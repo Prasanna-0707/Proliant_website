@@ -1,70 +1,45 @@
-import {
-  capabilities,
-  industries,
-  technologies,
-} from "./data";
-
 const WhatWeDo = () => {
   return (
-    <section className="bg-black text-white py-28">
-      <div className="max-w-7xl mx-auto px-8">
+    <section className="bg-white text-black py-16 md:py-20">
+      <div className="max-w-5xl mx-auto px-8">
 
-        <div className="grid grid-cols-3 gap-16">
+        {/* Section Label */}
+        <div className="mb-4">
+          <p className="text-blue-600 uppercase tracking-[4px] text-xs md:text-sm font-medium">
+            What We Do
+          </p>
+        </div>
 
-          {/* Capabilities */}
-          <div>
-            <h3 className="text-blue-500 uppercase tracking-[5px] mb-8">
-              Capabilities
-            </h3>
+        {/* Heading */}
+        <h2 className="text-3xl md:text-4xl lg:text-[42px] font-bold leading-[1.05] mb-8">
+          What We Do
+        </h2>
 
-            <ul className="space-y-6">
-              {capabilities.map((item) => (
-                <li
-                  key={item.id}
-                  className="text-2xl text-gray-200"
-                >
-                  {item.title}
-                </li>
-              ))}
-            </ul>
-          </div>
+        {/* Divider */}
+        <div className="border-t border-black/10 mb-8" />
 
-          {/* Industries */}
-          <div>
-            <h3 className="text-blue-500 uppercase tracking-[5px] mb-8">
-              Industries
-            </h3>
+        {/* Description */}
+        <div className="max-w-4xl">
+          <p className="text-base md:text-lg leading-7 text-neutral-600">
+            Proliant Data accelerates data and digital transformation by
+            delivering innovative, tailored solutions in enterprise data
+            management, migration, governance, and analytics to unlock the
+            full potential of your data.
+          </p>
+        </div>
 
-            <ul className="space-y-6">
-              {industries.map((item) => (
-                <li
-                  key={item.id}
-                  className="text-2xl text-gray-200"
-                >
-                  {item.title}
-                </li>
-              ))}
-            </ul>
-          </div>
+        {/* Read More */}
+        <div className="mt-8">
+          <a
+            href="/what-we-do"
+            className="group inline-flex items-center justify-between w-55px border border-black/30 px-5 py-3 text-xs font-medium tracking-wider uppercase transition-all duration-300 hover:bg-black hover:text-white"
+          >
+            <span>Read More</span>
 
-          {/* Technologies */}
-          <div>
-            <h3 className="text-blue-500 uppercase tracking-[5px] mb-8">
-              Technologies
-            </h3>
-
-            <ul className="space-y-6">
-              {technologies.map((item) => (
-                <li
-                  key={item.id}
-                  className="text-2xl text-gray-200"
-                >
-                  {item.title}
-                </li>
-              ))}
-            </ul>
-          </div>
-
+            <span className="text-lg font-light transition-transform duration-300 group-hover:translate-x-2">
+              →
+            </span>
+          </a>
         </div>
 
       </div>

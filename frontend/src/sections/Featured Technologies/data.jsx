@@ -1,10 +1,22 @@
 export const technologies = [
-  { id: 1, name: "SAP S/4HANA" },
-  { id: 2, name: "Salesforce" },
-  { id: 3, name: "Azure" },
-  { id: 4, name: "AWS" },
-  { id: 5, name: "Snowflake" },
-  { id: 6, name: "Databricks" },
-  { id: 7, name: "Power BI" },
-  { id: 8, name: "Python" },
+  {
+    id: 1,
+    name: "Master Data Management & Governance",
+  },
+  {
+    id: 2,
+    name: "Data Migration",
+  },
+  {
+    id: 3,
+    name: "ETL & Integration",
+  },
+  {
+    id: 4,
+    name: "Database & Server Administration",
+  },
+  {
+    id: 5,
+    name: "Analytics & Reporting",
+  },
 ];

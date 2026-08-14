@@ -1,4 +1,4 @@
-import logo from "@/assets/logos/logo.png";
+import logo from "@/assets/logos/ProliantWhite/proliant_white.png";
 
 const Logo = () => {
   return (

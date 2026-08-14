@@ -1,35 +1,23 @@
-import Navbar from "@/components/layout/Navbar";
+import ClickSpark from "@/components/ClickSpark";
 
-import Hero from "@/sections/Hero/Hero";
-import About from "@/sections/About/About";
-import WhatWeDo from "@/sections/WhatWeDo";
-import WhyChooseProliant from "@/sections/WhyChooseProliant";
-import OurProcess from "@/sections/Our Process";
-import FeaturedTechnologies from "@/sections/Featured Technologies";
-import IndustriesWeServe from "@/sections/Industries We Serve";
-import ContactCTA from "@/sections/ContactCTA";
+import Navbar from "@/components/layout/Navbar";
+import AppRoutes from "@/routes/AppRoutes";
 
 function App() {
   return (
-    <>
+    <ClickSpark
+      sparkColor="#ffffff"
+      sparkSize={8}
+      sparkRadius={18}
+      sparkCount={8}
+      duration={450}
+      easing="ease-out"
+      extraScale={1}
+    >
       <Navbar />
 
-      <Hero />
-
-      <About />
-
-      <WhatWeDo />
-
-      <WhyChooseProliant />
-
-      <OurProcess />
-      
-      <FeaturedTechnologies />
-
-      <IndustriesWeServe />
-      
-      <ContactCTA />
-    </>
+      <AppRoutes />
+    </ClickSpark>
   );
 }
 

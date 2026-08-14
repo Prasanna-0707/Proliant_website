@@ -1,32 +1,56 @@
+import { useState } from "react";
+import BlurText from "@/components/BlurText";
+
 const Hero = () => {
+  const [line1Complete, setLine1Complete] = useState(false);
+  const [line2Complete, setLine2Complete] = useState(false);
+
   return (
-    <section className="h-screen bg-black flex items-center justify-center">
-      <div className="max-w-7xl mx-auto px-8 text-center">
+    <section className="min-h-screen bg-black flex items-center pt-16">
+      <div className="max-w-7xl mx-auto w-full px-8">
 
-        <p className="text-blue-500 uppercase tracking-[6px] font-medium mb-6">
-          AI Powered Data Solutions
-        </p>
+        <div className="max-w-6xl">
 
-        <h1 className="text-6xl font-bold text-white leading-tight mb-8">
-          Transforming
-          <br />
-          Data Into Intelligence
-        </h1>
+          {/* Line 1 */}
+          <BlurText
+            text="Your Trusted Partner in Accelerating"
+            delay={100}
+            animateBy="words"
+            direction="top"
+            threshold={0}
+            rootMargin="100px"
+            stepDuration={0.35}
+            startAnimation={true}
+            onAnimationComplete={() => setLine1Complete(true)}
+            className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.15]"
+          />
 
-        <p className="text-gray-400 text-xl max-w-3xl mx-auto mb-12">
-          Empowering enterprises through AI, Enterprise Data Management,
-          Migration, Analytics and Digital Transformation.
-        </p>
+          {/* Line 2 */}
+          <BlurText
+            text="Digital Transformation &"
+            delay={100}
+            animateBy="words"
+            direction="top"
+            threshold={0}
+            rootMargin="100px"
+            stepDuration={0.35}
+            startAnimation={line1Complete}
+            onAnimationComplete={() => setLine2Complete(true)}
+            className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.15]"
+          />
 
-        <div className="flex justify-center gap-6">
-
-          <button className="px-8 py-4 rounded-full bg-blue-600 text-white">
-            Explore Services
-          </button>
-
-          <button className="px-8 py-4 rounded-full border border-white text-white">
-            Contact Us
-          </button>
+          {/* Line 3 */}
+          <BlurText
+            text="Data-Driven Innovation"
+            delay={100}
+            animateBy="words"
+            direction="top"
+            threshold={0}
+            rootMargin="100px"
+            stepDuration={0.35}
+            startAnimation={line2Complete}
+            className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.15] mb-8"
+          />
 
         </div>
 
