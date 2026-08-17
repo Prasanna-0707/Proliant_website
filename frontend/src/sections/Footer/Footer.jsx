@@ -16,7 +16,7 @@ const Footer = () => {
 
           {/* CONTACT HEADING */}
 
-          <div className="relative text-center mb-12">
+          <div className="relative text-center mb-12 pt-16 md:pt-0">
 
             {/* LOGO - TOP LEFT */}
             <div className="absolute left-0 top-0">
@@ -49,7 +49,7 @@ const Footer = () => {
                 LEFT SIDE LINKS
             ========================== */}
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-12">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-12">
 
               {/* COMPANY */}
 

@@ -6,7 +6,7 @@ const Hero = () => {
   const [line2Complete, setLine2Complete] = useState(false);
 
   return (
-    <section className="min-h-screen bg-black flex items-center pt-16">
+    <section className="min-h-[70vh] sm:min-h-screen bg-black flex items-center pt-16">
       <div className="max-w-7xl mx-auto w-full px-8">
 
         <div className="max-w-6xl">
