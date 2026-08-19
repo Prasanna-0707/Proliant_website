@@ -22,7 +22,7 @@ const Hero = () => {
             stepDuration={0.35}
             startAnimation={true}
             onAnimationComplete={() => setLine1Complete(true)}
-            className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.15]"
+            className="text-[clamp(2rem,5.5vw,4rem)] font-bold text-white leading-[1.15]"
           />
 
           {/* Line 2 */}
@@ -36,7 +36,7 @@ const Hero = () => {
             stepDuration={0.35}
             startAnimation={line1Complete}
             onAnimationComplete={() => setLine2Complete(true)}
-            className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.15]"
+            className="text-[clamp(2rem,5.5vw,4rem)] font-bold text-white leading-[1.15]"
           />
 
           {/* Line 3 */}
@@ -49,7 +49,7 @@ const Hero = () => {
             rootMargin="100px"
             stepDuration={0.35}
             startAnimation={line2Complete}
-            className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.15] mb-8"
+            className="text-[clamp(2rem,5.5vw,4rem)] font-bold text-white leading-[1.15] mb-8"
           />
 
         </div>

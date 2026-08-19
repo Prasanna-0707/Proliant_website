@@ -5,7 +5,7 @@ const Logo = () => {
     <img
       src={logo}
       alt="Proliant Logo"
-      className="h-12 w-auto object-contain cursor-pointer"
+      className="h-[clamp(2rem,8vw,3rem)] w-auto object-contain cursor-pointer"
     />
   );
 };

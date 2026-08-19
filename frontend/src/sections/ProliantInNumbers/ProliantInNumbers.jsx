@@ -7,7 +7,7 @@ const ProliantInNumbers = () => {
 
         {/* Section Heading */}
         <div className="mb-20">
-          <h2 className="text-5xl md:text-6xl font-bold tracking-tight">
+          <h2 className="text-[clamp(2rem,5vw,3.75rem)] font-bold tracking-tight">
             Proliant in Numbers
           </h2>
         </div>
@@ -23,12 +23,12 @@ const ProliantInNumbers = () => {
                 value={130}
                 suffix="+"
                 duration={2}
-                className="text-6xl md:text-7xl lg:text-8xl font-bold"
+                className="text-[clamp(2.75rem,8vw,6rem)] font-bold"
               />
             </div>
 
             <div className="w-full max-w-xs border-t border-black pt-6">
-              <p className="text-2xl md:text-3xl font-medium">
+              <p className="text-[clamp(1.25rem,3vw,1.875rem)] font-medium">
                 Employees
               </p>
             </div>
@@ -43,12 +43,12 @@ const ProliantInNumbers = () => {
                 value={5}
                 suffix="+"
                 duration={2}
-                className="text-6xl md:text-7xl lg:text-8xl font-bold"
+                className="text-[clamp(2.75rem,8vw,6rem)] font-bold"
               />
             </div>
 
             <div className="w-full max-w-xs border-t border-black pt-6">
-              <p className="text-2xl md:text-3xl font-medium">
+              <p className="text-[clamp(1.25rem,3vw,1.875rem)] font-medium">
                 Global Deployments
               </p>
             </div>
@@ -62,12 +62,12 @@ const ProliantInNumbers = () => {
               <StatsCounter
                 value={4}
                 duration={2}
-                className="text-6xl md:text-7xl lg:text-8xl font-bold"
+                className="text-[clamp(2.75rem,8vw,6rem)] font-bold"
               />
             </div>
 
             <div className="w-full max-w-xs border-t border-black pt-6">
-              <p className="text-2xl md:text-3xl font-medium">
+              <p className="text-[clamp(1.25rem,3vw,1.875rem)] font-medium">
                 Countries
               </p>
             </div>
