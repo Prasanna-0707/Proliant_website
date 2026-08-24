@@ -1,34 +1,32 @@
+import { useLayoutEffect, useRef } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+import Hero from "../sections/WhoWeAreSection/WhoWeAreHero/WhoWeAreHero";
+import OurStory from "../sections/WhoWeAreSection/OurStory/OurStory";
+import CorePrinciples from "../sections/WhoWeAreSection/CorePrinciples/CorePrinciples";
+import Leadership from "../sections/WhoWeAreSection/Leadership/Leadership";
+
+import Footer from "../components/common/Footer";
+
+gsap.registerPlugin(ScrollTrigger);
+
 const WhoWeAre = () => {
+  const pageRef = useRef(null);
   return (
-    <main className="bg-black text-white">
+    <main
+      ref={pageRef}
+      className="overflow-hidden bg-black text-white"
+    >
+      <Hero />
 
-      <section
-        id="about"
-        className="min-h-screen flex items-center justify-center"
-      >
-        <h1 className="text-5xl font-bold">
-          About
-        </h1>
-      </section>
+      <OurStory />
 
-      <section
-        id="leaders"
-        className="min-h-screen flex items-center justify-center"
-      >
-        <h1 className="text-5xl font-bold">
-          Leaders
-        </h1>
-      </section>
+      <CorePrinciples />
 
-      <section
-        id="contact"
-        className="min-h-screen flex items-center justify-center"
-      >
-        <h1 className="text-5xl font-bold">
-          Contact Us
-        </h1>
-      </section>
+      <Leadership />
 
+      <Footer />
     </main>
   );
 };

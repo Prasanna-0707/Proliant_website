@@ -4,8 +4,8 @@ const ContactButton = () => {
   return (
     <LiquidMetalButton
       metalConfig={{
-        colorBack: "#2563eb",
-        colorTint: "#60a5fa",
+        colorBack: "#EF3B3A ",
+        colorTint: "#FF7777",
       }}
     >
       Contact

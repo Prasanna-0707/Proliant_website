@@ -31,14 +31,17 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto h-full flex items-center justify-between px-8">
         <Logo />
 
+        {/* Desktop Navigation */}
         <div className="hidden lg:flex items-center gap-12">
           <NavLinks scrolled={scrolled} />
         </div>
 
+        {/* Contact Button */}
         <div className="hidden lg:block">
           <ContactButton scrolled={scrolled} />
         </div>
 
+        {/* Mobile Navigation */}
         <div className="lg:hidden">
           <MobileMenu />
         </div>

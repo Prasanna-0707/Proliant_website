@@ -1,9 +1,18 @@
+import CareersHero from "../sections/CareersSection/CareersHero/CareersHero";
+import LifeAtProliant from "../sections/CareersSection/LifeAtProliant/LifeAtProliant";
+import CareersContact from "../sections/CareersSection/ContactUs/ContactUs";
+import Footer from "../components/common/Footer";
+
 const Careers = () => {
   return (
-    <main className="min-h-screen bg-black text-white flex items-center justify-center">
-      <h1 className="text-5xl font-bold">
-        Careers
-      </h1>
+    <main className="bg-white text-black">
+      <CareersHero />
+
+      <LifeAtProliant />
+
+      <CareersContact />
+      
+      <Footer theme="light" />
     </main>
   );
 };
