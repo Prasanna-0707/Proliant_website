@@ -11,7 +11,7 @@ const WhatWeDo = () => {
         </div>
 
         {/* Heading */}
-        <h2 className="text-[clamp(2rem,5vw,2.625rem)] font-bold leading-[1.05] mb-8">
+        <h2 className="text-[clamp(1.875rem,7vw,2.625rem)] font-bold leading-[1.05] mb-8">
           What We Do
         </h2>
 

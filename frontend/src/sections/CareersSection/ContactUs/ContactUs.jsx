@@ -66,7 +66,7 @@ const CareersContact = () => {
           <h2
             className="
               career-contact-title
-              text-4xl
+              text-[clamp(1.875rem,7vw,3.75rem)]
               font-medium
               leading-none
               tracking-tight
@@ -146,7 +146,7 @@ const CareersContact = () => {
             <div className="mb-8 flex items-start justify-between gap-5">
 
               <div>
-                <p className="text-xs uppercase tracking-[0.18em] text-black/35">
+                <p className="text-xs uppercase tracking-[0.18em] text-black">
                   Careers
                 </p>
 
@@ -171,7 +171,7 @@ const CareersContact = () => {
               <div>
                 <label
                   htmlFor="career-first-name"
-                  className="mb-2 block text-xs uppercase tracking-[0.15em] text-black/40"
+                  className="mb-2 block text-xs uppercase tracking-[0.15em] text-black"
                 >
                   First Name *
                 </label>
@@ -203,7 +203,7 @@ const CareersContact = () => {
               <div>
                 <label
                   htmlFor="career-last-name"
-                  className="mb-2 block text-xs uppercase tracking-[0.15em] text-black/40"
+                  className="mb-2 block text-xs uppercase tracking-[0.15em] text-black"
                 >
                   Last Name *
                 </label>
@@ -242,7 +242,7 @@ const CareersContact = () => {
 
               <label
                 htmlFor="career-email"
-                className="mb-2 block text-xs uppercase tracking-[0.15em] text-black/40"
+                className="mb-2 block text-xs uppercase tracking-[0.15em] text-black"
               >
                 Email *
               </label>
@@ -280,7 +280,7 @@ const CareersContact = () => {
 
               <label
                 htmlFor="career-role"
-                className="mb-2 block text-xs uppercase tracking-[0.15em] text-black/40"
+                className="mb-2 block text-xs uppercase tracking-[0.15em] text-black"
               >
                 Area of Interest *
               </label>
@@ -300,7 +300,7 @@ const CareersContact = () => {
                   pb-3
                   pt-1
                   text-sm
-                  text-black/65
+                  text-black
                   outline-none
                   transition-all
                   duration-300
@@ -343,7 +343,7 @@ const CareersContact = () => {
 
               <label
                 htmlFor="career-resume"
-                className="mb-2 block text-xs uppercase tracking-[0.15em] text-black/40"
+                className="mb-2 block text-xs uppercase tracking-[0.15em] text-black"
               >
                 Resume *
               </label>
@@ -393,7 +393,7 @@ const CareersContact = () => {
 
               <label
                 htmlFor="career-message"
-                className="mb-2 block text-xs uppercase tracking-[0.15em] text-black/40"
+                className="mb-2 block text-xs uppercase tracking-[0.15em] text-black"
               >
                 Message
               </label>
@@ -431,7 +431,7 @@ const CareersContact = () => {
 
             <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
-              <p className="max-w-xs text-[11px] leading-relaxed text-black/35">
+              <p className="max-w-xs text-[11px] leading-relaxed text-black">
                 Share your details and our team will get in touch with you.
               </p>
 

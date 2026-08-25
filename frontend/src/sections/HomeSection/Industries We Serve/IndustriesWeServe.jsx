@@ -169,7 +169,7 @@ const IndustriesWeServe = () => {
             className="
               industries-heading
               max-w-5xl
-              text-4xl
+              text-[clamp(1.875rem,7vw,2.5rem)]
               font-semibold
               leading-tight
               tracking-tight

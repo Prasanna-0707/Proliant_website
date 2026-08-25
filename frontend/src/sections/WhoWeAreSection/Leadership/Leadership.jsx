@@ -358,7 +358,7 @@ const Leadership = () => {
           <h2
             className="
               mt-3
-              text-4xl
+              text-[clamp(1.875rem,7vw,3.75rem)]
               font-semibold
               leading-none
               tracking-tight

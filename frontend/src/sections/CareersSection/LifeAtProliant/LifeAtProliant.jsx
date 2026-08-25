@@ -163,7 +163,7 @@ const LifeAtProliant = () => {
             <h2
               className="
                 career-life-title
-                text-4xl
+                text-[clamp(1.875rem,7vw,3.75rem)]
                 font-medium
                 leading-none
                 tracking-tight

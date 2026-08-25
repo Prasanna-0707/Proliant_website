@@ -102,7 +102,7 @@ const CareersHero = () => {
       <div className="relative z-10 flex min-h-screen items-center px-8 pt-12 md:px-16 lg:px-24">
         <div className="max-w-4xl">
 
-          <h1 className="text-5xl font-semibold leading-none tracking-tight sm:text-6xl md:text-7xl lg:text-7xl">
+          <h1 className="text-[clamp(1.875rem,7vw,3.75rem)] font-semibold leading-none tracking-tight sm:text-6xl md:text-7xl lg:text-7xl">
             <span className="career-hero-title-line block">
               Work locally,
             </span>

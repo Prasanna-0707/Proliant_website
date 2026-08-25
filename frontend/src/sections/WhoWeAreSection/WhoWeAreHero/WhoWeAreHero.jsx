@@ -179,7 +179,7 @@ const Hero = () => {
 
           <h1
             className="
-              text-5xl
+              text-[clamp(1.875rem,7vw,3.75rem)]
               font-semibold
               leading-[0.9]
               tracking-[-0.055em]

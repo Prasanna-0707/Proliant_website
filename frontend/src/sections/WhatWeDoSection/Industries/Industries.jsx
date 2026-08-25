@@ -240,6 +240,7 @@ const Industries = () => {
           className="
             mt-10
             grid
+            min-w-0
             gap-10
             lg:grid-cols-2
             lg:gap-14
@@ -254,7 +255,8 @@ const Industries = () => {
             className="
               industry-visual
               relative
-              aspect-4/3
+              aspect-square
+              sm:aspect-4/3
               overflow-hidden
               border
               border-white/10
@@ -625,8 +627,8 @@ const IndustryNode = ({
         industry-node
         z-30
         flex
-        h-24
-        w-24
+        h-16
+        w-16
         flex-col
         items-center
         justify-center
@@ -635,8 +637,10 @@ const IndustryNode = ({
         text-center
         transition-all
         duration-300
-        sm:h-28
-        sm:w-28
+        sm:h-20
+        sm:w-20
+        md:h-24
+        md:w-24
         ${
           active
             ? "scale-105 border-red-500 bg-black shadow-lg"
@@ -663,8 +667,12 @@ const IndustryNode = ({
       <span
         className="
           mt-1
-          max-w-20
-          text-xs
+          max-w-14
+          sm:max-w-16
+          md:max-w-20
+          text-[9px]
+          sm:text-[10px]
+          md:text-xs
           font-medium
           leading-tight
           text-white
@@ -675,9 +683,12 @@ const IndustryNode = ({
 
       <Icon
         className={`
-          mt-2
-          h-4
-          w-4
+          mt-1
+          h-3
+          w-3
+          sm:mt-2
+          sm:h-4
+          sm:w-4
           ${
             active
               ? "text-white"
