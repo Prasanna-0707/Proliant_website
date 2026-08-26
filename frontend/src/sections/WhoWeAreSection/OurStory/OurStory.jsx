@@ -168,36 +168,6 @@ const OurStory = () => {
               lg:pt-1
             "
           >
-            <p
-              className="
-                text-lg
-                leading-[1.7]
-                text-black/80
-                md:text-xl
-                lg:text-2xl
-              "
-            >
-              Founded in 2021, Proliant Data LLC has rapidly
-              grown from a niche in data migration and governance
-              into a trusted partner delivering end-to-end
-              Enterprise Data Management, SAP solutions,
-              advanced analytics, and AI innovation.
-            </p>
-
-            <p
-              className="
-                mt-5
-                text-base
-                leading-[1.7]
-                text-black/50
-                md:text-lg
-              "
-            >
-              Our journey is driven by a technology-agnostic,
-              innovation-first approach, creating scalable,
-              business-aligned solutions designed to deliver
-              real impact.
-            </p>
 
             <p
               className="

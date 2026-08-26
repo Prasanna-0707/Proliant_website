@@ -3,7 +3,7 @@ import whoWeAreImage from "@/assets/images/who_we_are.png";
 const About = () => {
   return (
     <section className="bg-black text-white py-20 md:py-24">
-      <div className="max-w-5xl mx-auto px-8">
+      <div className="max-w-7xl mx-auto px-8">
 
         {/* Section Label */}
         <p className="text-blue-500 uppercase tracking-[4px] text-xs md:text-sm font-medium mb-5">
