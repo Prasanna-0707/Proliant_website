@@ -1,7 +1,7 @@
 import WhatWeDoHero from "../sections/WhatWeDoSection/Hero/WhatWeDoHero";
 import Capabilities from "../sections/WhatWeDoSection/Capabilities/Capabilities";
 import Industries from "../sections/WhatWeDoSection/Industries/Industries";
-import Technologies from "../sections/WhatWeDoSection/Technologies/Technologies";
+import Technologies  from "../sections/WhatWeDoSection/Technologies/Technologies";
 import Footer from "../components/common/Footer";
 
 const WhatWeDoPage = () => {
