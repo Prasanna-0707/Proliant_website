@@ -1,7 +1,7 @@
 const WhatWeDo = () => {
   return (
     <section className="bg-white text-black py-16 md:py-20">
-      <div className="max-w-5xl mx-auto px-8">
+      <div className="max-w-7xl mx-auto px-8">
 
         {/* Section Label */}
         <div className="mb-4">
@@ -9,11 +9,7 @@ const WhatWeDo = () => {
             What We Do
           </p>
         </div>
-
-        {/* Heading */}
-        <h2 className="text-3xl md:text-4xl lg:text-[42px] font-bold leading-[1.05] mb-8">
-          What We Do
-        </h2>
+        
 
         {/* Divider */}
         <div className="border-t border-black/10 mb-8" />
