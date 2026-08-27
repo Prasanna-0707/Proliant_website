@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -6,6 +6,9 @@ gsap.registerPlugin(ScrollTrigger);
 
 const CareersContact = () => {
   const sectionRef = useRef(null);
+
+  // SEND APPLICATION BUTTON STATE
+  const [submitStatus, setSubmitStatus] = useState("idle");
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
@@ -46,6 +49,30 @@ const CareersContact = () => {
     return () => ctx.revert();
   }, []);
 
+  // SEND APPLICATION CLICK HANDLER
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    // Check whether required fields are filled
+    if (!e.currentTarget.checkValidity()) {
+      e.currentTarget.reportValidity();
+      return;
+    }
+
+    // Show loading spinner
+    setSubmitStatus("loading");
+
+    // After 2 seconds show success tick
+    setTimeout(() => {
+      setSubmitStatus("success");
+
+      // After 2 more seconds return to normal button
+      setTimeout(() => {
+        setSubmitStatus("idle");
+      }, 2000);
+    }, 2000);
+  };
+
   return (
     <section
       ref={sectionRef}
@@ -54,9 +81,7 @@ const CareersContact = () => {
     >
       <div className="mx-auto max-w-7xl">
 
-        {/* =========================
-            SECTION HEADING
-        ========================== */}
+        {/* SECTION HEADING */}
 
         <div className="border-b border-white/10 pb-6">
           <p className="mb-2 text-xs uppercase tracking-[0.2em] text-[#EF3B3A]">
@@ -78,16 +103,11 @@ const CareersContact = () => {
           </h2>
         </div>
 
-
-        {/* =========================
-            MAIN CONTENT
-        ========================== */}
+        {/* MAIN CONTENT */}
 
         <div className="mt-10 grid gap-10 lg:grid-cols-[0.65fr_1.35fr] lg:gap-16">
 
-          {/* =========================
-              LEFT CONTENT
-          ========================== */}
+          {/* LEFT CONTENT */}
 
           <div className="career-contact-intro lg:pt-4">
 
@@ -98,7 +118,6 @@ const CareersContact = () => {
                 Let&apos;s Connect
               </span>
             </div>
-
 
             <p className="mt-6 text-2xl font-medium leading-tight tracking-tight md:text-3xl">
 
@@ -115,7 +134,6 @@ const CareersContact = () => {
 
             </p>
 
-
             <p className="mt-6 max-w-sm text-sm leading-relaxed text-white/40 md:text-base">
               Tell us a little about yourself, your interests and the kind of
               opportunities you&apos;re looking for.
@@ -123,12 +141,10 @@ const CareersContact = () => {
 
           </div>
 
-
-          {/* =========================
-              APPLICATION FORM
-          ========================== */}
+          {/* APPLICATION FORM */}
 
           <form
+            onSubmit={handleSubmit}
             className="
               career-contact-form
               rounded-2xl
@@ -161,10 +177,7 @@ const CareersContact = () => {
 
             </div>
 
-
-            {/* =========================
-                FIRST + LAST NAME
-            ========================== */}
+            {/* FIRST + LAST NAME */}
 
             <div className="grid gap-6 md:grid-cols-2">
 
@@ -199,7 +212,6 @@ const CareersContact = () => {
                 />
               </div>
 
-
               <div>
                 <label
                   htmlFor="career-last-name"
@@ -233,10 +245,7 @@ const CareersContact = () => {
 
             </div>
 
-
-            {/* =========================
-                EMAIL
-            ========================== */}
+            {/* EMAIL */}
 
             <div className="mt-6">
 
@@ -271,10 +280,7 @@ const CareersContact = () => {
 
             </div>
 
-
-            {/* =========================
-                AREA OF INTEREST
-            ========================== */}
+            {/* AREA OF INTEREST */}
 
             <div className="mt-6">
 
@@ -334,10 +340,7 @@ const CareersContact = () => {
 
             </div>
 
-
-            {/* =========================
-                RESUME UPLOAD
-            ========================== */}
+            {/* RESUME UPLOAD */}
 
             <div className="mt-6">
 
@@ -384,10 +387,7 @@ const CareersContact = () => {
 
             </div>
 
-
-            {/* =========================
-                MESSAGE
-            ========================== */}
+            {/* MESSAGE */}
 
             <div className="mt-6">
 
@@ -424,10 +424,7 @@ const CareersContact = () => {
 
             </div>
 
-
-            {/* =========================
-                SUBMIT
-            ========================== */}
+            {/* SUBMIT */}
 
             <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
@@ -435,16 +432,19 @@ const CareersContact = () => {
                 Share your details and our team will get in touch with you.
               </p>
 
+              {/* SEND APPLICATION BUTTON */}
 
               <button
                 type="submit"
+                disabled={submitStatus === "loading"}
                 className="
                   group
                   inline-flex
+                  min-w-[190px]
                   shrink-0
                   items-center
                   justify-center
-                  gap-4
+                  gap-3
                   rounded-full
                   bg-black
                   px-6
@@ -457,13 +457,45 @@ const CareersContact = () => {
                   transition-all
                   duration-300
                   hover:bg-[#EF3B3A]
+                  disabled:cursor-not-allowed
                 "
               >
-                Send Application
+                {/* NORMAL BUTTON */}
 
-                <span className="transition-transform duration-300 group-hover:translate-x-1">
-                  →
-                </span>
+                {submitStatus === "idle" && (
+                  <>
+                    <span>Send Application</span>
+
+                    <span className="transition-transform duration-300 group-hover:translate-x-1">
+                      →
+                    </span>
+                  </>
+                )}
+
+                {/* LOADING SPINNER */}
+
+                {submitStatus === "loading" && (
+                  <span
+                    className="
+                      h-5
+                      w-5
+                      animate-spin
+                      rounded-full
+                      border-2
+                      border-white/30
+                      border-t-white
+                    "
+                  />
+                )}
+
+                {/* SUCCESS TICK */}
+
+                {submitStatus === "success" && (
+                  <span className="text-xl leading-none">
+                    ✓
+                  </span>
+                )}
+
               </button>
 
             </div>
