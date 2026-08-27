@@ -17,7 +17,7 @@ const lifeCards = [
       "Join a fast-growing, innovation-led company that's shaping the future of data and AI.",
     image: benefitsImage,
     imageAlt: "Benefits at Proliant",
-    dark: true,
+    dark: false,
   },
   {
     number: "02",
@@ -51,7 +51,7 @@ const lifeCards = [
     ],
     image: growthImage,
     imageAlt: "Career growth at Proliant",
-    dark: false,
+    dark: true,
   },
 ];
 
@@ -59,89 +59,22 @@ const LifeAtProliant = () => {
   const sectionRef = useRef(null);
 
   useLayoutEffect(() => {
-    const ctx = gsap.context(() => {
-      /* =========================
-         SECTION TITLE
-      ========================== */
+  const ctx = gsap.context(() => {
+    gsap.from(".career-life-title", {
+      scrollTrigger: {
+        trigger: ".career-life-title",
+        start: "top 90%",
+        once: true,
+      },
+      opacity: 0,
+      y: 20,
+      duration: 0.5,
+      ease: "power2.out",
+    });
+  }, sectionRef);
 
-      gsap.from(".career-life-title", {
-        scrollTrigger: {
-          trigger: ".career-life-title",
-          start: "top 85%",
-        },
-        opacity: 0,
-        y: 35,
-        duration: 0.8,
-        ease: "power3.out",
-      });
-
-      /* =========================
-         CARDS
-      ========================== */
-
-      gsap.utils.toArray(".career-life-card").forEach((card) => {
-        const content = card.querySelector(".career-card-content");
-        const image = card.querySelector(".career-card-image");
-        const glow = card.querySelector(".career-card-glow");
-
-        gsap.from(card, {
-          scrollTrigger: {
-            trigger: card,
-            start: "top 82%",
-          },
-          opacity: 0,
-          y: 50,
-          duration: 0.9,
-          ease: "power3.out",
-        });
-
-        gsap.from(content, {
-          scrollTrigger: {
-            trigger: card,
-            start: "top 82%",
-          },
-          opacity: 0,
-          x: -25,
-          duration: 0.8,
-          delay: 0.1,
-          ease: "power3.out",
-        });
-
-        gsap.from(image, {
-          scrollTrigger: {
-            trigger: card,
-            start: "top 82%",
-          },
-          opacity: 0,
-          scale: 1.08,
-          duration: 1.1,
-          delay: 0.05,
-          ease: "power3.out",
-        });
-
-        gsap.fromTo(
-          glow,
-          {
-            opacity: 0,
-            scale: 0.7,
-          },
-          {
-            opacity: 1,
-            scale: 1,
-            duration: 1.2,
-            delay: 0.25,
-            ease: "power2.out",
-            scrollTrigger: {
-              trigger: card,
-              start: "top 82%",
-            },
-          }
-        );
-      });
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, []);
+  return () => ctx.revert();
+}, []);
 
   return (
     <section
@@ -149,7 +82,6 @@ const LifeAtProliant = () => {
       className="bg-white px-6 py-16 text-black md:px-12 md:py-20 lg:px-20"
     >
       <div className="mx-auto max-w-7xl">
-
         {/* =========================
             SECTION HEADING
         ========================== */}
@@ -180,14 +112,12 @@ const LifeAtProliant = () => {
           </span>
         </div>
 
-
         {/* =========================
             FOUR LIFE CARDS
         ========================== */}
 
         <div className="space-y-6">
-
-          {lifeCards.map((card) => (
+          {lifeCards.map((card, index) => (
             <article
               key={card.number}
               className="
@@ -202,8 +132,13 @@ const LifeAtProliant = () => {
                 shadow-black/5
               "
             >
-              <div className="grid min-h-80 md:grid-cols-2">
-
+              <div
+                className={`
+                  grid
+                  min-h-80
+                  md:grid-cols-2
+                `}
+              >
                 {/* =========================
                     TEXT PANEL
                 ========================== */}
@@ -212,6 +147,7 @@ const LifeAtProliant = () => {
                   className={`
                     career-card-content
                     relative
+                    order-1
                     flex
                     min-h-80
                     flex-col
@@ -224,9 +160,13 @@ const LifeAtProliant = () => {
                         ? "bg-black text-white"
                         : "bg-white text-black"
                     }
+                    ${
+                      index % 2 === 0
+                        ? "md:order-1"
+                        : "md:order-2"
+                    }
                   `}
                 >
-
                   {/* RED CORNER LIGHT */}
 
                   {card.dark && (
@@ -264,24 +204,18 @@ const LifeAtProliant = () => {
                   />
 
                   <div className="relative z-10">
-
                     {/* NUMBER */}
 
                     <span
-                      className={`
+                      className="
                         text-xs
                         uppercase
                         tracking-[0.2em]
-                        ${
-                          card.dark
-                            ? "text-[#EF3B3A]"
-                            : "text-[#EF3B3A]"
-                        }
-                      `}
+                        text-[#EF3B3A]
+                      "
                     >
                       {card.number}
                     </span>
-
 
                     {/* TITLE */}
 
@@ -305,7 +239,6 @@ const LifeAtProliant = () => {
                       {card.title}
                     </h3>
 
-
                     {/* DESCRIPTION */}
 
                     {card.description && (
@@ -326,7 +259,6 @@ const LifeAtProliant = () => {
                         {card.description}
                       </p>
                     )}
-
 
                     {/* LIST */}
 
@@ -359,17 +291,28 @@ const LifeAtProliant = () => {
                         ))}
                       </ul>
                     )}
-
                   </div>
                 </div>
-
 
                 {/* =========================
                     IMAGE PANEL
                 ========================== */}
 
-                <div className="career-card-image relative min-h-80 overflow-hidden bg-white">
-
+                <div
+                  className={`
+                    career-card-image
+                    relative
+                    order-2
+                    min-h-80
+                    overflow-hidden
+                    bg-white
+                    ${
+                      index % 2 === 0
+                        ? "md:order-2"
+                        : "md:order-1"
+                    }
+                  `}
+                >
                   <img
                     src={card.image}
                     alt={card.imageAlt}
@@ -388,15 +331,11 @@ const LifeAtProliant = () => {
                   {/* IMAGE SOFT FADE */}
 
                   <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-white/5 via-transparent to-black/5" />
-
                 </div>
-
               </div>
             </article>
           ))}
-
         </div>
-
       </div>
     </section>
   );

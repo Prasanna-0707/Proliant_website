@@ -60,13 +60,13 @@ const CareersHero = () => {
         loop
         playsInline
         preload="auto"
-        className="absolute inset-0 h-full w-full scale-105 object-cover"
+        className="absolute inset-0 h-full w-full object-cover"
         style={{
           objectPosition: "40% center",
           filter: "brightness(1.35) contrast(1.12)",
         }}
       >
-        <source src={careerVideo} type="video/quicktime" />
+        <source src={careerVideo} type="video/mp4" />
 
         Your browser does not support the video element.
       </video>
@@ -77,10 +77,8 @@ const CareersHero = () => {
 
       <div className="absolute inset-0 bg-black/10" />
 
-      {/* Keeps text readable without killing the globe */}
       <div className="absolute inset-0 bg-linear-to-r from-black/65 via-black/20 to-transparent" />
 
-      {/* Slight bottom cinematic fade */}
       <div className="absolute inset-0 bg-linear-to-t from-black/30 via-transparent to-transparent" />
 
       {/* =========================
@@ -101,8 +99,7 @@ const CareersHero = () => {
 
       <div className="relative z-10 flex min-h-screen items-center px-8 pt-12 md:px-16 lg:px-24">
         <div className="max-w-4xl">
-
-          <h1 className="text-5xl font-semibold leading-none tracking-tight sm:text-6xl md:text-7xl lg:text-7xl">
+          <h1 className="text-[clamp(1.875rem,7vw,3.75rem)] font-semibold leading-none tracking-tight sm:text-6xl md:text-7xl lg:text-7xl">
             <span className="career-hero-title-line block">
               Work locally,
             </span>
@@ -127,9 +124,7 @@ const CareersHero = () => {
           >
             Explore Opportunities
 
-            <span className="text-base">
-              →
-            </span>
+            <span className="text-base">→</span>
           </a>
         </div>
       </div>

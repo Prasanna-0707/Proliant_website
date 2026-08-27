@@ -778,8 +778,6 @@ const IndustryNode = ({
           font-medium
           leading-tight
           text-white
-          sm:max-w-20
-          sm:text-[10px]
         "
       >
         {industry.title}
