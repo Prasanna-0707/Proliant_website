@@ -90,8 +90,6 @@ const IndustriesWeServe = () => {
 
       /* =====================================================
          IMAGE LOAD FIX
-         Prevents ScrollTrigger from calculating positions
-         before images have finished loading.
       ===================================================== */
 
       const images = sectionRef.current.querySelectorAll("img");
@@ -103,19 +101,15 @@ const IndustriesWeServe = () => {
       };
 
       images.forEach((image) => {
-        if (image.complete) {
-          return;
-        }
+        if (image.complete) return;
 
         image.addEventListener("load", refreshScrollTrigger);
       });
 
-      /* Initial layout calculation */
       requestAnimationFrame(() => {
         ScrollTrigger.refresh();
       });
 
-      /* Extra safety after browser layout settles */
       const refreshTimer = setTimeout(() => {
         ScrollTrigger.refresh();
       }, 500);
@@ -143,6 +137,269 @@ const IndustriesWeServe = () => {
         md:py-24
       "
     >
+      {/* =====================================================
+          READ MORE BUTTON STYLES
+          ONLY SIZE + CURVE CHANGED
+          ANIMATIONS REMAIN THE SAME
+      ===================================================== */}
+
+      <style>{`
+        /* =====================================================
+           COMMON BUTTON
+        ===================================================== */
+
+        .industry-readmore {
+          position: relative;
+          z-index: 10;
+          display: inline-flex;
+
+          width: 135px;
+          height: 40px;
+
+          align-items: center;
+          justify-content: space-between;
+
+          overflow: hidden;
+
+          border: 1px solid rgba(255, 255, 255, 0.5);
+
+          padding: 0 15px;
+
+          text-decoration: none;
+          cursor: pointer;
+
+          border-radius: 999px;
+        }
+
+        .industry-readmore-text,
+        .industry-readmore-arrow {
+          position: relative;
+          z-index: 3;
+
+          color: white;
+
+          transition:
+            color 0.35s ease,
+            transform 0.35s ease;
+
+          font-size: 11px;
+          font-weight: 500;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+        }
+
+        .industry-readmore-arrow {
+          font-size: 17px;
+          letter-spacing: normal;
+        }
+
+        .industry-readmore:hover .industry-readmore-arrow {
+          transform: translateX(4px);
+        }
+
+
+        /* =====================================================
+           MASK 1
+           SAME ANIMATION
+        ===================================================== */
+
+        .industry-mask1::before {
+          content: "";
+
+          position: absolute;
+          inset: 0;
+
+          z-index: 1;
+
+          background: #EF3B3A;
+
+          transform: translateX(-101%);
+
+          transition:
+            transform 0.5s cubic-bezier(
+              0.76,
+              0,
+              0.24,
+              1
+            );
+        }
+
+        .industry-mask1:hover::before {
+          transform: translateX(0);
+        }
+
+        .industry-mask1::after {
+          content: "";
+
+          position: absolute;
+          inset: 0;
+
+          z-index: 2;
+
+          background: rgba(255, 255, 255, 0.12);
+
+          transform: translateX(-110%);
+
+          transition: transform 0.65s ease;
+        }
+
+        .industry-mask1:hover::after {
+          transform: translateX(110%);
+        }
+
+
+        /* =====================================================
+           MASK 2
+           SAME SPRITE ANIMATION
+        ===================================================== */
+
+        .industry-mask2::before {
+          content: "";
+
+          position: absolute;
+          inset: 0;
+
+          z-index: 1;
+
+          background: #EF3B3A;
+
+          -webkit-mask-image: url(
+            "https://raw.githubusercontent.com/robin-dela/css-mask-animation/master/img/nature-sprite.png"
+          );
+
+          mask-image: url(
+            "https://raw.githubusercontent.com/robin-dela/css-mask-animation/master/img/nature-sprite.png"
+          );
+
+          -webkit-mask-size: 2300% 100%;
+          mask-size: 2300% 100%;
+
+          -webkit-mask-position: 100% 0;
+          mask-position: 100% 0;
+
+          animation:
+            industryMask2Out
+            0.7s
+            steps(22)
+            forwards;
+        }
+
+        .industry-mask2:hover::before {
+          animation:
+            industryMask2In
+            0.7s
+            steps(22)
+            forwards;
+        }
+
+        @keyframes industryMask2In {
+          from {
+            -webkit-mask-position: 100% 0;
+            mask-position: 100% 0;
+          }
+
+          to {
+            -webkit-mask-position: 0 0;
+            mask-position: 0 0;
+          }
+        }
+
+        @keyframes industryMask2Out {
+          from {
+            -webkit-mask-position: 0 0;
+            mask-position: 0 0;
+          }
+
+          to {
+            -webkit-mask-position: 100% 0;
+            mask-position: 100% 0;
+          }
+        }
+
+
+        /* =====================================================
+           MASK 3
+           SAME DIAGONAL ANIMATION
+        ===================================================== */
+
+        .industry-mask3::before {
+          content: "";
+
+          position: absolute;
+
+          inset: -2px;
+
+          z-index: 1;
+
+          background: #EF3B3A;
+
+          clip-path: polygon(
+            0 0,
+            0 0,
+            0 100%,
+            0 100%
+          );
+
+          transition:
+            clip-path
+            0.65s
+            cubic-bezier(
+              0.76,
+              0,
+              0.24,
+              1
+            );
+        }
+
+        .industry-mask3:hover::before {
+          clip-path: polygon(
+            0 0,
+            100% 0,
+            100% 100%,
+            0 100%
+          );
+        }
+
+        .industry-mask3::after {
+          content: "";
+
+          position: absolute;
+
+          top: -20%;
+          left: -40%;
+
+          width: 25%;
+          height: 140%;
+
+          z-index: 2;
+
+          background: rgba(255, 255, 255, 0.25);
+
+          transform:
+            skewX(-25deg)
+            translateX(-500%);
+
+          transition: transform 0.7s ease;
+        }
+
+        .industry-mask3:hover::after {
+          transform:
+            skewX(-25deg)
+            translateX(800%);
+        }
+
+
+        /* =====================================================
+           HOVER BORDER
+        ===================================================== */
+
+        .industry-mask1:hover,
+        .industry-mask2:hover,
+        .industry-mask3:hover {
+          border-color: #EF3B3A;
+        }
+      `}</style>
+
       <div className="mx-auto max-w-7xl px-8">
 
         {/* =================================================
@@ -190,8 +447,14 @@ const IndustriesWeServe = () => {
         <div className="industries-grid space-y-6 md:space-y-7">
 
           {industries.map((industry, index) => {
-
             const imageLeft = index % 2 === 0;
+
+            const buttonAnimation =
+              index === 0
+                ? "industry-mask1"
+                : index === 1
+                ? "industry-mask2"
+                : "industry-mask3";
 
             return (
               <article
@@ -217,9 +480,7 @@ const IndustriesWeServe = () => {
                 "
               >
 
-                {/* =================================================
-                    IMAGE SIDE
-                ================================================== */}
+                {/* IMAGE SIDE */}
 
                 <div
                   className={`
@@ -229,10 +490,13 @@ const IndustriesWeServe = () => {
                     bg-black
                     md:min-h-80
                     lg:min-h-96
-                    ${imageLeft ? "lg:order-1" : "lg:order-2"}
+                    ${
+                      imageLeft
+                        ? "lg:order-1"
+                        : "lg:order-2"
+                    }
                   `}
                 >
-
                   <img
                     src={industry.image}
                     alt={industry.name}
@@ -249,8 +513,6 @@ const IndustriesWeServe = () => {
                     "
                   />
 
-                  {/* Dark Overlay */}
-
                   <div
                     className="
                       absolute
@@ -261,8 +523,6 @@ const IndustriesWeServe = () => {
                       group-hover:bg-black/20
                     "
                   />
-
-                  {/* Red Corner Tint */}
 
                   <div
                     className="
@@ -279,8 +539,6 @@ const IndustriesWeServe = () => {
                       group-hover:opacity-100
                     "
                   />
-
-                  {/* Image Shine */}
 
                   <div
                     className="
@@ -301,9 +559,7 @@ const IndustriesWeServe = () => {
                 </div>
 
 
-                {/* =================================================
-                    BLACK CONTENT SIDE
-                ================================================== */}
+                {/* CONTENT SIDE */}
 
                 <div
                   className={`
@@ -320,11 +576,13 @@ const IndustriesWeServe = () => {
                     md:py-12
                     lg:px-14
                     lg:py-12
-                    ${imageLeft ? "lg:order-2" : "lg:order-1"}
+                    ${
+                      imageLeft
+                        ? "lg:order-2"
+                        : "lg:order-1"
+                    }
                   `}
                 >
-
-                  {/* Red Ambient Glow */}
 
                   <div
                     className="
@@ -344,8 +602,6 @@ const IndustriesWeServe = () => {
                     "
                   />
 
-                  {/* Number */}
-
                   <span
                     className="
                       relative
@@ -359,8 +615,6 @@ const IndustriesWeServe = () => {
                     0{industry.id}
                   </span>
 
-
-                  {/* Title */}
 
                   <h3
                     className="
@@ -383,8 +637,6 @@ const IndustriesWeServe = () => {
                   </h3>
 
 
-                  {/* Red Accent */}
-
                   <div
                     className="
                       relative
@@ -399,8 +651,6 @@ const IndustriesWeServe = () => {
                     "
                   />
 
-
-                  {/* Description */}
 
                   <p
                     className="
@@ -418,58 +668,25 @@ const IndustriesWeServe = () => {
                   </p>
 
 
-                  {/* Read More */}
+                  {/* READ MORE BUTTON */}
 
                   <a
                     href="/what-we-do"
-                    className="
-                      group/button
-                      relative
-                      z-10
-                      inline-flex
-                      w-48
-                      items-center
-                      justify-between
-                      border
-                      border-white/50
-                      px-5
-                      py-3
-                      text-xs
-                      font-medium
-                      uppercase
-                      tracking-widest
-                      text-white
-                      transition-all
-                      duration-300
-                      hover:border-[#EF3B3A]
-                      hover:bg-[#EF3B3A]
-                      hover:text-white
-                    "
+                    className={`industry-readmore ${buttonAnimation}`}
                   >
-
-                    <span>
+                    <span className="industry-readmore-text">
                       Read More
                     </span>
 
-                    <span
-                      className="
-                        text-lg
-                        transition-transform
-                        duration-300
-                        group-hover/button:translate-x-1
-                      "
-                    >
+                    <span className="industry-readmore-arrow">
                       →
                     </span>
-
                   </a>
 
                 </div>
 
 
-                {/* =================================================
-                    CARD HIGHLIGHT
-                ================================================== */}
+                {/* CARD HIGHLIGHT */}
 
                 <div
                   className="
