@@ -269,7 +269,7 @@ const CorePrinciples = () => {
           <h2
             className="
               mt-5
-              text-5xl
+              text-[clamp(1.875rem,7vw,3.75rem)]
               font-semibold
               leading-none
               tracking-tight
@@ -381,7 +381,7 @@ const CorePrinciples = () => {
                   className="
                     principle-title
                     mt-3
-                    text-4xl
+                    text-[clamp(1.5rem,5vw,2.25rem)]
                     font-semibold
                     italic
                     leading-none
@@ -523,7 +523,7 @@ const CorePrinciples = () => {
                   className="
                     principle-title
                     mt-3
-                    text-4xl
+                    text-[clamp(1.5rem,5vw,2.25rem)]
                     font-semibold
                     italic
                     leading-none
@@ -664,7 +664,7 @@ const CorePrinciples = () => {
                   className="
                     principle-title
                     mt-3
-                    text-4xl
+                    text-[clamp(1.5rem,5vw,2.25rem)]
                     font-semibold
                     italic
                     leading-none

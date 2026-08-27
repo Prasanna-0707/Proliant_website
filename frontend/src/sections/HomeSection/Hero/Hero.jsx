@@ -107,7 +107,7 @@ const Hero = () => {
             {/* Line 1 */}
             <h1
               ref={(el) => (lineRefs.current[0] = el)}
-              className="text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.15]"
+              className="text-[clamp(2rem,8vw,3rem)] md:text-5xl lg:text-6xl font-bold leading-[1.15]"
             >
               Your Trusted Partner in Accelerating
             </h1>
@@ -115,7 +115,7 @@ const Hero = () => {
             {/* Line 2 */}
             <h1
               ref={(el) => (lineRefs.current[1] = el)}
-              className="text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.15]"
+              className="text-[clamp(2rem,8vw,3rem)] md:text-5xl lg:text-6xl font-bold leading-[1.15]"
             >
               Digital Transformation &
             </h1>
@@ -123,7 +123,7 @@ const Hero = () => {
             {/* Line 3 */}
             <h1
               ref={(el) => (lineRefs.current[2] = el)}
-              className="text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.15]"
+              className="text-[clamp(2rem,8vw,3rem)] md:text-5xl lg:text-6xl font-bold leading-[1.15]"
             >
               Data-Driven Innovation
             </h1>

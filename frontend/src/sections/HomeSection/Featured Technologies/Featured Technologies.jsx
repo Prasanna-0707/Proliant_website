@@ -191,7 +191,7 @@ const FeaturedTechnologies = () => {
           <h2
             className="
               featured-tech-heading
-              text-4xl
+              text-[clamp(1.875rem,7vw,2.5rem)]
               font-semibold
               leading-tight
               tracking-tight
