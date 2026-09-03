@@ -1,17 +1,127 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const NavLinks = ({ scrolled }) => {
   const [openMenu, setOpenMenu] = useState(null);
 
   const navigate = useNavigate();
+  const location = useLocation();
+
+  /*
+   * =================================================
+   * SCROLL TO HASH SECTION AFTER PAGE LOAD
+   * =================================================
+   */
+
+  useEffect(() => {
+    if (!location.hash) {
+      return;
+    }
+
+    const sectionId = location.hash.substring(1);
+
+    let attempts = 0;
+    let animationFrame;
+
+    const findSection = () => {
+      const section = document.getElementById(sectionId);
+
+      if (section) {
+        /*
+         * Give the new page a moment to finish rendering
+         * before starting the scroll.
+         */
+        requestAnimationFrame(() => {
+          section.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        });
+
+        return;
+      }
+
+      attempts += 1;
+
+      /*
+       * Keep checking while the destination section
+       * is still being rendered.
+       */
+      if (attempts < 120) {
+        animationFrame = requestAnimationFrame(findSection);
+      }
+    };
+
+    animationFrame = requestAnimationFrame(findSection);
+
+    return () => {
+      cancelAnimationFrame(animationFrame);
+    };
+  }, [location.pathname, location.hash]);
+
+  /*
+   * =================================================
+   * MAIN PAGE NAVIGATION
+   * =================================================
+   *
+   * Clicking:
+   * Home
+   * Who We Are
+   * What We Do
+   * Careers
+   *
+   * should always open the Hero / top of the page.
+   */
+
+  const navigateToPage = (path) => {
+    setOpenMenu(null);
+
+    /*
+     * Already on the same page
+     */
+    if (location.pathname === path) {
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "smooth",
+      });
+
+      /*
+       * Remove any old hash from the URL.
+       */
+      if (location.hash) {
+        navigate(path, {
+          replace: true,
+        });
+      }
+
+      return;
+    }
+
+    /*
+     * Different page.
+     *
+     * No hash means the page opens from Hero/top.
+     */
+    navigate(path);
+  };
+
+  /*
+   * =================================================
+   * SECTION NAVIGATION
+   * =================================================
+   */
 
   const scrollToSection = (path, sectionId) => {
     setOpenMenu(null);
 
-    navigate(`${path}#${sectionId}`);
+    /*
+     * =================================================
+     * SAME PAGE
+     * =================================================
+     */
 
-    setTimeout(() => {
+    if (location.pathname === path) {
       const section = document.getElementById(sectionId);
 
       if (section) {
@@ -19,8 +129,33 @@ const NavLinks = ({ scrolled }) => {
           behavior: "smooth",
           block: "start",
         });
+
+        /*
+         * Update URL without triggering another
+         * React Router navigation.
+         */
+        window.history.replaceState(
+          null,
+          "",
+          `${path}#${sectionId}`
+        );
       }
-    }, 100);
+
+      return;
+    }
+
+    /*
+     * =================================================
+     * DIFFERENT PAGE
+     * =================================================
+     *
+     * React Router changes the page first.
+     *
+     * Then the useEffect above waits until the
+     * destination section exists and scrolls to it.
+     */
+
+    navigate(`${path}#${sectionId}`);
   };
 
   const links = [
@@ -43,7 +178,8 @@ const NavLinks = ({ scrolled }) => {
         },
         {
           name: "Contact Us",
-          section: "contact",
+          path: "/contact",
+          section: "get-in-touch",
         },
       ],
     },
@@ -76,21 +212,27 @@ const NavLinks = ({ scrolled }) => {
   return (
     <nav className="flex items-center gap-10">
       {links.map((item) => {
-        /* =================================================
-           NORMAL LINKS
-           Home / Careers
-        ================================================= */
+        /*
+         * =================================================
+         * NORMAL LINKS
+         * Home / Careers
+         * =================================================
+         */
 
         if (!item.dropdown) {
           return (
-            <Link
+            <button
               key={item.name}
-              to={item.path}
+              type="button"
+              onClick={() => navigateToPage(item.path)}
               className="
                 group
                 relative
                 inline-flex
                 items-center
+                border-0
+                bg-transparent
+                p-0
                 text-[16px]
                 font-medium
                 text-white
@@ -99,7 +241,6 @@ const NavLinks = ({ scrolled }) => {
                 hover:scale-105
               "
             >
-              {/* Text */}
               <span
                 className="
                   transition-all
@@ -111,7 +252,6 @@ const NavLinks = ({ scrolled }) => {
                 {item.name}
               </span>
 
-              {/* Underline */}
               <span
                 className="
                   absolute
@@ -126,14 +266,15 @@ const NavLinks = ({ scrolled }) => {
                   group-hover:w-full
                 "
               />
-            </Link>
+            </button>
           );
         }
 
-        /* =================================================
-           DROPDOWN LINKS
-           Who We Are / What We Do
-        ================================================= */
+        /*
+         * =================================================
+         * DROPDOWN LINKS
+         * =================================================
+         */
 
         return (
           <div
@@ -142,18 +283,20 @@ const NavLinks = ({ scrolled }) => {
             onMouseEnter={() => setOpenMenu(item.name)}
             onMouseLeave={() => setOpenMenu(null)}
           >
-            {/* =================================================
-                MAIN PAGE LINK
-            ================================================= */}
+            {/* MAIN PAGE BUTTON */}
 
-            <Link
-              to={item.path}
+            <button
+              type="button"
+              onClick={() => navigateToPage(item.path)}
               className="
                 group
                 relative
                 inline-flex
                 items-center
                 gap-2
+                border-0
+                bg-transparent
+                p-0
                 text-[16px]
                 font-medium
                 text-white
@@ -162,7 +305,6 @@ const NavLinks = ({ scrolled }) => {
                 hover:scale-105
               "
             >
-              {/* Text */}
               <span
                 className="
                   transition-all
@@ -174,7 +316,6 @@ const NavLinks = ({ scrolled }) => {
                 {item.name}
               </span>
 
-              {/* Arrow */}
               <span
                 className={`
                   text-[10px]
@@ -190,7 +331,6 @@ const NavLinks = ({ scrolled }) => {
                 ▼
               </span>
 
-              {/* Underline */}
               <span
                 className="
                   absolute
@@ -205,11 +345,9 @@ const NavLinks = ({ scrolled }) => {
                   group-hover:w-full
                 "
               />
-            </Link>
+            </button>
 
-            {/* =================================================
-                DROPDOWN
-            ================================================= */}
+            {/* DROPDOWN */}
 
             <div
               className={`
@@ -223,7 +361,7 @@ const NavLinks = ({ scrolled }) => {
                 ${
                   openMenu === item.name
                     ? "visible translate-y-0 opacity-100"
-                    : "invisible -translate-y-2 pointer-events-none opacity-0"
+                    : "invisible pointer-events-none -translate-y-2 opacity-0"
                 }
               `}
             >
@@ -245,7 +383,7 @@ const NavLinks = ({ scrolled }) => {
                     type="button"
                     onClick={() =>
                       scrollToSection(
-                        item.path,
+                        subItem.path || item.path,
                         subItem.section
                       )
                     }
@@ -284,7 +422,7 @@ const NavLinks = ({ scrolled }) => {
 
                     <span
                       className="
-                        translate-x-8px
+                        translate-x-2
                         text-[#EF3B3A]
                         opacity-0
                         transition-all

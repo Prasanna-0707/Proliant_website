@@ -83,14 +83,12 @@ const Footer = ({ theme = "dark" }) => {
           ========================== */}
 
           <div className="footer-brand">
-
             <div className="mb-5">
               <img
                 src={isLight ? blackLogo : whiteLogo}
                 alt="Proliant Data"
                 className="h-9 w-auto object-contain md:h-10"
               />
-
             </div>
 
             <p
@@ -103,16 +101,13 @@ const Footer = ({ theme = "dark" }) => {
               Transforming enterprise complexity through data,
               technology, analytics and intelligent solutions.
             </p>
-
           </div>
-
 
           {/* =========================
               COMPANY
           ========================== */}
 
           <div className="footer-column">
-
             <p className="text-xs font-semibold uppercase tracking-widest text-[#EF3B3A]">
               Company
             </p>
@@ -124,7 +119,6 @@ const Footer = ({ theme = "dark" }) => {
                   : "mt-4 flex flex-col gap-2.5 text-sm text-white/45"
               }
             >
-
               <Link
                 to="/"
                 className="w-fit transition-colors duration-300 hover:text-[#EF3B3A]"
@@ -152,18 +146,14 @@ const Footer = ({ theme = "dark" }) => {
               >
                 Careers
               </Link>
-
             </div>
-
           </div>
-
 
           {/* =========================
               LEGAL
           ========================== */}
 
           <div className="footer-column">
-
             <p className="text-xs font-semibold uppercase tracking-widest text-[#EF3B3A]">
               Legal
             </p>
@@ -175,7 +165,6 @@ const Footer = ({ theme = "dark" }) => {
                   : "mt-4 flex flex-col gap-2.5 text-sm text-white/45"
               }
             >
-
               <Link
                 to="/terms"
                 className="w-fit transition-colors duration-300 hover:text-[#EF3B3A]"
@@ -189,18 +178,14 @@ const Footer = ({ theme = "dark" }) => {
               >
                 Privacy Policy
               </Link>
-
             </div>
-
           </div>
-
 
           {/* =========================
               CONNECT
           ========================== */}
 
           <div className="footer-column">
-
             <p className="text-xs font-semibold uppercase tracking-widest text-[#EF3B3A]">
               Connect
             </p>
@@ -212,6 +197,7 @@ const Footer = ({ theme = "dark" }) => {
                   : "mt-4 flex flex-col gap-2.5 text-sm text-white/45"
               }
             >
+              {/* CONTACT */}
 
               <Link
                 to="/contact"
@@ -224,30 +210,19 @@ const Footer = ({ theme = "dark" }) => {
                 </span>
               </Link>
 
+              {/* LINKEDIN */}
+
               <a
-                href="#"
+                href="https://www.linkedin.com/company/proliant-data/"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-fit transition-colors duration-300 hover:text-[#EF3B3A]"
               >
                 LinkedIn
               </a>
-
-              <Link
-                to="/careers#get-in-touch"
-                className="group mt-1 flex w-fit items-center gap-2 font-medium text-[#EF3B3A] transition-opacity duration-300 hover:opacity-70"
-              >
-                Let&apos;s connect
-
-                <span className="transition-transform duration-300 group-hover:translate-x-1">
-                  →
-                </span>
-              </Link>
-
             </div>
-
           </div>
-
         </div>
-
 
         {/* =========================
             FOOTER BOTTOM
@@ -260,14 +235,12 @@ const Footer = ({ theme = "dark" }) => {
               : "footer-bottom flex flex-col gap-4 pt-5 text-xs text-white/30 md:flex-row md:items-center md:justify-between"
           }
         >
-
           <p>
             © {new Date().getFullYear()} Proliant Data LLC.
             All Rights Reserved.
           </p>
 
           <div className="flex items-center gap-4">
-
             <Link
               to="/privacy"
               className="transition-colors duration-300 hover:text-[#EF3B3A]"
@@ -285,9 +258,7 @@ const Footer = ({ theme = "dark" }) => {
             >
               Terms
             </Link>
-
           </div>
-
         </div>
 
       </div>

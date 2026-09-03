@@ -20,7 +20,7 @@ const ProliantInNumbers = () => {
 
             <div className="flex items-center justify-center gap-4 mb-8">
               <StatsCounter
-                value={130}
+                value={150}
                 suffix="+"
                 duration={2}
                 className="text-[clamp(2.75rem,8vw,6rem)] font-bold"

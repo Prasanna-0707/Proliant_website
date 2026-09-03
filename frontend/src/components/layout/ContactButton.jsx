@@ -4,7 +4,7 @@ const ContactButton = () => {
   const items = [
     {
       label: "Contact",
-      href: "#contact",
+      href: "/contact",
     },
   ];
 

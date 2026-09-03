@@ -1,3 +1,7 @@
+import { motion } from "framer-motion";
+
+import whatWeDoImage from "../../../assets/images/Home/whatwedo.png";
+
 const WhatWeDo = () => {
   return (
     <section className="bg-white py-16 text-black md:py-20">
@@ -89,45 +93,86 @@ const WhatWeDo = () => {
       `}</style>
 
       <div className="mx-auto max-w-7xl px-8">
-        {/* Section Label */}
-        <div className="mb-4">
+        {/* SECTION LABEL */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="mb-4"
+        >
           <p className="text-xs font-medium uppercase tracking-[4px] text-blue-600 md:text-sm">
-            What We Do
+            Our Capabilities
           </p>
-        </div>
+        </motion.div>
 
-        {/* Heading */}
-        <h2 className="mb-8 text-[clamp(1.875rem,7vw,2.625rem)] font-bold leading-[1.05]">
-          What We Do
-        </h2>
-
-        {/* Divider */}
-        <div className="mb-8 border-t border-black/10" />
-
-        {/* Description */}
-        <div className="max-w-4xl">
-          <p className="text-base leading-7 text-neutral-600 md:text-lg">
-            Proliant Data accelerates data and digital transformation by
-            delivering innovative, tailored solutions in enterprise data
-            management, migration, governance, and analytics to unlock the
-            full potential of your data.
-          </p>
-        </div>
-
-        {/* READ MORE - MASK2 ANIMATION */}
-        <div className="mt-8">
-          <a
-            href="/what-we-do"
-            className="whatwedo-mask2-button"
+        {/* MAIN CONTENT */}
+        <div className="grid items-center gap-10 md:grid-cols-2 md:gap-14 lg:gap-20">
+          {/* LEFT - TEXT */}
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.25 }}
+            transition={{
+              duration: 0.8,
+              ease: "easeOut",
+            }}
           >
-            <span className="whatwedo-mask2-text">
-              READ MORE
-            </span>
+            {/* HEADING */}
+            <h2 className="mb-8 text-4xl font-bold leading-tight sm:text-5xl md:text-5xl lg:text-6xl">
+              Turning Data Into Business Impact
+            </h2>
 
-            <span className="whatwedo-mask2-arrow">
-              →
-            </span>
-          </a>
+            {/* DIVIDER */}
+            <div className="mb-8 border-t border-black/10" />
+
+            {/* DESCRIPTION */}
+            <div className="max-w-4xl">
+              <p className="text-base leading-7 text-neutral-600 md:text-lg">
+                Proliant Data accelerates data and digital transformation by
+                delivering innovative, tailored solutions in enterprise data
+                management, migration, governance, and analytics to unlock the
+                full potential of your data.
+              </p>
+            </div>
+
+            {/* READ MORE - MASK2 ANIMATION */}
+            <div className="mt-8">
+              <a
+                href="/what-we-do"
+                className="whatwedo-mask2-button"
+              >
+                <span className="whatwedo-mask2-text">
+                  READ MORE
+                </span>
+
+                <span className="whatwedo-mask2-arrow">
+                  →
+                </span>
+              </a>
+            </div>
+          </motion.div>
+
+          {/* RIGHT - IMAGE */}
+          <motion.div
+            initial={{ opacity: 0, x: 50, scale: 0.96 }}
+            whileInView={{ opacity: 1, x: 0, scale: 1 }}
+            viewport={{ once: true, amount: 0.25 }}
+            transition={{
+              duration: 0.9,
+              ease: "easeOut",
+              delay: 0.15,
+            }}
+            className="overflow-hidden rounded-2xl"
+          >
+            <motion.img
+              src={whatWeDoImage}
+              alt="Proliant Data capabilities"
+              className="h-auto w-full object-cover"
+              whileHover={{ scale: 1.04 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            />
+          </motion.div>
         </div>
       </div>
     </section>

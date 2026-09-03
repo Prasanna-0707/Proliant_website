@@ -4,97 +4,127 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const OurStory = () => {
+const AboutUs = () => {
   const sectionRef = useRef(null);
 
   useLayoutEffect(() => {
-    const ctx = gsap.context(() => {
-      /* =====================================================
-         SECTION INTRO
-      ===================================================== */
+      const ctx = gsap.context(() => {
+        /* =====================================================
+          ABOUT US LABEL
+        ===================================================== */
 
-      gsap.from(".story-heading", {
-        scrollTrigger: {
-          trigger: ".story-section",
-          start: "top 75%",
-          toggleActions: "play none none reverse",
-        },
-        opacity: 0,
-        y: 60,
-        duration: 1,
-        ease: "power3.out",
-      });
+        gsap.from(".story-label", {
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top 75%",
+            toggleActions: "play none none none",
+          },
+          opacity: 0,
+          x: -30,
+          duration: 0.8,
+          ease: "power3.out",
+        });
 
-      gsap.from(".story-copy", {
-        scrollTrigger: {
-          trigger: ".story-section",
-          start: "top 70%",
-          toggleActions: "play none none reverse",
-        },
-        opacity: 0,
-        y: 40,
-        duration: 1,
-        delay: 0.15,
-        ease: "power3.out",
-      });
+        /* =====================================================
+          ABOUT US HEADING
+        ===================================================== */
 
-      /* =====================================================
-         TIMELINE LINE
-      ===================================================== */
+        gsap.from(".story-heading-line", {
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top 70%",
+            toggleActions: "play none none none",
+          },
+          opacity: 0,
+          y: 60,
+          filter: "blur(10px)",
+          duration: 0.9,
+          stagger: 0.12,
+          ease: "power4.out",
+        });
 
-      gsap.from(".story-line", {
-        scrollTrigger: {
-          trigger: ".story-timeline",
-          start: "top 75%",
-          toggleActions: "play none none reverse",
-        },
-        scaleX: 0,
-        transformOrigin: "left center",
-        duration: 1.4,
-        ease: "power3.inOut",
-      });
+        /* =====================================================
+          ABOUT US DESCRIPTION
+        ===================================================== */
 
-      /* =====================================================
-         TIMELINE POINTS
-      ===================================================== */
+        gsap.from(".story-copy", {
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top 65%",
+            toggleActions: "play none none none",
+          },
+          opacity: 0,
+          y: 40,
+          filter: "blur(6px)",
+          duration: 0.9,
+          delay: 0.2,
+          ease: "power3.out",
+        });
 
-      gsap.from(".story-point", {
-        scrollTrigger: {
-          trigger: ".story-timeline",
-          start: "top 70%",
-          toggleActions: "play none none reverse",
-        },
-        opacity: 0,
-        y: 35,
-        stagger: 0.18,
-        duration: 0.8,
-        ease: "power3.out",
-      });
+        /* =====================================================
+          TIMELINE LINE
+        ===================================================== */
 
-      /* =====================================================
-         TIMELINE DOTS
-      ===================================================== */
+        gsap.from(".story-line", {
+          scrollTrigger: {
+            trigger: ".story-timeline",
+            start: "top 75%",
+            toggleActions: "play none none reverse",
+          },
+          scaleX: 0,
+          transformOrigin: "left center",
+          duration: 1.4,
+          ease: "power3.inOut",
+        });
 
-      gsap.from(".story-point-dot", {
-        scrollTrigger: {
-          trigger: ".story-timeline",
-          start: "top 70%",
-          toggleActions: "play none none reverse",
-        },
-        scale: 0,
-        opacity: 0,
-        stagger: 0.18,
-        duration: 0.5,
-        ease: "back.out(1.7)",
-      });
-    }, sectionRef);
+        /* =====================================================
+          TIMELINE POINTS
+        ===================================================== */
 
-    return () => ctx.revert();
-  }, []);
+        gsap.from(".story-point", {
+          scrollTrigger: {
+            trigger: ".story-timeline",
+            start: "top 70%",
+            toggleActions: "play none none reverse",
+          },
+          opacity: 0,
+          y: 35,
+          stagger: 0.18,
+          duration: 0.8,
+          ease: "power3.out",
+        });
+
+        /* =====================================================
+          TIMELINE DOTS
+        ===================================================== */
+
+        gsap.from(".story-point-dot", {
+          scrollTrigger: {
+            trigger: ".story-timeline",
+            start: "top 70%",
+            toggleActions: "play none none reverse",
+          },
+          scale: 0,
+          opacity: 0,
+          stagger: 0.18,
+          duration: 0.5,
+          ease: "back.out(1.7)",
+        });
+
+        /* =====================================================
+          REFRESH SCROLLTRIGGER
+        ===================================================== */
+
+        ScrollTrigger.refresh();
+      }, sectionRef);
+
+      return () => ctx.revert();
+    }, []);
 
   return (
     <section
       ref={sectionRef}
+      id="about"
       className="
         story-section
         bg-white
@@ -128,6 +158,7 @@ const OurStory = () => {
           <div>
             <p
               className="
+                story-label
                 text-sm
                 uppercase
                 tracking-[0.3em]
@@ -139,7 +170,6 @@ const OurStory = () => {
 
             <h2
               className="
-                story-heading
                 mt-4
                 text-[clamp(1.875rem,7vw,3.75rem)]
                 font-semibold
@@ -149,11 +179,15 @@ const OurStory = () => {
                 lg:text-7xl
               "
             >
-              From data
-              <br />
-              to
-              <br />
-              <span className="text-black/30">
+              <span className="story-heading-line block">
+                From data
+              </span>
+
+              <span className="story-heading-line block">
+                to
+              </span>
+
+              <span className="story-heading-line block text-[#EF3B3A]">
                 transformation.
               </span>
             </h2>
@@ -168,7 +202,6 @@ const OurStory = () => {
               lg:pt-1
             "
           >
-
             <p
               className="
                 mt-5
@@ -461,4 +494,4 @@ const OurStory = () => {
   );
 };
 
-export default OurStory;
+export default AboutUs;

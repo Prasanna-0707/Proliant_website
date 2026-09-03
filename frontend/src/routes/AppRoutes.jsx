@@ -4,6 +4,7 @@ import Home from "@/pages/Home";
 import WhoWeAre from "@/pages/WhoWeAre";
 import WhatWeDoPage from "@/pages/WhatWeDo";
 import Careers from "@/pages/Careers";
+import Contact from "@/pages/Contact";
 
 const AppRoutes = () => {
   return (
@@ -12,6 +13,7 @@ const AppRoutes = () => {
       <Route path="/who-we-are" element={<WhoWeAre />} />
       <Route path="/what-we-do" element={<WhatWeDoPage />} />
       <Route path="/careers" element={<Careers />} />
+      <Route path="/contact" element={<Contact />} />
     </Routes>
   );
 };

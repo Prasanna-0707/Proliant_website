@@ -1,6 +1,6 @@
 import CareersHero from "../sections/CareersSection/CareersHero/CareersHero";
 import LifeAtProliant from "../sections/CareersSection/LifeAtProliant/LifeAtProliant";
-import CareersContact from "../sections/CareersSection/ContactUs/ContactUs";
+import Jobs from "../sections/CareersSection/Jobs/jobs";
 import Footer from "../components/common/Footer";
 
 const Careers = () => {
@@ -10,7 +10,7 @@ const Careers = () => {
 
       <LifeAtProliant />
 
-      <CareersContact />
+      <Jobs />
       
       <Footer theme="light" />
     </main>

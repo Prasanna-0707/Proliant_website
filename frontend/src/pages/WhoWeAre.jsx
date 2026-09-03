@@ -3,7 +3,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import Hero from "../sections/WhoWeAreSection/WhoWeAreHero/WhoWeAreHero";
-import OurStory from "../sections/WhoWeAreSection/OurStory/OurStory";
+import AboutUs from "../sections/WhoWeAreSection/AboutUS/AboutUs";
 import CorePrinciples from "../sections/WhoWeAreSection/CorePrinciples/CorePrinciples";
 import Leadership from "../sections/WhoWeAreSection/Leadership/Leadership";
 
@@ -20,7 +20,7 @@ const WhoWeAre = () => {
     >
       <Hero />
 
-      <OurStory />
+      <AboutUs />
 
       <CorePrinciples />
 

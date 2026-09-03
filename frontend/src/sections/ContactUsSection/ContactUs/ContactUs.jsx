@@ -4,7 +4,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const CareersContact = () => {
+const ContactUs = () => {
   const sectionRef = useRef(null);
 
   // SEND APPLICATION BUTTON STATE
@@ -440,7 +440,7 @@ const CareersContact = () => {
                 className="
                   group
                   inline-flex
-                  min-w-[190px]
+                  min-w-48
                   shrink-0
                   items-center
                   justify-center
@@ -509,4 +509,4 @@ const CareersContact = () => {
   );
 };
 
-export default CareersContact;
+export default ContactUs;

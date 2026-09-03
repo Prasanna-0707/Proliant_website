@@ -1,9 +1,10 @@
-import whoWeAreImage from "@/assets/images/who_we_are.png";
+import { motion } from "framer-motion";
 
-const About = () => {
+import whoWeAreImage from "@/assets/images/Home/EDI.png";
+
+const WhoWeAre = () => {
   return (
-    <section className="bg-black text-white py-20 md:py-24">
-
+    <section className="bg-black py-20 text-white md:py-24">
       {/* MASK2 ANIMATION */}
       <style>{`
         .mask2-button {
@@ -91,41 +92,81 @@ const About = () => {
         }
       `}</style>
 
-      <div className="max-w-7xl mx-auto px-8">
-
+      <div className="mx-auto max-w-7xl px-8">
         {/* Section Label */}
-        <p className="text-blue-500 uppercase tracking-[4px] text-xs md:text-sm font-medium mb-5">
+        <motion.p
+          initial={{ opacity: 0, y: 15 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{
+            duration: 0.6,
+            ease: "easeOut",
+          }}
+          className="mb-5 text-xs font-medium uppercase tracking-[4px] text-blue-500 md:text-sm"
+        >
           Who We Are
-        </p>
+        </motion.p>
 
         {/* Heading */}
-        <h2 className="max-w-3xl text-3xl md:text-4xl lg:text-[42px] font-bold leading-[1.1] mb-11">
+        <motion.h2
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{
+            duration: 0.8,
+            ease: "easeOut",
+            delay: 0.1,
+          }}
+          className="mb-11 max-w-3xl text-3xl font-bold leading-[1.1] md:text-4xl lg:text-5xl"
+        >
           Empowering Businesses Through
-          <br />
           Data & AI Innovation
-        </h2>
+        </motion.h2>
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-[0.95fr_1fr] gap-10 lg:gap-14 items-center">
-
+        <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
           {/* IMAGE */}
-          <div className="relative">
+          <motion.div
+            initial={{ opacity: 0, x: -50, scale: 0.96 }}
+            whileInView={{ opacity: 1, x: 0, scale: 1 }}
+            viewport={{ once: true, amount: 0.25 }}
+            transition={{
+              duration: 0.9,
+              ease: "easeOut",
+            }}
+            className="relative"
+          >
             <div className="absolute -inset-2 rounded-[20px] bg-blue-500/10 blur-xl" />
 
-            <div className="relative h-320px md:h-380px rounded-[20px] overflow-hidden border border-white/10 bg-neutral-950">
-              <img
+            <div className="relative aspect-video overflow-hidden rounded-[20px] border border-white/10 bg-neutral-950">
+              <motion.img
                 src={whoWeAreImage}
                 alt="Proliant Data AI and enterprise solutions"
-                className="w-full h-full object-cover"
+                className="h-full w-full object-cover"
+                whileHover={{ scale: 1.04 }}
+                transition={{
+                  duration: 0.5,
+                  ease: "easeOut",
+                }}
               />
             </div>
-          </div>
+          </motion.div>
 
           {/* CONTENT */}
-          <div className="max-w-lg">
-            <p className="text-sm md:text-base leading-7 text-gray-300 mb-8">
-              Founded in 2021, Proliant Data LLC has rapidly grown from a niche
-              in data migration and governance into a trusted partner
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.25 }}
+            transition={{
+              duration: 0.8,
+              ease: "easeOut",
+              delay: 0.15,
+            }}
+            className="max-w-lg"
+          >
+            <p className="mb-8 text-sm leading-7 text-gray-300 md:text-base">
+              Founded in 2021, Proliant Data LLC has rapidly grown from a
+              niche in data migration and governance into a trusted partner
               delivering end-to-end Enterprise Data Management, SAP solutions,
               advanced analytics, and AI innovation.
             </p>
@@ -143,12 +184,11 @@ const About = () => {
                 →
               </span>
             </a>
-          </div>
-
+          </motion.div>
         </div>
       </div>
     </section>
   );
 };
 
-export default About;
+export default WhoWeAre;

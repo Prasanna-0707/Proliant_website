@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const GooeyNav = ({
   items,
@@ -10,6 +11,7 @@ const GooeyNav = ({
   colors = [1, 1, 1, 1, 1, 1, 1, 1],
   initialActiveIndex = -1,
 }) => {
+  const navigate = useNavigate();
   const containerRef = useRef(null);
   const navRef = useRef(null);
   const filterRef = useRef(null);
@@ -292,149 +294,155 @@ const GooeyNav = ({
     textRef.current.innerText =
       element.innerText;
   };
-
-  /*
-   * Main button click.
-   *
-   * BLACK → WHITE → RED → BLACK
-   */
   const handleClick = (
-    e,
-    index,
-  ) => {
-    e.preventDefault();
+        e,
+        index,
+      ) => {
+          e.preventDefault();
+        const liEl =
+          e.currentTarget;
 
-    const liEl =
-      e.currentTarget;
-
-    updateEffectPosition(
-      liEl,
-    );
-
-    /*
-     * Calculate next state.
-     *
-     * 0 → 1
-     * 1 → 2
-     * 2 → 0
-     */
-    const nextState =
-      (buttonState + 1) % 3;
-
-    /*
-     * Remove old particles.
-     */
-    if (filterRef.current) {
-      const particles =
-        filterRef.current.querySelectorAll(
-          ".particle",
+        updateEffectPosition(
+          liEl,
         );
 
-      particles.forEach(
-        (particle) =>
-          particle.remove(),
-      );
-    }
+        /*
+        * Calculate next state.
+        *
+        * 0 → 1
+        * 1 → 2
+        * 2 → 0
+        */
+        const nextState =
+          (buttonState + 1) % 3;
 
-    /*
-     * Reset the previous pill state.
-     */
-    if (filterRef.current) {
-      filterRef.current.classList.remove(
-        "active",
-        "black",
-        "white",
-        "red",
-      );
+        /*
+        * Remove old particles.
+        */
+        if (filterRef.current) {
+          const particles =
+            filterRef.current.querySelectorAll(
+              ".particle",
+            );
 
-      /*
-       * Force browser reflow so
-       * animation restarts every click.
-       */
-      void filterRef.current
-        .offsetWidth;
+          particles.forEach(
+            (particle) =>
+              particle.remove(),
+          );
+        }
 
-      /*
-       * Add the destination state.
-       */
-      if (nextState === 0) {
-        filterRef.current.classList.add(
-          "black",
+        /*
+        * Reset the previous pill state.
+        */
+        if (filterRef.current) {
+          filterRef.current.classList.remove(
+            "active",
+            "black",
+            "white",
+            "red",
+          );
+
+          /*
+          * Force browser reflow so
+          * animation restarts every click.
+          */
+          void filterRef.current
+            .offsetWidth;
+
+          /*
+          * Add the destination state.
+          */
+          if (nextState === 0) {
+            filterRef.current.classList.add(
+              "black",
+            );
+          }
+
+          if (nextState === 1) {
+            filterRef.current.classList.add(
+              "white",
+            );
+          }
+
+          if (nextState === 2) {
+            filterRef.current.classList.add(
+              "red",
+            );
+          }
+
+          /*
+          * IMPORTANT:
+          *
+          * Animation happens for ALL
+          * three transitions.
+          */
+          filterRef.current.classList.add(
+            "active",
+          );
+
+          makeParticles(
+            filterRef.current,
+            nextState,
+          );
+        }
+
+        /*
+        * Text color
+        *
+        * BLACK → white text
+        * WHITE → black text
+        * RED   → white text
+        */
+        if (textRef.current) {
+          textRef.current.classList.remove(
+            "active",
+            "red-text",
+          );
+
+          void textRef.current
+            .offsetWidth;
+
+          /*
+          * WHITE background
+          * → BLACK text
+          */
+          if (nextState === 1) {
+            textRef.current.classList.add(
+              "active",
+            );
+          }
+
+          /*
+          * RED background
+          * → WHITE text
+          */
+          if (nextState === 2) {
+            textRef.current.classList.add(
+              "red-text",
+            );
+          }
+        }
+
+        /*
+        * Update current state.
+        */
+        setButtonState(
+          nextState,
         );
+
+        /*
+        * Navigate after the Gooey animation
+        * has had time to play.
+        */
+      const target = items[index]?.href;
+
+      if (target) {
+        setTimeout(() => {
+          navigate(target);
+        }, animationTime);
       }
 
-      if (nextState === 1) {
-        filterRef.current.classList.add(
-          "white",
-        );
-      }
-
-      if (nextState === 2) {
-        filterRef.current.classList.add(
-          "red",
-        );
-      }
-
-      /*
-       * IMPORTANT:
-       *
-       * Animation happens for ALL
-       * three transitions.
-       */
-      filterRef.current.classList.add(
-        "active",
-      );
-
-      makeParticles(
-        filterRef.current,
-        nextState,
-      );
-    }
-
-    /*
-     * Text color
-     *
-     * BLACK → white text
-     * WHITE → black text
-     * RED   → white text
-     */
-    if (textRef.current) {
-      textRef.current.classList.remove(
-        "active",
-        "red-text",
-      );
-
-      void textRef.current
-        .offsetWidth;
-
-      /*
-       * WHITE background
-       * → BLACK text
-       */
-      if (nextState === 1) {
-        textRef.current.classList.add(
-          "active",
-        );
-      }
-
-      /*
-       * RED background
-       * → WHITE text
-       */
-      if (nextState === 2) {
-        textRef.current.classList.add(
-          "red-text",
-        );
-      }
-    }
-
-    /*
-     * Update current state.
-     */
-    setButtonState(
-      nextState,
-    );
-  };
+      };
 
   /*
    * Keyboard accessibility.

@@ -76,7 +76,6 @@ const Hero = () => {
   return (
     <section
       ref={heroRef}
-      id="about"
       className="
         relative
         flex

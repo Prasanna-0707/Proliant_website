@@ -1,5 +1,5 @@
 import Hero from "@/sections/HomeSection/Hero/Hero";
-import About from "@/sections/HomeSection/About/About";
+import WhoWeAre from "@/sections/HomeSection/WhoWeAre/WhoWeAre";
 import WhatWeDo from "@/sections/HomeSection/WhatWeDo/WhatWeDo";
 
 import FeaturedTechnologies from "@/sections/HomeSection/Featured Technologies/Featured Technologies";
@@ -15,7 +15,7 @@ const Home = () => {
 
         <ProliantInNumbers />
 
-        <About />
+        <WhoWeAre />
 
         <WhatWeDo />
 
