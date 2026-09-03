@@ -1,0 +1,5 @@
+id,country,state,city,location,address,latitude,longitude,phone,email
+1,USA,Massachusetts,Boston,Proliant Data LLC,"75 State Street, Boston, MA 01803",42.35902288181857,-71.0553326746298,+1-617-955-2070,hr@proliantdatallc.com
+2,Germany,Bavaria,Erlangen,Proliant Data GmbH,"Würzburger Ring 39, Erlangen, 91056",49.59963951233804,10.967766810446841,+49-15158005363,hr@proliantdatallc.com
+3,India,Telangana,Hyderabad,Roliant Data Pvt. Ltd.,"Pranava Vaishnoi Business Park, Kothaguda, Telangana, India",17.46148007233937,78.36740788019645,+91 8008199903,hr@proliantdatallc.com
+4,UAE,Dubai,Dubai,Proliant Data FZCO,"IFZA Business Park, Dubai, United Arab Emirates",25.118804862011046,55.37773192460008,+971 505 185363,hr@proliantdatallc.com

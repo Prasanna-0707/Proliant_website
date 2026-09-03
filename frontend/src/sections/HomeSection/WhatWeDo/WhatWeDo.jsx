@@ -1,26 +1,112 @@
 const WhatWeDo = () => {
   return (
-    <section className="bg-white text-black py-16 md:py-20">
-      <div className="max-w-5xl mx-auto px-8">
+    <section className="bg-white py-16 text-black md:py-20">
+      {/* MASK2 BUTTON ANIMATION */}
+      <style>{`
+        .whatwedo-mask2-button {
+          position: relative;
+          width: 190px;
+          height: 46px;
+          border: 1px solid rgba(0, 0, 0, 0.3);
+          border-radius: 8px;
+          overflow: hidden;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          text-decoration: none;
+          cursor: pointer;
+        }
 
+        .whatwedo-mask2-button::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: black;
+
+          -webkit-mask-image: url("https://raw.githubusercontent.com/robin-dela/css-mask-animation/master/img/nature-sprite.png");
+          mask-image: url("https://raw.githubusercontent.com/robin-dela/css-mask-animation/master/img/nature-sprite.png");
+
+          -webkit-mask-size: 2300% 100%;
+          mask-size: 2300% 100%;
+
+          -webkit-mask-position: 100% 0;
+          mask-position: 100% 0;
+
+          animation: whatWeDoMaskOut 0.7s steps(22) forwards;
+        }
+
+        .whatwedo-mask2-button:hover::before {
+          animation: whatWeDoMaskIn 0.7s steps(22) forwards;
+        }
+
+        @keyframes whatWeDoMaskIn {
+          from {
+            -webkit-mask-position: 100% 0;
+            mask-position: 100% 0;
+          }
+
+          to {
+            -webkit-mask-position: 0 0;
+            mask-position: 0 0;
+          }
+        }
+
+        @keyframes whatWeDoMaskOut {
+          from {
+            -webkit-mask-position: 0 0;
+            mask-position: 0 0;
+          }
+
+          to {
+            -webkit-mask-position: 100% 0;
+            mask-position: 100% 0;
+          }
+        }
+
+        .whatwedo-mask2-text {
+          position: relative;
+          z-index: 2;
+          color: black;
+          transition: color 0.3s ease;
+        }
+
+        .whatwedo-mask2-button:hover .whatwedo-mask2-text {
+          color: white;
+        }
+
+        .whatwedo-mask2-arrow {
+          position: relative;
+          z-index: 2;
+          margin-left: 14px;
+          color: black;
+          transition: color 0.3s ease, transform 0.3s ease;
+        }
+
+        .whatwedo-mask2-button:hover .whatwedo-mask2-arrow {
+          color: white;
+          transform: translateX(5px);
+        }
+      `}</style>
+
+      <div className="mx-auto max-w-7xl px-8">
         {/* Section Label */}
         <div className="mb-4">
-          <p className="text-blue-600 uppercase tracking-[4px] text-xs md:text-sm font-medium">
+          <p className="text-xs font-medium uppercase tracking-[4px] text-blue-600 md:text-sm">
             What We Do
           </p>
         </div>
 
         {/* Heading */}
-        <h2 className="text-[clamp(2rem,5vw,2.625rem)] font-bold leading-[1.05] mb-8">
+        <h2 className="mb-8 text-[clamp(1.875rem,7vw,2.625rem)] font-bold leading-[1.05]">
           What We Do
         </h2>
 
         {/* Divider */}
-        <div className="border-t border-black/10 mb-8" />
+        <div className="mb-8 border-t border-black/10" />
 
         {/* Description */}
         <div className="max-w-4xl">
-          <p className="text-base md:text-lg leading-7 text-neutral-600">
+          <p className="text-base leading-7 text-neutral-600 md:text-lg">
             Proliant Data accelerates data and digital transformation by
             delivering innovative, tailored solutions in enterprise data
             management, migration, governance, and analytics to unlock the
@@ -28,20 +114,21 @@ const WhatWeDo = () => {
           </p>
         </div>
 
-        {/* Read More */}
+        {/* READ MORE - MASK2 ANIMATION */}
         <div className="mt-8">
           <a
             href="/what-we-do"
-            className="group inline-flex items-center justify-between w-55px border border-black/30 px-5 py-3 text-xs font-medium tracking-wider uppercase transition-all duration-300 hover:bg-black hover:text-white"
+            className="whatwedo-mask2-button"
           >
-            <span>Read More</span>
+            <span className="whatwedo-mask2-text">
+              READ MORE
+            </span>
 
-            <span className="text-lg font-light transition-transform duration-300 group-hover:translate-x-2">
+            <span className="whatwedo-mask2-arrow">
               →
             </span>
           </a>
         </div>
-
       </div>
     </section>
   );

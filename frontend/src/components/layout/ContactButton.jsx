@@ -1,15 +1,24 @@
-import { LiquidMetalButton } from "@/components/ui/liquid-metal";
+import GooeyNav from "@/components/ui/GooeyNav";
 
 const ContactButton = () => {
+  const items = [
+    {
+      label: "Contact",
+      href: "#contact",
+    },
+  ];
+
   return (
-    <LiquidMetalButton
-      metalConfig={{
-        colorBack: "#EF3B3A ",
-        colorTint: "#FF7777",
-      }}
-    >
-      Contact
-    </LiquidMetalButton>
+    <GooeyNav
+      items={items}
+      particleCount={15}
+      particleDistances={[90, 10]}
+      particleR={100}
+      initialActiveIndex={-1}
+      animationTime={600}
+      timeVariance={300}
+      colors={[1, 1, 1, 1, 1, 1, 1, 1]}
+    />
   );
 };
 

@@ -7,6 +7,7 @@ import OurStory from "../sections/WhoWeAreSection/OurStory/OurStory";
 import CorePrinciples from "../sections/WhoWeAreSection/CorePrinciples/CorePrinciples";
 import Leadership from "../sections/WhoWeAreSection/Leadership/Leadership";
 
+import GlobalPresence from "../sections/WhoWeAreSection/GlobalPresence/GlobalPresence";
 import Footer from "../components/common/Footer";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -25,7 +26,7 @@ const WhoWeAre = () => {
       <CorePrinciples />
 
       <Leadership />
-
+      <GlobalPresence />
       <Footer />
     </main>
   );
