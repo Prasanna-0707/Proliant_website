@@ -161,9 +161,6 @@ const Technologies = () => {
 
         /*
          * Gap between active card and next card.
-         *
-         * This is deliberately visible so the text
-         * from two cards never touches.
          */
         const cardGap = 52;
 
@@ -175,23 +172,9 @@ const Technologies = () => {
           return getCardHeight() + cardGap;
         };
 
-        /*
-         * ------------------------------------------------------------
-         * INITIAL STATE
-         * ------------------------------------------------------------
-         *
-         * Card 01:
-         *     active
-         *
-         * Card 02:
-         *     below Card 01
-         *
-         * Card 03:
-         *     further below
-         *
-         * Previous cards later become small layers
-         * at the top.
-         */
+        /* ============================================================
+           INITIAL STATE
+        ============================================================ */
 
         const setInitialState = () => {
           const distance = getDistance();
@@ -219,11 +202,35 @@ const Technologies = () => {
 
         setInitialState();
 
-        /*
-         * ------------------------------------------------------------
-         * MAIN TIMELINE
-         * ------------------------------------------------------------
-         */
+        /* ============================================================
+           NEW CARD REVEAL ANIMATION
+           
+           IMPORTANT:
+           We are NOT animating y / scale / opacity here because
+           those properties are already controlled by the existing
+           stack animation below.
+
+           clipPath gives the cards a smooth reveal without
+           disturbing the existing stack movement.
+        ============================================================ */
+
+        gsap.from(cards, {
+          clipPath: "inset(0 100% 0 0 round 16px)",
+          duration: 0.9,
+          stagger: 0.12,
+          ease: "power3.out",
+          immediateRender: false,
+
+          scrollTrigger: {
+            trigger: stack,
+            start: "top 88%",
+            once: true,
+          },
+        });
+
+        /* ============================================================
+           MAIN STACK TIMELINE
+        ============================================================ */
 
         const timeline = gsap.timeline({
           scrollTrigger: {
@@ -249,24 +256,10 @@ const Technologies = () => {
             preventOverlaps: true,
           },
         });
-        /*
-         * ------------------------------------------------------------
-         * CARD-BY-CARD MOVEMENT
-         * ------------------------------------------------------------
-         *
-         * This is the important part.
-         *
-         * At every step:
-         *
-         * 1. Current active card moves slightly ABOVE.
-         *
-         * 2. Next card moves from BELOW to CENTER.
-         *
-         * 3. All cards behind the active card remain as
-         *    small visible layers at the TOP.
-         *
-         * 4. Future cards remain below with a clear gap.
-         */
+
+        /* ============================================================
+           CARD-BY-CARD MOVEMENT
+        ============================================================ */
 
         cards.forEach((_, activeIndex) => {
           if (activeIndex === cards.length - 1) {
@@ -283,13 +276,9 @@ const Technologies = () => {
             let targetOpacity;
             let targetZ;
 
-            /*
-             * --------------------------------------------------------
-             * PREVIOUS CARDS
-             * --------------------------------------------------------
-             *
-             * They become thin layers above the active card.
-             */
+            /* ========================================================
+               PREVIOUS CARDS
+            ======================================================== */
 
             if (cardIndex < activeIndex + 1) {
               const previousDistance =
@@ -312,15 +301,12 @@ const Technologies = () => {
                     previousDistance * 0.08,
                 );
 
-              targetZ =
-                cardIndex;
+              targetZ = cardIndex;
             }
 
-            /*
-             * --------------------------------------------------------
-             * ACTIVE CARD
-             * --------------------------------------------------------
-             */
+            /* ========================================================
+               ACTIVE CARD
+            ======================================================== */
 
             else if (
               cardIndex === activeIndex + 1
@@ -331,13 +317,9 @@ const Technologies = () => {
               targetZ = cards.length + 20;
             }
 
-            /*
-             * --------------------------------------------------------
-             * FUTURE CARDS
-             * --------------------------------------------------------
-             *
-             * They stay BELOW the active card.
-             */
+            /* ========================================================
+               FUTURE CARDS
+            ======================================================== */
 
             else {
               const futureDistance =
@@ -372,11 +354,9 @@ const Technologies = () => {
           });
         });
 
-        /*
-         * ------------------------------------------------------------
-         * REFRESH
-         * ------------------------------------------------------------
-         */
+        /* ============================================================
+           REFRESH
+        ============================================================ */
 
         const refresh = () => {
           requestAnimationFrame(() => {
@@ -430,6 +410,7 @@ const Technologies = () => {
               y: 0,
               duration: 0.65,
               ease: "power2.out",
+
               scrollTrigger: {
                 trigger: card,
                 start: "top 85%",
@@ -526,6 +507,7 @@ const Technologies = () => {
         {/* ======================================================
             STACK
         ======================================================= */}
+
         <div
           ref={stackRef}
           className="
@@ -574,6 +556,7 @@ const Technologies = () => {
                   xl:h-117.5
                 "
               >
+
                 {/* ==================================================
                     IMAGE
                 =================================================== */}
@@ -617,28 +600,15 @@ const Technologies = () => {
                   "
                 />
 
-                <div
-                  className="
-                    absolute
-                    inset-y-0
-                    right-0
-                    w-1/2
-                    bg-linear-to-l
-                    from-black/60
-                    to-transparent
-                  "
-                />
-
                 {/* ==================================================
                     CONTENT
                 =================================================== */}
 
                 <div
                   className="
-                    relative
-                    z-10
+                    absolute
+                    inset-0
                     flex
-                    h-full
                     flex-col
                     p-5
 
@@ -649,6 +619,7 @@ const Technologies = () => {
                     xl:p-10
                   "
                 >
+
                   {/* TOP */}
 
                   <div
@@ -687,6 +658,7 @@ const Technologies = () => {
                       lg:gap-10
                     "
                   >
+
                     {/* TITLE */}
 
                     <div>
@@ -717,6 +689,7 @@ const Technologies = () => {
                         md:justify-self-end
                       "
                     >
+
                       <p
                         className="
                           text-xs
@@ -742,6 +715,7 @@ const Technologies = () => {
                           sm:pt-4
                         "
                       >
+
                         <p
                           className="
                             mb-2
@@ -794,6 +768,7 @@ const Technologies = () => {
                             ),
                           )}
                         </ul>
+
                       </div>
                     </div>
                   </div>
@@ -826,6 +801,7 @@ const Technologies = () => {
                       Explore →
                     </span>
                   </div>
+
                 </div>
               </article>
             ),
