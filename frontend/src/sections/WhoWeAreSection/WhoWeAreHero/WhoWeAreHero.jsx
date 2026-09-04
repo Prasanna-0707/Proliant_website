@@ -159,16 +159,7 @@ const Hero = () => {
           =========================================== */}
 
           <p
-            className="
-              who-hero-label
-              mb-8
-              text-sm
-              uppercase
-              tracking-[0.35em]
-              text-[#EF3B3A]
-              md:text-base
-            "
-          >
+            className="mb-5 text-xs font-medium uppercase tracking-[2px] md:text-sm text-[#EF3B3A]">
             Who We Are
           </p>
 

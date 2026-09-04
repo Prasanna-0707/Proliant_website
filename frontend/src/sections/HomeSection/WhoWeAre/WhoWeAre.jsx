@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 
-import whoWeAreImage from "@/assets/images/Home/EDI.png";
+import whoWeAreImage from "@/assets/images/Home/whoweare.png";
 
 const WhoWeAre = () => {
   return (
@@ -102,7 +102,7 @@ const WhoWeAre = () => {
             duration: 0.6,
             ease: "easeOut",
           }}
-          className="mb-5 text-xs font-medium uppercase tracking-[4px] text-blue-500 md:text-sm"
+          className="mb-5 text-xs font-medium uppercase tracking-[2px] text-red-600 md:text-sm"
         >
           Who We Are
         </motion.p>

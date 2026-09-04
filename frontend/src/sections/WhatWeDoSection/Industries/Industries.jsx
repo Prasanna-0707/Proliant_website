@@ -70,6 +70,11 @@ const Industries = () => {
   const detailRef = useRef(null);
   const coreRef = useRef(null);
 
+  // Tracks the previously rendered industry.
+  // This prevents the initial industry from receiving
+  // the active-industry animation twice.
+  const previousIndustryRef = useRef(null);
+
   const [activeIndustry, setActiveIndustry] = useState(0);
 
   /*
@@ -166,15 +171,29 @@ const Industries = () => {
   useLayoutEffect(() => {
     if (!detailRef.current) return;
 
-    // Keep the first industry visible on initial render.
-    // Animation will still run when the user changes nodes.
-    if (activeIndustry === 0) {
-      gsap.set(detailRef.current, {
-        opacity: 1,
-        y: 0,
-      });
+    /*
+     * IMPORTANT:
+     *
+     * The first industry is already animated by the
+     * SECTION ANIMATION above.
+     *
+     * So we skip the active-industry animation on the
+     * initial render.
+     *
+     * After that, only actual node changes animate
+     * the right-side content.
+     */
+    if (previousIndustryRef.current === null) {
+      previousIndustryRef.current = activeIndustry;
       return;
     }
+
+    // No animation if the active industry hasn't changed.
+    if (previousIndustryRef.current === activeIndustry) {
+      return;
+    }
+
+    previousIndustryRef.current = activeIndustry;
 
     const ctx = gsap.context(() => {
       gsap.fromTo(
@@ -272,7 +291,6 @@ const Industries = () => {
           </h2>
         </div>
 
-
         {/* =================================================
             MAIN CONTENT
         ================================================== */}
@@ -331,7 +349,6 @@ const Industries = () => {
                 md:w-64
               "
             />
-
 
             {/* =================================================
                 CONNECTION LINES
@@ -395,7 +412,6 @@ const Industries = () => {
 
             </svg>
 
-
             {/* =================================================
                 INDUSTRY NODES
             ================================================== */}
@@ -447,7 +463,6 @@ const Industries = () => {
               }}
               onClick={() => setActiveIndustry(3)}
             />
-
 
             {/* =================================================
                 PROLIANT INTELLIGENCE
@@ -515,7 +530,6 @@ const Industries = () => {
 
           </div>
 
-
           {/* =================================================
               RIGHT CONTENT
           ================================================== */}
@@ -576,7 +590,6 @@ const Industries = () => {
             </div>
             */}
 
-
             {/* TITLE */}
 
             <h3
@@ -596,7 +609,6 @@ const Industries = () => {
             >
               {currentIndustry.title}
             </h3>
-
 
             {/* DESCRIPTION */}
 
@@ -645,7 +657,6 @@ const Industries = () => {
               ))}
 
             </div>
-
 
             {/* =================================================
                 BOTTOM LABEL
@@ -1500,5 +1511,4 @@ export default Industries;
 //     </button>
 //   );
 // };
-
 // export default Industries;

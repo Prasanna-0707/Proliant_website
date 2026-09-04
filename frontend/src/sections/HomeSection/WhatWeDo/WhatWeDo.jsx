@@ -101,8 +101,8 @@ const WhatWeDo = () => {
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="mb-4"
         >
-          <p className="text-xs font-medium uppercase tracking-[4px] text-blue-600 md:text-sm">
-            Our Capabilities
+          <p className="mb-5 text-xs font-medium uppercase tracking-[2px] text-red-600 md:text-sm">
+            What We Do
           </p>
         </motion.div>
 

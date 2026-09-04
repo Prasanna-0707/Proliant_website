@@ -364,19 +364,6 @@ const CorePrinciples = () => {
             >
 
               <div>
-
-                <p
-                  className="
-                    principle-number
-                    text-xs
-                    uppercase
-                    tracking-widest
-                    text-[#EF3B3A]
-                  "
-                >
-                  01
-                </p>
-
                 <h3
                   className="
                     principle-title
@@ -506,19 +493,6 @@ const CorePrinciples = () => {
             >
 
               <div>
-
-                <p
-                  className="
-                    principle-number
-                    text-xs
-                    uppercase
-                    tracking-widest
-                    text-[#EF3B3A]
-                  "
-                >
-                  02
-                </p>
-
                 <h3
                   className="
                     principle-title
@@ -647,19 +621,6 @@ const CorePrinciples = () => {
             >
 
               <div>
-
-                <p
-                  className="
-                    principle-number
-                    text-xs
-                    uppercase
-                    tracking-widest
-                    text-[#EF3B3A]
-                  "
-                >
-                  03
-                </p>
-
                 <h3
                   className="
                     principle-title

@@ -157,13 +157,7 @@ const AboutUs = () => {
 
           <div>
             <p
-              className="
-                story-label
-                text-sm
-                uppercase
-                tracking-[0.3em]
-                text-[#EF3B3A]
-              "
+              className="mb-5 text-xs font-medium uppercase tracking-[2px] md:text-sm text-[#EF3B3A]"
             >
               About Us
             </p>

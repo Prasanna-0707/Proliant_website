@@ -7,7 +7,7 @@ gsap.registerPlugin(ScrollTrigger);
 const ContactUs = () => {
   const sectionRef = useRef(null);
 
-  // SEND APPLICATION BUTTON STATE
+  // SEND MESSAGE BUTTON STATE
   const [submitStatus, setSubmitStatus] = useState("idle");
 
   useLayoutEffect(() => {
@@ -49,7 +49,7 @@ const ContactUs = () => {
     return () => ctx.revert();
   }, []);
 
-  // SEND APPLICATION CLICK HANDLER
+  // SEND MESSAGE CLICK HANDLER
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -280,22 +280,21 @@ const ContactUs = () => {
 
             </div>
 
-            {/* AREA OF INTEREST */}
+            {/* ORGANIZATION */}
 
             <div className="mt-6">
 
               <label
-                htmlFor="career-role"
+                htmlFor="career-organization"
                 className="mb-2 block text-xs uppercase tracking-[0.15em] text-black"
               >
-                Area of Interest *
+                Organization
               </label>
 
-              <select
-                id="career-role"
-                name="role"
-                required
-                defaultValue=""
+              <input
+                id="career-organization"
+                name="organization"
+                type="text"
                 className="
                   w-full
                   border-0
@@ -306,84 +305,47 @@ const ContactUs = () => {
                   pb-3
                   pt-1
                   text-sm
-                  text-black
                   outline-none
                   transition-all
                   duration-300
                   focus:border-[#EF3B3A]
                 "
-              >
-                <option value="" disabled>
-                  Select an area
-                </option>
-
-                <option value="engineering">
-                  Engineering
-                </option>
-
-                <option value="data-ai">
-                  Data & AI
-                </option>
-
-                <option value="consulting">
-                  Consulting
-                </option>
-
-                <option value="business">
-                  Business & Operations
-                </option>
-
-                <option value="other">
-                  Other
-                </option>
-              </select>
+              />
 
             </div>
 
-            {/* RESUME UPLOAD */}
+            {/* TYPE OF INQUIRY */}
 
             <div className="mt-6">
 
               <label
-                htmlFor="career-resume"
+                htmlFor="career-inquiry"
                 className="mb-2 block text-xs uppercase tracking-[0.15em] text-black"
               >
-                Resume *
+                Type of Inquiry *
               </label>
 
-              <div className="flex items-center border-b border-black/15 pb-3">
-
-                <input
-                  id="career-resume"
-                  name="resume"
-                  type="file"
-                  required
-                  accept=".pdf,.doc,.docx"
-                  className="
-                    w-full
-                    cursor-pointer
-                    bg-transparent
-                    text-sm
-                    text-black/60
-                    file:mr-4
-                    file:rounded-full
-                    file:border-0
-                    file:bg-black
-                    file:px-4
-                    file:py-2
-                    file:text-xs
-                    file:font-medium
-                    file:text-white
-                    file:transition-colors
-                    hover:file:bg-[#EF3B3A]
-                  "
-                />
-
-              </div>
-
-              <p className="mt-2 text-[11px] text-black/30">
-                PDF, DOC or DOCX · Maximum file size will be configured later.
-              </p>
+              <input
+                id="career-inquiry"
+                name="inquiryType"
+                type="text"
+                required
+                className="
+                  w-full
+                  border-0
+                  border-b
+                  border-black/15
+                  bg-transparent
+                  px-0
+                  pb-3
+                  pt-1
+                  text-sm
+                  outline-none
+                  transition-all
+                  duration-300
+                  focus:border-[#EF3B3A]
+                "
+              />
 
             </div>
 
@@ -402,7 +364,7 @@ const ContactUs = () => {
                 id="career-message"
                 name="message"
                 rows="4"
-                placeholder="Tell us about yourself..."
+                placeholder="Write your message here"
                 className="
                   w-full
                   resize-none
@@ -432,7 +394,7 @@ const ContactUs = () => {
                 Share your details and our team will get in touch with you.
               </p>
 
-              {/* SEND APPLICATION BUTTON */}
+              {/* SEND MESSAGE BUTTON */}
 
               <button
                 type="submit"
@@ -464,7 +426,7 @@ const ContactUs = () => {
 
                 {submitStatus === "idle" && (
                   <>
-                    <span>Send Application</span>
+                    <span>Send Message</span>
 
                     <span className="transition-transform duration-300 group-hover:translate-x-1">
                       →

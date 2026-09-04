@@ -370,7 +370,7 @@ const Leadership = () => {
               The people behind{" "}
             </span>
 
-            <span className="leaders-heading-line inline-block text-black/25">
+            <span className="leaders-heading-line inline-block text-[#EF3B3A]">
               Proliant.
             </span>
           </h2>

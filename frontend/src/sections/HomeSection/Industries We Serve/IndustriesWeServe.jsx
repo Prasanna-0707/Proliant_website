@@ -409,16 +409,7 @@ const IndustriesWeServe = () => {
         <div className="mb-12 md:mb-14">
 
           <p
-            className="
-              industries-label
-              mb-4
-              text-xs
-              font-medium
-              uppercase
-              tracking-widest
-              text-[#EF3B3A]
-            "
-          >
+            className="mb-5 text-xs font-medium uppercase tracking-[2px] text-red-600 md:text-sm">
             Industries We Serve
           </p>
 
@@ -601,21 +592,6 @@ const IndustriesWeServe = () => {
                       group-hover:opacity-100
                     "
                   />
-
-                  <span
-                    className="
-                      relative
-                      z-10
-                      mb-5
-                      text-xs
-                      tracking-widest
-                      text-[#EF3B3A]
-                    "
-                  >
-                    0{industry.id}
-                  </span>
-
-
                   <h3
                     className="
                       relative
@@ -671,7 +647,7 @@ const IndustriesWeServe = () => {
                   {/* READ MORE BUTTON */}
 
                   <a
-                    href="/what-we-do"
+                    href="/what-we-do#industries"
                     className={`industry-readmore ${buttonAnimation}`}
                   >
                     <span className="industry-readmore-text">

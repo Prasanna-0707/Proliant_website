@@ -204,19 +204,6 @@ const LifeAtProliant = () => {
                   />
 
                   <div className="relative z-10">
-                    {/* NUMBER */}
-
-                    <span
-                      className="
-                        text-xs
-                        uppercase
-                        tracking-[0.2em]
-                        text-[#EF3B3A]
-                      "
-                    >
-                      {card.number}
-                    </span>
-
                     {/* TITLE */}
 
                     <h3
