@@ -1,4 +1,7 @@
 import StatsCounter from "@/components/ui/stats-counter";
+import peopleIcon from "@/assets/images/icons8-people.gif";
+import globeIcon from "@/assets/images/globe-icon-final.png";
+import mapsIcon from "@/assets/images/maps-icon.png";
 
 const ProliantInNumbers = () => {
   return (
@@ -19,12 +22,20 @@ const ProliantInNumbers = () => {
           <div className="flex flex-col items-center text-center">
 
             <div className="flex items-center justify-center gap-4 mb-8">
+
+              <img
+                src={peopleIcon}
+                alt="Employees"
+                className="w-[clamp(4rem,10vw,7rem)] h-[clamp(4rem,10vw,7rem)] object-contain"
+              />
+
               <StatsCounter
                 value={150}
                 suffix="+"
                 duration={2}
                 className="text-[clamp(2.75rem,8vw,6rem)] font-bold"
               />
+
             </div>
 
             <div className="w-full max-w-xs border-t border-black pt-6">
@@ -39,12 +50,20 @@ const ProliantInNumbers = () => {
           <div className="flex flex-col items-center text-center">
 
             <div className="flex items-center justify-center gap-4 mb-8">
+
+              <img
+                src={globeIcon}
+                alt="Global Deployments"
+                className="w-[clamp(2.75rem,8vw,6rem)] h-[clamp(2.75rem,8vw,6rem)] object-contain"
+              />
+
               <StatsCounter
                 value={5}
                 suffix="+"
                 duration={2}
                 className="text-[clamp(2.75rem,8vw,6rem)] font-bold"
               />
+
             </div>
 
             <div className="w-full max-w-xs border-t border-black pt-6">
@@ -59,11 +78,19 @@ const ProliantInNumbers = () => {
           <div className="flex flex-col items-center text-center">
 
             <div className="flex items-center justify-center gap-4 mb-8">
+
+              <img
+                src={mapsIcon}
+                alt="Countries"
+                className="w-[clamp(2.75rem,8vw,6rem)] h-[clamp(2.75rem,8vw,6rem)] object-contain"
+              />
+
               <StatsCounter
                 value={4}
                 duration={2}
                 className="text-[clamp(2.75rem,8vw,6rem)] font-bold"
               />
+
             </div>
 
             <div className="w-full max-w-xs border-t border-black pt-6">
