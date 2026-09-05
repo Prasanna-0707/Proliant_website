@@ -25,6 +25,13 @@ const WhatWeDoHero = () => {
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
+      const isMobile = window.matchMedia("(max-width: 639px)").matches;
+      const isTablet = window.matchMedia(
+        "(min-width: 640px) and (max-width: 1023px)"
+      ).matches;
+
+      const headingY = isMobile ? 30 : isTablet ? 40 : 60;
+
       const intro = gsap.timeline({
         defaults: {
           ease: "power4.out",
@@ -34,40 +41,40 @@ const WhatWeDoHero = () => {
       intro
         .from(".what-hero-label", {
           opacity: 0,
-          y: 20,
-          duration: 0.7,
+          y: isMobile ? 12 : 20,
+          duration: isMobile ? 0.55 : 0.7,
         })
 
         .from(
           ".what-hero-line",
           {
             opacity: 0,
-            y: 60,
-            filter: "blur(12px)",
-            duration: 1,
-            stagger: 0.12,
+            y: headingY,
+            filter: isMobile ? "blur(7px)" : "blur(12px)",
+            duration: isMobile ? 0.8 : 1,
+            stagger: isMobile ? 0.08 : 0.12,
           },
-          "-=0.35"
+          "-=0.3"
         )
 
         .from(
           ".what-hero-copy",
           {
             opacity: 0,
-            y: 20,
-            duration: 0.8,
+            y: isMobile ? 12 : 20,
+            duration: isMobile ? 0.65 : 0.8,
           },
-          "-=0.45"
+          "-=0.35"
         )
 
         .from(
           ".hero-capability-label",
           {
             opacity: 0,
-            y: 25,
-            duration: 0.8,
+            y: isMobile ? 15 : 25,
+            duration: isMobile ? 0.65 : 0.8,
           },
-          "-=0.35"
+          "-=0.3"
         )
 
         .from(
@@ -76,7 +83,7 @@ const WhatWeDoHero = () => {
             opacity: 0,
             duration: 0.6,
           },
-          "-=0.25"
+          "-=0.2"
         );
     }, sectionRef);
 
@@ -104,18 +111,20 @@ const WhatWeDoHero = () => {
   useLayoutEffect(() => {
     if (!capabilityRef.current) return;
 
+    const isMobile = window.matchMedia("(max-width: 639px)").matches;
+
     gsap.fromTo(
       capabilityRef.current,
       {
         opacity: 0,
-        y: 18,
-        filter: "blur(8px)",
+        y: isMobile ? 12 : 18,
+        filter: isMobile ? "blur(5px)" : "blur(8px)",
       },
       {
         opacity: 1,
         y: 0,
         filter: "blur(0px)",
-        duration: 0.65,
+        duration: isMobile ? 0.5 : 0.65,
         ease: "power3.out",
       }
     );
@@ -127,8 +136,8 @@ const WhatWeDoHero = () => {
       className="
         what-do-hero
         relative
-        h-screen
-        min-h-screen
+        h-[100svh]
+        min-h-[100svh]
         overflow-hidden
         bg-black
       "
@@ -213,10 +222,17 @@ const WhatWeDoHero = () => {
           w-full
           max-w-7xl
           items-center
-          px-8
-          py-24
-          md:px-12
+          px-5
+          py-16
+
+          sm:px-6
+          sm:py-16
+
+          md:px-10
+          md:py-20
+
           lg:px-16
+          lg:py-24
         "
       >
         <div className="w-full max-w-6xl">
@@ -230,18 +246,31 @@ const WhatWeDoHero = () => {
               hero-eyebrow
               flex
               items-center
-              gap-4
+              gap-3
+
+              sm:gap-4
             "
           >
-            <span className="h-px w-10 bg-[#EF3B3A]" />
+            <span
+              className="
+                h-px
+                w-7
+                bg-[#EF3B3A]
+
+                sm:w-10
+              "
+            />
 
             <span
               className="
                 what-hero-label
-                text-xs
+                text-[10px]
                 uppercase
-                tracking-[0.3em]
+                tracking-[0.25em]
                 text-white/50
+
+                sm:text-xs
+                sm:tracking-[0.3em]
               "
             >
               What We Do
@@ -255,14 +284,20 @@ const WhatWeDoHero = () => {
           <h1
             className="
               hero-title
-              mt-6
+              mt-4
               overflow-hidden
-              text-4xl
+              text-[2.15rem]
               font-semibold
-              leading-tight
+              leading-[1.02]
               tracking-tight
+
+              sm:mt-5
               sm:text-5xl
+              sm:leading-tight
+
+              md:mt-6
               md:text-6xl
+
               lg:text-7xl
             "
           >
@@ -288,11 +323,18 @@ const WhatWeDoHero = () => {
           <p
             className="
               what-hero-copy
-              mt-6
-              max-w-xl
-              text-sm
+              mt-4
+              max-w-[20rem]
+              text-xs
               leading-relaxed
               text-white/45
+
+              sm:mt-5
+              sm:max-w-lg
+              sm:text-sm
+
+              md:mt-6
+              md:max-w-xl
               md:text-base
             "
           >
@@ -309,11 +351,15 @@ const WhatWeDoHero = () => {
           <div
             className="
               hero-capability-label
-              mt-10
+              mt-7
               flex
               flex-col
               items-center
               text-center
+
+              sm:mt-8
+
+              md:mt-10
             "
           >
             {/* Expertise Label */}
@@ -322,23 +368,44 @@ const WhatWeDoHero = () => {
               className="
                 flex
                 items-center
-                gap-5
+                gap-3
+
+                sm:gap-5
               "
             >
-              <span className="h-px w-10 bg-[#EF3B3A]" />
+              <span
+                className="
+                  h-px
+                  w-7
+                  bg-[#EF3B3A]
+
+                  sm:w-10
+                "
+              />
 
               <span
                 className="
-                  text-xs
+                  text-[10px]
                   uppercase
-                  tracking-[0.3em]
+                  tracking-[0.25em]
                   text-white/35
+
+                  sm:text-xs
+                  sm:tracking-[0.3em]
                 "
               >
                 Expertise
               </span>
 
-              <span className="h-px w-10 bg-[#EF3B3A]" />
+              <span
+                className="
+                  h-px
+                  w-7
+                  bg-[#EF3B3A]
+
+                  sm:w-10
+                "
+              />
             </div>
 
             {/* Active Capability */}
@@ -346,14 +413,20 @@ const WhatWeDoHero = () => {
             <div
               ref={capabilityRef}
               className="
-                mt-4
-                min-h-14
-                text-3xl
+                mt-3
+                min-h-10
+                text-2xl
                 font-semibold
                 tracking-tight
                 text-white
+
+                sm:mt-4
+                sm:min-h-12
                 sm:text-4xl
+
+                md:min-h-14
                 md:text-5xl
+
                 lg:text-6xl
               "
             >
@@ -362,7 +435,17 @@ const WhatWeDoHero = () => {
 
             {/* Capability Progress */}
 
-            <div className="mt-5 flex items-center gap-2">
+            <div
+              className="
+                mt-4
+                flex
+                items-center
+                gap-1.5
+
+                sm:mt-5
+                sm:gap-2
+              "
+            >
               {capabilities.map((capability, index) => (
                 <span
                   key={capability}
@@ -372,8 +455,8 @@ const WhatWeDoHero = () => {
                     duration-500
                     ${
                       index === activeCapability
-                        ? "w-8 bg-[#EF3B3A]"
-                        : "w-3 bg-white/20"
+                        ? "w-6 bg-[#EF3B3A] sm:w-8"
+                        : "w-2 bg-white/20 sm:w-3"
                     }
                   `}
                 />
@@ -391,22 +474,30 @@ const WhatWeDoHero = () => {
         className="
           hero-scroll
           absolute
-          bottom-7
+          bottom-4
           left-1/2
           z-10
           flex
           -translate-x-1/2
           flex-col
           items-center
-          gap-2
+          gap-1.5
+
+          sm:bottom-5
+          sm:gap-2
+
+          md:bottom-7
         "
       >
         <span
           className="
-            text-[10px]
+            text-[9px]
             uppercase
-            tracking-[0.3em]
+            tracking-[0.25em]
             text-white/25
+
+            sm:text-[10px]
+            sm:tracking-[0.3em]
           "
         >
           Scroll
@@ -414,9 +505,11 @@ const WhatWeDoHero = () => {
 
         <span
           className="
-            h-8
+            h-6
             w-px
             bg-white/20
+
+            sm:h-8
           "
         />
       </div>

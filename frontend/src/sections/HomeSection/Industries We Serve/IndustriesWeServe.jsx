@@ -37,6 +37,8 @@ const IndustriesWeServe = () => {
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
+      const isMobile = window.matchMedia("(max-width: 767px)").matches;
+
       /* =====================================================
          HEADER ANIMATIONS
       ===================================================== */
@@ -48,8 +50,8 @@ const IndustriesWeServe = () => {
           toggleActions: "play none none reverse",
         },
         opacity: 0,
-        y: 20,
-        duration: 0.7,
+        y: isMobile ? 12 : 20,
+        duration: isMobile ? 0.55 : 0.7,
         ease: "power3.out",
         immediateRender: false,
       });
@@ -61,9 +63,9 @@ const IndustriesWeServe = () => {
           toggleActions: "play none none reverse",
         },
         opacity: 0,
-        y: 40,
-        filter: "blur(8px)",
-        duration: 0.9,
+        y: isMobile ? 25 : 40,
+        filter: isMobile ? "blur(5px)" : "blur(8px)",
+        duration: isMobile ? 0.7 : 0.9,
         ease: "power4.out",
         immediateRender: false,
       });
@@ -80,9 +82,9 @@ const IndustriesWeServe = () => {
             toggleActions: "play none none reverse",
           },
           opacity: 0,
-          y: 45,
-          duration: 0.8,
-          delay: index * 0.08,
+          y: isMobile ? 25 : 45,
+          duration: isMobile ? 0.65 : 0.8,
+          delay: isMobile ? index * 0.05 : index * 0.08,
           ease: "power3.out",
           immediateRender: false,
         });
@@ -132,14 +134,13 @@ const IndustriesWeServe = () => {
       className="
         overflow-hidden
         bg-white
-        py-20
-        text-black
+        py-10
+        sm:py-12
         md:py-24
       "
     >
       {/* =====================================================
           READ MORE BUTTON STYLES
-          ONLY SIZE + CURVE CHANGED
           ANIMATIONS REMAIN THE SAME
       ===================================================== */}
 
@@ -200,7 +201,6 @@ const IndustriesWeServe = () => {
 
         /* =====================================================
            MASK 1
-           SAME ANIMATION
         ===================================================== */
 
         .industry-mask1::before {
@@ -250,7 +250,6 @@ const IndustriesWeServe = () => {
 
         /* =====================================================
            MASK 2
-           SAME SPRITE ANIMATION
         ===================================================== */
 
         .industry-mask2::before {
@@ -319,7 +318,6 @@ const IndustriesWeServe = () => {
 
         /* =====================================================
            MASK 3
-           SAME DIAGONAL ANIMATION
         ===================================================== */
 
         .industry-mask3::before {
@@ -398,18 +396,46 @@ const IndustriesWeServe = () => {
         .industry-mask3:hover {
           border-color: #EF3B3A;
         }
+
+        /* =====================================================
+           MOBILE BUTTON
+           Only size adjustment
+        ===================================================== */
+
+        @media (max-width: 639px) {
+          .industry-readmore {
+            width: 125px;
+            height: 38px;
+            padding: 0 13px;
+          }
+
+          .industry-readmore-arrow {
+            font-size: 16px;
+          }
+        }
       `}</style>
 
-      <div className="mx-auto max-w-7xl px-8">
+      <div className="mx-auto max-w-7xl px-5 sm:px-6 md:px-8">
 
         {/* =================================================
             SECTION HEADER
         ================================================== */}
 
-        <div className="mb-12 md:mb-14">
+        <div className="mb-8 sm:mb-10 md:mb-14">
 
           <p
-            className="mb-5 text-xs font-medium uppercase tracking-[2px] text-red-600 md:text-sm">
+            className="
+              industries-label
+              mb-4
+              text-xs
+              font-medium
+              uppercase
+              tracking-[2px]
+              text-red-600
+              sm:mb-5
+              md:text-sm
+            "
+          >
             Industries We Serve
           </p>
 
@@ -417,10 +443,11 @@ const IndustriesWeServe = () => {
             className="
               industries-heading
               max-w-5xl
-              text-[clamp(1.875rem,7vw,2.5rem)]
+              text-[clamp(1.875rem,7.5vw,2.5rem)]
               font-semibold
-              leading-tight
+              leading-[1.1]
               tracking-tight
+              sm:text-[clamp(2.125rem,6vw,3rem)]
               md:text-5xl
               lg:text-6xl
             "
@@ -435,7 +462,7 @@ const IndustriesWeServe = () => {
             INDUSTRY CARDS
         ================================================== */}
 
-        <div className="industries-grid space-y-6 md:space-y-7">
+        <div className="industries-grid space-y-5 sm:space-y-6 md:space-y-7">
 
           {industries.map((industry, index) => {
             const imageLeft = index % 2 === 0;
@@ -476,10 +503,11 @@ const IndustriesWeServe = () => {
                 <div
                   className={`
                     relative
-                    min-h-72
+                    min-h-56
                     overflow-hidden
                     bg-black
-                    md:min-h-80
+                    sm:min-h-64
+                    md:min-h-72
                     lg:min-h-96
                     ${
                       imageLeft
@@ -560,9 +588,11 @@ const IndustriesWeServe = () => {
                     justify-center
                     overflow-hidden
                     bg-black
-                    px-8
-                    py-10
+                    px-6
+                    py-8
                     text-white
+                    sm:px-8
+                    sm:py-9
                     md:px-10
                     md:py-12
                     lg:px-14
@@ -592,19 +622,22 @@ const IndustriesWeServe = () => {
                       group-hover:opacity-100
                     "
                   />
+
                   <h3
                     className="
                       relative
                       z-10
-                      mb-5
+                      mb-4
                       max-w-xl
-                      text-3xl
+                      text-[clamp(1.75rem,7vw,2.25rem)]
                       font-semibold
-                      leading-tight
+                      leading-[1.1]
                       tracking-tight
                       transition-transform
                       duration-500
                       group-hover:translate-x-1
+                      sm:mb-5
+                      sm:text-4xl
                       md:text-4xl
                       lg:text-5xl
                     "
@@ -617,13 +650,14 @@ const IndustriesWeServe = () => {
                     className="
                       relative
                       z-10
-                      mb-5
+                      mb-4
                       h-px
                       w-10
                       bg-[#EF3B3A]
                       transition-all
                       duration-500
                       group-hover:w-20
+                      sm:mb-5
                     "
                   />
 
@@ -632,11 +666,14 @@ const IndustriesWeServe = () => {
                     className="
                       relative
                       z-10
-                      mb-7
+                      mb-6
                       max-w-lg
-                      text-base
-                      leading-relaxed
+                      text-[15px]
+                      leading-6
                       text-white/60
+                      sm:mb-7
+                      sm:text-base
+                      sm:leading-relaxed
                       md:text-lg
                     "
                   >

@@ -4,7 +4,7 @@ import whatWeDoImage from "../../../assets/images/Home/whatwedo.png";
 
 const WhatWeDo = () => {
   return (
-    <section className="bg-white py-16 text-black md:py-20">
+    <section className="bg-white py-10 text-black sm:py-12 md:py-20">
       {/* MASK2 BUTTON ANIMATION */}
       <style>{`
         .whatwedo-mask2-button {
@@ -90,24 +90,35 @@ const WhatWeDo = () => {
           color: white;
           transform: translateX(5px);
         }
+
+        @media (max-width: 639px) {
+          .whatwedo-mask2-button {
+            width: 170px;
+            height: 44px;
+          }
+
+          .whatwedo-mask2-arrow {
+            margin-left: 10px;
+          }
+        }
       `}</style>
 
-      <div className="mx-auto max-w-7xl px-8">
+      <div className="mx-auto max-w-7xl px-5 sm:px-6 md:px-8">
         {/* SECTION LABEL */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="mb-4"
+          className="mb-3 sm:mb-4"
         >
-          <p className="mb-5 text-xs font-medium uppercase tracking-[2px] text-red-600 md:text-sm">
+          <p className="mb-4 text-xs font-medium uppercase tracking-[2px] text-red-600 sm:mb-5 md:text-sm">
             What We Do
           </p>
         </motion.div>
 
         {/* MAIN CONTENT */}
-        <div className="grid items-center gap-10 md:grid-cols-2 md:gap-14 lg:gap-20">
+        <div className="grid items-center gap-8 sm:gap-10 md:grid-cols-2 md:gap-14 lg:gap-20">
           {/* LEFT - TEXT */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
@@ -119,16 +130,16 @@ const WhatWeDo = () => {
             }}
           >
             {/* HEADING */}
-            <h2 className="mb-8 text-4xl font-bold leading-tight sm:text-5xl md:text-5xl lg:text-6xl">
+            <h2 className="mb-6 text-[clamp(2rem,8vw,3rem)] font-bold leading-[1.1] sm:mb-7 sm:text-5xl md:mb-8 md:text-5xl lg:text-6xl">
               Turning Data Into Business Impact
             </h2>
 
             {/* DIVIDER */}
-            <div className="mb-8 border-t border-black/10" />
+            <div className="mb-6 border-t border-black/10 sm:mb-7 md:mb-8" />
 
             {/* DESCRIPTION */}
             <div className="max-w-4xl">
-              <p className="text-base leading-7 text-neutral-600 md:text-lg">
+              <p className="text-[15px] leading-6 text-neutral-600 sm:text-base sm:leading-7 md:text-lg">
                 Proliant Data accelerates data and digital transformation by
                 delivering innovative, tailored solutions in enterprise data
                 management, migration, governance, and analytics to unlock the
@@ -137,7 +148,7 @@ const WhatWeDo = () => {
             </div>
 
             {/* READ MORE - MASK2 ANIMATION */}
-            <div className="mt-8">
+            <div className="mt-6 sm:mt-7 md:mt-8">
               <a
                 href="/what-we-do"
                 className="whatwedo-mask2-button"

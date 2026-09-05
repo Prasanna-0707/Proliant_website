@@ -8,118 +8,128 @@ const AboutUs = () => {
   const sectionRef = useRef(null);
 
   useLayoutEffect(() => {
-      const ctx = gsap.context(() => {
-        /* =====================================================
-          ABOUT US LABEL
-        ===================================================== */
+    const ctx = gsap.context(() => {
+      // Responsive animation values
+      const isMobile = window.matchMedia("(max-width: 639px)").matches;
+      const isTablet = window.matchMedia(
+        "(min-width: 640px) and (max-width: 1279px)"
+      ).matches;
 
-        gsap.from(".story-label", {
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top 75%",
-            toggleActions: "play none none none",
-          },
-          opacity: 0,
-          x: -30,
-          duration: 0.8,
-          ease: "power3.out",
-        });
+      const headingY = isMobile ? 30 : isTablet ? 40 : 60;
+      const copyY = isMobile ? 20 : isTablet ? 30 : 40;
+      const pointY = isMobile ? 20 : isTablet ? 25 : 35;
 
-        /* =====================================================
-          ABOUT US HEADING
-        ===================================================== */
+      /* =====================================================
+        ABOUT US LABEL
+      ===================================================== */
 
-        gsap.from(".story-heading-line", {
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top 70%",
-            toggleActions: "play none none none",
-          },
-          opacity: 0,
-          y: 60,
-          filter: "blur(10px)",
-          duration: 0.9,
-          stagger: 0.12,
-          ease: "power4.out",
-        });
+      gsap.from(".story-label", {
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: "top 75%",
+          toggleActions: "play none none none",
+        },
+        opacity: 0,
+        x: isMobile ? -15 : -30,
+        duration: 0.8,
+        ease: "power3.out",
+      });
 
-        /* =====================================================
-          ABOUT US DESCRIPTION
-        ===================================================== */
+      /* =====================================================
+        ABOUT US HEADING
+      ===================================================== */
 
-        gsap.from(".story-copy", {
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top 65%",
-            toggleActions: "play none none none",
-          },
-          opacity: 0,
-          y: 40,
-          filter: "blur(6px)",
-          duration: 0.9,
-          delay: 0.2,
-          ease: "power3.out",
-        });
+      gsap.from(".story-heading-line", {
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: "top 70%",
+          toggleActions: "play none none none",
+        },
+        opacity: 0,
+        y: headingY,
+        filter: isMobile ? "blur(6px)" : "blur(10px)",
+        duration: isMobile ? 0.75 : 0.9,
+        stagger: isMobile ? 0.08 : 0.12,
+        ease: "power4.out",
+      });
 
-        /* =====================================================
-          TIMELINE LINE
-        ===================================================== */
+      /* =====================================================
+        ABOUT US DESCRIPTION
+      ===================================================== */
 
-        gsap.from(".story-line", {
-          scrollTrigger: {
-            trigger: ".story-timeline",
-            start: "top 75%",
-            toggleActions: "play none none reverse",
-          },
-          scaleX: 0,
-          transformOrigin: "left center",
-          duration: 1.4,
-          ease: "power3.inOut",
-        });
+      gsap.from(".story-copy", {
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: "top 65%",
+          toggleActions: "play none none none",
+        },
+        opacity: 0,
+        y: copyY,
+        filter: isMobile ? "blur(4px)" : "blur(6px)",
+        duration: isMobile ? 0.75 : 0.9,
+        delay: isMobile ? 0.1 : 0.2,
+        ease: "power3.out",
+      });
 
-        /* =====================================================
-          TIMELINE POINTS
-        ===================================================== */
+      /* =====================================================
+        TIMELINE LINE
+      ===================================================== */
 
-        gsap.from(".story-point", {
-          scrollTrigger: {
-            trigger: ".story-timeline",
-            start: "top 70%",
-            toggleActions: "play none none reverse",
-          },
-          opacity: 0,
-          y: 35,
-          stagger: 0.18,
-          duration: 0.8,
-          ease: "power3.out",
-        });
+      gsap.from(".story-line", {
+        scrollTrigger: {
+          trigger: ".story-timeline",
+          start: "top 75%",
+          toggleActions: "play none none reverse",
+        },
+        scaleX: 0,
+        transformOrigin: "left center",
+        duration: isMobile ? 1 : 1.4,
+        ease: "power3.inOut",
+      });
 
-        /* =====================================================
-          TIMELINE DOTS
-        ===================================================== */
+      /* =====================================================
+        TIMELINE POINTS
+      ===================================================== */
 
-        gsap.from(".story-point-dot", {
-          scrollTrigger: {
-            trigger: ".story-timeline",
-            start: "top 70%",
-            toggleActions: "play none none reverse",
-          },
-          scale: 0,
-          opacity: 0,
-          stagger: 0.18,
-          duration: 0.5,
-          ease: "back.out(1.7)",
-        });
+      gsap.from(".story-point", {
+        scrollTrigger: {
+          trigger: ".story-timeline",
+          start: "top 70%",
+          toggleActions: "play none none reverse",
+        },
+        opacity: 0,
+        y: pointY,
+        stagger: isMobile ? 0.12 : 0.18,
+        duration: isMobile ? 0.7 : 0.8,
+        ease: "power3.out",
+      });
 
-        /* =====================================================
-          REFRESH SCROLLTRIGGER
-        ===================================================== */
+      /* =====================================================
+        TIMELINE DOTS
+      ===================================================== */
 
-        ScrollTrigger.refresh();
-      }, sectionRef);
+      gsap.from(".story-point-dot", {
+        scrollTrigger: {
+          trigger: ".story-timeline",
+          start: "top 70%",
+          toggleActions: "play none none reverse",
+        },
+        scale: 0,
+        opacity: 0,
+        stagger: isMobile ? 0.12 : 0.18,
+        duration: isMobile ? 0.4 : 0.5,
+        ease: "back.out(1.7)",
+      });
 
-      return () => ctx.revert();
-    }, []);
+      /* =====================================================
+        REFRESH SCROLLTRIGGER
+      ===================================================== */
+
+      ScrollTrigger.refresh();
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
 
   return (
     <section
@@ -128,13 +138,21 @@ const AboutUs = () => {
       className="
         story-section
         bg-white
-        px-8
-        py-16
+        px-5
+        py-10
         text-black
-        md:px-16
-        md:py-20
-        lg:px-24
-        lg:py-24
+
+        sm:px-6
+        sm:py-12
+
+        md:px-10
+        md:py-14
+
+        lg:px-16
+        lg:py-16
+
+        xl:px-24
+        xl:py-24
       "
     >
       <div className="mx-auto max-w-1500px">
@@ -146,10 +164,15 @@ const AboutUs = () => {
         <div
           className="
             grid
-            gap-10
+            gap-8
+
+            md:gap-10
+
             lg:grid-cols-[0.7fr_1.3fr]
             lg:items-start
-            lg:gap-20
+            lg:gap-12
+
+            xl:gap-20
           "
         >
 
@@ -157,20 +180,36 @@ const AboutUs = () => {
 
           <div>
             <p
-              className="mb-5 text-xs font-medium uppercase tracking-[2px] md:text-sm text-[#EF3B3A]"
+              className="
+                mb-4
+                text-xs
+                font-medium
+                uppercase
+                tracking-[2px]
+                text-[#EF3B3A]
+
+                sm:mb-5
+                md:text-sm
+              "
             >
               About Us
             </p>
 
             <h2
               className="
-                mt-4
-                text-[clamp(1.875rem,7vw,3.75rem)]
+                mt-3
+                text-[clamp(1.875rem,8vw,3rem)]
                 font-semibold
-                leading-[0.9]
+                leading-[0.92]
                 tracking-tight
-                md:text-6xl
-                lg:text-7xl
+
+                sm:text-[clamp(2rem,6vw,3.25rem)]
+
+                md:text-5xl
+
+                lg:text-6xl
+
+                xl:text-7xl
               "
             >
               <span className="story-heading-line block">
@@ -193,16 +232,21 @@ const AboutUs = () => {
             className="
               story-copy
               max-w-4xl
+
               lg:pt-1
             "
           >
             <p
               className="
-                mt-5
-                text-base
-                leading-[1.7]
+                mt-3
+                text-[0.95rem]
+                leading-[1.65]
                 text-black/50
+
+                sm:text-base
+
                 md:text-lg
+                md:leading-[1.7]
               "
             >
               Our growth is fueled by a team of seasoned
@@ -227,12 +271,22 @@ const AboutUs = () => {
           className="
             story-timeline
             relative
-            mt-16
+            mt-10
             border-t
             border-black/10
-            pt-10
-            md:mt-20
-            md:pt-12
+            pt-7
+
+            sm:mt-12
+            sm:pt-8
+
+            md:mt-14
+            md:pt-10
+
+            lg:mt-16
+            lg:pt-10
+
+            xl:mt-20
+            xl:pt-12
           "
         >
 
@@ -254,10 +308,17 @@ const AboutUs = () => {
           <div
             className="
               grid
-              gap-10
-              md:grid-cols-4
-              md:gap-6
-            "
+              gap-8
+
+              sm:gap-8
+
+              md:grid-cols-2
+              md:gap-x-8
+              md:gap-y-10
+
+              lg:grid-cols-4
+              lg:gap-6
+          "
           >
 
             {/* =================================================
@@ -268,8 +329,11 @@ const AboutUs = () => {
               className="
                 story-point
                 relative
-                pt-4
-                md:pt-5
+                pt-3
+
+                md:pt-4
+
+                lg:pt-5
               "
             >
               <span
@@ -300,16 +364,26 @@ const AboutUs = () => {
               <h3
                 className="
                   mt-2
-                  text-xl
+                  text-lg
                   font-semibold
                   tracking-tight
+
+                  sm:text-xl
+
                   md:text-2xl
                 "
               >
                 Data Migration
               </h3>
 
-              <p className="mt-2 text-sm leading-relaxed text-black/45">
+              <p
+                className="
+                  mt-2
+                  text-sm
+                  leading-relaxed
+                  text-black/45
+                "
+              >
                 Building our foundation in data migration and
                 governance.
               </p>
@@ -323,8 +397,11 @@ const AboutUs = () => {
               className="
                 story-point
                 relative
-                pt-4
-                md:pt-5
+                pt-3
+
+                md:pt-4
+
+                lg:pt-5
               "
             >
               <span
@@ -355,16 +432,26 @@ const AboutUs = () => {
               <h3
                 className="
                   mt-2
-                  text-xl
+                  text-lg
                   font-semibold
                   tracking-tight
+
+                  sm:text-xl
+
                   md:text-2xl
                 "
               >
                 Enterprise Data
               </h3>
 
-              <p className="mt-2 text-sm leading-relaxed text-black/45">
+              <p
+                className="
+                  mt-2
+                  text-sm
+                  leading-relaxed
+                  text-black/45
+                "
+              >
                 Expanding into end-to-end enterprise data
                 management.
               </p>
@@ -378,8 +465,11 @@ const AboutUs = () => {
               className="
                 story-point
                 relative
-                pt-4
-                md:pt-5
+                pt-3
+
+                md:pt-4
+
+                lg:pt-5
               "
             >
               <span
@@ -410,16 +500,26 @@ const AboutUs = () => {
               <h3
                 className="
                   mt-2
-                  text-xl
+                  text-lg
                   font-semibold
                   tracking-tight
+
+                  sm:text-xl
+
                   md:text-2xl
                 "
               >
                 SAP & Analytics
               </h3>
 
-              <p className="mt-2 text-sm leading-relaxed text-black/45">
+              <p
+                className="
+                  mt-2
+                  text-sm
+                  leading-relaxed
+                  text-black/45
+                "
+              >
                 Connecting enterprise systems with intelligent
                 insights.
               </p>
@@ -433,8 +533,11 @@ const AboutUs = () => {
               className="
                 story-point
                 relative
-                pt-4
-                md:pt-5
+                pt-3
+
+                md:pt-4
+
+                lg:pt-5
               "
             >
               <span
@@ -465,16 +568,26 @@ const AboutUs = () => {
               <h3
                 className="
                   mt-2
-                  text-xl
+                  text-lg
                   font-semibold
                   tracking-tight
+
+                  sm:text-xl
+
                   md:text-2xl
                 "
               >
                 AI Innovation
               </h3>
 
-              <p className="mt-2 text-sm leading-relaxed text-black/45">
+              <p
+                className="
+                  mt-2
+                  text-sm
+                  leading-relaxed
+                  text-black/45
+                "
+              >
                 Building the next generation of intelligent
                 transformation.
               </p>
