@@ -59,34 +59,57 @@ const LifeAtProliant = () => {
   const sectionRef = useRef(null);
 
   useLayoutEffect(() => {
-  const ctx = gsap.context(() => {
-    gsap.from(".career-life-title", {
-      scrollTrigger: {
-        trigger: ".career-life-title",
-        start: "top 90%",
-        once: true,
-      },
-      opacity: 0,
-      y: 20,
-      duration: 0.5,
-      ease: "power2.out",
-    });
-  }, sectionRef);
+    const ctx = gsap.context(() => {
+      gsap.from(".career-life-title", {
+        scrollTrigger: {
+          trigger: ".career-life-title",
+          start: "top 90%",
+          once: true,
+        },
+        opacity: 0,
+        y: 20,
+        duration: 0.5,
+        ease: "power2.out",
+      });
+    }, sectionRef);
 
-  return () => ctx.revert();
-}, []);
+    return () => ctx.revert();
+  }, []);
 
   return (
     <section
       ref={sectionRef}
-      className="bg-white px-6 py-16 text-black md:px-12 md:py-20 lg:px-20"
+      className="
+        bg-white
+        px-5
+        py-10
+        text-black
+        sm:px-6
+        sm:py-12
+        md:px-12
+        md:py-20
+        lg:px-20
+      "
     >
       <div className="mx-auto max-w-7xl">
+
         {/* =========================
             SECTION HEADING
         ========================== */}
 
-        <div className="mb-10 flex items-end justify-between border-b border-black/10 pb-5">
+        <div
+          className="
+            mb-8
+            flex
+            items-end
+            justify-between
+            border-b
+            border-black/10
+            pb-4
+            sm:mb-10
+            sm:pb-5
+          "
+        >
           <div>
             <p className="mb-2 text-xs uppercase tracking-[0.2em] text-[#EF3B3A]">
               Life at Proliant
@@ -116,7 +139,7 @@ const LifeAtProliant = () => {
             FOUR LIFE CARDS
         ========================== */}
 
-        <div className="space-y-6">
+        <div className="space-y-5 sm:space-y-6">
           {lifeCards.map((card, index) => (
             <article
               key={card.number}
@@ -133,12 +156,14 @@ const LifeAtProliant = () => {
               "
             >
               <div
-                className={`
+                className="
                   grid
-                  min-h-80
+                  min-h-0
+                  md:min-h-80
                   md:grid-cols-2
-                `}
+                "
               >
+
                 {/* =========================
                     TEXT PANEL
                 ========================== */}
@@ -149,11 +174,13 @@ const LifeAtProliant = () => {
                     relative
                     order-1
                     flex
-                    min-h-80
+                    min-h-0
                     flex-col
                     justify-center
                     overflow-hidden
-                    p-7
+                    p-5
+                    sm:p-6
+                    md:min-h-80
                     md:p-9
                     ${
                       card.dark
@@ -167,6 +194,7 @@ const LifeAtProliant = () => {
                     }
                   `}
                 >
+
                   {/* RED CORNER LIGHT */}
 
                   {card.dark && (
@@ -204,17 +232,22 @@ const LifeAtProliant = () => {
                   />
 
                   <div className="relative z-10">
+
                     {/* TITLE */}
 
                     <h3
                       className={`
-                        mt-4
+                        mt-2
                         max-w-lg
                         border-b
-                        pb-4
-                        text-2xl
+                        pb-3
+                        text-xl
                         font-semibold
                         tracking-tight
+                        sm:mt-3
+                        sm:pb-4
+                        sm:text-2xl
+                        md:mt-4
                         md:text-3xl
                         ${
                           card.dark
@@ -231,10 +264,12 @@ const LifeAtProliant = () => {
                     {card.description && (
                       <p
                         className={`
-                          mt-6
+                          mt-4
                           max-w-xl
                           text-sm
                           leading-relaxed
+                          sm:mt-5
+                          md:mt-6
                           md:text-base
                           ${
                             card.dark
@@ -252,10 +287,13 @@ const LifeAtProliant = () => {
                     {card.items && (
                       <ul
                         className={`
-                          mt-6
-                          space-y-3
+                          mt-4
+                          space-y-2.5
                           text-sm
                           leading-relaxed
+                          sm:mt-5
+                          sm:space-y-3
+                          md:mt-6
                           md:text-base
                           ${
                             card.dark
@@ -267,7 +305,7 @@ const LifeAtProliant = () => {
                         {card.items.map((item) => (
                           <li
                             key={item}
-                            className="flex gap-3"
+                            className="flex gap-2.5 sm:gap-3"
                           >
                             <span className="shrink-0 text-[#EF3B3A]">
                               +
@@ -278,6 +316,7 @@ const LifeAtProliant = () => {
                         ))}
                       </ul>
                     )}
+
                   </div>
                 </div>
 
@@ -290,9 +329,13 @@ const LifeAtProliant = () => {
                     career-card-image
                     relative
                     order-2
-                    min-h-80
+                    h-52
+                    min-h-0
                     overflow-hidden
                     bg-white
+                    sm:h-60
+                    md:h-auto
+                    md:min-h-80
                     ${
                       index % 2 === 0
                         ? "md:order-2"
@@ -319,10 +362,12 @@ const LifeAtProliant = () => {
 
                   <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-white/5 via-transparent to-black/5" />
                 </div>
+
               </div>
             </article>
           ))}
         </div>
+
       </div>
     </section>
   );

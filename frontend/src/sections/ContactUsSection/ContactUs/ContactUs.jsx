@@ -12,14 +12,19 @@ const ContactUs = () => {
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
+      // Keep animations lighter on smaller screens
+      const isMobile = window.matchMedia(
+        "(max-width: 767px)"
+      ).matches;
+
       gsap.from(".career-contact-title", {
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top 80%",
         },
         opacity: 0,
-        y: 40,
-        duration: 0.8,
+        y: isMobile ? 25 : 40,
+        duration: isMobile ? 0.6 : 0.8,
         ease: "power3.out",
       });
 
@@ -29,8 +34,8 @@ const ContactUs = () => {
           start: "top 75%",
         },
         opacity: 0,
-        x: -30,
-        duration: 0.8,
+        x: isMobile ? -15 : -30,
+        duration: isMobile ? 0.6 : 0.8,
         ease: "power3.out",
       });
 
@@ -40,9 +45,13 @@ const ContactUs = () => {
           start: "top 75%",
         },
         opacity: 0,
-        x: 30,
-        duration: 0.8,
+        x: isMobile ? 15 : 30,
+        duration: isMobile ? 0.6 : 0.8,
         ease: "power3.out",
+      });
+
+      requestAnimationFrame(() => {
+        ScrollTrigger.refresh();
       });
     }, sectionRef);
 
@@ -53,20 +62,16 @@ const ContactUs = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Check whether required fields are filled
     if (!e.currentTarget.checkValidity()) {
       e.currentTarget.reportValidity();
       return;
     }
 
-    // Show loading spinner
     setSubmitStatus("loading");
 
-    // After 2 seconds show success tick
     setTimeout(() => {
       setSubmitStatus("success");
 
-      // After 2 more seconds return to normal button
       setTimeout(() => {
         setSubmitStatus("idle");
       }, 2000);
@@ -77,14 +82,42 @@ const ContactUs = () => {
     <section
       ref={sectionRef}
       id="get-in-touch"
-      className="career-contact bg-black px-6 py-16 text-white md:px-12 md:py-20 lg:px-20"
+      className="
+        career-contact
+        bg-black
+        px-5
+        pt-16
+        pb-12
+        text-white
+        sm:px-6
+        sm:pt-18
+        sm:pb-14
+        md:px-12
+        md:py-20
+        lg:px-20
+      "
     >
       <div className="mx-auto max-w-7xl">
 
         {/* SECTION HEADING */}
 
-        <div className="border-b border-white/10 pb-6">
-          <p className="mb-2 text-xs uppercase tracking-[0.2em] text-[#EF3B3A]">
+        <div
+          className="
+            border-b
+            border-white/10
+            pb-5
+            sm:pb-6
+          "
+        >
+          <p
+            className="
+              mb-2
+              text-xs
+              uppercase
+              tracking-[0.2em]
+              text-[#EF3B3A]
+            "
+          >
             Contact
           </p>
 
@@ -105,36 +138,57 @@ const ContactUs = () => {
 
         {/* MAIN CONTENT */}
 
-        <div className="mt-10 grid gap-10 lg:grid-cols-[0.65fr_1.35fr] lg:gap-16">
+        <div
+          className="
+            mt-4
+            grid
+            gap-8
+            sm:mt-5
+            sm:gap-10
+            lg:mt-8
+            lg:grid-cols-[0.65fr_1.35fr]
+            lg:gap-16
+          "
+        >
 
           {/* LEFT CONTENT */}
 
           <div className="career-contact-intro lg:pt-4">
 
-            <div className="flex items-center gap-3">
-              <span className="h-px w-10 bg-[#EF3B3A]" />
-
-              <span className="text-xs uppercase tracking-[0.18em] text-white/40">
-                Let&apos;s Connect
-              </span>
-            </div>
-
-            <p className="mt-6 text-2xl font-medium leading-tight tracking-tight md:text-3xl">
-
-              <span className="block whitespace-nowrap">
+            <p
+              className="
+                mt-0
+                text-[1.5rem]
+                font-medium
+                leading-tight
+                tracking-tight
+                sm:text-2xl
+                md:text-3xl
+              "
+            >
+              <span className="block sm:whitespace-nowrap">
                 Ready to build
               </span>
 
-              <span className="block whitespace-nowrap">
+              <span className="block sm:whitespace-nowrap">
                 what&apos;s next{" "}
                 <span className="text-[#EF3B3A]">
                   with us?
                 </span>
               </span>
-
             </p>
 
-            <p className="mt-6 max-w-sm text-sm leading-relaxed text-white/40 md:text-base">
+            <p
+              className="
+                mt-5
+                max-w-sm
+                text-sm
+                leading-relaxed
+                text-white/40
+                sm:mt-6
+                md:text-base
+              "
+            >
               Tell us a little about yourself, your interests and the kind of
               opportunities you&apos;re looking for.
             </p>
@@ -151,16 +205,26 @@ const ContactUs = () => {
               border
               border-white/10
               bg-[#F7F7F5]
-              p-6
+              p-5
               text-black
+              sm:p-6
               md:p-8
             "
           >
 
             {/* FORM HEADER */}
 
-            <div className="mb-8 flex items-start justify-between gap-5">
-
+            <div
+              className="
+                mb-6
+                flex
+                items-start
+                justify-between
+                gap-4
+                sm:mb-8
+                sm:gap-5
+              "
+            >
               <div>
                 <p className="text-xs uppercase tracking-[0.18em] text-black">
                   Careers
@@ -171,20 +235,41 @@ const ContactUs = () => {
                 </h3>
               </div>
 
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black text-sm text-white">
+              <span
+                className="
+                  flex
+                  h-8
+                  w-8
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-full
+                  bg-black
+                  text-sm
+                  text-white
+                  sm:h-9
+                  sm:w-9
+                "
+              >
                 →
               </span>
-
             </div>
 
             {/* FIRST + LAST NAME */}
 
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-5 md:grid-cols-2 md:gap-6">
 
               <div>
                 <label
                   htmlFor="career-first-name"
-                  className="mb-2 block text-xs uppercase tracking-[0.15em] text-black"
+                  className="
+                    mb-2
+                    block
+                    text-xs
+                    uppercase
+                    tracking-[0.15em]
+                    text-black
+                  "
                 >
                   First Name *
                 </label>
@@ -201,9 +286,10 @@ const ContactUs = () => {
                     border-black/15
                     bg-transparent
                     px-0
-                    pb-3
+                    pb-0
                     pt-1
                     text-sm
+                    leading-none
                     outline-none
                     transition-all
                     duration-300
@@ -215,7 +301,14 @@ const ContactUs = () => {
               <div>
                 <label
                   htmlFor="career-last-name"
-                  className="mb-2 block text-xs uppercase tracking-[0.15em] text-black"
+                  className="
+                    mb-2
+                    block
+                    text-xs
+                    uppercase
+                    tracking-[0.15em]
+                    text-black
+                  "
                 >
                   Last Name *
                 </label>
@@ -232,9 +325,10 @@ const ContactUs = () => {
                     border-black/15
                     bg-transparent
                     px-0
-                    pb-3
+                    pb-0
                     pt-1
                     text-sm
+                    leading-none
                     outline-none
                     transition-all
                     duration-300
@@ -247,11 +341,18 @@ const ContactUs = () => {
 
             {/* EMAIL */}
 
-            <div className="mt-6">
+            <div className="mt-5 sm:mt-6">
 
               <label
                 htmlFor="career-email"
-                className="mb-2 block text-xs uppercase tracking-[0.15em] text-black"
+                className="
+                  mb-2
+                  block
+                  text-xs
+                  uppercase
+                  tracking-[0.15em]
+                  text-black
+                "
               >
                 Email *
               </label>
@@ -268,9 +369,10 @@ const ContactUs = () => {
                   border-black/15
                   bg-transparent
                   px-0
-                  pb-3
+                  pb-0
                   pt-1
                   text-sm
+                  leading-none
                   outline-none
                   transition-all
                   duration-300
@@ -282,11 +384,18 @@ const ContactUs = () => {
 
             {/* ORGANIZATION */}
 
-            <div className="mt-6">
+            <div className="mt-5 sm:mt-6">
 
               <label
                 htmlFor="career-organization"
-                className="mb-2 block text-xs uppercase tracking-[0.15em] text-black"
+                className="
+                  mb-2
+                  block
+                  text-xs
+                  uppercase
+                  tracking-[0.15em]
+                  text-black
+                "
               >
                 Organization
               </label>
@@ -302,9 +411,10 @@ const ContactUs = () => {
                   border-black/15
                   bg-transparent
                   px-0
-                  pb-3
+                  pb-0
                   pt-1
                   text-sm
+                  leading-none
                   outline-none
                   transition-all
                   duration-300
@@ -316,11 +426,18 @@ const ContactUs = () => {
 
             {/* TYPE OF INQUIRY */}
 
-            <div className="mt-6">
+            <div className="mt-5 sm:mt-6">
 
               <label
                 htmlFor="career-inquiry"
-                className="mb-2 block text-xs uppercase tracking-[0.15em] text-black"
+                className="
+                  mb-2
+                  block
+                  text-xs
+                  uppercase
+                  tracking-[0.15em]
+                  text-black
+                "
               >
                 Type of Inquiry *
               </label>
@@ -337,9 +454,10 @@ const ContactUs = () => {
                   border-black/15
                   bg-transparent
                   px-0
-                  pb-3
+                  pb-0
                   pt-1
                   text-sm
+                  leading-none
                   outline-none
                   transition-all
                   duration-300
@@ -351,11 +469,18 @@ const ContactUs = () => {
 
             {/* MESSAGE */}
 
-            <div className="mt-6">
+            <div className="mt-5 sm:mt-6">
 
               <label
                 htmlFor="career-message"
-                className="mb-2 block text-xs uppercase tracking-[0.15em] text-black"
+                className="
+                  mb-2
+                  block
+                  text-xs
+                  uppercase
+                  tracking-[0.15em]
+                  text-black
+                "
               >
                 Message
               </label>
@@ -373,9 +498,10 @@ const ContactUs = () => {
                   border-black/15
                   bg-transparent
                   px-0
-                  pb-3
+                  pb-0
                   pt-1
                   text-sm
+                  leading-none
                   outline-none
                   placeholder:text-black/25
                   transition-all
@@ -388,13 +514,29 @@ const ContactUs = () => {
 
             {/* SUBMIT */}
 
-            <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div
+              className="
+                mt-6
+                flex
+                flex-col
+                gap-4
+                sm:mt-8
+                sm:flex-row
+                sm:items-center
+                sm:justify-between
+              "
+            >
 
-              <p className="max-w-xs text-[11px] leading-relaxed text-black">
+              <p
+                className="
+                  max-w-xs
+                  text-[11px]
+                  leading-relaxed
+                  text-black
+                "
+              >
                 Share your details and our team will get in touch with you.
               </p>
-
-              {/* SEND MESSAGE BUTTON */}
 
               <button
                 type="submit"
@@ -410,7 +552,7 @@ const ContactUs = () => {
                   rounded-full
                   bg-black
                   px-6
-                  py-3.5
+                  py-3
                   text-xs
                   font-medium
                   uppercase
@@ -420,9 +562,9 @@ const ContactUs = () => {
                   duration-300
                   hover:bg-[#EF3B3A]
                   disabled:cursor-not-allowed
+                  sm:py-3.5
                 "
               >
-                {/* NORMAL BUTTON */}
 
                 {submitStatus === "idle" && (
                   <>
@@ -433,8 +575,6 @@ const ContactUs = () => {
                     </span>
                   </>
                 )}
-
-                {/* LOADING SPINNER */}
 
                 {submitStatus === "loading" && (
                   <span
@@ -449,8 +589,6 @@ const ContactUs = () => {
                     "
                   />
                 )}
-
-                {/* SUCCESS TICK */}
 
                 {submitStatus === "success" && (
                   <span className="text-xl leading-none">
