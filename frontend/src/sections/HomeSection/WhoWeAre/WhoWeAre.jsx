@@ -4,7 +4,7 @@ import whoWeAreImage from "@/assets/images/Home/whoweare.png";
 
 const WhoWeAre = () => {
   return (
-    <section className="bg-black py-20 text-white md:py-24">
+    <section className="bg-black py-12 text-white sm:py-16 md:py-20 lg:py-24">
       {/* MASK2 ANIMATION */}
       <style>{`
         .mask2-button {
@@ -92,7 +92,8 @@ const WhoWeAre = () => {
         }
       `}</style>
 
-      <div className="mx-auto max-w-7xl px-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
+
         {/* Section Label */}
         <motion.p
           initial={{ opacity: 0, y: 15 }}
@@ -102,7 +103,7 @@ const WhoWeAre = () => {
             duration: 0.6,
             ease: "easeOut",
           }}
-          className="mb-5 text-xs font-medium uppercase tracking-[2px] text-red-600 md:text-sm"
+          className="mb-3 text-xs font-medium uppercase tracking-[2px] text-red-600 sm:mb-4 md:mb-5 md:text-sm"
         >
           Who We Are
         </motion.p>
@@ -117,14 +118,15 @@ const WhoWeAre = () => {
             ease: "easeOut",
             delay: 0.1,
           }}
-          className="mb-11 max-w-3xl text-3xl font-bold leading-[1.1] md:text-4xl lg:text-5xl"
+          className="mb-8 max-w-3xl text-2xl font-bold leading-tight sm:mb-9 sm:text-3xl md:mb-10 md:text-4xl lg:mb-11 lg:text-5xl"
         >
           Empowering Businesses Through
           Data & AI Innovation
         </motion.h2>
 
         {/* Main Content */}
-        <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
+        <div className="grid items-center gap-8 sm:gap-10 lg:grid-cols-2 lg:gap-14">
+
           {/* IMAGE */}
           <motion.div
             initial={{ opacity: 0, x: -50, scale: 0.96 }}
@@ -136,9 +138,9 @@ const WhoWeAre = () => {
             }}
             className="relative"
           >
-            <div className="absolute -inset-2 rounded-[20px] bg-blue-500/10 blur-xl" />
+            <div className="absolute -inset-2 rounded-2xl bg-blue-500/10 blur-xl" />
 
-            <div className="relative aspect-video overflow-hidden rounded-[20px] border border-white/10 bg-neutral-950">
+            <div className="relative aspect-video overflow-hidden rounded-2xl border border-white/10 bg-neutral-950">
               <motion.img
                 src={whoWeAreImage}
                 alt="Proliant Data AI and enterprise solutions"
@@ -164,7 +166,7 @@ const WhoWeAre = () => {
             }}
             className="max-w-lg"
           >
-            <p className="mb-8 text-sm leading-7 text-gray-300 md:text-base">
+            <p className="mb-6 text-sm leading-6 text-gray-300 sm:mb-7 sm:leading-7 md:mb-8 md:text-base">
               Founded in 2021, Proliant Data LLC has rapidly grown from a
               niche in data migration and governance into a trusted partner
               delivering end-to-end Enterprise Data Management, SAP solutions,
@@ -174,7 +176,7 @@ const WhoWeAre = () => {
             {/* READ MORE - MASK2 ANIMATION */}
             <a
               href="/who-we-are"
-              className="mask2-button"
+              className="mask2-button h-11! w-40! sm:h-12! sm:w-48!"
             >
               <span className="mask2-text">
                 READ MORE

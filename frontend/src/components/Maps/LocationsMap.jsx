@@ -14,6 +14,7 @@ import maplibreWorker from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import Papa from "papaparse";
 
 import proliantBlackLogo from "../../assets/logos/ProliantBlack/proliant_black.png";
+import pinIcon from "../../assets/images/WhoweAre/Maps/Pin.png";
 
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -23,371 +24,35 @@ const LocationsMap = () => {
   const mapContainer = useRef(null);
   const map = useRef(null);
 
-  const markers = useRef([]);
+  const countryMarkers = useRef([]);
+  const officeMarkers = useRef([]);
+
   const popup = useRef(null);
 
   const level = useRef("world");
+  const selectedCountry = useRef(null);
   const automaticTransition = useRef(false);
 
-  const selectedCountry = useRef(null);
-  const selectedState = useRef(null);
-
   useEffect(() => {
-    if (map.current) return;
+    if (!mapContainer.current || map.current) {
+      return;
+    }
 
     /* =========================================================
-       CARD STYLES
+       MAP INITIALIZATION
     ========================================================= */
 
-    const addCardStyles = () => {
-      if (
-        document.getElementById(
-          "proliant-location-card-styles"
-        )
-      ) {
-        return;
-      }
-
-      const style = document.createElement("style");
-
-      style.id = "proliant-location-card-styles";
-
-      style.innerHTML = `
-        .proliant-location-popup {
-          width: 340px;
-          max-width: calc(100vw - 40px);
-
-          background: #000000;
-          color: #ffffff;
-
-          border-radius: 20px;
-
-          overflow: hidden;
-
-          box-shadow:
-            0 20px 50px rgba(0, 0, 0, 0.55),
-            0 0 25px rgba(218, 56, 56, 0.10);
-
-          font-family:
-            Arial,
-            Helvetica,
-            sans-serif;
-
-          box-sizing: border-box;
-        }
-
-        .proliant-card-header {
-          width: 100%;
-
-          min-height: 110px;
-
-          background: #ffffff;
-
-          display: flex;
-
-          align-items: center;
-
-          justify-content: center;
-
-          padding: 12px 20px;
-
-          box-sizing: border-box;
-
-          overflow: hidden;
-        }
-
-        .proliant-card-logo {
-          display: block;
-
-          width: 190px;
-
-          height: auto;
-
-          max-width: 100%;
-
-          max-height: 60px;
-
-          object-fit: contain;
-
-          object-position: center;
-
-          margin: 0 auto;
-        }
-
-        .proliant-card-body {
-          width: 100%;
-
-          background: #000000;
-
-          padding: 26px 28px 24px;
-
-          box-sizing: border-box;
-        }
-
-        .proliant-card-company {
-          margin: 0;
-
-          padding: 0;
-
-          color: #ffffff;
-
-          font-size: 21px;
-
-          line-height: 1.35;
-
-          font-weight: 700;
-
-          white-space: normal;
-
-          overflow-wrap: break-word;
-
-          word-break: normal;
-        }
-
-        .proliant-card-country {
-          margin-top: 5px;
-
-          color: #bdbdbd;
-
-          font-size: 14px;
-
-          line-height: 1.4;
-
-          white-space: normal;
-        }
-
-        .proliant-card-address-wrapper {
-          display: flex;
-
-          align-items: stretch;
-
-          gap: 12px;
-
-          width: 100%;
-
-          margin-top: 22px;
-
-          box-sizing: border-box;
-        }
-
-        .proliant-card-address-line {
-          width: 3px;
-
-          min-width: 3px;
-
-          background: #DA3838;
-
-          border-radius: 2px;
-
-          align-self: stretch;
-        }
-
-        .proliant-card-address {
-          flex: 1;
-
-          min-width: 0;
-
-          margin: 0;
-
-          padding: 0;
-
-          color: #e5e5e5;
-
-          font-size: 14px;
-
-          line-height: 1.6;
-
-          white-space: normal;
-
-          overflow: visible;
-
-          overflow-wrap: break-word;
-
-          word-break: normal;
-        }
-
-        .proliant-card-actions {
-          width: 100%;
-
-          margin-top: 22px;
-        }
-
-        .proliant-card-action {
-          width: 100%;
-
-          min-height: 54px;
-
-          display: flex;
-
-          align-items: center;
-
-          gap: 14px;
-
-          padding: 13px 4px;
-
-          box-sizing: border-box;
-
-          color: #ffffff;
-
-          text-decoration: none;
-
-          border-top:
-            1px solid
-            rgba(255, 255, 255, 0.10);
-
-          font-size: 13px;
-
-          font-weight: 700;
-
-          letter-spacing: 0.8px;
-
-          transition:
-            background 0.25s ease,
-            color 0.25s ease,
-            padding-left 0.25s ease;
-        }
-
-        .proliant-card-action:first-child {
-          border-top: none;
-
-          border:
-            1px solid
-            rgba(255, 255, 255, 0.8);
-
-          border-radius: 5px;
-
-          padding-left: 10px;
-
-          padding-right: 10px;
-
-          margin-bottom: 4px;
-        }
-
-        .proliant-card-action:hover {
-          color: #DA3838;
-
-          background:
-            rgba(218, 56, 56, 0.06);
-
-          padding-left: 9px;
-        }
-
-        .proliant-card-action:first-child:hover {
-          padding-left: 14px;
-        }
-
-        .proliant-card-icon {
-          width: 20px;
-
-          height: 20px;
-
-          min-width: 20px;
-
-          display: flex;
-
-          align-items: center;
-
-          justify-content: center;
-
-          color: #DA3838;
-        }
-
-        .proliant-card-icon svg {
-          width: 20px;
-
-          height: 20px;
-
-          display: block;
-        }
-
-        .maplibregl-popup {
-          max-width: none !important;
-        }
-
-        .maplibregl-popup-content {
-          padding: 0 !important;
-
-          background: transparent !important;
-
-          box-shadow: none !important;
-
-          overflow: visible !important;
-        }
-
-        .maplibregl-popup-tip {
-          display: none !important;
-        }
-
-        @media (max-width: 600px) {
-          .proliant-location-popup {
-            width: 300px;
-
-            max-width:
-              calc(100vw - 30px);
-          }
-
-          .proliant-card-header {
-            min-height: 70px;
-
-            padding:
-              10px 16px;
-          }
-
-          .proliant-card-logo {
-            width: 150px;
-
-            max-height: 46px;
-          }
-
-          .proliant-card-body {
-            padding:
-              22px 22px 20px;
-          }
-
-          .proliant-card-company {
-            font-size: 18px;
-          }
-
-          .proliant-card-country {
-            font-size: 13px;
-          }
-
-          .proliant-card-address {
-            font-size: 13px;
-
-            line-height: 1.55;
-          }
-
-          .proliant-card-action {
-            font-size: 12px;
-          }
-        }
-      `;
-
-      document.head.appendChild(style);
-    };
-
-    addCardStyles();
-
-    /* =========================================================
-       MAP
-    ========================================================= */
-
-    const mapInstance = new Map({
-      container: mapContainer.current,
-
-      style:
-        "https://tiles.openfreemap.org/styles/dark",
-
-      center: [0, 20],
-
-      zoom: 1,
-
-      renderWorldCopies: false,
-
-      attributionControl: false,
-    });
-
+      const isMobile = window.innerWidth < 768;
+
+      const mapInstance = new Map({
+        container: mapContainer.current,
+        style: "https://tiles.openfreemap.org/styles/dark",
+        center: [0, 20],
+        zoom: 1.45,
+        minZoom: window.innerWidth < 768 ? -1 : 1.35,
+        renderWorldCopies: false,
+        attributionControl: false,
+      });
     map.current = mapInstance;
 
     /* =========================================================
@@ -401,25 +66,48 @@ const LocationsMap = () => {
       "bottom-right"
     );
 
+    mapInstance.scrollZoom.disable();
+    mapInstance.doubleClickZoom.disable();
+    mapInstance.touchZoomRotate.enable();
+
     /* =========================================================
-       ZOOM BEHAVIOR
+       RESPONSIVE RESIZE
     ========================================================= */
 
-    mapInstance.scrollZoom.disable();
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(() => {
+            if (!map.current) {
+              return;
+            }
 
-    mapInstance.doubleClickZoom.disable();
+            requestAnimationFrame(() => {
+              if (!map.current) {
+                return;
+              }
 
-    mapInstance.touchZoomRotate.enable();
+              try {
+                map.current.resize();
+              } catch (error) {
+                console.warn(
+                  "Map resize skipped:",
+                  error
+                );
+              }
+            });
+          })
+        : null;
+
+    if (resizeObserver && mapContainer.current) {
+      resizeObserver.observe(mapContainer.current);
+    }
 
     /* =========================================================
        ESCAPE HTML
     ========================================================= */
 
     const escapeHtml = (value) => {
-      if (
-        value === null ||
-        value === undefined
-      ) {
+      if (value === null || value === undefined) {
         return "";
       }
 
@@ -432,7 +120,189 @@ const LocationsMap = () => {
     };
 
     /* =========================================================
-       CREATE OFFICE CARD
+       COUNTRY NORMALIZATION
+    ========================================================= */
+
+    const normalizeCountry = (name) => {
+      if (!name) {
+        return "";
+      }
+
+      const normalized = String(name)
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z]/g, "");
+
+      const aliases = {
+        usa: "unitedstatesofamerica",
+        us: "unitedstatesofamerica",
+        unitedstates: "unitedstatesofamerica",
+        uae: "unitedarabemirates",
+        dubai: "unitedarabemirates",
+      };
+
+      return aliases[normalized] || normalized;
+    };
+
+    /* =========================================================
+       GEOJSON COUNTRY NAME
+    ========================================================= */
+
+    const getCountryName = (feature) => {
+      return (
+        feature?.properties?.ADMIN ||
+        feature?.properties?.NAME ||
+        feature?.properties?.name ||
+        ""
+      );
+    };
+
+    /* =========================================================
+       COUNTRY BOUNDS
+    ========================================================= */
+
+    const getCountryBounds = (feature) => {
+      if (!feature?.geometry) {
+        return null;
+      }
+
+      const bounds = new LngLatBounds();
+
+      const addCoordinates = (coordinates) => {
+        if (!Array.isArray(coordinates)) {
+          return;
+        }
+
+        if (
+          typeof coordinates[0] === "number" &&
+          typeof coordinates[1] === "number"
+        ) {
+          bounds.extend(coordinates);
+          return;
+        }
+
+        coordinates.forEach((item) => {
+          addCoordinates(item);
+        });
+      };
+
+      addCoordinates(feature.geometry.coordinates);
+
+      return bounds.isEmpty() ? null : bounds;
+    };
+
+    /* =========================================================
+       CLOSE POPUP
+    ========================================================= */
+
+    const closePopup = () => {
+      if (popup.current) {
+        popup.current.remove();
+        popup.current = null;
+      }
+    };
+
+    /* =========================================================
+       CLEAR OFFICE HIGHLIGHTS
+    ========================================================= */
+
+    const clearOfficeHighlights = () => {
+      officeMarkers.current.forEach((marker) => {
+        const element = marker.getElement();
+
+        if (!element) {
+          return;
+        }
+
+        const image = element.querySelector("img");
+
+        if (!image) {
+          return;
+        }
+
+        image.classList.remove(
+          "scale-[1.2]",
+          "drop-shadow-2xl"
+        );
+      });
+    };
+
+    /* =========================================================
+       CLEAR COUNTRY HIGHLIGHTS
+    ========================================================= */
+
+    const clearCountryHighlights = () => {
+      countryMarkers.current.forEach((marker) => {
+        const element = marker.getElement();
+
+        if (!element) {
+          return;
+        }
+
+        const image = element.querySelector("img");
+
+        if (!image) {
+          return;
+        }
+
+        image.classList.remove(
+          "scale-[1.18]",
+          "drop-shadow-2xl"
+        );
+      });
+    };
+
+    /* =========================================================
+       CREATE WORLD LOCATION PIN
+       Tailwind only
+    ========================================================= */
+
+    const createCountryMarker = () => {
+      const element = document.createElement("div");
+
+      element.className =
+        "group relative block h-11 w-8 cursor-pointer";
+
+      const image = document.createElement("img");
+
+      image.src = pinIcon;
+      image.alt = "Location";
+
+      image.className =
+        "block h-full w-full origin-bottom object-contain transition duration-300 ease-out group-hover:scale-110 group-hover:drop-shadow-xl";
+
+      element.appendChild(image);
+
+      return element;
+    };
+
+    /* =========================================================
+       CREATE OFFICE LOCATION PIN
+       Tailwind only
+    ========================================================= */
+
+    const createOfficeMarker = () => {
+      const element = document.createElement("div");
+
+      element.className =
+        "group relative block h-11 w-8 cursor-pointer";
+
+      const image = document.createElement("img");
+
+      image.src = pinIcon;
+      image.alt = "Office location";
+
+      image.className =
+        "block h-full w-full origin-bottom object-contain transition duration-300 ease-out group-hover:scale-110 group-hover:drop-shadow-xl";
+
+      element.appendChild(image);
+
+      return element;
+    };
+
+    /* =========================================================
+       OFFICE CARD
+       Tailwind only
     ========================================================= */
 
     const createOfficeCard = (location) => {
@@ -441,80 +311,187 @@ const LocationsMap = () => {
         "Proliant Data";
 
       const country =
-        location.country?.trim() ||
-        "";
+        location.country?.trim() || "";
 
       const address =
-        location.address?.trim() ||
-        "";
-
-      const latitude =
-        Number(location.latitude);
-
-      const longitude =
-        Number(location.longitude);
+        location.address?.trim() || "";
 
       const phone =
-        location.phone?.trim() ||
-        "";
+        location.phone?.trim() || "";
 
       const email =
         location.email?.trim() ||
         "hr@proliantdatallc.com";
 
-      const googleMapsUrl =
-        `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
-
       return `
-        <div class="proliant-location-popup">
+        <div
+          class="
+            w-80
+            max-w-full
+            overflow-hidden
+            rounded-2xl
+            bg-black
+            text-white
+            shadow-2xl
+          "
+        >
 
-          <div class="proliant-card-header">
+          <!-- CARD HEADER -->
+
+          <div
+            class="
+              flex
+              min-h-26.25
+              w-full
+              items-center
+              justify-center
+              overflow-hidden
+              bg-white
+              px-5
+              py-3
+            "
+          >
 
             <img
               src="${proliantBlackLogo}"
               alt="Proliant Data"
-              class="proliant-card-logo"
+              class="
+                block
+                h-auto
+                max-h-15
+                w-48
+                max-w-full
+                object-contain
+                object-center
+              "
             />
 
           </div>
 
-          <div class="proliant-card-body">
+          <!-- CARD BODY -->
 
-            <h3 class="proliant-card-company">
+          <div
+            class="
+              w-full
+              bg-black
+              px-7
+              pb-6
+              pt-7
+            "
+          >
+
+            <h3
+              class="
+                m-0
+                wrap-break-word
+                text-xl
+                font-bold
+                leading-snug
+                text-white
+              "
+            >
               ${escapeHtml(companyName)}
             </h3>
 
-            <div class="proliant-card-country">
+            <div
+              class="
+                mt-1
+                text-sm
+                leading-snug
+                text-neutral-400
+              "
+            >
               ${escapeHtml(country)}
             </div>
 
-            <div class="proliant-card-address-wrapper">
+            <!-- ADDRESS -->
+
+            <div
+              class="
+                mt-5
+                flex
+                w-full
+                items-stretch
+                gap-3
+              "
+            >
 
               <div
-                class="proliant-card-address-line"
+                class="
+                  w-1
+                  shrink-0
+                  self-stretch
+                  rounded-sm
+                  bg-[#EF3B3A]
+                "
               ></div>
 
               <p
-                class="proliant-card-address"
+                class="
+                  m-0
+                  min-w-0
+                  flex-1
+                  wrap-break-word
+                  text-sm
+                  leading-relaxed
+                  text-neutral-200
+                "
               >
                 ${escapeHtml(address)}
               </p>
 
             </div>
 
-            <div class="proliant-card-actions">
+            <!-- ACTIONS -->
 
-              <!-- GET DIRECTIONS -->
+            <div
+              class="
+                mt-5
+                w-full
+              "
+            >
 
-              <a
-                href="${googleMapsUrl}"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="proliant-card-action"
+              <!-- LOCATE US -->
+
+              <button
+                type="button"
+                class="
+                  group
+                  flex
+                  min-h-14
+                  w-full
+                  items-center
+                  gap-3.5
+                  rounded
+                  border
+                  border-white/80
+                  bg-transparent
+                  px-3
+                  py-3
+                  text-left
+                  text-[13px]
+                  font-bold
+                  uppercase
+                  tracking-wide
+                  text-white
+                  transition
+                  duration-300
+                  hover:bg-[#EF3B3A]/5
+                  hover:text-[#EF3B3A]
+                "
+                data-action="locate"
               >
 
                 <span
-                  class="proliant-card-icon"
+                  class="
+                    flex
+                    h-5
+                    w-5
+                    shrink-0
+                    items-center
+                    justify-center
+                    text-[#EF3B3A]
+                  "
                 >
 
                   <svg
@@ -524,8 +501,8 @@ const LocationsMap = () => {
                     stroke-width="2"
                     stroke-linecap="round"
                     stroke-linejoin="round"
+                    class="block h-5 w-5"
                   >
-
                     <path
                       d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"
                     />
@@ -535,26 +512,55 @@ const LocationsMap = () => {
                       cy="10"
                       r="2.5"
                     />
-
                   </svg>
 
                 </span>
 
                 <span>
-                  GET DIRECTIONS
+                  LOCATE US
                 </span>
 
-              </a>
+              </button>
 
-              <!-- EMAIL -->
+              <!-- EMAIL US -->
 
               <a
                 href="mailto:${escapeHtml(email)}"
-                class="proliant-card-action"
+                class="
+                  flex
+                  min-h-14
+                  w-full
+                  items-center
+                  gap-3.5
+                  border-t
+                  border-white/10
+                  bg-transparent
+                  px-1
+                  py-3
+                  text-left
+                  text-[13px]
+                  font-bold
+                  uppercase
+                  tracking-wide
+                  text-white
+                  no-underline
+                  transition
+                  duration-300
+                  hover:bg-[#EF3B3A]/5
+                  hover:text-[#EF3B3A]
+                "
               >
 
                 <span
-                  class="proliant-card-icon"
+                  class="
+                    flex
+                    h-5
+                    w-5
+                    shrink-0
+                    items-center
+                    justify-center
+                    text-[#EF3B3A]
+                  "
                 >
 
                   <svg
@@ -564,8 +570,8 @@ const LocationsMap = () => {
                     stroke-width="2"
                     stroke-linecap="round"
                     stroke-linejoin="round"
+                    class="block h-5 w-5"
                   >
-
                     <rect
                       x="3"
                       y="5"
@@ -574,10 +580,7 @@ const LocationsMap = () => {
                       rx="2"
                     />
 
-                    <path
-                      d="m3 7 9 6 9-6"
-                    />
-
+                    <path d="m3 7 9 6 9-6" />
                   </svg>
 
                 </span>
@@ -588,50 +591,89 @@ const LocationsMap = () => {
 
               </a>
 
-              <!-- CONTACT -->
+              <!-- CONTACT US -->
 
-              <a
-                href="tel:${escapeHtml(phone)}"
-                class="proliant-card-action"
-              >
+              ${
+                phone
+                  ? `
+                    <a
+                      href="tel:${escapeHtml(phone)}"
+                      class="
+                        flex
+                        min-h-14
+                        w-full
+                        items-center
+                        gap-3.5
+                        border-t
+                        border-white/10
+                        bg-transparent
+                        px-1
+                        py-3
+                        text-left
+                        text-[13px]
+                        font-bold
+                        uppercase
+                        tracking-wide
+                        text-white
+                        no-underline
+                        transition
+                        duration-300
+                        hover:bg-[#EF3B3A]/5
+                        hover:text-[#EF3B3A]
+                      "
+                    >
 
-                <span
-                  class="proliant-card-icon"
-                >
+                      <span
+                        class="
+                          flex
+                          h-5
+                          w-5
+                          shrink-0
+                          items-center
+                          justify-center
+                          text-[#EF3B3A]
+                        "
+                      >
 
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          class="block h-5 w-5"
+                        >
+                          <path
+                            d="
+                              M22 16.92v3
+                              a2 2 0 0 1-2.18 2
+                              19.79 19.79 0 0 1-8.63-3.07
+                              19.5 19.5 0 0 1-6-6
+                              19.79 19.79 0 0 1-3.07-8.67
+                              A2 2 0 0 1 4.11 2h3
+                              a2 2 0 0 1 2 1.72
+                              12.84 12.84 0 0 0 .7 2.81
+                              2 2 0 0 1-.45 2.11
+                              L8.09 9.91
+                              a16 16 0 0 0 6 6l1.27-1.27
+                              a2 2 0 0 1 2.11-.45
+                              12.84 12.84 0 0 0 2.81.7
+                              A2 2 0 0 1 22 16.92Z
+                            "
+                          />
+                        </svg>
 
-                    <path
-                      d="M22 16.92v3a2 2 0 0 1-2.18 2
-                      19.79 19.79 0 0 1-8.63-3.07
-                      19.5 19.5 0 0 1-6-6
-                      19.79 19.79 0 0 1-3.07-8.67
-                      A2 2 0 0 1 4.11 2h3
-                      a2 2 0 0 1 2 1.72
-                      12.84 12.84 0 0 0 .7 2.81
-                      2 2 0 0 1-.45 2.11L8.09 9.91
-                      a16 16 0 0 0 6 6l1.27-1.27
-                      a2 2 0 0 1 2.11-.45
-                      12.84 12.84 0 0 0 2.81.7
-                      A2 2 0 0 1 22 16.92Z"
-                    />
+                      </span>
 
-                  </svg>
+                      <span>
+                        CONTACT US
+                      </span>
 
-                </span>
-
-                <span>
-                  CONTACT US
-                </span>
-
-              </a>
+                    </a>
+                  `
+                  : ""
+              }
 
             </div>
 
@@ -649,15 +691,14 @@ const LocationsMap = () => {
       location,
       marker
     ) => {
-
-      if (popup.current) {
-        popup.current.remove();
-
-        popup.current = null;
+      if (
+        !map.current ||
+        !mapContainer.current
+      ) {
+        return;
       }
 
-      const cardHTML =
-        createOfficeCard(location);
+      closePopup();
 
       const markerPoint =
         mapInstance.project(
@@ -667,43 +708,142 @@ const LocationsMap = () => {
       const mapWidth =
         mapContainer.current.clientWidth;
 
-      /*
-        LEFT HALF  → CARD OPENS RIGHT
-        RIGHT HALF → CARD OPENS LEFT
-      */
+      const mapHeight =
+        mapContainer.current.clientHeight;
 
       const isLeftSide =
-        markerPoint.x <
-        mapWidth / 2;
+        markerPoint.x < mapWidth / 2;
 
-      const popupAnchor =
-        isLeftSide
+      let anchor;
+
+      if (window.innerWidth < 768) {
+        if (
+          markerPoint.y >
+          mapHeight * 0.62
+        ) {
+          anchor = "bottom";
+        } else {
+          anchor = isLeftSide
+            ? "left"
+            : "right";
+        }
+      } else {
+        anchor = isLeftSide
           ? "left"
           : "right";
+      }
 
       popup.current =
         new Popup({
           closeButton: false,
-
           closeOnClick: false,
-
           closeOnMove: false,
-
           maxWidth: "none",
-
-          anchor: popupAnchor,
-
-          offset: 22,
+          anchor,
+          offset:
+            window.innerWidth < 768
+              ? 16
+              : 22,
         })
-          .setLngLat(
-            marker.getLngLat()
-          )
+          .setLngLat(marker.getLngLat())
           .setHTML(
-            cardHTML
+            createOfficeCard(location)
           )
-          .addTo(
-            mapInstance
+          .addTo(mapInstance);
+
+      /* =======================================================
+         OVERRIDE MAPLIBRE POPUP DEFAULTS
+         Tailwind utility classes only
+      ======================================================= */
+
+      const popupElement =
+        popup.current.getElement();
+
+      if (popupElement) {
+        const popupContent =
+          popupElement.querySelector(
+            ".maplibregl-popup-content"
           );
+
+        if (popupContent) {
+          popupContent.className =
+            "maplibregl-popup-content !max-w-none !overflow-visible !bg-transparent !p-0 !shadow-none";
+        }
+
+        const popupTip =
+          popupElement.querySelector(
+            ".maplibregl-popup-tip"
+          );
+
+        if (popupTip) {
+          popupTip.className =
+            "maplibregl-popup-tip !hidden";
+        }
+      }
+
+      /* =======================================================
+         LOCATE BUTTON
+      ======================================================= */
+
+      const locateButton =
+        popup.current
+          .getElement()
+          ?.querySelector(
+            '[data-action="locate"]'
+          );
+
+      if (locateButton) {
+        locateButton.addEventListener(
+          "click",
+          (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            automaticTransition.current =
+              true;
+
+            clearOfficeHighlights();
+
+            const image =
+              marker
+                .getElement()
+                .querySelector("img");
+
+            if (image) {
+              image.classList.add(
+                "scale-[1.2]",
+                "drop-shadow-2xl"
+              );
+            }
+
+            closePopup();
+
+            mapInstance.flyTo({
+              center: marker.getLngLat(),
+              zoom:
+                window.innerWidth < 768
+                  ? 12
+                  : 13,
+              speed: 0.85,
+              curve: 1.35,
+              essential: true,
+            });
+
+            mapInstance.once(
+              "moveend",
+              () => {
+                automaticTransition.current =
+                  false;
+
+                showOfficeCard(
+                  location,
+                  marker
+                );
+              }
+            );
+          }
+        );
+      }
     };
 
     /* =========================================================
@@ -713,45 +853,30 @@ const LocationsMap = () => {
     mapInstance.on(
       "load",
       async () => {
+        if (!map.current) {
+          return;
+        }
 
         try {
 
-          /* =====================================================
-             ENGLISH COUNTRY LABELS
-          ===================================================== */
-
-          const countryLayers = [
-            "place_country_major",
-            "place_country_minor",
-            "place_country_other",
-          ];
-
-          countryLayers.forEach(
-            (layerId) => {
-
-              if (
-                mapInstance.getLayer(
-                  layerId
-                )
-              ) {
-
-                mapInstance.setLayoutProperty(
-                  layerId,
-                  "text-field",
-                  [
-                    "coalesce",
-                    ["get", "name_en"],
-                    ["get", "name"],
-                  ]
-                );
-
-              }
-
+            if (window.innerWidth < 768) {
+              mapInstance.fitBounds(
+                [
+                  [-180, -60],
+                  [180, 80],
+                ],
+                {
+                  padding: 0,
+                  duration: 0,
+                  maxZoom: 0,
+                }
+              );
             }
-          );
+
+
 
           /* =====================================================
-             COUNTRY GEOJSON
+             LOAD COUNTRY GEOJSON
           ===================================================== */
 
           const countryResponse =
@@ -768,41 +893,104 @@ const LocationsMap = () => {
           const countryData =
             await countryResponse.json();
 
+          if (!map.current) {
+            return;
+          }
+
           /* =====================================================
              COUNTRY SOURCE
           ===================================================== */
 
-          mapInstance.addSource(
-            "countries",
-            {
-              type: "geojson",
-
-              data: countryData,
-            }
-          );
+          if (
+            !mapInstance.getSource(
+              "countries"
+            )
+          ) {
+            mapInstance.addSource(
+              "countries",
+              {
+                type: "geojson",
+                data: countryData,
+              }
+            );
+          }
 
           /* =====================================================
-             CLICKABLE COUNTRY LAYER
+             COUNTRY CLICK LAYER
           ===================================================== */
 
-          mapInstance.addLayer({
-            id: "countries-clickable",
-
-            type: "fill",
-
-            source: "countries",
-
-            paint: {
-              "fill-color":
-                "#DA3838",
-
-              "fill-opacity":
-                0,
-            },
-          });
+          if (
+            !mapInstance.getLayer(
+              "countries-clickable"
+            )
+          ) {
+            mapInstance.addLayer({
+              id: "countries-clickable",
+              type: "fill",
+              source: "countries",
+              paint: {
+                "fill-color":
+                  "#EF3B3A",
+                "fill-opacity": 0,
+              },
+            });
+          }
 
           /* =====================================================
-             LOAD CSV
+             SELECTED COUNTRY FILL
+          ===================================================== */
+
+          if (
+            !mapInstance.getLayer(
+              "selected-country-fill"
+            )
+          ) {
+            mapInstance.addLayer({
+              id: "selected-country-fill",
+              type: "fill",
+              source: "countries",
+              filter: [
+                "==",
+                ["get", "ADMIN"],
+                "",
+              ],
+              paint: {
+                "fill-color":
+                  "#EF3B3A",
+                "fill-opacity": 0.16,
+              },
+            });
+          }
+
+          /* =====================================================
+             SELECTED COUNTRY OUTLINE
+          ===================================================== */
+
+          if (
+            !mapInstance.getLayer(
+              "selected-country-outline"
+            )
+          ) {
+            mapInstance.addLayer({
+              id: "selected-country-outline",
+              type: "line",
+              source: "countries",
+              filter: [
+                "==",
+                ["get", "ADMIN"],
+                "",
+              ],
+              paint: {
+                "line-color":
+                  "#EF3B3A",
+                "line-width": 2.5,
+                "line-opacity": 0.95,
+              },
+            });
+          }
+
+          /* =====================================================
+             LOAD LOCATIONS CSV
           ===================================================== */
 
           const csvResponse =
@@ -819,96 +1007,65 @@ const LocationsMap = () => {
           const csvText =
             await csvResponse.text();
 
-          const parsedCSV =
-            Papa.parse(
-              csvText,
-              {
-                header: true,
+          if (!map.current) {
+            return;
+          }
 
-                skipEmptyLines: true,
-              }
-            );
+          const parsedCSV =
+            Papa.parse(csvText, {
+              header: true,
+              skipEmptyLines: true,
+            });
 
           const locations =
-            parsedCSV.data;
+            Array.isArray(
+              parsedCSV.data
+            )
+              ? parsedCSV.data
+              : [];
 
           console.log(
-            "Locations loaded from CSV:",
+            "Proliant locations:",
             locations
           );
 
           /* =====================================================
-             NORMALIZE COUNTRY
+             VALID LOCATIONS
           ===================================================== */
 
-          const normalizeCountry = (
-            name
-          ) => {
+          const validLocations =
+            locations.filter(
+              (location) => {
+                const latitude =
+                  Number(
+                    location.latitude
+                  );
 
-            if (!name) {
-              return "";
-            }
+                const longitude =
+                  Number(
+                    location.longitude
+                  );
 
-            const normalized =
-              name
-                .toLowerCase()
-                .trim()
-                .replace(
-                  /[^a-z]/g,
-                  ""
+                return (
+                  !Number.isNaN(
+                    latitude
+                  ) &&
+                  !Number.isNaN(
+                    longitude
+                  )
                 );
-
-            const aliases = {
-              usa:
-                "unitedstatesofamerica",
-
-              us:
-                "unitedstatesofamerica",
-
-              unitedstates:
-                "unitedstatesofamerica",
-
-              uae:
-                "unitedarabemirates",
-
-              dubai:
-                "unitedarabemirates",
-            };
-
-            return (
-              aliases[
-                normalized
-              ] ||
-              normalized
+              }
             );
-          };
 
           /* =====================================================
-             GET GEOJSON COUNTRY NAME
-          ===================================================== */
-
-          const getGeoJSONCountryName =
-            (feature) => {
-
-              return (
-                feature.properties?.ADMIN ||
-                feature.properties?.NAME ||
-                feature.properties?.name ||
-                ""
-              );
-
-            };
-
-          /* =====================================================
-             LOCATIONS BY COUNTRY
+             GROUP LOCATIONS BY COUNTRY
           ===================================================== */
 
           const locationsByCountry =
             {};
 
-          locations.forEach(
+          validLocations.forEach(
             (location) => {
-
               const country =
                 location.country?.trim();
 
@@ -916,141 +1073,171 @@ const LocationsMap = () => {
                 return;
               }
 
-              const countryKey =
+              const key =
                 normalizeCountry(
                   country
                 );
 
               if (
                 !locationsByCountry[
-                  countryKey
+                  key
                 ]
               ) {
-
                 locationsByCountry[
-                  countryKey
+                  key
                 ] = [];
-
               }
 
               locationsByCountry[
-                countryKey
-              ].push(
-                location
-              );
-
+                key
+              ].push(location);
             }
           );
 
-          console.log(
-            "Locations by country:",
-            locationsByCountry
-          );
-
           /* =====================================================
-             LOCATIONS BY STATE
+             FIND COUNTRY FEATURE
           ===================================================== */
 
-          const locationsByState =
-            {};
+          const getCountryFeature =
+            (countryName) => {
+              const countryKey =
+                normalizeCountry(
+                  countryName
+                );
 
-          locations.forEach(
+              return (
+                countryData.features?.find(
+                  (feature) =>
+                    normalizeCountry(
+                      getCountryName(
+                        feature
+                      )
+                    ) === countryKey
+                ) || null
+              );
+            };
+
+          /* =====================================================
+             WORLD LOCATIONS
+             
+             EXACTLY:
+             USA
+             Germany
+             India
+             UAE
+          ===================================================== */
+
+          const worldCountryNames = [
+            "USA",
+            "Germany",
+            "India",
+            "UAE",
+          ];
+
+          const worldLocations =
+            worldCountryNames
+              .map(
+                (countryName) => {
+                  const countryKey =
+                    normalizeCountry(
+                      countryName
+                    );
+
+                  return (
+                    validLocations.find(
+                      (location) =>
+                        normalizeCountry(
+                          location.country
+                        ) === countryKey
+                    ) || null
+                  );
+                }
+              )
+              .filter(Boolean);
+
+          /* =====================================================
+             INITIAL COUNTRY HIGHLIGHTS
+          ===================================================== */
+
+          const highlightedGeoCountries =
+            worldLocations
+              .map((location) =>
+                getCountryFeature(
+                  location.country
+                )
+              )
+              .filter(Boolean)
+              .map((feature) =>
+                getCountryName(feature)
+              );
+
+          if (
+            mapInstance.getLayer( "selected-country-fill"
+            )
+          ) {
+            mapInstance.setFilter(
+              "selected-country-fill",
+              [
+                "==",
+                ["get", "ADMIN"],
+                "",
+              ]
+            );
+          }
+
+          if (
+            mapInstance.getLayer(
+              "selected-country-outline"
+            )
+          ) {
+            mapInstance.setFilter(
+              "selected-country-outline",
+              [
+                "==",
+                ["get", "ADMIN"],
+                "",
+              ]
+            );
+          }
+
+          /* =====================================================
+             CREATE WORLD LOCATION PINS
+
+             IMPORTANT:
+             World pins use EXACT CSV coordinates.
+          ===================================================== */
+
+          worldLocations.forEach(
             (location) => {
+              if (!map.current) {
+                return;
+              }
 
-              const country =
+              const countryName =
                 location.country?.trim();
 
-              const state =
-                location.state?.trim();
-
-              if (
-                !country ||
-                !state
-              ) {
+              if (!countryName) {
                 return;
               }
 
               const countryKey =
                 normalizeCountry(
-                  country
+                  countryName
                 );
 
-              const stateKey =
-                state
-                  .toLowerCase()
-                  .trim();
+              const countryFeature =
+                getCountryFeature(
+                  countryName
+                );
 
-              const key =
-                `${countryKey}__${stateKey}`;
+              if (!countryFeature) {
+                console.warn(
+                  "Country not found in GeoJSON:",
+                  countryName
+                );
 
-              if (
-                !locationsByState[
-                  key
-                ]
-              ) {
-
-                locationsByState[
-                  key
-                ] = [];
-
+                return;
               }
-
-              locationsByState[
-                key
-              ].push(
-                location
-              );
-
-            }
-          );
-
-          console.log(
-            "Locations by state:",
-            locationsByState
-          );
-
-          /* =====================================================
-             CREATE MARKER
-          ===================================================== */
-
-          const createMarker =
-            () => {
-
-              const element =
-                document.createElement(
-                  "div"
-                );
-
-              element.style.width =
-                "16px";
-
-              element.style.height =
-                "16px";
-
-              element.style.background =
-                "#DA3838";
-
-              element.style.borderRadius =
-                "50%";
-
-              element.style.boxShadow =
-                "0 0 12px rgba(218, 56, 56, 0.8)";
-
-              element.style.cursor =
-                "pointer";
-
-              element.style.pointerEvents =
-                "auto";
-
-              return element;
-            };
-
-          /* =====================================================
-             CREATE OFFICE MARKERS
-          ===================================================== */
-
-          locations.forEach(
-            (location) => {
 
               const latitude =
                 Number(
@@ -1063,404 +1250,473 @@ const LocationsMap = () => {
                 );
 
               if (
-                Number.isNaN(
-                  latitude
-                ) ||
-                Number.isNaN(
-                  longitude
-                )
+                Number.isNaN(latitude) ||
+                Number.isNaN(longitude)
               ) {
                 return;
               }
 
               const element =
-                createMarker();
+                createCountryMarker();
 
               const marker =
                 new Marker({
                   element,
-
-                  anchor: "center",
+                  anchor: "bottom",
                 })
                   .setLngLat([
                     longitude,
                     latitude,
                   ])
-                  .addTo(
-                    mapInstance
+                  .addTo(mapInstance);
+
+              marker.__countryName =
+                countryName;
+
+              marker.__countryKey =
+                countryKey;
+
+              marker.__countryFeature =
+                countryFeature;
+
+              marker.__countryLocations =
+                locationsByCountry[
+                  countryKey
+                ] || [location];
+
+              /* =================================================
+                 WORLD PIN CLICK
+              ================================================= */
+
+              element.addEventListener(
+                "click",
+                (event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+
+                  if (!map.current) {
+                    return;
+                  }
+
+                  const country =
+                    marker.__countryName;
+
+                  const feature =
+                    marker.__countryFeature;
+
+                  const countryLocations =
+                    marker.__countryLocations;
+
+                  selectedCountry.current =
+                    country;
+
+                  level.current =
+                    "country";
+
+                  clearCountryHighlights();
+                  clearOfficeHighlights();
+
+                  const image =
+                    element.querySelector(
+                      "img"
+                    );
+
+                  if (image) {
+                    image.classList.add(
+                      "scale-[1.18]",
+                      "drop-shadow-2xl"
+                    );
+                  }
+
+                  closePopup();
+
+                  /* =============================================
+                     HIGHLIGHT COUNTRY
+                  ============================================= */
+
+                  const geoCountryName =
+                    getCountryName(
+                      feature
+                    );
+
+                  if (
+                    mapInstance.getLayer(
+                      "selected-country-fill"
+                    )
+                  ) {
+                    mapInstance.setFilter(
+                      "selected-country-fill",
+                      [
+                        "==",
+                        [
+                          "get",
+                          "ADMIN",
+                        ],
+                        geoCountryName,
+                      ]
+                    );
+                  }
+
+                  if (
+                    mapInstance.getLayer(
+                      "selected-country-outline"
+                    )
+                  ) {
+                    mapInstance.setFilter(
+                      "selected-country-outline",
+                      [
+                        "==",
+                        [
+                          "get",
+                          "ADMIN",
+                        ],
+                        geoCountryName,
+                      ]
+                    );
+                  }
+
+                  /* =============================================
+                     HIDE WORLD PINS
+                  ============================================= */
+
+                  countryMarkers.current.forEach(
+                    (countryMarker) => {
+                      const countryElement =
+                        countryMarker.getElement();
+
+                      if (countryElement) {
+                        countryElement.style.display =
+                          "none";
+                      }
+                    }
                   );
 
-              /* Initially hidden */
+                  /* =============================================
+                     SHOW SELECTED COUNTRY OFFICE PINS
+                  ============================================= */
+
+                  officeMarkers.current.forEach(
+                    (officeMarker) => {
+                      const officeElement =
+                        officeMarker.getElement();
+
+                      if (!officeElement) {
+                        return;
+                      }
+
+                      const officeLocation =
+                        officeMarker
+                          .__proliantLocation;
+
+                      const officeCountry =
+                        officeLocation?.country;
+
+                      if (
+                        normalizeCountry(
+                          officeCountry
+                        ) === countryKey
+                      ) {
+                        officeElement.style.display =
+                          "block";
+                      } else {
+                        officeElement.style.display =
+                          "none";
+                      }
+                    }
+                  );
+
+                  /* =============================================
+                     COUNTRY ZOOM
+
+                     Center on EXACT office coordinates
+                  ============================================= */
+
+                  const latitude =
+                    Number(
+                      location.latitude
+                    );
+
+                  const longitude =
+                    Number(
+                      location.longitude
+                    );
+
+                  automaticTransition.current =
+                    true;
+
+                  mapInstance.flyTo({
+                    center: [
+                      longitude,
+                      latitude,
+                    ],
+                    zoom:
+                      window.innerWidth < 768
+                        ? 5
+                        : 5.2,
+                    speed: 0.85,
+                    curve: 1.35,
+                    essential: true,
+                  });
+
+                  mapInstance.once(
+                    "moveend",
+                    () => {
+                      if (!map.current) {
+                        return;
+                      }
+
+                      automaticTransition.current =
+                        false;
+                    }
+                  );
+                }
+              );
+
+              countryMarkers.current.push(
+                marker
+              );
+            }
+          );
+
+          /* =====================================================
+             CREATE OFFICE LOCATION PINS
+
+             EXACT CSV COORDINATES
+          ===================================================== */
+
+          validLocations.forEach(
+            (location) => {
+              if (!map.current) {
+                return;
+              }
+
+              const latitude =
+                Number(
+                  location.latitude
+                );
+
+              const longitude =
+                Number(
+                  location.longitude
+                );
+
+              const element =
+                createOfficeMarker();
+
+              const marker =
+                new Marker({
+                  element,
+                  anchor: "bottom",
+                })
+                  .setLngLat([
+                    longitude,
+                    latitude,
+                  ])
+                  .addTo(mapInstance);
+
+              marker.__proliantLocation =
+                location;
 
               element.style.display =
                 "none";
 
               /* =================================================
-                 CURRENT CARD BEHAVIOR:
-                 HOVER → SHOW CARD
+                 OFFICE PIN HOVER
               ================================================= */
 
               element.addEventListener(
                 "mouseenter",
                 () => {
+                  if (!map.current) {
+                    return;
+                  }
 
-                  level.current =
-                    "office";
-
-                  selectedCountry.current =
+                  const officeCountry =
                     location.country;
 
-                  selectedState.current =
-                    location.state;
+                  if (
+                    selectedCountry.current &&
+                    normalizeCountry(
+                      officeCountry
+                    ) !==
+                      normalizeCountry(
+                        selectedCountry.current
+                      )
+                  ) {
+                    return;
+                  }
 
-                  console.log(
-                    "Hovered office:",
-                    location.location
-                  );
+                  mapInstance
+                    .getCanvas()
+                    .style.cursor =
+                    "pointer";
+
+                  clearOfficeHighlights();
+
+                  const image =
+                    element.querySelector(
+                      "img"
+                    );
+
+                  if (image) {
+                    image.classList.add(
+                      "scale-[1.2]",
+                      "drop-shadow-2xl"
+                    );
+                  }
 
                   showOfficeCard(
                     location,
                     marker
                   );
-
                 }
               );
-
-              markers.current.push(
-                marker
-              );
-
-            }
-          );
-
-          /* =====================================================
-             SHOW ALL MARKERS
-          ===================================================== */
-
-          const showAllMarkers =
-            () => {
-
-              markers.current.forEach(
-                (marker) => {
-
-                  marker
-                    .getElement()
-                    .style.display =
-                    "block";
-
-                }
-              );
-
-            };
-
-          /* =====================================================
-             HIDE ALL MARKERS
-          ===================================================== */
-
-          const hideAllMarkers =
-            () => {
-
-              markers.current.forEach(
-                (marker) => {
-
-                  marker
-                    .getElement()
-                    .style.display =
-                    "none";
-
-                }
-              );
-
-            };
-
-          /* =====================================================
-             WORLD LEVEL
-          ===================================================== */
-
-          showAllMarkers();
-
-          /* =====================================================
-             COUNTRY CLICK
-             
-             THIS IS THE IMPORTANT PART
-             
-             CLICK COUNTRY
-             ↓
-             FIND PROLIANT COUNTRY
-             ↓
-             GET COUNTRY GEOMETRY
-             ↓
-             CALCULATE BOUNDS
-             ↓
-             SMOOTHLY ZOOM INTO COUNTRY
-          ===================================================== */
-
-          mapInstance.on(
-            "click",
-            "countries-clickable",
-            (event) => {
-
-              /* Only allow country
-                 clicks at world level */
-
-              if (
-                level.current !==
-                "world"
-              ) {
-                return;
-              }
-
-              if (
-                !event.features ||
-                !event.features.length
-              ) {
-                return;
-              }
-
-              const country =
-                event.features[0];
-
-              /* -----------------------------------------------
-                 GET GEOJSON COUNTRY NAME
-              ------------------------------------------------ */
-
-              const geoCountry =
-                getGeoJSONCountryName(
-                  country
-                );
-
-              console.log(
-                "Clicked GeoJSON country:",
-                geoCountry
-              );
-
-              /* -----------------------------------------------
-                 NORMALIZE NAME
-              ------------------------------------------------ */
-
-              const countryKey =
-                normalizeCountry(
-                  geoCountry
-                );
-
-              /* -----------------------------------------------
-                 FIND PROLIANT LOCATIONS
-              ------------------------------------------------ */
-
-              const countryLocations =
-                locationsByCountry[
-                  countryKey
-                ];
-
-              /* -----------------------------------------------
-                 IGNORE NON-PROLIANT COUNTRIES
-              ------------------------------------------------ */
-
-              if (
-                !countryLocations ||
-                !countryLocations.length
-              ) {
-
-                console.log(
-                  "Not a Proliant country:",
-                  geoCountry
-                );
-
-                return;
-              }
-
-              /* -----------------------------------------------
-                 VALID COORDINATES
-              ------------------------------------------------ */
-
-              const validLocations =
-                countryLocations.filter(
-                  (location) =>
-                    !Number.isNaN(
-                      Number(
-                        location.latitude
-                      )
-                    ) &&
-                    !Number.isNaN(
-                      Number(
-                        location.longitude
-                      )
-                    )
-                );
-
-              if (
-                !validLocations.length
-              ) {
-                return;
-              }
-
-              /* -----------------------------------------------
-                 SAVE SELECTED COUNTRY
-              ------------------------------------------------ */
-
-              selectedCountry.current =
-                countryLocations[0].country;
-
-              level.current =
-                "country";
-
-              console.log(
-                "Proliant country selected:",
-                selectedCountry.current
-              );
-
-              automaticTransition.current =
-                true;
 
               /* =================================================
-                 COUNTRY ZOOM
+                 OFFICE PIN CLICK
               ================================================= */
 
-              const geometry =
-                country.geometry;
+              element.addEventListener(
+                "click",
+                (event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
 
-              if (!geometry) {
+                  if (!map.current) {
+                    return;
+                  }
 
-                console.log(
-                  "Country geometry missing"
-                );
-
-                automaticTransition.current =
-                  false;
-
-                return;
-              }
-
-              /* -----------------------------------------------
-                 CREATE EMPTY BOUNDS
-              ------------------------------------------------ */
-
-              const bounds =
-                new LngLatBounds();
-
-              /* -----------------------------------------------
-                 RECURSIVELY READ GEOJSON
-                 
-                 Handles:
-                 Polygon
-                 MultiPolygon
-              ------------------------------------------------ */
-
-              const addCoordinates =
-                (coordinates) => {
+                  const officeCountry =
+                    location.country;
 
                   if (
-                    !Array.isArray(
-                      coordinates
-                    )
+                    selectedCountry.current &&
+                    normalizeCountry(
+                      officeCountry
+                    ) !==
+                      normalizeCountry(
+                        selectedCountry.current
+                      )
                   ) {
                     return;
                   }
 
-                  /* Single coordinate:
-                     [longitude, latitude] */
+                  level.current =
+                    "office";
 
-                  if (
-                    typeof coordinates[0] ===
-                      "number" &&
-                    typeof coordinates[1] ===
-                      "number"
-                  ) {
+                  clearOfficeHighlights();
 
-                    bounds.extend(
-                      coordinates
+                  const image =
+                    element.querySelector(
+                      "img"
                     );
 
-                    return;
+                  if (image) {
+                    image.classList.add(
+                      "scale-[1.2]",
+                      "drop-shadow-2xl"
+                    );
                   }
 
-                  /* Nested coordinates */
+                  closePopup();
 
-                  coordinates.forEach(
-                    (item) => {
+                  automaticTransition.current =
+                    true;
 
-                      addCoordinates(
-                        item
+                  mapInstance.flyTo({
+                    center:
+                      marker.getLngLat(),
+                    zoom:
+                      window.innerWidth < 768
+                        ? 12
+                        : 13,
+                    speed: 0.85,
+                    curve: 1.35,
+                    essential: true,
+                  });
+
+                  mapInstance.once(
+                    "moveend",
+                    () => {
+                      if (!map.current) {
+                        return;
+                      }
+
+                      automaticTransition.current =
+                        false;
+
+                      showOfficeCard(
+                        location,
+                        marker
                       );
-
                     }
                   );
-                };
-
-              addCoordinates(
-                geometry.coordinates
-              );
-
-              /* -----------------------------------------------
-                 SAFETY CHECK
-              ------------------------------------------------ */
-
-              if (
-                bounds.isEmpty()
-              ) {
-
-                console.log(
-                  "Country bounds are empty"
-                );
-
-                automaticTransition.current =
-                  false;
-
-                return;
-              }
-
-              console.log(
-                "Country bounds:",
-                bounds
+                }
               );
 
               /* =================================================
-                 SMOOTH COUNTRY ZOOM EFFECT
+                 OFFICE PIN LEAVE
               ================================================= */
 
-              mapInstance.fitBounds(
-                bounds,
-                {
-                  padding: {
-                    top: 120,
-                    bottom: 120,
-                    left: 120,
-                    right: 120,
-                  },
-
-                  maxZoom: 5.2,
-
-                  duration: 1800,
-
-                  essential: true,
-                }
-              );
-
-              /* -----------------------------------------------
-                 AFTER ZOOM
-              ------------------------------------------------ */
-
-              mapInstance.once(
-                "moveend",
+              element.addEventListener(
+                "mouseleave",
                 () => {
+                  if (!map.current) {
+                    return;
+                  }
 
-                  automaticTransition.current =
-                    false;
-
+                  mapInstance
+                    .getCanvas()
+                    .style.cursor =
+                    "";
                 }
               );
 
+              officeMarkers.current.push(
+                marker
+              );
             }
           );
 
           /* =====================================================
-             COUNTRY HOVER / CURSOR
+             WORLD INITIAL STATE
+          ===================================================== */
+
+          countryMarkers.current.forEach(
+            (marker) => {
+              const element =
+                marker.getElement();
+
+              if (element) {
+                element.style.display =
+                  "block";
+              }
+            }
+          );
+
+          officeMarkers.current.forEach(
+            (marker) => {
+              const element =
+                marker.getElement();
+
+              if (element) {
+                element.style.display =
+                  "none";
+              }
+            }
+          );
+
+          /* =====================================================
+             COUNTRY LAYER HOVER
           ===================================================== */
 
           mapInstance.on(
             "mouseenter",
             "countries-clickable",
-            (event) => {
+            () => {
+              if (!map.current) {
+                return;
+              }
 
               if (
                 level.current !==
@@ -1469,39 +1725,10 @@ const LocationsMap = () => {
                 return;
               }
 
-              if (
-                !event.features ||
-                !event.features.length
-              ) {
-                return;
-              }
-
-              const country =
-                event.features[0];
-
-              const geoCountry =
-                getGeoJSONCountryName(
-                  country
-                );
-
-              const countryKey =
-                normalizeCountry(
-                  geoCountry
-                );
-
-              if (
-                locationsByCountry[
-                  countryKey
-                ]
-              ) {
-
-                mapInstance
-                  .getCanvas()
-                  .style.cursor =
-                  "pointer";
-
-              }
-
+              mapInstance
+                .getCanvas()
+                .style.cursor =
+                "pointer";
             }
           );
 
@@ -1509,145 +1736,33 @@ const LocationsMap = () => {
             "mouseleave",
             "countries-clickable",
             () => {
+              if (!map.current) {
+                return;
+              }
 
               mapInstance
                 .getCanvas()
                 .style.cursor =
                 "";
-
             }
           );
 
           /* =====================================================
-             ZOOM LEVEL LOGIC
+             MAP ZOOM CHANGE
           ===================================================== */
 
           mapInstance.on(
             "zoomend",
             () => {
-
               if (
+                !map.current ||
                 automaticTransition.current
               ) {
                 return;
               }
 
-              const zoom =
+              const currentZoom =
                 mapInstance.getZoom();
-
-              /* ===============================================
-                 OFFICE → STATE
-              =============================================== */
-
-              if (
-                level.current ===
-                  "office" &&
-                zoom <= 11
-              ) {
-
-                console.log(
-                  "OFFICE → STATE"
-                );
-
-                level.current =
-                  "state";
-
-                automaticTransition.current =
-                  true;
-
-                if (popup.current) {
-
-                  popup.current.remove();
-
-                  popup.current =
-                    null;
-                }
-
-                const center =
-                  mapInstance.getCenter();
-
-                mapInstance.flyTo({
-
-                  center: [
-                    center.lng,
-                    center.lat,
-                  ],
-
-                  zoom: 6,
-
-                  speed: 1.2,
-
-                  curve: 1.5,
-
-                  essential: true,
-
-                });
-
-                mapInstance.once(
-                  "moveend",
-                  () => {
-
-                    automaticTransition.current =
-                      false;
-
-                  }
-                );
-
-                return;
-              }
-
-              /* ===============================================
-                 STATE → COUNTRY
-              =============================================== */
-
-              if (
-                level.current ===
-                  "state" &&
-                zoom <= 5
-              ) {
-
-                console.log(
-                  "STATE → COUNTRY"
-                );
-
-                level.current =
-                  "country";
-
-                automaticTransition.current =
-                  true;
-
-                const center =
-                  mapInstance.getCenter();
-
-                mapInstance.flyTo({
-
-                  center: [
-                    center.lng,
-                    center.lat,
-                  ],
-
-                  zoom: 4.5,
-
-                  speed: 1.2,
-
-                  curve: 1.5,
-
-                  essential: true,
-
-                });
-
-                mapInstance.once(
-                  "moveend",
-                  () => {
-
-                    automaticTransition.current =
-                      false;
-
-                  }
-                );
-
-                return;
-              }
 
               /* ===============================================
                  COUNTRY → WORLD
@@ -1656,72 +1771,214 @@ const LocationsMap = () => {
               if (
                 level.current ===
                   "country" &&
-                zoom <= 3.5
+                currentZoom < 2.2
               ) {
-
-                console.log(
-                  "COUNTRY → WORLD"
-                );
-
                 level.current =
                   "world";
 
-                automaticTransition.current =
-                  true;
+                selectedCountry.current =
+                  null;
 
-                if (popup.current) {
+                clearCountryHighlights();
+                clearOfficeHighlights();
 
-                  popup.current.remove();
+                closePopup();
 
-                  popup.current =
-                    null;
+                /* =============================================
+                   RESTORE INITIAL 4 COUNTRY HIGHLIGHTS
+                ============================================= */
+
+                if (
+                  mapInstance.getLayer(
+                    "selected-country-fill"
+                  )
+                ) {
+                  mapInstance.setFilter(
+                    "selected-country-fill",
+                    [
+                      "==",
+                      ["get", "ADMIN"],
+                      "",
+                    ]
+                  );
                 }
 
-                mapInstance.flyTo({
+                if (
+                  mapInstance.getLayer(
+                    "selected-country-outline"
+                  )
+                ) {
+                  mapInstance.setFilter(
+                    "selected-country-outline",
+                    [
+                      "==",
+                      ["get", "ADMIN"],
+                      "",
+                    ]
+                  );
+                }
 
-                  center: [
-                    0,
-                    20,
-                  ],
+                /* =============================================
+                   SHOW WORLD PINS
+                ============================================= */
 
-                  zoom: 1,
+                countryMarkers.current.forEach(
+                  (marker) => {
+                    const element =
+                      marker.getElement();
 
-                  speed: 1.2,
-
-                  curve: 1.5,
-
-                  essential: true,
-
-                });
-
-                mapInstance.once(
-                  "moveend",
-                  () => {
-
-                    automaticTransition.current =
-                      false;
-
-                    showAllMarkers();
-
+                    if (element) {
+                      element.style.display =
+                        "block";
+                    }
                   }
                 );
 
-                return;
-              }
+                /* =============================================
+                   HIDE OFFICE PINS
+                ============================================= */
 
+                officeMarkers.current.forEach(
+                  (marker) => {
+                    const element =
+                      marker.getElement();
+
+                    if (element) {
+                      element.style.display =
+                        "none";
+                    }
+                  }
+                );
+              }
             }
           );
 
-        } catch (error) {
+          /* =====================================================
+             MAP MOVE START
+          ===================================================== */
 
-          console.error(
-            "LocationsMap error:",
-            error
+          mapInstance.on(
+            "movestart",
+            () => {
+              if (
+                popup.current &&
+                !automaticTransition.current
+              ) {
+                closePopup();
+              }
+            }
           );
 
+          /* =====================================================
+             INITIAL SAFE RESIZE
+          ===================================================== */
+
+          requestAnimationFrame(() => {
+            if (!map.current) {
+              return;
+            }
+
+            try {
+              map.current.resize();
+            } catch (error) {
+              console.warn(
+                "Initial map resize skipped:",
+                error
+              );
+            }
+          });
+
+          /* =====================================================
+             DELAYED SAFE RESIZE
+          ===================================================== */
+
+          setTimeout(() => {
+            if (!map.current) {
+              return;
+            }
+
+            try {
+              map.current.resize();
+            } catch (error) {
+              console.warn(
+                "Delayed map resize skipped:",
+                error
+              );
+            }
+          }, 300);
+
+          setTimeout(() => {
+            if (!map.current) {
+              return;
+            }
+
+            try {
+              map.current.resize();
+            } catch (error) {
+              console.warn(
+                "Final map resize skipped:",
+                error
+              );
+            }
+          }, 1000);
+        } catch (error) {
+          console.error(
+            "Locations map initialization failed:",
+            error
+          );
+        }
+      }
+    );
+
+    /* =========================================================
+       MAP ERROR
+    ========================================================= */
+
+    mapInstance.on(
+      "error",
+      (event) => {
+        if (event?.error) {
+          console.warn(
+            "MapLibre map error:",
+            event.error
+          );
+        }
+      }
+    );
+
+    /* =========================================================
+       WINDOW RESIZE
+    ========================================================= */
+
+    const handleResize = () => {
+      if (!map.current) {
+        return;
+      }
+
+      requestAnimationFrame(() => {
+        if (!map.current) {
+          return;
         }
 
-      }
+        try {
+          map.current.resize();
+        } catch (error) {
+          console.warn(
+            "Window map resize skipped:",
+            error
+          );
+        }
+      });
+    };
+
+    window.addEventListener(
+      "resize",
+      handleResize
+    );
+
+    window.addEventListener(
+      "orientationchange",
+      handleResize
     );
 
     /* =========================================================
@@ -1729,37 +1986,177 @@ const LocationsMap = () => {
     ========================================================= */
 
     return () => {
+      window.removeEventListener(
+        "resize",
+        handleResize
+      );
 
-      if (popup.current) {
+      window.removeEventListener(
+        "orientationchange",
+        handleResize
+      );
 
-        popup.current.remove();
-
-        popup.current = null;
+      if (resizeObserver) {
+        resizeObserver.disconnect();
       }
 
-      markers.current.forEach(
+      closePopup();
+
+      countryMarkers.current.forEach(
         (marker) => {
-
-          marker.remove();
-
+          try {
+            marker.remove();
+          } catch (error) {
+            console.warn(
+              "Country marker cleanup skipped:",
+              error
+            );
+          }
         }
       );
 
-      markers.current = [];
+      officeMarkers.current.forEach(
+        (marker) => {
+          try {
+            marker.remove();
+          } catch (error) {
+            console.warn(
+              "Office marker cleanup skipped:",
+              error
+            );
+          }
+        }
+      );
 
-      mapInstance.remove();
+      countryMarkers.current = [];
+      officeMarkers.current = [];
 
-      map.current = null;
+      if (map.current) {
+        try {
+          map.current.remove();
+        } catch (error) {
+          console.warn(
+            "Map cleanup skipped:",
+            error
+          );
+        }
 
+        map.current = null;
+      }
+
+      level.current = "world";
+      selectedCountry.current = null;
+      automaticTransition.current = false;
     };
-
   }, []);
 
+  /* ===========================================================
+     SECTION UI
+  =========================================================== */
+
   return (
-    <div
-      ref={mapContainer}
-      className="w-full h-[900px]"
-    />
+    <section
+      id="locations"
+      className="
+        relative
+        overflow-hidden
+        bg-black
+        py-12
+        text-white
+      "
+    >
+      {/* =======================================================
+          MAP
+      ======================================================= */}
+
+      <div
+        className="
+          mx-auto
+          w-full
+          max-w-7xl
+          px-0
+          sm:px-4
+          md:px-6
+          lg:px-8
+        "
+      >
+        <div
+          className="
+            relative
+            overflow-hidden
+            rounded-none
+            border-y
+            border-white/10
+            bg-neutral-950
+            sm:rounded-2xl
+            sm:border
+          "
+        >
+          <div
+            ref={mapContainer}
+            className="
+              h-75
+              w-full
+              sm:h-100
+              md:h-135
+              xl:h-155
+            "
+          />
+
+          {/* ===================================================
+              SUBTLE MAP OVERLAY
+          =================================================== */}
+
+          <div
+            className="
+              pointer-events-none
+              absolute
+              inset-0
+              z-10
+              bg-linear-to-b
+              from-black/10
+              via-transparent
+              to-black/20
+            "
+          />
+
+          {/* ===================================================
+              MAP LABEL
+          =================================================== */}
+
+          <div
+            className="
+              pointer-events-none
+              absolute
+              left-4
+              top-4
+              z-20
+              sm:left-6
+              sm:top-6
+            "
+          >
+            <div
+              className="
+                rounded-full
+                border
+                border-white/10
+                bg-black/55
+                px-4
+                py-2
+                text-xs
+                font-medium
+                uppercase
+                tracking-wide
+                text-white/70
+                backdrop-blur-md
+              "
+            >
+              Global Locations
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 };
 
