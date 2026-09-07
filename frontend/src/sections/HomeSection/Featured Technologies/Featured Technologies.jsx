@@ -465,14 +465,16 @@ const FeaturedTechnologies = () => {
                 ======================================= */}
 
                 {/* ======================================
-    DETAIL CARD
-    OPENS FROM PLUS ICON
-======================================= */}
+                    DETAIL CARD
+                    OPENS FROM PLUS ICON
+                ======================================= */}
 
                 <div
                   className={`
                     absolute
-                    inset-8
+                    bottom-36
+                    left-4
+                    right-4
                     z-20
                     flex
                     items-start
@@ -482,14 +484,20 @@ const FeaturedTechnologies = () => {
                     border
                     border-black/10
                     bg-white
-                    p-4
+                    p-3
                     text-black
                     shadow-2xl
                     origin-bottom-right
                     transition-all
                     duration-500
                     ease-out
-                    md:inset-10
+                    sm:bottom-28
+                    sm:left-5
+                    sm:right-5
+                    sm:p-4
+                    md:bottom-28
+                    md:left-6
+                    md:right-6
                     md:p-5
                     ${
                       isOpen

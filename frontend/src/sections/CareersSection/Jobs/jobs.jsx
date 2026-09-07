@@ -375,8 +375,7 @@ const Jobs = () => {
 
                     <span
                       className="
-                        max-w-40
-                   
+                        max-w-40  
                         text-[10px]
                         font-medium
                         uppercase

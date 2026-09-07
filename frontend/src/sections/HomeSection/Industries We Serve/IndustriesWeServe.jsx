@@ -592,6 +592,7 @@ const IndustriesWeServe = () => {
                       group-hover:opacity-100
                     "
                   />
+                  
                   <h3
                     className="
                       relative

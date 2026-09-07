@@ -9,11 +9,12 @@ const Hero = () => {
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
       const lines = lineRefs.current;
+      const isMobile = window.innerWidth < 768;
 
       gsap.set(lines, {
         opacity: 0,
-        y: 45,
-        filter: "blur(12px)",
+        y: isMobile ? 25 : 45,
+        filter: isMobile ? "blur(8px)" : "blur(12px)",
       });
 
       const tl = gsap.timeline({
@@ -26,7 +27,7 @@ const Hero = () => {
         opacity: 1,
         y: 0,
         filter: "blur(0px)",
-        duration: 1.1,
+        duration: isMobile ? 0.8 : 1.1,
       })
         .to(
           lines[1],
@@ -34,9 +35,9 @@ const Hero = () => {
             opacity: 1,
             y: 0,
             filter: "blur(0px)",
-            duration: 1.1,
+            duration: isMobile ? 0.8 : 1.1,
           },
-          "-=0.55"
+          isMobile ? "-=0.4" : "-=0.55"
         )
         .to(
           lines[2],
@@ -44,9 +45,9 @@ const Hero = () => {
             opacity: 1,
             y: 0,
             filter: "blur(0px)",
-            duration: 1.1,
+            duration: isMobile ? 0.8 : 1.1,
           },
-          "-=0.55"
+          isMobile ? "-=0.4" : "-=0.55"
         );
     }, heroRef);
 
@@ -56,13 +57,12 @@ const Hero = () => {
   return (
     <section
       ref={heroRef}
-      className="relative min-h-screen overflow-hidden bg-black text-white"
+      className="relative h-75 overflow-hidden bg-black text-white sm:h-72 md:min-h-screen"
     >
 
       {/* =========================
           WEB THREADS BACKGROUND
       ========================== */}
-
       <div className="absolute inset-0 z-0">
         <WebThreads
           color1="#DA3838"
@@ -92,22 +92,20 @@ const Hero = () => {
       {/* =========================
           DARK OVERLAY
       ========================== */}
-
-      <div className="absolute inset-0 z-1 bg-black/40 pointer-events-none" />
+      <div className="pointer-events-none absolute inset-0 z-1 bg-black/40" />
 
       {/* =========================
           HERO TEXT
       ========================== */}
-
-      <div className="relative z-2 min-h-screen flex items-center pt-16">
-        <div className="max-w-7xl mx-auto w-full px-8">
+      <div className="relative z-2 flex h-full items-center pt-8 sm:pt-10 md:min-h-screen md:pt-16">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 md:px-8">
 
           <div className="max-w-6xl">
 
             {/* Line 1 */}
             <h1
               ref={(el) => (lineRefs.current[0] = el)}
-              className="text-[clamp(2rem,8vw,3rem)] md:text-5xl lg:text-6xl font-bold leading-[1.15]"
+              className="text-xl font-bold leading-[1.15] sm:text-2xl md:text-5xl lg:text-6xl"
             >
               Your Trusted Partner in Accelerating
             </h1>
@@ -115,7 +113,7 @@ const Hero = () => {
             {/* Line 2 */}
             <h1
               ref={(el) => (lineRefs.current[1] = el)}
-              className="text-[clamp(2rem,8vw,3rem)] md:text-5xl lg:text-6xl font-bold leading-[1.15]"
+              className="text-xl font-bold leading-[1.15] sm:text-2xl md:text-5xl lg:text-6xl"
             >
               Digital Transformation &
             </h1>
@@ -123,7 +121,7 @@ const Hero = () => {
             {/* Line 3 */}
             <h1
               ref={(el) => (lineRefs.current[2] = el)}
-              className="text-[clamp(2rem,8vw,3rem)] md:text-5xl lg:text-6xl font-bold leading-[1.15]"
+              className="text-xl font-bold leading-[1.15] sm:text-2xl md:text-5xl lg:text-6xl"
             >
               Data-Driven Innovation
             </h1>
