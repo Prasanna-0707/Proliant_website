@@ -33,6 +33,11 @@ const LocationsMap = () => {
   const selectedCountry = useRef(null);
   const automaticTransition = useRef(false);
 
+  const initialView = useRef({
+    center: [0, 20],
+    zoom: 1.45,
+  });
+
   useEffect(() => {
     if (!mapContainer.current || map.current) {
       return;
@@ -42,17 +47,18 @@ const LocationsMap = () => {
        MAP INITIALIZATION
     ========================================================= */
 
-      const isMobile = window.innerWidth < 768;
+    const isMobile = window.innerWidth < 768;
 
-      const mapInstance = new Map({
-        container: mapContainer.current,
-        style: "https://tiles.openfreemap.org/styles/dark",
-        center: [0, 20],
-        zoom: 1.45,
-        minZoom: window.innerWidth < 768 ? -1 : 1.35,
-        renderWorldCopies: false,
-        attributionControl: false,
-      });
+    const mapInstance = new Map({
+      container: mapContainer.current,
+      style: "https://tiles.openfreemap.org/styles/dark",
+      center: initialView.current.center,
+      zoom: initialView.current.zoom,
+      minZoom: isMobile ? -1 : 1.35,
+      renderWorldCopies: false,
+      attributionControl: false,
+    });
+
     map.current = mapInstance;
 
     /* =========================================================
@@ -254,14 +260,14 @@ const LocationsMap = () => {
 
     /* =========================================================
        CREATE WORLD LOCATION PIN
-       Tailwind only
+       Slightly reduced size
     ========================================================= */
 
     const createCountryMarker = () => {
       const element = document.createElement("div");
 
       element.className =
-        "group relative block h-11 w-8 cursor-pointer";
+        "group relative block h-10 w-7 cursor-pointer";
 
       const image = document.createElement("img");
 
@@ -278,14 +284,14 @@ const LocationsMap = () => {
 
     /* =========================================================
        CREATE OFFICE LOCATION PIN
-       Tailwind only
+       Slightly reduced size
     ========================================================= */
 
     const createOfficeMarker = () => {
       const element = document.createElement("div");
 
       element.className =
-        "group relative block h-11 w-8 cursor-pointer";
+        "group relative block h-10 w-7 cursor-pointer";
 
       const image = document.createElement("img");
 
@@ -302,7 +308,6 @@ const LocationsMap = () => {
 
     /* =========================================================
        OFFICE CARD
-       Tailwind only
     ========================================================= */
 
     const createOfficeCard = (location) => {
@@ -753,7 +758,6 @@ const LocationsMap = () => {
 
       /* =======================================================
          OVERRIDE MAPLIBRE POPUP DEFAULTS
-         Tailwind utility classes only
       ======================================================= */
 
       const popupElement =
@@ -858,22 +862,19 @@ const LocationsMap = () => {
         }
 
         try {
-
-            if (window.innerWidth < 768) {
-              mapInstance.fitBounds(
-                [
-                  [-180, -60],
-                  [180, 80],
-                ],
-                {
-                  padding: 0,
-                  duration: 0,
-                  maxZoom: 0,
-                }
-              );
-            }
-
-
+          if (window.innerWidth < 768) {
+            mapInstance.fitBounds(
+              [
+                [-180, -60],
+                [180, 80],
+              ],
+              {
+                padding: 0,
+                duration: 0,
+                maxZoom: 0,
+              }
+            );
+          }
 
           /* =====================================================
              LOAD COUNTRY GEOJSON
@@ -930,7 +931,7 @@ const LocationsMap = () => {
               source: "countries",
               paint: {
                 "fill-color":
-                  "#EF3B3A",
+                  "#FFFFFF",
                 "fill-opacity": 0,
               },
             });
@@ -938,6 +939,9 @@ const LocationsMap = () => {
 
           /* =====================================================
              SELECTED COUNTRY FILL
+
+             Red fill removed completely.
+             Country remains transparent.
           ===================================================== */
 
           if (
@@ -956,14 +960,16 @@ const LocationsMap = () => {
               ],
               paint: {
                 "fill-color":
-                  "#EF3B3A",
-                "fill-opacity": 0.16,
+                  "#FFFFFF",
+                "fill-opacity": 0,
               },
             });
           }
 
           /* =====================================================
              SELECTED COUNTRY OUTLINE
+
+             Red outline replaced with subtle white.
           ===================================================== */
 
           if (
@@ -982,9 +988,9 @@ const LocationsMap = () => {
               ],
               paint: {
                 "line-color":
-                  "#EF3B3A",
-                "line-width": 2.5,
-                "line-opacity": 0.95,
+                  "#FFFFFF",
+                "line-width": 2,
+                "line-opacity": 0.9,
               },
             });
           }
@@ -1119,7 +1125,7 @@ const LocationsMap = () => {
 
           /* =====================================================
              WORLD LOCATIONS
-             
+
              EXACTLY:
              USA
              Germany
@@ -1157,22 +1163,13 @@ const LocationsMap = () => {
 
           /* =====================================================
              INITIAL COUNTRY HIGHLIGHTS
+
+             No country fill/highlight at startup.
           ===================================================== */
 
-          const highlightedGeoCountries =
-            worldLocations
-              .map((location) =>
-                getCountryFeature(
-                  location.country
-                )
-              )
-              .filter(Boolean)
-              .map((feature) =>
-                getCountryName(feature)
-              );
-
           if (
-            mapInstance.getLayer( "selected-country-fill"
+            mapInstance.getLayer(
+              "selected-country-fill"
             )
           ) {
             mapInstance.setFilter(
@@ -1707,6 +1704,118 @@ const LocationsMap = () => {
           );
 
           /* =====================================================
+             RESET TO INITIAL WORLD STATE
+          ===================================================== */
+
+          const resetToWorldState = (
+            restoreView = false
+          ) => {
+            if (!map.current) {
+              return;
+            }
+
+            level.current = "world";
+            selectedCountry.current = null;
+
+            clearCountryHighlights();
+            clearOfficeHighlights();
+            closePopup();
+
+            /* =============================================
+               REMOVE SELECTED COUNTRY HIGHLIGHT
+            ============================================= */
+
+            if (
+              mapInstance.getLayer(
+                "selected-country-fill"
+              )
+            ) {
+              mapInstance.setFilter(
+                "selected-country-fill",
+                [
+                  "==",
+                  ["get", "ADMIN"],
+                  "",
+                ]
+              );
+            }
+
+            if (
+              mapInstance.getLayer(
+                "selected-country-outline"
+              )
+            ) {
+              mapInstance.setFilter(
+                "selected-country-outline",
+                [
+                  "==",
+                  ["get", "ADMIN"],
+                  "",
+                ]
+              );
+            }
+
+            /* =============================================
+               SHOW ALL 4 COUNTRY PINS
+            ============================================= */
+
+            countryMarkers.current.forEach(
+              (marker) => {
+                const element =
+                  marker.getElement();
+
+                if (element) {
+                  element.style.display =
+                    "block";
+                }
+              }
+            );
+
+            /* =============================================
+               HIDE ALL OFFICE PINS
+            ============================================= */
+
+            officeMarkers.current.forEach(
+              (marker) => {
+                const element =
+                  marker.getElement();
+
+                if (element) {
+                  element.style.display =
+                    "none";
+                }
+              }
+            );
+
+            /* =============================================
+               RESET MAP VIEW
+            ============================================= */
+
+            if (restoreView) {
+              automaticTransition.current =
+                true;
+
+              mapInstance.easeTo({
+                center:
+                  initialView.current
+                    .center,
+                zoom:
+                  initialView.current.zoom,
+                duration: 500,
+                essential: true,
+              });
+
+              mapInstance.once(
+                "moveend",
+                () => {
+                  automaticTransition.current =
+                    false;
+                }
+              );
+            }
+          };
+
+          /* =====================================================
              COUNTRY LAYER HOVER
           ===================================================== */
 
@@ -1749,6 +1858,8 @@ const LocationsMap = () => {
 
           /* =====================================================
              MAP ZOOM CHANGE
+
+             Country / office → world reset
           ===================================================== */
 
           mapInstance.on(
@@ -1764,91 +1875,12 @@ const LocationsMap = () => {
               const currentZoom =
                 mapInstance.getZoom();
 
-              /* ===============================================
-                 COUNTRY → WORLD
-              =============================================== */
-
               if (
-                level.current ===
-                  "country" &&
-                currentZoom < 2.2
+                level.current !==
+                  "world" &&
+                currentZoom <= 2.2
               ) {
-                level.current =
-                  "world";
-
-                selectedCountry.current =
-                  null;
-
-                clearCountryHighlights();
-                clearOfficeHighlights();
-
-                closePopup();
-
-                /* =============================================
-                   RESTORE INITIAL 4 COUNTRY HIGHLIGHTS
-                ============================================= */
-
-                if (
-                  mapInstance.getLayer(
-                    "selected-country-fill"
-                  )
-                ) {
-                  mapInstance.setFilter(
-                    "selected-country-fill",
-                    [
-                      "==",
-                      ["get", "ADMIN"],
-                      "",
-                    ]
-                  );
-                }
-
-                if (
-                  mapInstance.getLayer(
-                    "selected-country-outline"
-                  )
-                ) {
-                  mapInstance.setFilter(
-                    "selected-country-outline",
-                    [
-                      "==",
-                      ["get", "ADMIN"],
-                      "",
-                    ]
-                  );
-                }
-
-                /* =============================================
-                   SHOW WORLD PINS
-                ============================================= */
-
-                countryMarkers.current.forEach(
-                  (marker) => {
-                    const element =
-                      marker.getElement();
-
-                    if (element) {
-                      element.style.display =
-                        "block";
-                    }
-                  }
-                );
-
-                /* =============================================
-                   HIDE OFFICE PINS
-                ============================================= */
-
-                officeMarkers.current.forEach(
-                  (marker) => {
-                    const element =
-                      marker.getElement();
-
-                    if (element) {
-                      element.style.display =
-                        "none";
-                    }
-                  }
-                );
+                resetToWorldState(true);
               }
             }
           );

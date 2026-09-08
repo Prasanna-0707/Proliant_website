@@ -2,6 +2,8 @@ import { useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
+import JobApplicationForm from "../../../components/common/JobApplicationForm";
+
 gsap.registerPlugin(ScrollTrigger);
 
 /* =====================================================
@@ -92,6 +94,14 @@ const Jobs = () => {
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
+      /*
+        Keep animations lighter on smaller screens
+        to avoid unnecessary scroll load/stutter.
+      */
+      const isMobile = window.matchMedia(
+        "(max-width: 767px)"
+      ).matches;
+
       /* =================================================
          SECTION LABEL
       ================================================= */
@@ -100,12 +110,12 @@ const Jobs = () => {
         ".jobs-label",
         {
           opacity: 0,
-          x: -25,
+          x: isMobile ? -15 : -25,
         },
         {
           opacity: 1,
           x: 0,
-          duration: 0.7,
+          duration: isMobile ? 0.5 : 0.7,
           ease: "power3.out",
           scrollTrigger: {
             trigger: sectionRef.current,
@@ -123,15 +133,15 @@ const Jobs = () => {
         ".jobs-title-line",
         {
           opacity: 0,
-          y: 50,
-          filter: "blur(8px)",
+          y: isMobile ? 30 : 50,
+          filter: isMobile ? "blur(5px)" : "blur(8px)",
         },
         {
           opacity: 1,
           y: 0,
           filter: "blur(0px)",
-          duration: 0.9,
-          stagger: 0.12,
+          duration: isMobile ? 0.7 : 0.9,
+          stagger: isMobile ? 0.08 : 0.12,
           ease: "power4.out",
           scrollTrigger: {
             trigger: sectionRef.current,
@@ -149,12 +159,12 @@ const Jobs = () => {
         ".jobs-description",
         {
           opacity: 0,
-          y: 25,
+          y: isMobile ? 15 : 25,
         },
         {
           opacity: 1,
           y: 0,
-          duration: 0.7,
+          duration: isMobile ? 0.55 : 0.7,
           ease: "power3.out",
           scrollTrigger: {
             trigger: sectionRef.current,
@@ -178,12 +188,12 @@ const Jobs = () => {
           card,
           {
             opacity: 0,
-            y: 45,
+            y: isMobile ? 25 : 45,
           },
           {
             opacity: 1,
             y: 0,
-            duration: 0.7,
+            duration: isMobile ? 0.55 : 0.7,
             ease: "power3.out",
             scrollTrigger: {
               trigger: card,
@@ -208,7 +218,6 @@ const Jobs = () => {
 
   const openApplicationForm = (job) => {
     setSelectedJob(job);
-    document.body.style.overflow = "hidden";
   };
 
   /* =====================================================
@@ -217,7 +226,6 @@ const Jobs = () => {
 
   const closeApplicationForm = () => {
     setSelectedJob(null);
-    document.body.style.overflow = "";
   };
 
   return (
@@ -229,7 +237,18 @@ const Jobs = () => {
       <section
         ref={sectionRef}
         id="jobs"
-        className="bg-black px-6 py-20 text-white md:px-12 md:py-24 lg:px-20 lg:py-28"
+        className="
+          bg-black
+          px-5
+          py-12
+          text-white
+          sm:px-6
+          sm:py-14
+          md:px-12
+          md:py-24
+          lg:px-20
+          lg:py-28
+        "
       >
         <div className="mx-auto max-w-7xl">
 
@@ -237,25 +256,41 @@ const Jobs = () => {
               SECTION HEADER
           ================================================= */}
 
-          <div className="border-b border-white/10 pb-10">
-
+          <div
+            className="
+              border-b
+              border-white/10
+              pb-7
+              sm:pb-8
+              md:pb-10
+            "
+          >
             <p
               className="
                 jobs-label
-                mb-5
+                mb-4
                 text-xs
                 font-medium
                 uppercase
                 tracking-[0.25em]
                 text-[#EF3B3A]
+                sm:mb-5
                 md:text-sm
               "
             >
               Open Positions
             </p>
 
-            <div className="grid gap-8 lg:grid-cols-[1fr_0.6fr] lg:items-end">
-
+            <div
+              className="
+                grid
+                gap-5
+                sm:gap-6
+                md:gap-8
+                lg:grid-cols-[1fr_0.6fr]
+                lg:items-end
+              "
+            >
               <h2
                 className="
                   text-[clamp(2rem,7vw,4.5rem)]
@@ -287,31 +322,34 @@ const Jobs = () => {
                 technology while helping organizations transform the way they
                 work.
               </p>
-
             </div>
           </div>
 
           {/* =================================================
               JOB CARDS
 
-              1 column  → mobile
-              2 columns → tablet
-              3 columns → desktop
+              Mobile       → 1 column
+              Large mobile → 2 columns
+              Tablet       → 2 columns
+              Desktop      → 3 columns
 
-              No fixed section height.
+              No unnecessary fixed height on mobile.
           ================================================= */}
 
           <div
             className="
-              mt-12
+              mt-8
               grid
               grid-cols-1
-              gap-5
-              md:grid-cols-2
+              gap-4
+              sm:mt-10
+              sm:grid-cols-2
+              sm:gap-5
+              md:mt-12
+              md:gap-5
               lg:grid-cols-3
             "
           >
-
             {jobs.map((job) => (
               <article
                 key={job.id}
@@ -320,7 +358,7 @@ const Jobs = () => {
                   group
                   relative
                   flex
-                  min-h-105
+                  min-h-0
                   flex-col
                   overflow-hidden
                   rounded-2xl
@@ -329,12 +367,10 @@ const Jobs = () => {
                   transition-all
                   duration-500
                   hover:-translate-y-2
+                  md:min-h-105
                 "
               >
-
-                {/* =================================================
-                    TOP RED ACCENT
-                ================================================== */}
+                {/* TOP RED ACCENT */}
 
                 <div
                   className="
@@ -352,30 +388,31 @@ const Jobs = () => {
                   "
                 />
 
-                {/* =================================================
-                    CARD CONTENT
-                ================================================== */}
+                {/* CARD CONTENT */}
 
-                <div className="flex flex-1 flex-col p-7">
-
+                <div
+                  className="
+                    flex
+                    flex-1
+                    flex-col
+                    p-5
+                    sm:p-6
+                    md:p-7
+                  "
+                >
                   {/* NUMBER + DEPARTMENT */}
 
-                  <div className="flex items-start justify-between gap-4">
-
-                    {/* <span
-                      className="
-                        text-xs
-                        font-semibold
-                        tracking-[0.2em]
-                        text-[#EF3B3A]
-                      "
-                    >
-                      {job.number}
-                    </span> */}
-
+                  <div
+                    className="
+                      flex
+                      items-start
+                      justify-between
+                      gap-3
+                    "
+                  >
                     <span
                       className="
-                        max-w-40  
+                        max-w-40
                         text-[10px]
                         font-medium
                         uppercase
@@ -385,22 +422,24 @@ const Jobs = () => {
                     >
                       {job.department}
                     </span>
-
                   </div>
 
                   {/* JOB TITLE */}
 
                   <h3
                     className="
-                      mt-8
+                      mt-6
                       max-w-sm
-                      text-2xl
+                      text-xl
                       font-semibold
                       leading-tight
                       tracking-tight
                       transition-colors
                       duration-300
                       group-hover:text-[#EF3B3A]
+                      sm:mt-7
+                      sm:text-2xl
+                      md:mt-8
                     "
                   >
                     {job.title}
@@ -410,73 +449,110 @@ const Jobs = () => {
 
                   <p
                     className="
-                      mt-4
+                      mt-3
                       text-sm
                       leading-6
                       text-black/55
+                      sm:mt-4
                     "
                   >
                     {job.description}
                   </p>
 
-                  {/* =================================================
-                      META
-                  ================================================== */}
+                  {/* META */}
 
                   <div
                     className="
-                      mt-auto
+                      mt-6
                       flex
                       flex-col
                       gap-2
                       border-t
                       border-black/10
-                      pt-5
+                      pt-4
+                      sm:mt-auto
+                      sm:pt-5
                     "
                   >
-
-                    <div className="flex items-center justify-between">
-
-                      <span className="text-[10px] uppercase tracking-[0.12em] text-black/40">
+                    <div
+                      className="
+                        flex
+                        items-center
+                        justify-between
+                        gap-3
+                      "
+                    >
+                      <span
+                        className="
+                          shrink-0
+                          text-[10px]
+                          uppercase
+                          tracking-[0.12em]
+                          text-black/40
+                        "
+                      >
                         Location
                       </span>
 
-                      <span className="text-xs font-medium text-black/70">
+                      <span
+                        className="
+                          text-right
+                          text-xs
+                          font-medium
+                          text-black/70
+                        "
+                      >
                         {job.location}
                       </span>
-
                     </div>
 
-                    <div className="flex items-center justify-between">
-
-                      <span className="text-[10px] uppercase tracking-[0.12em] text-black/40">
+                    <div
+                      className="
+                        flex
+                        items-center
+                        justify-between
+                        gap-3
+                      "
+                    >
+                      <span
+                        className="
+                          shrink-0
+                          text-[10px]
+                          uppercase
+                          tracking-[0.12em]
+                          text-black/40
+                        "
+                      >
                         Experience
                       </span>
 
-                      <span className="text-xs font-medium text-black/70">
+                      <span
+                        className="
+                          text-right
+                          text-xs
+                          font-medium
+                          text-black/70
+                        "
+                      >
                         {job.experience}
                       </span>
-
                     </div>
-
                   </div>
 
-                  {/* =================================================
-                      APPLY BUTTON
-                  ================================================== */}
+                  {/* APPLY BUTTON */}
 
                   <button
                     type="button"
                     onClick={() => openApplicationForm(job)}
                     className="
-                      mt-6
+                      mt-5
                       flex
                       w-full
                       items-center
                       justify-between
                       bg-black
-                      px-5
-                      py-3.5
+                      px-4
+                      py-3
                       text-xs
                       font-medium
                       uppercase
@@ -485,11 +561,12 @@ const Jobs = () => {
                       transition-all
                       duration-300
                       hover:bg-[#EF3B3A]
+                      sm:mt-6
+                      sm:px-5
+                      sm:py-3.5
                     "
                   >
-                    <span>
-                      Apply Now
-                    </span>
+                    <span>Apply Now</span>
 
                     <span
                       className="
@@ -501,14 +578,10 @@ const Jobs = () => {
                     >
                       →
                     </span>
-
                   </button>
-
                 </div>
-
               </article>
             ))}
-
           </div>
 
           {/* =================================================
@@ -517,19 +590,20 @@ const Jobs = () => {
 
           <div
             className="
-              mt-10
+              mt-8
               flex
               flex-col
               gap-3
               border-t
               border-white/10
-              pt-6
+              pt-5
+              sm:mt-9
+              sm:pt-6
               md:flex-row
               md:items-center
               md:justify-between
             "
           >
-
             <p
               className="
                 text-xs
@@ -568,452 +642,27 @@ const Jobs = () => {
                 →
               </span>
             </a>
-
           </div>
-
         </div>
       </section>
 
-      {/* =========================================================
-          APPLICATION FORM MODAL
-      ========================================================= */}
+      {/* =====================================================
+          JOB APPLICATION FORM
+
+          Render only when a job is selected.
+          The separate component handles:
+          - modal
+          - body scroll lock
+          - form scrolling
+          - Lenis prevention
+          - submission state
+      ===================================================== */}
 
       {selectedJob && (
-        <div
-          className="
-            fixed
-            inset-0
-            z-50
-            flex
-            items-center
-            justify-center
-            bg-black/80
-            p-5
-            backdrop-blur-md
-          "
-          onClick={closeApplicationForm}
-        >
-
-          <div
-            className="
-              relative
-              max-h-[90vh]
-              w-full
-              max-w-2xl
-              overflow-y-auto
-              rounded-2xl
-              bg-white
-              p-6
-              text-black
-              shadow-2xl
-              md:p-8
-            "
-            onClick={(event) => event.stopPropagation()}
-          >
-
-            {/* =================================================
-                CLOSE BUTTON
-            ================================================== */}
-
-            <button
-              type="button"
-              onClick={closeApplicationForm}
-              className="
-                absolute
-                right-5
-                top-5
-                flex
-                h-9
-                w-9
-                items-center
-                justify-center
-                rounded-full
-                border
-                border-black/10
-                text-lg
-                text-black/60
-                transition-all
-                duration-300
-                hover:border-[#EF3B3A]
-                hover:bg-[#EF3B3A]
-                hover:text-white
-              "
-              aria-label="Close application form"
-            >
-              ×
-            </button>
-
-            {/* =================================================
-                FORM HEADER
-            ================================================== */}
-
-            <div className="border-b border-black/10 pb-6 pr-10">
-
-              <p
-                className="
-                  text-xs
-                  font-medium
-                  uppercase
-                  tracking-[0.2em]
-                  text-[#EF3B3A]
-                "
-              >
-                Job Application
-              </p>
-
-              <h2
-                className="
-                  mt-3
-                  text-3xl
-                  font-semibold
-                  tracking-tight
-                  md:text-4xl
-                "
-              >
-                Apply for this role
-              </h2>
-
-              <p className="mt-3 text-sm text-black/50 md:text-base">
-                {selectedJob.title}
-              </p>
-
-            </div>
-
-            {/* =================================================
-                APPLICATION FORM
-            ================================================== */}
-
-            <form
-              className="mt-7 space-y-5"
-              onSubmit={(event) => {
-                event.preventDefault();
-
-                alert("Application form submitted successfully.");
-              }}
-            >
-
-              {/* POSITION */}
-
-              <div>
-                <label className="mb-2 block text-xs font-medium uppercase tracking-[0.15em] text-black/60">
-                  Position
-                </label>
-
-                <input
-                  type="text"
-                  value={selectedJob.title}
-                  readOnly
-                  className="
-                    w-full
-                    rounded-lg
-                    border
-                    border-black/10
-                    bg-black/3
-                    px-4
-                    py-3
-                    text-sm
-                    text-black/60
-                    outline-none
-                  "
-                />
-              </div>
-
-              {/* FULL NAME */}
-
-              <div>
-                <label className="mb-2 block text-xs font-medium uppercase tracking-[0.15em] text-black/60">
-                  Full Name
-                </label>
-
-                <input
-                  type="text"
-                  required
-                  placeholder="Enter your full name"
-                  className="
-                    w-full
-                    rounded-lg
-                    border
-                    border-black/10
-                    px-4
-                    py-3
-                    text-sm
-                    outline-none
-                    transition-colors
-                    duration-300
-                    focus:border-[#EF3B3A]
-                  "
-                />
-              </div>
-
-              {/* EMAIL + PHONE */}
-
-              <div className="grid gap-5 md:grid-cols-2">
-
-                <div>
-                  <label className="mb-2 block text-xs font-medium uppercase tracking-[0.15em] text-black/60">
-                    Email
-                  </label>
-
-                  <input
-                    type="email"
-                    required
-                    placeholder="you@example.com"
-                    className="
-                      w-full
-                      rounded-lg
-                      border
-                      border-black/10
-                      px-4
-                      py-3
-                      text-sm
-                      outline-none
-                      transition-colors
-                      duration-300
-                      focus:border-[#EF3B3A]
-                    "
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-xs font-medium uppercase tracking-[0.15em] text-black/60">
-                    Phone Number
-                  </label>
-
-                  <input
-                    type="tel"
-                    required
-                    placeholder="Enter phone number"
-                    className="
-                      w-full
-                      rounded-lg
-                      border
-                      border-black/10
-                      px-4
-                      py-3
-                      text-sm
-                      outline-none
-                      transition-colors
-                      duration-300
-                      focus:border-[#EF3B3A]
-                    "
-                  />
-                </div>
-
-              </div>
-
-              {/* LOCATION + EXPERIENCE */}
-
-              <div className="grid gap-5 md:grid-cols-2">
-
-                <div>
-                  <label className="mb-2 block text-xs font-medium uppercase tracking-[0.15em] text-black/60">
-                    Location
-                  </label>
-
-                  <input
-                    type="text"
-                    required
-                    placeholder="City / Country"
-                    className="
-                      w-full
-                      rounded-lg
-                      border
-                      border-black/10
-                      px-4
-                      py-3
-                      text-sm
-                      outline-none
-                      transition-colors
-                      duration-300
-                      focus:border-[#EF3B3A]
-                    "
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-xs font-medium uppercase tracking-[0.15em] text-black/60">
-                    Years of Experience
-                  </label>
-
-                  <input
-                    type="number"
-                    min="0"
-                    required
-                    placeholder="e.g. 3"
-                    className="
-                      w-full
-                      rounded-lg
-                      border
-                      border-black/10
-                      px-4
-                      py-3
-                      text-sm
-                      outline-none
-                      transition-colors
-                      duration-300
-                      focus:border-[#EF3B3A]
-                    "
-                  />
-                </div>
-
-              </div>
-
-              {/* QUALIFICATION */}
-
-              <div>
-                <label className="mb-2 block text-xs font-medium uppercase tracking-[0.15em] text-black/60">
-                  Highest Qualification
-                </label>
-
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. B.Tech, MBA, MCA"
-                  className="
-                    w-full
-                    rounded-lg
-                    border
-                    border-black/10
-                    px-4
-                    py-3
-                    text-sm
-                    outline-none
-                    transition-colors
-                    duration-300
-                    focus:border-[#EF3B3A]
-                  "
-                />
-              </div>
-
-              {/* CURRENT / PREVIOUS COMPANY */}
-
-              <div>
-                <label className="mb-2 block text-xs font-medium uppercase tracking-[0.15em] text-black/60">
-                  Current / Previous Company
-                </label>
-
-                <input
-                  type="text"
-                  placeholder="Company name"
-                  className="
-                    w-full
-                    rounded-lg
-                    border
-                    border-black/10
-                    px-4
-                    py-3
-                    text-sm
-                    outline-none
-                    transition-colors
-                    duration-300
-                    focus:border-[#EF3B3A]
-                  "
-                />
-              </div>
-
-              {/* RESUME */}
-
-              <div>
-                <label className="mb-2 block text-xs font-medium uppercase tracking-[0.15em] text-black/60">
-                  Resume
-                </label>
-
-                <input
-                  type="file"
-                  required
-                  accept=".pdf,.doc,.docx"
-                  className="
-                    block
-                    w-full
-                    rounded-lg
-                    border
-                    border-dashed
-                    border-black/20
-                    px-4
-                    py-4
-                    text-sm
-                    text-black/50
-                    file:mr-4
-                    file:rounded
-                    file:border-0
-                    file:bg-black
-                    file:px-4
-                    file:py-2
-                    file:text-xs
-                    file:font-medium
-                    file:uppercase
-                    file:tracking-wider
-                    file:text-white
-                  "
-                />
-
-                <p className="mt-2 text-xs text-black/35">
-                  PDF, DOC or DOCX
-                </p>
-              </div>
-
-              {/* COVER MESSAGE */}
-
-              <div>
-                <label className="mb-2 block text-xs font-medium uppercase tracking-[0.15em] text-black/60">
-                  Cover Message
-                </label>
-
-                <textarea
-                  rows="4"
-                  placeholder="Tell us briefly about yourself..."
-                  className="
-                    w-full
-                    resize-none
-                    rounded-lg
-                    border
-                    border-black/10
-                    px-4
-                    py-3
-                    text-sm
-                    outline-none
-                    transition-colors
-                    duration-300
-                    focus:border-[#EF3B3A]
-                  "
-                />
-              </div>
-
-              {/* SUBMIT */}
-
-              <button
-                type="submit"
-                className="
-                  inline-flex
-                  w-full
-                  items-center
-                  justify-center
-                  gap-3
-                  rounded-lg
-                  bg-black
-                  px-6
-                  py-4
-                  text-xs
-                  font-medium
-                  uppercase
-                  tracking-[0.18em]
-                  text-white
-                  transition-all
-                  duration-300
-                  hover:bg-[#EF3B3A]
-                "
-              >
-                Submit Application
-
-                <span className="text-base">
-                  →
-                </span>
-              </button>
-
-            </form>
-
-          </div>
-        </div>
+        <JobApplicationForm
+          selectedJob={selectedJob}
+          onClose={closeApplicationForm}
+        />
       )}
     </>
   );

@@ -39,7 +39,7 @@ const communicationLinks = [
 
 function Sidebar() {
   return (
-    <aside className="flex h-screen w-64 shrink-0 flex-col border-r border-gray-200 bg-white">
+    <aside className="fixed inset-y-0 left-0 z-40 flex h-screen w-64 shrink-0 flex-col border-r border-gray-200 bg-white">
       {/* Logo */}
       <div className="flex h-20 items-center border-b border-gray-200 px-6">
         <div>
