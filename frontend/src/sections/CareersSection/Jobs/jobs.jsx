@@ -330,13 +330,6 @@ const Jobs = () => {
 
           {/* =================================================
               JOB CARDS
-
-              Mobile       → 1 column
-              Large mobile → 2 columns
-              Tablet       → 2 columns
-              Desktop      → 3 columns
-
-              No unnecessary fixed height on mobile.
           ================================================= */}
 
           <div
@@ -375,9 +368,7 @@ const Jobs = () => {
                 "
               >
 
-                {/* =================================================
-                    TOP RED ACCENT
-                ================================================== */}
+                {/* TOP RED ACCENT */}
 
                 <div
                   className="
@@ -395,9 +386,7 @@ const Jobs = () => {
                   "
                 />
 
-                {/* =================================================
-                    CARD CONTENT
-                ================================================== */}
+                {/* CARD CONTENT */}
 
                 <div
                   className="
@@ -420,17 +409,6 @@ const Jobs = () => {
                       gap-3
                     "
                   >
-
-                    {/* <span
-                      className="
-                        text-xs
-                        font-semibold
-                        tracking-[0.2em]
-                        text-[#EF3B3A]
-                      "
-                    >
-                      {job.number}
-                    </span> */}
 
                     <span
                       className="
@@ -482,9 +460,7 @@ const Jobs = () => {
                     {job.description}
                   </p>
 
-                  {/* =================================================
-                      META
-                  ================================================== */}
+                  {/* META */}
 
                   <div
                     className="
@@ -570,9 +546,7 @@ const Jobs = () => {
 
                   </div>
 
-                  {/* =================================================
-                      APPLY BUTTON
-                  ================================================== */}
+                  {/* APPLY BUTTON */}
 
                   <button
                     type="button"
@@ -623,9 +597,7 @@ const Jobs = () => {
 
           </div>
 
-          {/* =================================================
-              BOTTOM NOTE
-          ================================================= */}
+          {/* BOTTOM NOTE */}
 
           <div
             className="
@@ -728,9 +700,7 @@ const Jobs = () => {
             onClick={(event) => event.stopPropagation()}
           >
 
-            {/* =================================================
-                CLOSE BUTTON
-            ================================================== */}
+            {/* CLOSE BUTTON */}
 
             <button
               type="button"
@@ -764,9 +734,7 @@ const Jobs = () => {
               ×
             </button>
 
-            {/* =================================================
-                FORM HEADER
-            ================================================== */}
+            {/* FORM HEADER */}
 
             <div
               className="
@@ -811,9 +779,7 @@ const Jobs = () => {
 
             </div>
 
-            {/* =================================================
-                APPLICATION FORM
-            ================================================== */}
+            {/* APPLICATION FORM */}
 
             <form
               className="
@@ -879,7 +845,7 @@ const Jobs = () => {
                     text-black/60
                   "
                 >
-                  Full Name
+                  Full Name <span className="text-[#EF3B3A]">*</span>
                 </label>
 
                 <input
@@ -918,7 +884,7 @@ const Jobs = () => {
                       text-black/60
                     "
                   >
-                    Email
+                    Email <span className="text-[#EF3B3A]">*</span>
                   </label>
 
                   <input
@@ -953,7 +919,7 @@ const Jobs = () => {
                       text-black/60
                     "
                   >
-                    Phone Number
+                    Phone Number <span className="text-[#EF3B3A]">*</span>
                   </label>
 
                   <input
@@ -1069,7 +1035,8 @@ const Jobs = () => {
                     text-black/60
                   "
                 >
-                  Highest Qualification
+                  Highest Qualification{" "}
+                  <span className="text-[#EF3B3A]">*</span>
                 </label>
 
                 <input
@@ -1128,55 +1095,121 @@ const Jobs = () => {
                 />
               </div>
 
-              {/* RESUME */}
+              {/* =================================================
+                  RESUME + NOTICE PERIOD
+              ================================================== */}
 
-              <div>
-                <label
-                  className="
-                    mb-2
-                    block
-                    text-xs
-                    font-medium
-                    uppercase
-                    tracking-[0.15em]
-                    text-black/60
-                  "
-                >
-                  Resume
-                </label>
+              <div className="grid gap-4 md:grid-cols-2 md:gap-5">
 
-                <input
-                  type="file"
-                  required
-                  accept=".pdf,.doc,.docx"
-                  className="
-                    block
-                    w-full
-                    rounded-lg
-                    border
-                    border-dashed
-                    border-black/20
-                    px-4
-                    py-4
-                    text-sm
-                    text-black/50
-                    file:mr-4
-                    file:rounded
-                    file:border-0
-                    file:bg-black
-                    file:px-4
-                    file:py-2
-                    file:text-xs
-                    file:font-medium
-                    file:uppercase
-                    file:tracking-wider
-                    file:text-white
-                  "
-                />
+                {/* RESUME */}
 
-                <p className="mt-2 text-xs text-black/35">
-                  PDF, DOC or DOCX
-                </p>
+                <div>
+                  <label
+                    className="
+                      mb-2
+                      block
+                      text-xs
+                      font-medium
+                      uppercase
+                      tracking-[0.15em]
+                      text-black/60
+                    "
+                  >
+                    Resume <span className="text-[#EF3B3A]">*</span>
+                  </label>
+
+                  <input
+                    type="file"
+                    required
+                    accept=".pdf,.doc,.docx"
+                    className="
+                      block
+                      w-full
+                      rounded-lg
+                      border
+                      border-dashed
+                      border-black/20
+                      px-4
+                      py-4
+                      text-sm
+                      text-black/50
+                      file:mr-4
+                      file:rounded
+                      file:border-0
+                      file:bg-black
+                      file:px-4
+                      file:py-2
+                      file:text-xs
+                      file:font-medium
+                      file:uppercase
+                      file:tracking-wider
+                      file:text-white
+                    "
+                  />
+
+                  <p className="mt-2 text-xs text-black/35">
+                    PDF, DOC or DOCX
+                  </p>
+                </div>
+
+                {/* NOTICE PERIOD */}
+
+                <div>
+                  <label
+                    className="
+                      mb-2
+                      block
+                      text-xs
+                      font-medium
+                      uppercase
+                      tracking-[0.15em]
+                      text-black/60
+                    "
+                  >
+                    Notice Period <span className="text-[#EF3B3A]">*</span>
+                  </label>
+
+                  <select
+                    required
+                    defaultValue=""
+                    className="
+                      w-full
+                      rounded-lg
+                      border
+                      border-black/10
+                      bg-white
+                      px-4
+                      py-3
+                      text-sm
+                      text-black/60
+                      outline-none
+                      transition-colors
+                      duration-300
+                      focus:border-[#EF3B3A]
+                    "
+                  >
+                    <option value="" disabled>
+                      Select notice period
+                    </option>
+
+                    <option value="Immediately">
+                      Immediately
+                    </option>
+
+                    <option value="15 Days">
+                      15 Days
+                    </option>
+
+                    <option value="30 Days">
+                      30 Days
+                    </option>
+
+                    <option value="90 Days">
+                      90 Days
+                    </option>
+                  </select>
+                </div>
+
               </div>
 
               {/* COVER MESSAGE */}
