@@ -2,11 +2,9 @@ import { useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-gsap.registerPlugin(ScrollTrigger);
+import JobApplicationForm from "../../../components/common/JobApplicationForm";
 
-/* =====================================================
-   DUMMY SAP JOB DATA
-===================================================== */
+gsap.registerPlugin(ScrollTrigger);
 
 const jobs = [
   {
@@ -77,32 +75,15 @@ const jobs = [
   },
 ];
 
-/* =====================================================
-   JOBS COMPONENT
-===================================================== */
-
 const Jobs = () => {
   const sectionRef = useRef(null);
-
   const [selectedJob, setSelectedJob] = useState(null);
-
-  /* =====================================================
-     GSAP ANIMATIONS
-  ===================================================== */
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
-      /*
-        Keep animations lighter on smaller screens
-        to avoid unnecessary scroll load/stutter.
-      */
       const isMobile = window.matchMedia(
         "(max-width: 767px)"
       ).matches;
-
-      /* =================================================
-         SECTION LABEL
-      ================================================= */
 
       gsap.fromTo(
         ".jobs-label",
@@ -122,10 +103,6 @@ const Jobs = () => {
           },
         }
       );
-
-      /* =================================================
-         SECTION HEADING
-      ================================================= */
 
       gsap.fromTo(
         ".jobs-title-line",
@@ -149,10 +126,6 @@ const Jobs = () => {
         }
       );
 
-      /* =================================================
-         DESCRIPTION
-      ================================================= */
-
       gsap.fromTo(
         ".jobs-description",
         {
@@ -171,13 +144,6 @@ const Jobs = () => {
           },
         }
       );
-
-      /* =================================================
-         INDIVIDUAL JOB CARDS
-
-         Every card gets its own ScrollTrigger.
-         So 5, 10 or 20 cards will work correctly.
-      ================================================= */
 
       const jobCards = gsap.utils.toArray(".job-card");
 
@@ -210,30 +176,16 @@ const Jobs = () => {
     return () => ctx.revert();
   }, []);
 
-  /* =====================================================
-     OPEN APPLICATION FORM
-  ===================================================== */
-
   const openApplicationForm = (job) => {
     setSelectedJob(job);
-    document.body.style.overflow = "hidden";
   };
-
-  /* =====================================================
-     CLOSE APPLICATION FORM
-  ===================================================== */
 
   const closeApplicationForm = () => {
     setSelectedJob(null);
-    document.body.style.overflow = "";
   };
 
   return (
     <>
-      {/* =====================================================
-          JOBS SECTION
-      ===================================================== */}
-
       <section
         ref={sectionRef}
         id="jobs"
@@ -252,9 +204,7 @@ const Jobs = () => {
       >
         <div className="mx-auto max-w-7xl">
 
-          {/* =================================================
-              SECTION HEADER
-          ================================================= */}
+          {/* SECTION HEADER */}
 
           <div
             className="
@@ -265,7 +215,6 @@ const Jobs = () => {
               md:pb-10
             "
           >
-
             <p
               className="
                 jobs-label
@@ -292,7 +241,6 @@ const Jobs = () => {
                 lg:items-end
               "
             >
-
               <h2
                 className="
                   text-[clamp(2rem,7vw,4.5rem)]
@@ -320,17 +268,14 @@ const Jobs = () => {
                   md:text-base
                 "
               >
-                Explore opportunities to work with SAP, enterprise data and
-                technology while helping organizations transform the way they
-                work.
+                Explore opportunities to work with SAP, enterprise data
+                and technology while helping organizations transform the
+                way they work.
               </p>
-
             </div>
           </div>
 
-          {/* =================================================
-              JOB CARDS
-          ================================================= */}
+          {/* JOB CARDS */}
 
           <div
             className="
@@ -346,7 +291,6 @@ const Jobs = () => {
               lg:grid-cols-3
             "
           >
-
             {jobs.map((job) => (
               <article
                 key={job.id}
@@ -367,7 +311,6 @@ const Jobs = () => {
                   md:min-h-105
                 "
               >
-
                 {/* TOP RED ACCENT */}
 
                 <div
@@ -398,8 +341,7 @@ const Jobs = () => {
                     md:p-7
                   "
                 >
-
-                  {/* NUMBER + DEPARTMENT */}
+                  {/* DEPARTMENT */}
 
                   <div
                     className="
@@ -409,7 +351,6 @@ const Jobs = () => {
                       gap-3
                     "
                   >
-
                     <span
                       className="
                         max-w-40
@@ -422,7 +363,6 @@ const Jobs = () => {
                     >
                       {job.department}
                     </span>
-
                   </div>
 
                   {/* JOB TITLE */}
@@ -475,7 +415,6 @@ const Jobs = () => {
                       sm:pt-5
                     "
                   >
-
                     <div
                       className="
                         flex
@@ -484,7 +423,6 @@ const Jobs = () => {
                         gap-3
                       "
                     >
-
                       <span
                         className="
                           shrink-0
@@ -507,7 +445,6 @@ const Jobs = () => {
                       >
                         {job.location}
                       </span>
-
                     </div>
 
                     <div
@@ -518,7 +455,6 @@ const Jobs = () => {
                         gap-3
                       "
                     >
-
                       <span
                         className="
                           shrink-0
@@ -541,9 +477,7 @@ const Jobs = () => {
                       >
                         {job.experience}
                       </span>
-
                     </div>
-
                   </div>
 
                   {/* APPLY BUTTON */}
@@ -573,9 +507,7 @@ const Jobs = () => {
                       sm:py-3.5
                     "
                   >
-                    <span>
-                      Apply Now
-                    </span>
+                    <span>Apply Now</span>
 
                     <span
                       className="
@@ -587,14 +519,10 @@ const Jobs = () => {
                     >
                       →
                     </span>
-
                   </button>
-
                 </div>
-
               </article>
             ))}
-
           </div>
 
           {/* BOTTOM NOTE */}
@@ -615,7 +543,6 @@ const Jobs = () => {
               md:justify-between
             "
           >
-
             <p
               className="
                 text-xs
@@ -654,637 +581,17 @@ const Jobs = () => {
                 →
               </span>
             </a>
-
           </div>
-
         </div>
       </section>
 
-      {/* =========================================================
-          APPLICATION FORM MODAL
-      ========================================================= */}
+      {/* JOB APPLICATION FORM */}
 
       {selectedJob && (
-        <div
-          className="
-            fixed
-            inset-0
-            z-50
-            flex
-            items-center
-            justify-center
-            bg-black/80
-            p-4
-            backdrop-blur-md
-            sm:p-5
-          "
-          onClick={closeApplicationForm}
-        >
-
-          <div
-            className="
-              relative
-              max-h-[92vh]
-              w-full
-              max-w-2xl
-              overflow-y-auto
-              rounded-2xl
-              bg-white
-              p-5
-              text-black
-              shadow-2xl
-              sm:p-6
-              md:max-h-[90vh]
-              md:p-8
-            "
-            onClick={(event) => event.stopPropagation()}
-          >
-
-            {/* CLOSE BUTTON */}
-
-            <button
-              type="button"
-              onClick={closeApplicationForm}
-              className="
-                absolute
-                right-4
-                top-4
-                flex
-                h-8
-                w-8
-                items-center
-                justify-center
-                rounded-full
-                border
-                border-black/10
-                text-lg
-                text-black/60
-                transition-all
-                duration-300
-                hover:border-[#EF3B3A]
-                hover:bg-[#EF3B3A]
-                hover:text-white
-                sm:right-5
-                sm:top-5
-                sm:h-9
-                sm:w-9
-              "
-              aria-label="Close application form"
-            >
-              ×
-            </button>
-
-            {/* FORM HEADER */}
-
-            <div
-              className="
-                border-b
-                border-black/10
-                pb-5
-                pr-9
-                sm:pb-6
-                sm:pr-10
-              "
-            >
-
-              <p
-                className="
-                  text-xs
-                  font-medium
-                  uppercase
-                  tracking-[0.2em]
-                  text-[#EF3B3A]
-                "
-              >
-                Job Application
-              </p>
-
-              <h2
-                className="
-                  mt-2
-                  text-2xl
-                  font-semibold
-                  tracking-tight
-                  sm:mt-3
-                  sm:text-3xl
-                  md:text-4xl
-                "
-              >
-                Apply for this role
-              </h2>
-
-              <p className="mt-2 text-sm text-black/50 sm:mt-3 sm:text-base">
-                {selectedJob.title}
-              </p>
-
-            </div>
-
-            {/* APPLICATION FORM */}
-
-            <form
-              className="
-                mt-5
-                space-y-4
-                sm:mt-7
-                sm:space-y-5
-              "
-              onSubmit={(event) => {
-                event.preventDefault();
-
-                alert("Application form submitted successfully.");
-              }}
-            >
-
-              {/* POSITION */}
-
-              <div>
-                <label
-                  className="
-                    mb-2
-                    block
-                    text-xs
-                    font-medium
-                    uppercase
-                    tracking-[0.15em]
-                    text-black/60
-                  "
-                >
-                  Position
-                </label>
-
-                <input
-                  type="text"
-                  value={selectedJob.title}
-                  readOnly
-                  className="
-                    w-full
-                    rounded-lg
-                    border
-                    border-black/10
-                    bg-black/3
-                    px-4
-                    py-3
-                    text-sm
-                    text-black/60
-                    outline-none
-                  "
-                />
-              </div>
-
-              {/* FULL NAME */}
-
-              <div>
-                <label
-                  className="
-                    mb-2
-                    block
-                    text-xs
-                    font-medium
-                    uppercase
-                    tracking-[0.15em]
-                    text-black/60
-                  "
-                >
-                  Full Name <span className="text-[#EF3B3A]">*</span>
-                </label>
-
-                <input
-                  type="text"
-                  required
-                  placeholder="Enter your full name"
-                  className="
-                    w-full
-                    rounded-lg
-                    border
-                    border-black/10
-                    px-4
-                    py-3
-                    text-sm
-                    outline-none
-                    transition-colors
-                    duration-300
-                    focus:border-[#EF3B3A]
-                  "
-                />
-              </div>
-
-              {/* EMAIL + PHONE */}
-
-              <div className="grid gap-4 md:grid-cols-2 md:gap-5">
-
-                <div>
-                  <label
-                    className="
-                      mb-2
-                      block
-                      text-xs
-                      font-medium
-                      uppercase
-                      tracking-[0.15em]
-                      text-black/60
-                    "
-                  >
-                    Email <span className="text-[#EF3B3A]">*</span>
-                  </label>
-
-                  <input
-                    type="email"
-                    required
-                    placeholder="you@example.com"
-                    className="
-                      w-full
-                      rounded-lg
-                      border
-                      border-black/10
-                      px-4
-                      py-3
-                      text-sm
-                      outline-none
-                      transition-colors
-                      duration-300
-                      focus:border-[#EF3B3A]
-                    "
-                  />
-                </div>
-
-                <div>
-                  <label
-                    className="
-                      mb-2
-                      block
-                      text-xs
-                      font-medium
-                      uppercase
-                      tracking-[0.15em]
-                      text-black/60
-                    "
-                  >
-                    Phone Number <span className="text-[#EF3B3A]">*</span>
-                  </label>
-
-                  <input
-                    type="tel"
-                    required
-                    placeholder="Enter phone number"
-                    className="
-                      w-full
-                      rounded-lg
-                      border
-                      border-black/10
-                      px-4
-                      py-3
-                      text-sm
-                      outline-none
-                      transition-colors
-                      duration-300
-                      focus:border-[#EF3B3A]
-                    "
-                  />
-                </div>
-
-              </div>
-
-              {/* LOCATION + EXPERIENCE */}
-
-              <div className="grid gap-4 md:grid-cols-2 md:gap-5">
-
-                <div>
-                  <label
-                    className="
-                      mb-2
-                      block
-                      text-xs
-                      font-medium
-                      uppercase
-                      tracking-[0.15em]
-                      text-black/60
-                    "
-                  >
-                    Location
-                  </label>
-
-                  <input
-                    type="text"
-                    required
-                    placeholder="City / Country"
-                    className="
-                      w-full
-                      rounded-lg
-                      border
-                      border-black/10
-                      px-4
-                      py-3
-                      text-sm
-                      outline-none
-                      transition-colors
-                      duration-300
-                      focus:border-[#EF3B3A]
-                    "
-                  />
-                </div>
-
-                <div>
-                  <label
-                    className="
-                      mb-2
-                      block
-                      text-xs
-                      font-medium
-                      uppercase
-                      tracking-[0.15em]
-                      text-black/60
-                    "
-                  >
-                    Years of Experience
-                  </label>
-
-                  <input
-                    type="number"
-                    min="0"
-                    required
-                    placeholder="e.g. 3"
-                    className="
-                      w-full
-                      rounded-lg
-                      border
-                      border-black/10
-                      px-4
-                      py-3
-                      text-sm
-                      outline-none
-                      transition-colors
-                      duration-300
-                      focus:border-[#EF3B3A]
-                    "
-                  />
-                </div>
-
-              </div>
-
-              {/* QUALIFICATION */}
-
-              <div>
-                <label
-                  className="
-                    mb-2
-                    block
-                    text-xs
-                    font-medium
-                    uppercase
-                    tracking-[0.15em]
-                    text-black/60
-                  "
-                >
-                  Highest Qualification{" "}
-                  <span className="text-[#EF3B3A]">*</span>
-                </label>
-
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. B.Tech, MBA, MCA"
-                  className="
-                    w-full
-                    rounded-lg
-                    border
-                    border-black/10
-                    px-4
-                    py-3
-                    text-sm
-                    outline-none
-                    transition-colors
-                    duration-300
-                    focus:border-[#EF3B3A]
-                  "
-                />
-              </div>
-
-              {/* CURRENT / PREVIOUS COMPANY */}
-
-              <div>
-                <label
-                  className="
-                    mb-2
-                    block
-                    text-xs
-                    font-medium
-                    uppercase
-                    tracking-[0.15em]
-                    text-black/60
-                  "
-                >
-                  Current / Previous Company
-                </label>
-
-                <input
-                  type="text"
-                  placeholder="Company name"
-                  className="
-                    w-full
-                    rounded-lg
-                    border
-                    border-black/10
-                    px-4
-                    py-3
-                    text-sm
-                    outline-none
-                    transition-colors
-                    duration-300
-                    focus:border-[#EF3B3A]
-                  "
-                />
-              </div>
-
-              {/* =================================================
-                  RESUME + NOTICE PERIOD
-              ================================================== */}
-
-              <div className="grid gap-4 md:grid-cols-2 md:gap-5">
-
-                {/* RESUME */}
-
-                <div>
-                  <label
-                    className="
-                      mb-2
-                      block
-                      text-xs
-                      font-medium
-                      uppercase
-                      tracking-[0.15em]
-                      text-black/60
-                    "
-                  >
-                    Resume <span className="text-[#EF3B3A]">*</span>
-                  </label>
-
-                  <input
-                    type="file"
-                    required
-                    accept=".pdf,.doc,.docx"
-                    className="
-                      block
-                      w-full
-                      rounded-lg
-                      border
-                      border-dashed
-                      border-black/20
-                      px-4
-                      py-4
-                      text-sm
-                      text-black/50
-                      file:mr-4
-                      file:rounded
-                      file:border-0
-                      file:bg-black
-                      file:px-4
-                      file:py-2
-                      file:text-xs
-                      file:font-medium
-                      file:uppercase
-                      file:tracking-wider
-                      file:text-white
-                    "
-                  />
-
-                  <p className="mt-2 text-xs text-black/35">
-                    PDF, DOC or DOCX
-                  </p>
-                </div>
-
-                {/* NOTICE PERIOD */}
-
-                <div>
-                  <label
-                    className="
-                      mb-2
-                      block
-                      text-xs
-                      font-medium
-                      uppercase
-                      tracking-[0.15em]
-                      text-black/60
-                    "
-                  >
-                    Notice Period <span className="text-[#EF3B3A]">*</span>
-                  </label>
-
-                  <select
-                    required
-                    defaultValue=""
-                    className="
-                      w-full
-                      rounded-lg
-                      border
-                      border-black/10
-                      bg-white
-                      px-4
-                      py-3
-                      text-sm
-                      text-black/60
-                      outline-none
-                      transition-colors
-                      duration-300
-                      focus:border-[#EF3B3A]
-                    "
-                  >
-                    <option value="" disabled>
-                      Select notice period
-                    </option>
-
-                    <option value="Immediately">
-                      Immediately
-                    </option>
-
-                    <option value="15 Days">
-                      15 Days
-                    </option>
-
-                    <option value="30 Days">
-                      30 Days
-                    </option>
-
-                    <option value="90 Days">
-                      90 Days
-                    </option>
-                  </select>
-                </div>
-
-              </div>
-
-              {/* COVER MESSAGE */}
-
-              <div>
-                <label
-                  className="
-                    mb-2
-                    block
-                    text-xs
-                    font-medium
-                    uppercase
-                    tracking-[0.15em]
-                    text-black/60
-                  "
-                >
-                  Cover Message
-                </label>
-
-                <textarea
-                  rows="4"
-                  placeholder="Tell us briefly about yourself..."
-                  className="
-                    w-full
-                    resize-none
-                    rounded-lg
-                    border
-                    border-black/10
-                    px-4
-                    py-3
-                    text-sm
-                    outline-none
-                    transition-colors
-                    duration-300
-                    focus:border-[#EF3B3A]
-                  "
-                />
-              </div>
-
-              {/* SUBMIT */}
-
-              <button
-                type="submit"
-                className="
-                  inline-flex
-                  w-full
-                  items-center
-                  justify-center
-                  gap-3
-                  rounded-lg
-                  bg-black
-                  px-6
-                  py-3.5
-                  text-xs
-                  font-medium
-                  uppercase
-                  tracking-[0.18em]
-                  text-white
-                  transition-all
-                  duration-300
-                  hover:bg-[#EF3B3A]
-                  sm:py-4
-                "
-              >
-                Submit Application
-
-                <span className="text-base">
-                  →
-                </span>
-              </button>
-
-            </form>
-
-          </div>
-        </div>
+        <JobApplicationForm
+          selectedJob={selectedJob}
+          onClose={closeApplicationForm}
+        />
       )}
     </>
   );

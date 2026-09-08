@@ -5,13 +5,13 @@ import Header from "./Header";
 
 function AdminLayout() {
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-100">
       <Sidebar />
 
       <div className="flex min-w-0 flex-1 flex-col">
         <Header />
 
-        <main className="flex-1">
+        <main className="ml-64 min-h-screen bg-gray-100">
           <Outlet />
         </main>
       </div>

@@ -210,7 +210,7 @@ const jobColumns = [
 
 function Dashboard() {
   return (
-    <div className="min-h-full bg-red-50/90 p-5 sm:p-6">
+    <div className="min-h-screen bg-gray-200 p-5 sm:p-6">
       {/* Page Heading */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight text-gray-900">
