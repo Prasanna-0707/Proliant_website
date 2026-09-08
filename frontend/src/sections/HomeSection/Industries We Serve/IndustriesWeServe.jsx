@@ -141,7 +141,7 @@ const IndustriesWeServe = () => {
     >
       {/* =====================================================
           READ MORE BUTTON STYLES
-          ANIMATIONS REMAIN THE SAME
+          SAME MASK 1 ANIMATION FOR ALL 3 BUTTONS
       ===================================================== */}
 
       <style>{`
@@ -201,6 +201,7 @@ const IndustriesWeServe = () => {
 
         /* =====================================================
            MASK 1
+           THIS IS NOW USED BY ALL 3 BUTTONS
         ===================================================== */
 
         .industry-mask1::before {
@@ -249,153 +250,13 @@ const IndustriesWeServe = () => {
 
 
         /* =====================================================
-           MASK 2
-        ===================================================== */
-
-        .industry-mask2::before {
-          content: "";
-
-          position: absolute;
-          inset: 0;
-
-          z-index: 1;
-
-          background: #EF3B3A;
-
-          -webkit-mask-image: url(
-            "https://raw.githubusercontent.com/robin-dela/css-mask-animation/master/img/nature-sprite.png"
-          );
-
-          mask-image: url(
-            "https://raw.githubusercontent.com/robin-dela/css-mask-animation/master/img/nature-sprite.png"
-          );
-
-          -webkit-mask-size: 2300% 100%;
-          mask-size: 2300% 100%;
-
-          -webkit-mask-position: 100% 0;
-          mask-position: 100% 0;
-
-          animation:
-            industryMask2Out
-            0.7s
-            steps(22)
-            forwards;
-        }
-
-        .industry-mask2:hover::before {
-          animation:
-            industryMask2In
-            0.7s
-            steps(22)
-            forwards;
-        }
-
-        @keyframes industryMask2In {
-          from {
-            -webkit-mask-position: 100% 0;
-            mask-position: 100% 0;
-          }
-
-          to {
-            -webkit-mask-position: 0 0;
-            mask-position: 0 0;
-          }
-        }
-
-        @keyframes industryMask2Out {
-          from {
-            -webkit-mask-position: 0 0;
-            mask-position: 0 0;
-          }
-
-          to {
-            -webkit-mask-position: 100% 0;
-            mask-position: 100% 0;
-          }
-        }
-
-
-        /* =====================================================
-           MASK 3
-        ===================================================== */
-
-        .industry-mask3::before {
-          content: "";
-
-          position: absolute;
-
-          inset: -2px;
-
-          z-index: 1;
-
-          background: #EF3B3A;
-
-          clip-path: polygon(
-            0 0,
-            0 0,
-            0 100%,
-            0 100%
-          );
-
-          transition:
-            clip-path
-            0.65s
-            cubic-bezier(
-              0.76,
-              0,
-              0.24,
-              1
-            );
-        }
-
-        .industry-mask3:hover::before {
-          clip-path: polygon(
-            0 0,
-            100% 0,
-            100% 100%,
-            0 100%
-          );
-        }
-
-        .industry-mask3::after {
-          content: "";
-
-          position: absolute;
-
-          top: -20%;
-          left: -40%;
-
-          width: 25%;
-          height: 140%;
-
-          z-index: 2;
-
-          background: rgba(255, 255, 255, 0.25);
-
-          transform:
-            skewX(-25deg)
-            translateX(-500%);
-
-          transition: transform 0.7s ease;
-        }
-
-        .industry-mask3:hover::after {
-          transform:
-            skewX(-25deg)
-            translateX(800%);
-        }
-
-
-        /* =====================================================
            HOVER BORDER
         ===================================================== */
 
-        .industry-mask1:hover,
-        .industry-mask2:hover,
-        .industry-mask3:hover {
+        .industry-mask1:hover {
           border-color: #EF3B3A;
         }
+
 
         /* =====================================================
            MOBILE BUTTON
@@ -466,13 +327,6 @@ const IndustriesWeServe = () => {
 
           {industries.map((industry, index) => {
             const imageLeft = index % 2 === 0;
-
-            const buttonAnimation =
-              index === 0
-                ? "industry-mask1"
-                : index === 1
-                ? "industry-mask2"
-                : "industry-mask3";
 
             return (
               <article
@@ -685,7 +539,7 @@ const IndustriesWeServe = () => {
 
                   <a
                     href="/what-we-do#industries"
-                    className={`industry-readmore ${buttonAnimation}`}
+                    className="industry-readmore industry-mask1"
                   >
                     <span className="industry-readmore-text">
                       Read More

@@ -5,9 +5,9 @@ import whatWeDoImage from "../../../assets/images/Home/whatwedo.png";
 const WhatWeDo = () => {
   return (
     <section className="bg-white py-10 text-black sm:py-12 md:py-20">
-      {/* MASK2 BUTTON ANIMATION */}
+      {/* MASK3 BUTTON ANIMATION */}
       <style>{`
-        .whatwedo-mask2-button {
+        .whatwedo-mask3-button {
           position: relative;
           width: 190px;
           height: 46px;
@@ -21,89 +21,106 @@ const WhatWeDo = () => {
           cursor: pointer;
         }
 
-        .whatwedo-mask2-button::before {
+        .whatwedo-mask3-button::before {
           content: "";
+
           position: absolute;
-          inset: 0;
+          inset: -2px;
+
+          z-index: 1;
+
           background: black;
 
-          -webkit-mask-image: url("https://raw.githubusercontent.com/robin-dela/css-mask-animation/master/img/nature-sprite.png");
-          mask-image: url("https://raw.githubusercontent.com/robin-dela/css-mask-animation/master/img/nature-sprite.png");
+          clip-path: polygon(
+            0 0,
+            0 0,
+            0 100%,
+            0 100%
+          );
 
-          -webkit-mask-size: 2300% 100%;
-          mask-size: 2300% 100%;
-
-          -webkit-mask-position: 100% 0;
-          mask-position: 100% 0;
-
-          animation: whatWeDoMaskOut 0.7s steps(22) forwards;
+          transition:
+            clip-path
+            0.65s
+            cubic-bezier(
+              0.76,
+              0,
+              0.24,
+              1
+            );
         }
 
-        .whatwedo-mask2-button:hover::before {
-          animation: whatWeDoMaskIn 0.7s steps(22) forwards;
+        .whatwedo-mask3-button:hover::before {
+          clip-path: polygon(
+            0 0,
+            100% 0,
+            100% 100%,
+            0 100%
+          );
         }
 
-        @keyframes whatWeDoMaskIn {
-          from {
-            -webkit-mask-position: 100% 0;
-            mask-position: 100% 0;
-          }
+        .whatwedo-mask3-button::after {
+          content: "";
 
-          to {
-            -webkit-mask-position: 0 0;
-            mask-position: 0 0;
-          }
-        }
+          position: absolute;
 
-        @keyframes whatWeDoMaskOut {
-          from {
-            -webkit-mask-position: 0 0;
-            mask-position: 0 0;
-          }
+          top: -20%;
+          left: -40%;
 
-          to {
-            -webkit-mask-position: 100% 0;
-            mask-position: 100% 0;
-          }
-        }
+          width: 25%;
+          height: 140%;
 
-        .whatwedo-mask2-text {
-          position: relative;
           z-index: 2;
-          color: black;
-          transition: color 0.3s ease;
+
+          background: rgba(255,255,255,0.25);
+
+          transform:
+            skewX(-25deg)
+            translateX(-500%);
+
+          transition: transform 0.7s ease;
         }
 
-        .whatwedo-mask2-button:hover .whatwedo-mask2-text {
+        .whatwedo-mask3-button:hover::after {
+          transform:
+            skewX(-25deg)
+            translateX(800%);
+        }
+
+        .whatwedo-mask3-text,
+        .whatwedo-mask3-arrow {
+          position: relative;
+          z-index: 3;
+
+          color: black;
+
+          transition:
+            color 0.3s ease,
+            transform 0.35s ease;
+        }
+
+        .whatwedo-mask3-button:hover .whatwedo-mask3-text,
+        .whatwedo-mask3-button:hover .whatwedo-mask3-arrow {
           color: white;
         }
 
-        .whatwedo-mask2-arrow {
-          position: relative;
-          z-index: 2;
-          margin-left: 14px;
-          color: black;
-          transition: color 0.3s ease, transform 0.3s ease;
-        }
-
-        .whatwedo-mask2-button:hover .whatwedo-mask2-arrow {
-          color: white;
+        .whatwedo-mask3-button:hover .whatwedo-mask3-arrow {
           transform: translateX(5px);
         }
 
         @media (max-width: 639px) {
-          .whatwedo-mask2-button {
+          .whatwedo-mask3-button {
             width: 170px;
             height: 44px;
           }
 
-          .whatwedo-mask2-arrow {
+          .whatwedo-mask3-arrow {
             margin-left: 10px;
           }
         }
       `}</style>
 
       <div className="mx-auto max-w-7xl px-5 sm:px-6 md:px-8">
+
         {/* SECTION LABEL */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
@@ -119,6 +136,7 @@ const WhatWeDo = () => {
 
         {/* MAIN CONTENT */}
         <div className="grid items-center gap-8 sm:gap-10 md:grid-cols-2 md:gap-14 lg:gap-20">
+
           {/* LEFT - TEXT */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
@@ -147,17 +165,17 @@ const WhatWeDo = () => {
               </p>
             </div>
 
-            {/* READ MORE - MASK2 ANIMATION */}
+            {/* READ MORE - MASK3 */}
             <div className="mt-6 sm:mt-7 md:mt-8">
               <a
                 href="/what-we-do"
-                className="whatwedo-mask2-button"
+                className="whatwedo-mask3-button"
               >
-                <span className="whatwedo-mask2-text">
+                <span className="whatwedo-mask3-text">
                   READ MORE
                 </span>
 
-                <span className="whatwedo-mask2-arrow">
+                <span className="whatwedo-mask3-arrow">
                   →
                 </span>
               </a>

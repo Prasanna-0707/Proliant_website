@@ -4,6 +4,7 @@ import WhatWeDo from "@/sections/HomeSection/WhatWeDo/WhatWeDo";
 
 import FeaturedTechnologies from "@/sections/HomeSection/Featured Technologies/Featured Technologies";
 import IndustriesWeServe from "@/sections/HomeSection/Industries We Serve/IndustriesWeServe";
+import ProliantAdvantage from "@/sections/HomeSection/ProliantAdvantage/ProliantAdvantage";
 import Footer from "../components/common/Footer";
 
 import ProliantInNumbers from "@/sections/HomeSection/ProliantInNumbers/ProliantInNumbers";
@@ -22,6 +23,8 @@ const Home = () => {
         <FeaturedTechnologies />
 
         <IndustriesWeServe />
+
+        <ProliantAdvantage />
         
         <Footer />
     </>

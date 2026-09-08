@@ -12,7 +12,6 @@ gsap.registerPlugin(ScrollTrigger);
 
 const industries = [
   {
-    number: "01",
     title: "Global Healthcare Leader",
     description: [
       "Multi-country rollouts with evolving scope",
@@ -29,7 +28,6 @@ const industries = [
   },
 
   {
-    number: "02",
     title: "Leading eHealth Provider",
     description: [
       "Migrated 6B+ patient records with minimal downtime",
@@ -41,7 +39,6 @@ const industries = [
   },
 
   {
-    number: "03",
     title: "Top 10 U.S. Food Corporations",
     description: [
       "Legacy procurement and inventory data caused financial discrepancies.",
@@ -53,7 +50,6 @@ const industries = [
   },
 
   {
-    number: "04",
     title: "Defense & Aerospace Manufacturer",
     description: [
       "Unstructured legacy billing data and complex order-to-cash workflows",
