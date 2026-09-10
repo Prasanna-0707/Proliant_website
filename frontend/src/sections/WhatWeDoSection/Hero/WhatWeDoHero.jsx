@@ -147,7 +147,7 @@ const WhatWeDoHero = () => {
             "#E5E5E5",
             "#EF3B3A",
           ]}
-          backgroundColor="#ffffff"
+          backgroundColor="#D12300"
           speed={0.2}
           streakCount={1}
           streakWidth={1}
