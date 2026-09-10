@@ -6,6 +6,10 @@ import JobApplicationForm from "../../../components/common/JobApplicationForm";
 
 gsap.registerPlugin(ScrollTrigger);
 
+/* =====================================================
+   DUMMY SAP JOB DATA
+===================================================== */
+
 const jobs = [
   {
     id: 1,
@@ -75,15 +79,33 @@ const jobs = [
   },
 ];
 
+/* =====================================================
+   JOBS COMPONENT
+===================================================== */
+
 const Jobs = () => {
   const sectionRef = useRef(null);
+
   const [selectedJob, setSelectedJob] = useState(null);
+  const [isApplicationFormOpen, setIsApplicationFormOpen] = useState(false);
+
+  /* =====================================================
+     GSAP ANIMATIONS
+  ===================================================== */
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
+      /*
+        Keep animations lighter on smaller screens
+        to avoid unnecessary scroll load/stutter.
+      */
       const isMobile = window.matchMedia(
         "(max-width: 767px)"
       ).matches;
+
+      /* =================================================
+         SECTION LABEL
+      ================================================= */
 
       gsap.fromTo(
         ".jobs-label",
@@ -98,26 +120,53 @@ const Jobs = () => {
           ease: "power3.out",
           scrollTrigger: {
             trigger: sectionRef.current,
+            start: "top 85%",
+            toggleActions: "play none none reverse",
+          },
+        }
+      );
+
+      /* =================================================
+         SECTION HEADING
+      ================================================= */
+
+      gsap.fromTo(
+        ".jobs-title-line",
+        {
+          opacity: 0,
+          y: isMobile ? 25 : 40,
+          filter: isMobile ? "blur(4px)" : "blur(7px)",
+        },
+        {
+          opacity: 1,
+          y: 0,
+          filter: "blur(0px)",
+          duration: isMobile ? 0.65 : 0.8,
+          stagger: isMobile ? 0.07 : 0.1,
+          ease: "power4.out",
+          scrollTrigger: {
+            trigger: sectionRef.current,
             start: "top 80%",
             toggleActions: "play none none reverse",
           },
         }
       );
 
+      /* =================================================
+         DESCRIPTION
+      ================================================= */
+
       gsap.fromTo(
-        ".jobs-title-line",
+        ".jobs-description",
         {
           opacity: 0,
-          y: isMobile ? 30 : 50,
-          filter: isMobile ? "blur(5px)" : "blur(8px)",
+          y: isMobile ? 12 : 20,
         },
         {
           opacity: 1,
           y: 0,
-          filter: "blur(0px)",
-          duration: isMobile ? 0.7 : 0.9,
-          stagger: isMobile ? 0.08 : 0.12,
-          ease: "power4.out",
+          duration: isMobile ? 0.5 : 0.65,
+          ease: "power3.out",
           scrollTrigger: {
             trigger: sectionRef.current,
             start: "top 75%",
@@ -126,24 +175,12 @@ const Jobs = () => {
         }
       );
 
-      gsap.fromTo(
-        ".jobs-description",
-        {
-          opacity: 0,
-          y: isMobile ? 15 : 25,
-        },
-        {
-          opacity: 1,
-          y: 0,
-          duration: isMobile ? 0.55 : 0.7,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top 70%",
-            toggleActions: "play none none reverse",
-          },
-        }
-      );
+      /* =================================================
+         INDIVIDUAL JOB CARDS
+
+         Every card gets its own ScrollTrigger.
+         So 5, 10 or 20 cards will work correctly.
+      ================================================= */
 
       const jobCards = gsap.utils.toArray(".job-card");
 
@@ -152,16 +189,16 @@ const Jobs = () => {
           card,
           {
             opacity: 0,
-            y: isMobile ? 25 : 45,
+            y: isMobile ? 20 : 35,
           },
           {
             opacity: 1,
             y: 0,
-            duration: isMobile ? 0.55 : 0.7,
+            duration: isMobile ? 0.5 : 0.65,
             ease: "power3.out",
             scrollTrigger: {
               trigger: card,
-              start: "top 88%",
+              start: "top 90%",
               toggleActions: "play none none reverse",
             },
           }
@@ -176,55 +213,71 @@ const Jobs = () => {
     return () => ctx.revert();
   }, []);
 
+  /* =====================================================
+     OPEN APPLICATION FORM
+  ===================================================== */
+
   const openApplicationForm = (job) => {
     setSelectedJob(job);
+    setIsApplicationFormOpen(true);
   };
+
+  /* =====================================================
+     CLOSE APPLICATION FORM
+  ===================================================== */
 
   const closeApplicationForm = () => {
     setSelectedJob(null);
+    setIsApplicationFormOpen(false);
   };
 
   return (
     <>
+      {/* =====================================================
+          JOBS SECTION
+      ===================================================== */}
+
       <section
         ref={sectionRef}
         id="jobs"
         className="
           bg-black
           px-5
-          py-12
+          py-10
           text-white
           sm:px-6
-          sm:py-14
+          sm:py-12
           md:px-12
-          md:py-24
+          md:py-16
           lg:px-20
-          lg:py-28
+          lg:py-20
         "
       >
         <div className="mx-auto max-w-7xl">
 
-          {/* SECTION HEADER */}
+          {/* =================================================
+              SECTION HEADER
+          ================================================= */}
 
           <div
             className="
               border-b
               border-white/10
-              pb-7
-              sm:pb-8
-              md:pb-10
+              pb-6
+              sm:pb-7
+              md:pb-8
             "
           >
             <p
               className="
                 jobs-label
-                mb-4
+                mb-3
                 text-xs
                 font-medium
                 uppercase
-                tracking-[0.25em]
+                tracking-[0.22em]
                 text-[#EF3B3A]
-                sm:mb-5
+                sm:mb-4
                 md:text-sm
               "
             >
@@ -234,16 +287,16 @@ const Jobs = () => {
             <div
               className="
                 grid
-                gap-5
-                sm:gap-6
-                md:gap-8
+                gap-4
+                sm:gap-5
+                md:gap-6
                 lg:grid-cols-[1fr_0.6fr]
                 lg:items-end
               "
             >
               <h2
                 className="
-                  text-[clamp(2rem,7vw,4.5rem)]
+                  text-[clamp(2rem,6vw,4.5rem)]
                   font-semibold
                   leading-[0.9]
                   tracking-tight
@@ -268,26 +321,34 @@ const Jobs = () => {
                   md:text-base
                 "
               >
-                Explore opportunities to work with SAP, enterprise data
-                and technology while helping organizations transform the
-                way they work.
+                Explore opportunities to work with SAP, enterprise data and
+                technology while helping organizations transform the way they
+                work.
               </p>
             </div>
           </div>
 
-          {/* JOB CARDS */}
+          {/* =================================================
+              JOB CARDS
+
+              Mobile       → 1 column
+              Large mobile → 2 columns
+              Tablet       → 2 columns
+              Desktop      → 3 columns
+
+              No unnecessary fixed height on mobile.
+          ================================================= */}
 
           <div
             className="
-              mt-8
+              mt-6
               grid
               grid-cols-1
               gap-4
-              sm:mt-10
+              sm:mt-8
               sm:grid-cols-2
               sm:gap-5
-              md:mt-12
-              md:gap-5
+              md:mt-9
               lg:grid-cols-3
             "
           >
@@ -299,7 +360,6 @@ const Jobs = () => {
                   group
                   relative
                   flex
-                  min-h-0
                   flex-col
                   overflow-hidden
                   rounded-2xl
@@ -307,8 +367,7 @@ const Jobs = () => {
                   text-black
                   transition-all
                   duration-500
-                  hover:-translate-y-2
-                  md:min-h-105
+                  hover:-translate-y-1
                 "
               >
                 {/* TOP RED ACCENT */}
@@ -338,19 +397,12 @@ const Jobs = () => {
                     flex-col
                     p-5
                     sm:p-6
-                    md:p-7
+                    md:p-6
                   "
                 >
-                  {/* DEPARTMENT */}
+                  {/* NUMBER + DEPARTMENT */}
 
-                  <div
-                    className="
-                      flex
-                      items-start
-                      justify-between
-                      gap-3
-                    "
-                  >
+                  <div className="flex items-start justify-between">
                     <span
                       className="
                         max-w-40
@@ -369,7 +421,7 @@ const Jobs = () => {
 
                   <h3
                     className="
-                      mt-6
+                      mt-4
                       max-w-sm
                       text-xl
                       font-semibold
@@ -378,9 +430,8 @@ const Jobs = () => {
                       transition-colors
                       duration-300
                       group-hover:text-[#EF3B3A]
-                      sm:mt-7
+                      sm:mt-5
                       sm:text-2xl
-                      md:mt-8
                     "
                   >
                     {job.title}
@@ -390,11 +441,11 @@ const Jobs = () => {
 
                   <p
                     className="
-                      mt-3
+                      mt-2.5
                       text-sm
                       leading-6
                       text-black/55
-                      sm:mt-4
+                      sm:mt-3
                     "
                   >
                     {job.description}
@@ -404,15 +455,13 @@ const Jobs = () => {
 
                   <div
                     className="
-                      mt-6
+                      mt-5
                       flex
                       flex-col
                       gap-2
                       border-t
                       border-black/10
                       pt-4
-                      sm:mt-auto
-                      sm:pt-5
                     "
                   >
                     <div
@@ -486,7 +535,7 @@ const Jobs = () => {
                     type="button"
                     onClick={() => openApplicationForm(job)}
                     className="
-                      mt-5
+                      mt-4
                       flex
                       w-full
                       items-center
@@ -502,7 +551,7 @@ const Jobs = () => {
                       transition-all
                       duration-300
                       hover:bg-[#EF3B3A]
-                      sm:mt-6
+                      sm:mt-5
                       sm:px-5
                       sm:py-3.5
                     "
@@ -524,70 +573,10 @@ const Jobs = () => {
               </article>
             ))}
           </div>
-
-          {/* BOTTOM NOTE */}
-
-          <div
-            className="
-              mt-8
-              flex
-              flex-col
-              gap-3
-              border-t
-              border-white/10
-              pt-5
-              sm:mt-9
-              sm:pt-6
-              md:flex-row
-              md:items-center
-              md:justify-between
-            "
-          >
-            <p
-              className="
-                text-xs
-                uppercase
-                tracking-[0.15em]
-                text-white/30
-              "
-            >
-              Can&apos;t find the right role?
-            </p>
-
-            <a
-              href="#get-in-touch"
-              className="
-                group
-                inline-flex
-                w-fit
-                items-center
-                gap-3
-                text-xs
-                font-medium
-                uppercase
-                tracking-[0.15em]
-                text-[#EF3B3A]
-              "
-            >
-              Let&apos;s connect
-
-              <span
-                className="
-                  transition-transform
-                  duration-300
-                  group-hover:translate-x-1
-                "
-              >
-                →
-              </span>
-            </a>
-          </div>
         </div>
       </section>
 
-      {/* JOB APPLICATION FORM */}
-
-      {selectedJob && (
+      {isApplicationFormOpen && (
         <JobApplicationForm
           selectedJob={selectedJob}
           onClose={closeApplicationForm}

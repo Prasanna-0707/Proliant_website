@@ -3,6 +3,25 @@ import { useEffect, useState } from "react";
 const JobApplicationForm = ({ selectedJob, onClose }) => {
   const [submitStatus, setSubmitStatus] = useState("idle");
 
+  const [areaOfInterest, setAreaOfInterest] = useState("");
+  const [otherAreaOfInterest, setOtherAreaOfInterest] = useState("");
+  const [isFresher, setIsFresher] = useState("");
+  const [noticePeriod, setNoticePeriod] = useState("");
+
+  /* =====================================================
+     FRESHER → NOTICE PERIOD
+  ===================================================== */
+
+  useEffect(() => {
+    if (isFresher === "yes") {
+      setNoticePeriod("Immediately");
+    }
+
+    if (isFresher === "no") {
+      setNoticePeriod("");
+    }
+  }, [isFresher]);
+
   /* =====================================================
      LOCK BACKGROUND PAGE SCROLL
   ===================================================== */
@@ -87,10 +106,6 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
     >
       {/* =================================================
           MODAL SHELL
-
-          IMPORTANT:
-          h-full gives this element a real height.
-          overflow-hidden keeps the rounded corners intact.
       ================================================== */}
 
       <div
@@ -112,22 +127,20 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
       >
         {/* =================================================
             SCROLLABLE FORM AREA
-
-            THIS IS THE ONLY SCROLL CONTAINER.
         ================================================== */}
 
         <div
-           data-lenis-prevent
-            className="
-                min-h-0
-                flex-1
-                overflow-y-auto
-                overscroll-contain
-                touch-pan-y
-                p-5
-                sm:p-6
-                md:p-8
-            "
+          data-lenis-prevent
+          className="
+            min-h-0
+            flex-1
+            overflow-y-auto
+            overscroll-contain
+            touch-pan-y
+            p-5
+            sm:p-6
+            md:p-8
+          "
         >
           {/* =================================================
               CLOSE BUTTON
@@ -208,7 +221,7 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
             </h2>
 
             <p className="mt-2 text-sm text-black/50 sm:mt-3 sm:text-base">
-              {selectedJob.title}
+              {selectedJob?.title || "Job Application"}
             </p>
           </div>
 
@@ -225,7 +238,9 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
             "
             onSubmit={handleSubmit}
           >
-            {/* POSITION */}
+            {/* =================================================
+                POSITION
+            ================================================== */}
 
             <div>
               <label
@@ -244,7 +259,7 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
 
               <input
                 type="text"
-                value={selectedJob.title}
+                value={selectedJob?.title || ""}
                 readOnly
                 className="
                   w-full
@@ -261,7 +276,9 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
               />
             </div>
 
-            {/* FULL NAME */}
+            {/* =================================================
+                AREA OF INTEREST
+            ================================================== */}
 
             <div>
               <label
@@ -275,7 +292,112 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
                   text-black/60
                 "
               >
-                Full Name
+                Area of Interest
+              </label>
+
+              <select
+                value={areaOfInterest}
+                onChange={(event) => {
+                  setAreaOfInterest(event.target.value);
+
+                  if (event.target.value !== "Other") {
+                    setOtherAreaOfInterest("");
+                  }
+                }}
+                className="
+                  w-full
+                  rounded-lg
+                  border
+                  border-black/10
+                  bg-white
+                  px-4
+                  py-3
+                  text-sm
+                  outline-none
+                  transition-colors
+                  duration-300
+                  focus:border-[#EF3B3A]
+                "
+              >
+                <option value="">Select an area</option>
+
+                <option value="SAP S/4HANA">
+                  SAP S/4HANA
+                </option>
+
+                <option value="SAP MM">
+                  SAP MM
+                </option>
+
+                <option value="SAP SD">
+                  SAP SD
+                </option>
+
+                <option value="SAP FICO">
+                  SAP FICO
+                </option>
+
+                <option value="SAP ABAP">
+                  SAP ABAP
+                </option>
+
+                <option value="Data & Migration">
+                  Data Migration
+                </option>
+
+                <option value="Other">
+                  Other
+                </option>
+              </select>
+
+              {/* =================================================
+                  OTHER AREA OF INTEREST
+              ================================================== */}
+
+              {areaOfInterest === "Other" && (
+                <input
+                  type="text"
+                  value={otherAreaOfInterest}
+                  onChange={(event) =>
+                    setOtherAreaOfInterest(event.target.value)
+                  }
+                  placeholder="Please specify your area of interest"
+                  className="
+                    mt-3
+                    w-full
+                    border-0
+                    border-b
+                    border-black/20
+                    bg-transparent
+                    px-1
+                    py-2
+                    text-sm
+                    outline-none
+                    transition-colors
+                    duration-300
+                    focus:border-[#EF3B3A]
+                  "
+                />
+              )}
+            </div>
+
+            {/* =================================================
+                FULL NAME
+            ================================================== */}
+
+            <div>
+              <label
+                className="
+                  mb-2
+                  block
+                  text-xs
+                  font-medium
+                  uppercase
+                  tracking-[0.15em]
+                  text-black/60
+                "
+              >
+                Full Name <span className="text-[#EF3B3A]">*</span>
               </label>
 
               <input
@@ -298,9 +420,13 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
               />
             </div>
 
-            {/* EMAIL + PHONE */}
+            {/* =================================================
+                EMAIL + PHONE
+            ================================================== */}
 
             <div className="grid gap-4 md:grid-cols-2 md:gap-5">
+              {/* EMAIL */}
+
               <div>
                 <label
                   className="
@@ -313,7 +439,7 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
                     text-black/60
                   "
                 >
-                  Email
+                  Email <span className="text-[#EF3B3A]">*</span>
                 </label>
 
                 <input
@@ -336,6 +462,8 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
                 />
               </div>
 
+              {/* PHONE */}
+
               <div>
                 <label
                   className="
@@ -348,7 +476,7 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
                     text-black/60
                   "
                 >
-                  Phone Number
+                  Phone Number <span className="text-[#EF3B3A]">*</span>
                 </label>
 
                 <input
@@ -372,9 +500,77 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
               </div>
             </div>
 
-            {/* LOCATION + EXPERIENCE */}
+            {/* =================================================
+                ARE YOU A FRESHER?
+            ================================================== */}
+
+            <div>
+              <label
+                className="
+                  mb-3
+                  block
+                  text-xs
+                  font-medium
+                  uppercase
+                  tracking-[0.15em]
+                  text-black/60
+                "
+              >
+                Are you a fresher?
+              </label>
+
+              <div className="flex flex-wrap items-center gap-5">
+                {/* YES */}
+
+                <label className="flex cursor-pointer items-center gap-2">
+                  <input
+                    type="radio"
+                    name="fresher"
+                    value="yes"
+                    checked={isFresher === "yes"}
+                    onChange={(event) => setIsFresher(event.target.value)}
+                    className="
+                      h-4
+                      w-4
+                      accent-[#EF3B3A]
+                    "
+                  />
+
+                  <span className="text-sm text-black/70">
+                    Yes
+                  </span>
+                </label>
+
+                {/* NO */}
+
+                <label className="flex cursor-pointer items-center gap-2">
+                  <input
+                    type="radio"
+                    name="fresher"
+                    value="no"
+                    checked={isFresher === "no"}
+                    onChange={(event) => setIsFresher(event.target.value)}
+                    className="
+                      h-4
+                      w-4
+                      accent-[#EF3B3A]
+                    "
+                  />
+
+                  <span className="text-sm text-black/70">
+                    No
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            {/* =================================================
+                LOCATION + EXPERIENCE
+            ================================================== */}
 
             <div className="grid gap-4 md:grid-cols-2 md:gap-5">
+              {/* LOCATION */}
+
               <div>
                 <label
                   className="
@@ -392,7 +588,6 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
 
                 <input
                   type="text"
-                  required
                   placeholder="City / Country"
                   className="
                     w-full
@@ -409,6 +604,8 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
                   "
                 />
               </div>
+
+              {/* YEARS OF EXPERIENCE */}
 
               <div>
                 <label
@@ -428,8 +625,8 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
                 <input
                   type="number"
                   min="0"
-                  required
                   placeholder="e.g. 3"
+                  disabled={isFresher === "yes"}
                   className="
                     w-full
                     rounded-lg
@@ -441,13 +638,18 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
                     outline-none
                     transition-colors
                     duration-300
+                    disabled:cursor-not-allowed
+                    disabled:bg-black/5
+                    disabled:text-black/30
                     focus:border-[#EF3B3A]
                   "
                 />
               </div>
             </div>
 
-            {/* HIGHEST QUALIFICATION */}
+            {/* =================================================
+                HIGHEST QUALIFICATION
+            ================================================== */}
 
             <div>
               <label
@@ -461,7 +663,8 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
                   text-black/60
                 "
               >
-                Highest Qualification
+                Highest Qualification{" "}
+                <span className="text-[#EF3B3A]">*</span>
               </label>
 
               <input
@@ -484,7 +687,9 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
               />
             </div>
 
-            {/* CURRENT / PREVIOUS COMPANY */}
+            {/* =================================================
+                CURRENT / PREVIOUS COMPANY
+            ================================================== */}
 
             <div>
               <label
@@ -504,6 +709,7 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
               <input
                 type="text"
                 placeholder="Company name"
+                disabled={isFresher === "yes"}
                 className="
                   w-full
                   rounded-lg
@@ -515,63 +721,146 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
                   outline-none
                   transition-colors
                   duration-300
+                  disabled:cursor-not-allowed
+                  disabled:bg-black/5
+                  disabled:text-black/30
                   focus:border-[#EF3B3A]
                 "
               />
             </div>
 
-            {/* RESUME */}
+            {/* =================================================
+                RESUME + NOTICE PERIOD
+            ================================================== */}
 
-            <div>
-              <label
-                className="
-                  mb-2
-                  block
-                  text-xs
-                  font-medium
-                  uppercase
-                  tracking-[0.15em]
-                  text-black/60
-                "
-              >
-                Resume
-              </label>
+            <div className="grid gap-4 md:grid-cols-2 md:gap-5">
+              {/* RESUME */}
 
-              <input
-                type="file"
-                required
-                accept=".pdf,.doc,.docx"
-                className="
-                  block
-                  w-full
-                  rounded-lg
-                  border
-                  border-dashed
-                  border-black/20
-                  px-4
-                  py-4
-                  text-sm
-                  text-black/50
-                  file:mr-4
-                  file:rounded
-                  file:border-0
-                  file:bg-black
-                  file:px-4
-                  file:py-2
-                  file:text-xs
-                  file:font-medium
-                  file:uppercase
-                  file:tracking-wider
-                  file:text-white
-                "
-              />
+              <div>
+                <label
+                  className="
+                    mb-2
+                    block
+                    text-xs
+                    font-medium
+                    uppercase
+                    tracking-[0.15em]
+                    text-black/60
+                  "
+                >
+                  Resume <span className="text-[#EF3B3A]">*</span>
+                </label>
 
-              <p className="mt-2 text-xs text-black/35">
-                PDF, DOC or DOCX
-              </p>
+                <input
+                  type="file"
+                  required
+                  accept=".pdf,.doc,.docx"
+                  className="
+                    block
+                    w-full
+                    rounded-lg
+                    border
+                    border-dashed
+                    border-black/20
+                    px-4
+                    py-4
+                    text-sm
+                    text-black/50
+                    file:mr-4
+                    file:rounded
+                    file:border-0
+                    file:bg-black
+                    file:px-4
+                    file:py-2
+                    file:text-xs
+                    file:font-medium
+                    file:uppercase
+                    file:tracking-wider
+                    file:text-white
+                  "
+                />
+
+                <p className="mt-2 text-xs text-black/35">
+                  PDF, DOC or DOCX
+                </p>
+              </div>
+
+              {/* NOTICE PERIOD */}
+
+              <div>
+                <label
+                  className="
+                    mb-2
+                    block
+                    text-xs
+                    font-medium
+                    uppercase
+                    tracking-[0.15em]
+                    text-black/60
+                  "
+                >
+                  Notice Period{" "}
+                  <span className="text-[#EF3B3A]">*</span>
+                </label>
+
+                <select
+                  required
+                  value={noticePeriod}
+                  onChange={(event) =>
+                    setNoticePeriod(event.target.value)
+                  }
+                  disabled={isFresher === "yes"}
+                  className="
+                    w-full
+                    rounded-lg
+                    border
+                    border-black/10
+                    bg-white
+                    px-4
+                    py-3
+                    text-sm
+                    text-black/60
+                    outline-none
+                    transition-colors
+                    duration-300
+                    disabled:cursor-not-allowed
+                    disabled:bg-black/5
+                    disabled:text-black/30
+                    focus:border-[#EF3B3A]
+                  "
+                >
+                  <option value="" disabled>
+                    Select notice period
+                  </option>
+
+                  <option value="Immediately">
+                    Immediately
+                  </option>
+
+                  <option value="30 Days">
+                    30 Days
+                  </option>
+
+                  <option value="60 Days">
+                    60 Days
+                  </option>
+
+                  <option value="90 Days">
+                    90 Days
+                  </option>
+                </select>
+
+                {isFresher === "yes" && (
+                  <p className="mt-2 text-xs text-black/35">
+                    Set to Immediately for freshers
+                  </p>
+                )}
+              </div>
             </div>
 
-            {/* COVER MESSAGE */}
+            {/* =================================================
+                COVER MESSAGE
+            ================================================== */}
 
             <div>
               <label
@@ -609,7 +898,7 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
             </div>
 
             {/* =================================================
-                SEND APPLICATION
+                SEND / SUBMIT
             ================================================== */}
 
             <button
@@ -642,7 +931,9 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
             >
               {submitStatus === "idle" && (
                 <>
-                  <span>Send Application</span>
+                  <span>
+                    Send Application
+                  </span>
 
                   <span className="transition-transform duration-300 group-hover:translate-x-1">
                     →
