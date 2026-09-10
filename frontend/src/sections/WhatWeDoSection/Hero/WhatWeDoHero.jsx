@@ -44,7 +44,6 @@ const WhatWeDoHero = () => {
           y: isMobile ? 12 : 20,
           duration: isMobile ? 0.55 : 0.7,
         })
-
         .from(
           ".what-hero-line",
           {
@@ -56,7 +55,6 @@ const WhatWeDoHero = () => {
           },
           "-=0.3"
         )
-
         .from(
           ".what-hero-copy",
           {
@@ -66,7 +64,6 @@ const WhatWeDoHero = () => {
           },
           "-=0.35"
         )
-
         .from(
           ".hero-capability-label",
           {
@@ -76,7 +73,6 @@ const WhatWeDoHero = () => {
           },
           "-=0.3"
         )
-
         .from(
           ".hero-scroll",
           {
@@ -136,8 +132,13 @@ const WhatWeDoHero = () => {
       className="
         what-do-hero
         relative
+<<<<<<< HEAD
         h-[100svh]
         min-h-[100svh]
+=======
+        h-svh
+        min-h-svh
+>>>>>>> prasanna-dev
         overflow-hidden
         bg-black
       "
@@ -160,19 +161,19 @@ const WhatWeDoHero = () => {
             "#E5E5E5",
             "#EF3B3A",
           ]}
-          backgroundColor="#000000"
+          backgroundColor="#D12300"
           speed={0.2}
           streakCount={1}
           streakWidth={1}
           streakLength={0.7}
-          glow={0.45}
-          density={0.35}
-          twinkle={0.35}
+          glow={0.9}
+          density={0.4}
+          twinkle={0.2}
           zoom={3}
-          backgroundGlow={0.03}
-          opacity={0.45}
+          backgroundGlow={0}
+          opacity={1}
           mouseInteraction
-          mouseStrength={0.35}
+          mouseStrength={0.5}
           mouseRadius={0.55}
           color1="#FFFFFF"
           color2="#E5E5E5"
