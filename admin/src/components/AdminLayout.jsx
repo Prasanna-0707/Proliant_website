@@ -11,7 +11,7 @@ function AdminLayout() {
       <div className="flex min-w-0 flex-1 flex-col">
         <Header />
 
-        <main className="ml-64 min-h-screen bg-gray-100">
+        <main className="ml-64 min-h-screen bg-gray-100 max-[767px]:ml-0 max-[767px]:pb-20">
           <Outlet />
         </main>
       </div>

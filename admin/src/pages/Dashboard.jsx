@@ -223,7 +223,8 @@ function Dashboard() {
       </div>
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {/* ONLY CHANGE: grid-cols-1 -> grid-cols-2 */}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
           <StatCard
             key={stat.title}

@@ -2,7 +2,16 @@ import { motion } from "framer-motion";
 
 const ProliantAdvantage = () => {
   return (
-    <section className="bg-black py-14 text-white sm:py-16 md:py-20 lg:py-24">
+    <section
+      className="
+        bg-black
+        py-10
+        text-white
+        sm:py-12
+        md:py-16
+        lg:py-24
+      "
+    >
       {/* READ MORE - SAME ANIMATION AS WHO WE ARE */}
       <style>{`
         .proliant-mask3-button {
@@ -112,82 +121,119 @@ const ProliantAdvantage = () => {
         }
       `}</style>
 
-      <div className="mx-auto max-w-7xl px-5 sm:px-6 md:px-8">
+      <div
+        className="
+          mx-auto
+          max-w-7xl
+          px-5
+          sm:px-6
+          md:px-8
+        "
+      >
 
-        {/* HEADING */}
+        {/* =========================
+            HEADING
+        ========================== */}
+
         <motion.h2
-          initial={{ opacity: 0, y: 25 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.25 }}
           transition={{
-            duration: 0.8,
+            duration: 0.7,
             ease: "easeOut",
           }}
           className="
-            text-[clamp(2.5rem,7vw,4.5rem)]
+            text-[clamp(2.15rem,7vw,4.5rem)]
             font-bold
             leading-[1.05]
             tracking-tight
+            sm:text-[clamp(2.3rem,7vw,4.5rem)]
           "
         >
           The Proliant Advantage
         </motion.h2>
 
-        {/* DIVIDER */}
+        {/* =========================
+            DIVIDER
+        ========================== */}
+
         <motion.div
           initial={{ opacity: 0, scaleX: 0 }}
           whileInView={{ opacity: 1, scaleX: 1 }}
           viewport={{ once: true, amount: 0.25 }}
           transition={{
-            duration: 0.8,
+            duration: 0.7,
             ease: "easeOut",
             delay: 0.1,
           }}
-          className="mt-7 origin-left border-t border-white/30 sm:mt-8 md:mt-9"
+          className="
+            mt-5
+            origin-left
+            border-t
+            border-white/30
+            sm:mt-6
+            md:mt-8
+            lg:mt-9
+          "
         />
 
-        {/* CONTENT */}
+        {/* =========================
+            CONTENT
+        ========================== */}
+
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 22 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{
-            duration: 0.8,
+            duration: 0.7,
             ease: "easeOut",
             delay: 0.15,
           }}
           className="max-w-6xl"
         >
 
-          {/* INTRO */}
+          {/* =========================
+              INTRO
+          ========================== */}
+
           <p
             className="
-              mt-7
+              mt-5
               max-w-6xl
-              text-[clamp(1.35rem,3vw,2.15rem)]
+              text-[clamp(1.2rem,3vw,2.15rem)]
               font-normal
               leading-[1.25]
               text-white
-              sm:mt-8
+              sm:mt-6
+              md:mt-7
+              lg:mt-8
             "
           >
             Our approach is built on a foundation of specialized talent,
             proprietary technology, and a commitment to true partnership.
           </p>
 
-          {/* DESCRIPTION */}
+          {/* =========================
+              DESCRIPTION
+          ========================== */}
+
           <p
             className="
-              mt-5
+              mt-4
               max-w-6xl
-              text-[15px]
-              leading-6
+              text-[14px]
+              leading-[1.55]
               text-white/85
-              sm:mt-6
-              sm:text-base
-              sm:leading-7
-              md:text-lg
-              md:leading-8
+              sm:mt-5
+              sm:text-[15px]
+              sm:leading-6
+              md:mt-6
+              md:text-base
+              md:leading-7
+              lg:text-lg
+              lg:leading-8
             "
           >
             The Proliant Advantage is rooted in our specialist, high-caliber
@@ -202,8 +248,18 @@ const ProliantAdvantage = () => {
             success.
           </p>
 
-          {/* READ MORE */}
-          <div className="mt-8 sm:mt-9 md:mt-10">
+          {/* =========================
+              READ MORE
+          ========================== */}
+
+          <div
+            className="
+              mt-6
+              sm:mt-7
+              md:mt-8
+              lg:mt-10
+            "
+          >
             <a
               href="/who-we-are"
               className="proliant-mask3-button"

@@ -402,11 +402,11 @@ function Jobs() {
       </div>
 
       {/* Search & Filters */}
-      <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="relative w-full lg:max-w-sm">
+      <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between max-[767px]:flex-row max-[767px]:items-center max-[767px]:gap-2">
+        <div className="relative w-full lg:max-w-sm max-[767px]:min-w-0 max-[767px]:flex-[1.8]">
           <Search
-            size={18}
-            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+            size={16}
+            className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 max-[767px]:h-3.5 max-[767px]:w-3.5"
           />
 
           <input
@@ -414,31 +414,53 @@ function Jobs() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search jobs..."
-            className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50"
+            className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 max-[767px]:h-8 max-[767px]:rounded-md max-[767px]:py-1.5 max-[767px]:pl-7 max-[767px]:pr-2 max-[767px]:text-[10px]"
           />
         </div>
 
-        <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto">
+        <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto max-[767px]:min-w-0 max-[767px]:flex-[2] max-[767px]:flex-row max-[767px]:gap-2">
           <select
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 sm:w-40"
+            className="w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 sm:w-40 max-[767px]:h-8 max-[767px]:w-auto max-[767px]:flex-1 max-[767px]:rounded-md max-[767px]:px-2 max-[767px]:py-1 max-[767px]:text-[10px]"
           >
-            <option value="All">All Status</option>
-            <option value="Published">Published</option>
-            <option value="Draft">Draft</option>
+            <option value="All" className="text-[10px]">
+              All Status
+            </option>
+
+            <option value="Published" className="text-[10px]">
+              Published
+            </option>
+
+            <option value="Draft" className="text-[10px]">
+              Draft
+            </option>
           </select>
 
           <select
             value={typeFilter}
             onChange={(event) => setTypeFilter(event.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 sm:w-40"
+            className="w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 sm:w-40 max-[767px]:h-8 max-[767px]:w-auto max-[767px]:flex-1 max-[767px]:rounded-md max-[767px]:px-2 max-[767px]:py-1 max-[767px]:text-[10px]"
           >
-            <option value="All">All Types</option>
-            <option value="Full Time">Full Time</option>
-            <option value="Part Time">Part Time</option>
-            <option value="Contract">Contract</option>
-            <option value="Internship">Internship</option>
+            <option value="All" className="text-[10px]">
+              All Types
+            </option>
+
+            <option value="Full Time" className="text-[10px]">
+              Full Time
+            </option>
+
+            <option value="Part Time" className="text-[10px]">
+              Part Time
+            </option>
+
+            <option value="Contract" className="text-[10px]">
+              Contract
+            </option>
+
+            <option value="Internship" className="text-[10px]">
+              Internship
+            </option>
           </select>
         </div>
       </div>
