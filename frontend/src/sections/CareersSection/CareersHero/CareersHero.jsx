@@ -8,6 +8,18 @@ const CareersHero = () => {
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
+      // =========================
+      // HERO VIDEO FADE-IN
+      // =========================
+      gsap.to(".career-hero-video", {
+        opacity: 1,
+        duration: 1.8,
+        ease: "power2.out",
+      });
+
+      // =========================
+      // CAREERS LABEL
+      // =========================
       gsap.from(".career-hero-label", {
         opacity: 0,
         x: -20,
@@ -15,6 +27,9 @@ const CareersHero = () => {
         ease: "power3.out",
       });
 
+      // =========================
+      // HERO TITLE
+      // =========================
       gsap.from(".career-hero-title-line", {
         opacity: 0,
         y: 45,
@@ -25,6 +40,9 @@ const CareersHero = () => {
         ease: "power4.out",
       });
 
+      // =========================
+      // HERO COPY
+      // =========================
       gsap.from(".career-hero-copy", {
         opacity: 0,
         y: 20,
@@ -33,6 +51,9 @@ const CareersHero = () => {
         ease: "power3.out",
       });
 
+      // =========================
+      // HERO BUTTON
+      // =========================
       gsap.from(".career-hero-button", {
         opacity: 0,
         y: 20,
@@ -60,7 +81,7 @@ const CareersHero = () => {
         loop
         playsInline
         preload="auto"
-        className="absolute inset-0 h-full w-full object-cover"
+        className="career-hero-video absolute inset-0 h-full w-full object-cover opacity-0"
         style={{
           objectPosition: "40% center",
           filter: "brightness(1.35) contrast(1.12)",

@@ -23,10 +23,7 @@ const initialCandidates = [
     phone: "+91 98765 43210",
     location: "Hyderabad, India",
     job: "SAP ABAP Developer",
-    highestQualification: "B.Tech",
-    experience: "Fresher",
-    currentCompany: "NA",
-    noticePeriod: "NA",
+    experience: "4 Years",
     status: "New",
     appliedDate: "2026-09-04",
     resumeUrl: "#",
@@ -38,10 +35,7 @@ const initialCandidates = [
     phone: "+91 91234 56789",
     location: "Bangalore, India",
     job: "SAP SD Consultant",
-    highestQualification: "MBA",
     experience: "5 Years",
-    currentCompany: "Infosys",
-    noticePeriod: "30 Days",
     status: "Shortlisted",
     appliedDate: "2026-09-03",
     resumeUrl: "#",
@@ -53,10 +47,7 @@ const initialCandidates = [
     phone: "+91 99887 66554",
     location: "Chennai, India",
     job: "Business Analyst",
-    highestQualification: "B.Sc",
     experience: "3 Years",
-    currentCompany: "TCS",
-    noticePeriod: "60 Days",
     status: "Interview",
     appliedDate: "2026-09-02",
     resumeUrl: "#",
@@ -68,10 +59,7 @@ const initialCandidates = [
     phone: "+91 98765 12345",
     location: "Hyderabad, India",
     job: "HR Executive",
-    highestQualification: "M.Com",
     experience: "2 Years",
-    currentCompany: "Wipro",
-    noticePeriod: "15 Days",
     status: "Rejected",
     appliedDate: "2026-08-30",
     resumeUrl: "#",
@@ -83,10 +71,7 @@ const initialCandidates = [
     phone: "+91 90000 11223",
     location: "Pune, India",
     job: "SAP ABAP Developer",
-    highestQualification: "B.Tech",
     experience: "6 Years",
-    currentCompany: "Accenture",
-    noticePeriod: "90 Days",
     status: "Shortlisted",
     appliedDate: "2026-08-28",
     resumeUrl: "#",
@@ -128,16 +113,7 @@ function Candidates() {
         candidate.name.toLowerCase().includes(searchValue) ||
         candidate.email.toLowerCase().includes(searchValue) ||
         candidate.job.toLowerCase().includes(searchValue) ||
-        candidate.location.toLowerCase().includes(searchValue) ||
-        candidate.highestQualification
-          .toLowerCase()
-          .includes(searchValue) ||
-        candidate.currentPreviousCompany
-          .toLowerCase()
-          .includes(searchValue) ||
-        candidate.noticePeriod
-          .toLowerCase()
-          .includes(searchValue);
+        candidate.location.toLowerCase().includes(searchValue);
 
       const matchesStatus =
         statusFilter === "All" ||
@@ -215,16 +191,15 @@ function Candidates() {
     }
   };
 
+  // Temporary frontend Excel export.
+  // Later this will call the backend export API.
   const handleDownloadExcel = () => {
     const headers = [
       "Candidate",
       "Email",
       "Phone",
-      "Applied Role",
-      "Highest Qualification",
+      "Applied For",
       "Experience",
-      "Current Company",
-      "Notice Period",
       "Location",
       "Status",
       "Applied Date",
@@ -236,10 +211,7 @@ function Candidates() {
       candidate.email,
       candidate.phone,
       candidate.job,
-      candidate.highestQualification,
       candidate.experience,
-      candidate.currentCompany,
-      candidate.noticePeriod,
       candidate.location,
       candidate.status,
       formatDate(candidate.appliedDate),
@@ -248,7 +220,10 @@ function Candidates() {
         : candidate.resumeUrl,
     ]);
 
-    const csvContent = [headers, ...rows]
+    const csvContent = [
+      headers,
+      ...rows,
+    ]
       .map((row) =>
         row
           .map((value) => {
@@ -296,62 +271,25 @@ function Candidates() {
         </div>
       ),
     },
-
     {
       key: "job",
-      label: "Applied Role",
+      label: "Applied For",
       render: (candidate) => (
-        <p className="font-medium text-gray-800">
-          {candidate.job}
-        </p>
+        <div>
+          <p className="font-medium text-gray-800">
+            {candidate.job}
+          </p>
+
+          <p className="mt-0.5 text-xs text-gray-500">
+            {candidate.experience}
+          </p>
+        </div>
       ),
     },
-
-    {
-      key: "highestQualification",
-      label: "Highest Qualification",
-      render: (candidate) => (
-        <span className="text-sm text-gray-700">
-          {candidate.highestQualification}
-        </span>
-      ),
-    },
-
-    {
-      key: "experience",
-      label: "Experience",
-      render: (candidate) => (
-        <span className="text-sm text-gray-600">
-          {candidate.experience}
-        </span>
-      ),
-    },
-
-    {
-      key: "currentCompany",
-      label: "Current Company",
-      render: (candidate) => (
-        <span className="text-sm text-gray-700">
-          {candidate.currentCompany}
-        </span>
-      ),
-    },
-
-    {
-      key: "noticePeriod",
-      label: "Notice Period",
-      render: (candidate) => (
-        <span className="text-sm text-gray-600">
-          {candidate.noticePeriod}
-        </span>
-      ),
-    },
-
     {
       key: "location",
       label: "Location",
     },
-
     {
       key: "status",
       label: "Status",
@@ -365,7 +303,6 @@ function Candidates() {
         </span>
       ),
     },
-
     {
       key: "appliedDate",
       label: "Applied",
@@ -375,7 +312,6 @@ function Candidates() {
         </span>
       ),
     },
-
     {
       key: "resume",
       label: "Resume",
@@ -396,7 +332,6 @@ function Candidates() {
         </a>
       ),
     },
-
     {
       key: "actions",
       label: "Actions",
@@ -675,62 +610,11 @@ function Candidates() {
 
                   <div>
                     <p className="text-xs font-medium text-gray-400">
-                      Highest Qualification
-                    </p>
-
-                    <p className="mt-1 text-sm text-gray-700">
-                      {viewCandidate.highestQualification}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <FileText
-                    size={18}
-                    className="mt-0.5 text-gray-400"
-                  />
-
-                  <div>
-                    <p className="text-xs font-medium text-gray-400">
                       Experience
                     </p>
 
                     <p className="mt-1 text-sm text-gray-700">
                       {viewCandidate.experience}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <FileText
-                    size={18}
-                    className="mt-0.5 text-gray-400"
-                  />
-
-                  <div>
-                    <p className="text-xs font-medium text-gray-400">
-                      Current Company
-                    </p>
-
-                    <p className="mt-1 text-sm text-gray-700">
-                      {viewCandidate.currentCompany}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <FileText
-                    size={18}
-                    className="mt-0.5 text-gray-400"
-                  />
-
-                  <div>
-                    <p className="text-xs font-medium text-gray-400">
-                      Notice Period
-                    </p>
-
-                    <p className="mt-1 text-sm text-gray-700">
-                      {viewCandidate.noticePeriod}
                     </p>
                   </div>
                 </div>

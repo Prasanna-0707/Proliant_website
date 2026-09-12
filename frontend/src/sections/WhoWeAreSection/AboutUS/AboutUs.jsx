@@ -4,42 +4,75 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const OurStory = () => {
+const AboutUs = () => {
   const sectionRef = useRef(null);
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
+      // Responsive animation values
+      const isMobile = window.matchMedia("(max-width: 639px)").matches;
+      const isTablet = window.matchMedia(
+        "(min-width: 640px) and (max-width: 1279px)"
+      ).matches;
+
+      const headingY = isMobile ? 30 : isTablet ? 40 : 60;
+      const copyY = isMobile ? 20 : isTablet ? 30 : 40;
+      const pointY = isMobile ? 20 : isTablet ? 25 : 35;
+
       /* =====================================================
-         SECTION INTRO
+        ABOUT US LABEL
       ===================================================== */
 
-      gsap.from(".story-heading", {
+      gsap.from(".story-label", {
         scrollTrigger: {
-          trigger: ".story-section",
+          trigger: sectionRef.current,
           start: "top 75%",
-          toggleActions: "play none none reverse",
+          toggleActions: "play none none none",
         },
         opacity: 0,
-        y: 60,
-        duration: 1,
+        x: isMobile ? -15 : -30,
+        duration: 0.8,
         ease: "power3.out",
       });
+
+      /* =====================================================
+        ABOUT US HEADING
+      ===================================================== */
+
+      gsap.from(".story-heading-line", {
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: "top 70%",
+          toggleActions: "play none none none",
+        },
+        opacity: 0,
+        y: headingY,
+        filter: isMobile ? "blur(6px)" : "blur(10px)",
+        duration: isMobile ? 0.75 : 0.9,
+        stagger: isMobile ? 0.08 : 0.12,
+        ease: "power4.out",
+      });
+
+      /* =====================================================
+        ABOUT US DESCRIPTION
+      ===================================================== */
 
       gsap.from(".story-copy", {
         scrollTrigger: {
-          trigger: ".story-section",
-          start: "top 70%",
-          toggleActions: "play none none reverse",
+          trigger: sectionRef.current,
+          start: "top 65%",
+          toggleActions: "play none none none",
         },
         opacity: 0,
-        y: 40,
-        duration: 1,
-        delay: 0.15,
+        y: copyY,
+        filter: isMobile ? "blur(4px)" : "blur(6px)",
+        duration: isMobile ? 0.75 : 0.9,
+        delay: isMobile ? 0.1 : 0.2,
         ease: "power3.out",
       });
 
       /* =====================================================
-         TIMELINE LINE
+        TIMELINE LINE
       ===================================================== */
 
       gsap.from(".story-line", {
@@ -50,12 +83,12 @@ const OurStory = () => {
         },
         scaleX: 0,
         transformOrigin: "left center",
-        duration: 1.4,
+        duration: isMobile ? 1 : 1.4,
         ease: "power3.inOut",
       });
 
       /* =====================================================
-         TIMELINE POINTS
+        TIMELINE POINTS
       ===================================================== */
 
       gsap.from(".story-point", {
@@ -65,14 +98,14 @@ const OurStory = () => {
           toggleActions: "play none none reverse",
         },
         opacity: 0,
-        y: 35,
-        stagger: 0.18,
-        duration: 0.8,
+        y: pointY,
+        stagger: isMobile ? 0.12 : 0.18,
+        duration: isMobile ? 0.7 : 0.8,
         ease: "power3.out",
       });
 
       /* =====================================================
-         TIMELINE DOTS
+        TIMELINE DOTS
       ===================================================== */
 
       gsap.from(".story-point-dot", {
@@ -83,10 +116,16 @@ const OurStory = () => {
         },
         scale: 0,
         opacity: 0,
-        stagger: 0.18,
-        duration: 0.5,
+        stagger: isMobile ? 0.12 : 0.18,
+        duration: isMobile ? 0.4 : 0.5,
         ease: "back.out(1.7)",
       });
+
+      /* =====================================================
+        REFRESH SCROLLTRIGGER
+      ===================================================== */
+
+      ScrollTrigger.refresh();
     }, sectionRef);
 
     return () => ctx.revert();
@@ -95,16 +134,25 @@ const OurStory = () => {
   return (
     <section
       ref={sectionRef}
+      id="about"
       className="
         story-section
         bg-white
-        px-8
-        py-16
+        px-5
+        py-10
         text-black
-        md:px-16
-        md:py-20
-        lg:px-24
-        lg:py-24
+
+        sm:px-6
+        sm:py-12
+
+        md:px-10
+        md:py-14
+
+        lg:px-16
+        lg:py-16
+
+        xl:px-24
+        xl:py-24
       "
     >
       <div className="mx-auto max-w-1500px">
@@ -116,10 +164,15 @@ const OurStory = () => {
         <div
           className="
             grid
-            gap-10
+            gap-8
+
+            md:gap-10
+
             lg:grid-cols-[0.7fr_1.3fr]
             lg:items-start
-            lg:gap-20
+            lg:gap-12
+
+            xl:gap-20
           "
         >
 
@@ -128,10 +181,15 @@ const OurStory = () => {
           <div>
             <p
               className="
-                text-sm
+                mb-4
+                text-xs
+                font-medium
                 uppercase
-                tracking-[0.3em]
+                tracking-[2px]
                 text-[#EF3B3A]
+
+                sm:mb-5
+                md:text-sm
               "
             >
               About Us
@@ -139,21 +197,30 @@ const OurStory = () => {
 
             <h2
               className="
-                story-heading
-                mt-4
-                text-[clamp(1.875rem,7vw,3.75rem)]
+                mt-3
+                text-[clamp(1.875rem,8vw,3rem)]
                 font-semibold
-                leading-[0.9]
+                leading-[0.92]
                 tracking-tight
-                md:text-6xl
-                lg:text-7xl
+
+                sm:text-[clamp(2rem,6vw,3.25rem)]
+
+                md:text-5xl
+
+                lg:text-6xl
+
+                xl:text-7xl
               "
             >
-              From data
-              <br />
-              to
-              <br />
-              <span className="text-black/30">
+              <span className="story-heading-line block">
+                From data
+              </span>
+
+              <span className="story-heading-line block">
+                to
+              </span>
+
+              <span className="story-heading-line block text-[#EF3B3A]">
                 transformation.
               </span>
             </h2>
@@ -165,17 +232,21 @@ const OurStory = () => {
             className="
               story-copy
               max-w-4xl
+
               lg:pt-1
             "
           >
-
             <p
               className="
-                mt-5
-                text-base
-                leading-[1.7]
+                mt-3
+                text-[0.95rem]
+                leading-[1.65]
                 text-black/50
+
+                sm:text-base
+
                 md:text-lg
+                md:leading-[1.7]
               "
             >
               Our growth is fueled by a team of seasoned
@@ -200,12 +271,22 @@ const OurStory = () => {
           className="
             story-timeline
             relative
-            mt-16
+            mt-10
             border-t
             border-black/10
-            pt-10
-            md:mt-20
-            md:pt-12
+            pt-7
+
+            sm:mt-12
+            sm:pt-8
+
+            md:mt-14
+            md:pt-10
+
+            lg:mt-16
+            lg:pt-10
+
+            xl:mt-20
+            xl:pt-12
           "
         >
 
@@ -227,10 +308,17 @@ const OurStory = () => {
           <div
             className="
               grid
-              gap-10
-              md:grid-cols-4
-              md:gap-6
-            "
+              gap-8
+
+              sm:gap-8
+
+              md:grid-cols-2
+              md:gap-x-8
+              md:gap-y-10
+
+              lg:grid-cols-4
+              lg:gap-6
+          "
           >
 
             {/* =================================================
@@ -241,8 +329,11 @@ const OurStory = () => {
               className="
                 story-point
                 relative
-                pt-4
-                md:pt-5
+                pt-3
+
+                md:pt-4
+
+                lg:pt-5
               "
             >
               <span
@@ -273,16 +364,26 @@ const OurStory = () => {
               <h3
                 className="
                   mt-2
-                  text-xl
+                  text-lg
                   font-semibold
                   tracking-tight
+
+                  sm:text-xl
+
                   md:text-2xl
                 "
               >
                 Data Migration
               </h3>
 
-              <p className="mt-2 text-sm leading-relaxed text-black/45">
+              <p
+                className="
+                  mt-2
+                  text-sm
+                  leading-relaxed
+                  text-black/45
+                "
+              >
                 Building our foundation in data migration and
                 governance.
               </p>
@@ -296,8 +397,11 @@ const OurStory = () => {
               className="
                 story-point
                 relative
-                pt-4
-                md:pt-5
+                pt-3
+
+                md:pt-4
+
+                lg:pt-5
               "
             >
               <span
@@ -328,16 +432,26 @@ const OurStory = () => {
               <h3
                 className="
                   mt-2
-                  text-xl
+                  text-lg
                   font-semibold
                   tracking-tight
+
+                  sm:text-xl
+
                   md:text-2xl
                 "
               >
                 Enterprise Data
               </h3>
 
-              <p className="mt-2 text-sm leading-relaxed text-black/45">
+              <p
+                className="
+                  mt-2
+                  text-sm
+                  leading-relaxed
+                  text-black/45
+                "
+              >
                 Expanding into end-to-end enterprise data
                 management.
               </p>
@@ -351,8 +465,11 @@ const OurStory = () => {
               className="
                 story-point
                 relative
-                pt-4
-                md:pt-5
+                pt-3
+
+                md:pt-4
+
+                lg:pt-5
               "
             >
               <span
@@ -383,16 +500,26 @@ const OurStory = () => {
               <h3
                 className="
                   mt-2
-                  text-xl
+                  text-lg
                   font-semibold
                   tracking-tight
+
+                  sm:text-xl
+
                   md:text-2xl
                 "
               >
                 SAP & Analytics
               </h3>
 
-              <p className="mt-2 text-sm leading-relaxed text-black/45">
+              <p
+                className="
+                  mt-2
+                  text-sm
+                  leading-relaxed
+                  text-black/45
+                "
+              >
                 Connecting enterprise systems with intelligent
                 insights.
               </p>
@@ -406,8 +533,11 @@ const OurStory = () => {
               className="
                 story-point
                 relative
-                pt-4
-                md:pt-5
+                pt-3
+
+                md:pt-4
+
+                lg:pt-5
               "
             >
               <span
@@ -438,16 +568,26 @@ const OurStory = () => {
               <h3
                 className="
                   mt-2
-                  text-xl
+                  text-lg
                   font-semibold
                   tracking-tight
+
+                  sm:text-xl
+
                   md:text-2xl
                 "
               >
                 AI Innovation
               </h3>
 
-              <p className="mt-2 text-sm leading-relaxed text-black/45">
+              <p
+                className="
+                  mt-2
+                  text-sm
+                  leading-relaxed
+                  text-black/45
+                "
+              >
                 Building the next generation of intelligent
                 transformation.
               </p>
@@ -461,4 +601,4 @@ const OurStory = () => {
   );
 };
 
-export default OurStory;
+export default AboutUs;

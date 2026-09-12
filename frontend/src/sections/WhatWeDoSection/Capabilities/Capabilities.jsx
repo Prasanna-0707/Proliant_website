@@ -206,9 +206,13 @@ const Capabilities = () => {
         px-4
         py-6
         text-black
+
         sm:px-6
-        md:px-12
-        md:py-12
+        sm:py-8
+
+        md:px-10
+        md:py-10
+
         lg:px-16
         lg:py-14
       "
@@ -222,11 +226,14 @@ const Capabilities = () => {
         <div className="max-w-4xl">
           <p
             className="
-              text-xs
+              text-[10px]
               font-medium
               uppercase
-              tracking-widest
+              tracking-[0.2em]
               text-red-500
+
+              sm:text-xs
+              sm:tracking-widest
             "
           >
             Capabilities
@@ -236,13 +243,17 @@ const Capabilities = () => {
             className="
               capabilities-heading
               mt-2
-              text-2xl
+              text-[1.65rem]
               font-semibold
-              leading-tight
+              leading-[1.08]
               tracking-tight
-              sm:mt-4
-              sm:text-5xl
-              md:text-6xl
+
+              sm:mt-3
+              sm:text-4xl
+
+              md:mt-4
+              md:text-5xl
+
               lg:text-7xl
             "
           >
@@ -262,6 +273,9 @@ const Capabilities = () => {
             grid
             grid-cols-2
             gap-1.5
+
+            sm:mt-5
+
             md:hidden
           "
         >
@@ -273,22 +287,27 @@ const Capabilities = () => {
               className={`
                 capability-mobile-button
                 flex
-                min-h-12
+                min-h-11
                 w-full
                 items-center
                 justify-between
                 rounded
                 border
-                px-2.5
+                px-2
                 py-2
                 text-left
                 transition-all
                 duration-300
+
+                sm:min-h-12
+                sm:px-2.5
+
                 ${
                   activeCapability === index
                     ? "border-red-500 bg-black text-white"
                     : "border-black/10 bg-white text-black hover:border-black/30"
                 }
+
                 ${
                   index === capabilities.length - 1
                     ? "col-span-2"
@@ -296,13 +315,15 @@ const Capabilities = () => {
                 }
               `}
             >
-              <div className="flex items-center gap-2">
+              <div className="flex min-w-0 items-center gap-2">
                 <span
                   className="
-                    text-xs
+                    text-[11px]
                     font-medium
                     leading-tight
                     tracking-tight
+
+                    sm:text-xs
                   "
                 >
                   {item.title}
@@ -339,7 +360,12 @@ const Capabilities = () => {
             grid
             items-start
             gap-4
-            md:gap-8
+
+            sm:mt-5
+
+            md:gap-6
+
+            lg:mt-6
             lg:grid-cols-5
             lg:gap-10
           "
@@ -373,14 +399,19 @@ const Capabilities = () => {
                   w-full
                   items-center
                   justify-between
-                  gap-4
+                  gap-3
                   border-b
                   border-black/10
-                  py-4
+                  py-3.5
                   text-left
                   transition-all
                   duration-300
-                  md:py-5
+
+                  md:py-4
+
+                  lg:gap-4
+                  lg:py-5
+
                   ${
                     activeCapability === index
                       ? "pl-3"
@@ -390,12 +421,16 @@ const Capabilities = () => {
               >
                 <span
                   className={`
-                    text-base
+                    text-sm
                     font-medium
                     tracking-tight
                     transition-colors
                     duration-300
-                    md:text-lg
+
+                    md:text-base
+
+                    lg:text-lg
+
                     ${
                       activeCapability === index
                         ? "text-black"
@@ -408,6 +443,7 @@ const Capabilities = () => {
 
                 <span
                   className={`
+                    shrink-0
                     text-lg
                     transition-all
                     duration-300
@@ -436,7 +472,9 @@ const Capabilities = () => {
               overflow-hidden
               bg-black
               text-white
+
               md:col-span-1
+
               lg:col-span-3
             "
           >
@@ -477,11 +515,17 @@ const Capabilities = () => {
                 absolute
                 right-0
                 top-0
-                h-64
-                w-64
+                h-48
+                w-48
                 rounded-full
                 bg-red-500/10
                 blur-3xl
+
+                sm:h-56
+                sm:w-56
+
+                lg:h-64
+                lg:w-64
               "
             />
 
@@ -495,11 +539,16 @@ const Capabilities = () => {
                 relative
                 z-10
                 flex
-                min-h-96
+                min-h-0
                 flex-col
                 justify-between
-                p-8
-                md:p-10
+                p-5
+
+                sm:p-6
+
+                md:p-7
+
+                lg:min-h-96
                 lg:p-12
               "
             >
@@ -512,11 +561,14 @@ const Capabilities = () => {
 
                 <p
                   className="
-                    text-xs
+                    text-[10px]
                     font-medium
                     uppercase
-                    tracking-widest
+                    tracking-[0.2em]
                     text-red-400
+
+                    sm:text-xs
+                    sm:tracking-widest
                   "
                 >
                   Capability
@@ -526,13 +578,19 @@ const Capabilities = () => {
 
                 <h3
                   className="
-                    mt-5
+                    mt-3
                     max-w-4xl
-                    text-3xl
+                    text-2xl
                     font-semibold
                     leading-tight
                     tracking-tight
-                    sm:text-4xl
+
+                    sm:mt-4
+                    sm:text-3xl
+
+                    md:text-4xl
+
+                    lg:mt-5
                     lg:text-5xl
                   "
                 >
@@ -543,12 +601,18 @@ const Capabilities = () => {
 
                 <p
                   className="
-                    mt-6
+                    mt-4
                     max-w-3xl
-                    text-sm
+                    text-xs
                     leading-relaxed
                     text-white/75
+
+                    sm:mt-5
+                    sm:text-sm
+
                     md:text-base
+
+                    lg:mt-6
                     lg:text-lg
                   "
                 >
@@ -566,12 +630,18 @@ const Capabilities = () => {
 
                 <ul
                   className={`
-                    mt-7
-                    md:mt-8
+                    mt-5
+
+                    sm:mt-6
+
+                    md:mt-7
+
+                    lg:mt-8
+
                     ${
                       currentCapability.number === "01"
-                        ? "grid grid-cols-1 gap-y-3 md:grid-cols-2 md:gap-x-8 md:gap-y-4"
-                        : "space-y-3 md:space-y-4"
+                        ? "grid grid-cols-1 gap-y-2.5 sm:gap-y-3 md:grid-cols-2 md:gap-x-8 md:gap-y-4"
+                        : "space-y-2.5 sm:space-y-3 md:space-y-4"
                     }
                   `}
                 >
@@ -581,10 +651,14 @@ const Capabilities = () => {
                       className="
                         flex
                         items-start
-                        gap-3
-                        text-sm
+                        gap-2
+                        text-xs
                         leading-relaxed
                         text-white/80
+
+                        sm:gap-3
+                        sm:text-sm
+
                         md:text-base
                       "
                     >
@@ -605,18 +679,41 @@ const Capabilities = () => {
                   BOTTOM ACCENT
               ================================================== */}
 
-              <div className="mt-10">
+              <div
+                className="
+                  mt-6
 
-                <div className="flex items-center gap-3">
+                  sm:mt-8
 
-                  <span className="h-px w-12 bg-red-500" />
+                  md:mt-9
+
+                  lg:mt-10
+                "
+              >
+
+                <div className="flex items-center gap-2 sm:gap-3">
 
                   <span
                     className="
-                      text-xs
+                      h-px
+                      w-8
+                      bg-red-500
+
+                      sm:w-10
+
+                      lg:w-12
+                    "
+                  />
+
+                  <span
+                    className="
+                      text-[10px]
                       uppercase
-                      tracking-widest
+                      tracking-[0.2em]
                       text-white/30
+
+                      sm:text-xs
+                      sm:tracking-widest
                     "
                   >
                     Proliant capability

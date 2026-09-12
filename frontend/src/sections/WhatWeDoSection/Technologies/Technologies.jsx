@@ -19,9 +19,7 @@ const technologyAreas = [
       <>
         Master Data
         <br />
-        Management &
-        <br />
-        Governance
+        Management & Governance
       </>
     ),
     statement:
@@ -84,9 +82,7 @@ const technologyAreas = [
       <>
         Database &
         <br />
-        Server
-        <br />
-        Administration
+        Server Administration
       </>
     ),
     statement:
@@ -294,12 +290,12 @@ const Technologies = () => {
                   0.10,
                 );
 
-              targetOpacity =
-                Math.max(
-                  0.25,
-                  0.72 -
-                    previousDistance * 0.08,
-                );
+              targetOpacity = 1;
+                // Math.max(
+                //   0.25,
+                //   0.72 -
+                //     previousDistance * 0.08,
+                // );
 
               targetZ = cardIndex;
             }
@@ -512,11 +508,15 @@ const Technologies = () => {
           ref={stackRef}
           className="
             relative
-            h-125
+            flex
+            h-auto
             w-full
+            flex-col
+            gap-4
 
-            sm:h-130
+            sm:gap-5
 
+            md:block
             md:h-135
 
             lg:h-140
@@ -532,12 +532,11 @@ const Technologies = () => {
                   cardsRef.current[index] =
                     element;
                 }}
-                className="
+                className={`
                   technology-card
-                  absolute
+                  relative
                   left-0
                   top-0
-                  h-90
                   w-full
                   overflow-hidden
                   rounded-2xl
@@ -547,15 +546,18 @@ const Technologies = () => {
                   shadow-2xl
                   will-change-transform
 
+                  ${technology.number === "01" ? "h-96" : "h-90"}
+
                   sm:h-97.5
 
+                  md:absolute
                   md:h-107.5
 
                   lg:h-112.5
 
                   xl:h-117.5
-                "
-              >
+                `}
+                >
 
                 {/* ==================================================
                     IMAGE
@@ -571,6 +573,7 @@ const Technologies = () => {
                       object-cover
                       object-center
                       grayscale
+                      opacity-60
                     "
                   />
                 </div>
@@ -580,11 +583,13 @@ const Technologies = () => {
                 =================================================== */}
 
                 <div
-                  className="
+                  className={`
                     absolute
                     inset-0
-                    bg-black/45
-                  "
+                    ${technology.number === "02" || technology.number === "04"
+                      ? "bg-black/60"
+                      : "bg-black/45"}
+                  `}
                 />
 
                 <div
@@ -610,12 +615,9 @@ const Technologies = () => {
                     inset-0
                     flex
                     flex-col
-                    p-5
-
-                    sm:p-6
-
+                    p-4
+                    sm:p-5
                     md:p-8
-
                     xl:p-10
                   "
                 >
@@ -649,11 +651,15 @@ const Technologies = () => {
                     className="
                       mt-auto
                       grid
-                      gap-5
-                      pt-8
+                      gap-4
+                      pt-5
+
+                      sm:gap-5
+                      sm:pt-6
 
                       md:grid-cols-2
                       md:gap-8
+                      md:pt-8
 
                       lg:gap-10
                     "
@@ -664,17 +670,17 @@ const Technologies = () => {
                     <div>
                       <h3
                         className="
-                          text-3xl
-                          font-semibold
-                          leading-tight
-                          tracking-tight
-                          text-white
+                          text-2xl
+                            font-semibold
+                            leading-tight
+                            tracking-tight
+                            text-white
 
-                          sm:text-4xl
+                            sm:text-3xl 
 
-                          md:text-5xl
+                            md:text-5xl
 
-                          xl:text-6xl
+                            xl:text-6xl
                         "
                       >
                         {technology.title}
@@ -694,7 +700,7 @@ const Technologies = () => {
                         className="
                           text-xs
                           leading-relaxed
-                          text-white/75
+                          text-white/90
 
                           sm:text-sm
 
@@ -723,7 +729,7 @@ const Technologies = () => {
                             font-medium
                             uppercase
                             tracking-widest
-                            text-white/35
+                            text-white/55
 
                             sm:text-xs
                           "
@@ -746,7 +752,7 @@ const Technologies = () => {
                                   gap-2
                                   text-xs
                                   leading-relaxed
-                                  text-white/70
+                                  text-white/85
 
                                   sm:text-sm
                                 "
