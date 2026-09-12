@@ -427,11 +427,13 @@ function Candidates() {
       </div>
 
       {/* Search & Filters */}
-      <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="relative w-full lg:max-w-sm">
+      <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between max-[767px]:flex-row max-[767px]:items-center max-[767px]:gap-1.5">
+        
+        {/* Search */}
+        <div className="relative w-full lg:max-w-sm max-[767px]:min-w-0 max-[767px]:flex-[1.45]">
           <Search
             size={18}
-            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 max-[767px]:left-2 max-[767px]:size-[13px]"
           />
 
           <input
@@ -439,36 +441,72 @@ function Candidates() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search candidates..."
-            className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50"
+            className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 max-[767px]:h-8 max-[767px]:py-1 max-[767px]:pl-7 max-[767px]:pr-1.5 max-[767px]:text-[9px]"
           />
         </div>
 
-        <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto">
+        {/* Filters */}
+        <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto max-[767px]:min-w-0 max-[767px]:flex-[1.75] max-[767px]:flex-row max-[767px]:gap-1.5">
+          
+          {/* All Status */}
           <select
             value={statusFilter}
             onChange={(event) =>
               setStatusFilter(event.target.value)
             }
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 sm:w-40"
+            className="w-full rounded-lg border border-gray-300 bg-white px-2 py-2.5 text-[11px] text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 sm:w-40 max-[767px]:h-8 max-[767px]:min-w-0 max-[767px]:flex-1 max-[767px]:px-1 max-[767px]:py-1 max-[767px]:text-[9px]"
           >
-            <option value="All">All Status</option>
+            <option
+              value="All"
+              style={{
+                fontSize: "9px",
+                padding: "2px 4px",
+              }}
+            >
+              All Status
+            </option>
 
             {candidateStatuses.map((status) => (
-              <option key={status} value={status}>
+              <option
+                key={status}
+                value={status}
+                style={{
+                  fontSize: "9px",
+                  padding: "2px 4px",
+                }}
+              >
                 {status}
               </option>
             ))}
           </select>
 
+          {/* All Jobs */}
           <select
             value={jobFilter}
-            onChange={(event) => setJobFilter(event.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 sm:w-52"
+            onChange={(event) =>
+              setJobFilter(event.target.value)
+            }
+            className="w-full rounded-lg border border-gray-300 bg-white px-2 py-2.5 text-[11px] text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 sm:w-52 max-[767px]:h-8 max-[767px]:min-w-0 max-[767px]:flex-1 max-[767px]:px-1 max-[767px]:py-1 max-[767px]:text-[9px]"
           >
-            <option value="All">All Jobs</option>
+            <option
+              value="All"
+              style={{
+                fontSize: "9px",
+                padding: "2px 4px",
+              }}
+            >
+              All Jobs
+            </option>
 
             {jobs.map((job) => (
-              <option key={job} value={job}>
+              <option
+                key={job}
+                value={job}
+                style={{
+                  fontSize: "9px",
+                  padding: "2px 4px",
+                }}
+              >
                 {job}
               </option>
             ))}

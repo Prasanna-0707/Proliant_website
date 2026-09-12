@@ -347,8 +347,8 @@ function Enquiries() {
       </div>
 
       {/* Search & Filter */}
-      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative w-full sm:max-w-sm">
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between max-[767px]:flex-row max-[767px]:items-center">
+        <div className="relative w-full sm:max-w-sm max-[767px]:min-w-0 max-[767px]:flex-1">
           <Search
             size={18}
             className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
@@ -368,7 +368,7 @@ function Enquiries() {
           onChange={(event) =>
             setStatusFilter(event.target.value)
           }
-          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 sm:w-40"
+          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 sm:w-40 max-[767px]:min-w-0 max-[767px]:flex-1"
         >
           <option value="All">All Status</option>
           <option value="Unread">Unread</option>
