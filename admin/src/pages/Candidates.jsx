@@ -23,7 +23,10 @@ const initialCandidates = [
     phone: "+91 98765 43210",
     location: "Hyderabad, India",
     job: "SAP ABAP Developer",
-    experience: "4 Years",
+    highestQualification: "B.Tech",
+    experience: "Fresher",
+    currentCompany: "NA",
+    noticePeriod: "NA",
     status: "New",
     appliedDate: "2026-09-04",
     resumeUrl: "#",
@@ -35,7 +38,10 @@ const initialCandidates = [
     phone: "+91 91234 56789",
     location: "Bangalore, India",
     job: "SAP SD Consultant",
+    highestQualification: "MBA",
     experience: "5 Years",
+    currentCompany: "Infosys",
+    noticePeriod: "30 Days",
     status: "Shortlisted",
     appliedDate: "2026-09-03",
     resumeUrl: "#",
@@ -47,7 +53,10 @@ const initialCandidates = [
     phone: "+91 99887 66554",
     location: "Chennai, India",
     job: "Business Analyst",
+    highestQualification: "B.Sc",
     experience: "3 Years",
+    currentCompany: "TCS",
+    noticePeriod: "60 Days",
     status: "Interview",
     appliedDate: "2026-09-02",
     resumeUrl: "#",
@@ -59,7 +68,10 @@ const initialCandidates = [
     phone: "+91 98765 12345",
     location: "Hyderabad, India",
     job: "HR Executive",
+    highestQualification: "M.Com",
     experience: "2 Years",
+    currentCompany: "Wipro",
+    noticePeriod: "15 Days",
     status: "Rejected",
     appliedDate: "2026-08-30",
     resumeUrl: "#",
@@ -71,7 +83,10 @@ const initialCandidates = [
     phone: "+91 90000 11223",
     location: "Pune, India",
     job: "SAP ABAP Developer",
+    highestQualification: "B.Tech",
     experience: "6 Years",
+    currentCompany: "Accenture",
+    noticePeriod: "90 Days",
     status: "Shortlisted",
     appliedDate: "2026-08-28",
     resumeUrl: "#",
@@ -113,7 +128,16 @@ function Candidates() {
         candidate.name.toLowerCase().includes(searchValue) ||
         candidate.email.toLowerCase().includes(searchValue) ||
         candidate.job.toLowerCase().includes(searchValue) ||
-        candidate.location.toLowerCase().includes(searchValue);
+        candidate.location.toLowerCase().includes(searchValue) ||
+        candidate.highestQualification
+          .toLowerCase()
+          .includes(searchValue) ||
+        candidate.currentPreviousCompany
+          .toLowerCase()
+          .includes(searchValue) ||
+        candidate.noticePeriod
+          .toLowerCase()
+          .includes(searchValue);
 
       const matchesStatus =
         statusFilter === "All" ||
@@ -191,15 +215,16 @@ function Candidates() {
     }
   };
 
-  // Temporary frontend Excel export.
-  // Later this will call the backend export API.
   const handleDownloadExcel = () => {
     const headers = [
       "Candidate",
       "Email",
       "Phone",
-      "Applied For",
+      "Applied Role",
+      "Highest Qualification",
       "Experience",
+      "Current Company",
+      "Notice Period",
       "Location",
       "Status",
       "Applied Date",
@@ -211,7 +236,10 @@ function Candidates() {
       candidate.email,
       candidate.phone,
       candidate.job,
+      candidate.highestQualification,
       candidate.experience,
+      candidate.currentCompany,
+      candidate.noticePeriod,
       candidate.location,
       candidate.status,
       formatDate(candidate.appliedDate),
@@ -220,10 +248,7 @@ function Candidates() {
         : candidate.resumeUrl,
     ]);
 
-    const csvContent = [
-      headers,
-      ...rows,
-    ]
+    const csvContent = [headers, ...rows]
       .map((row) =>
         row
           .map((value) => {
@@ -271,25 +296,62 @@ function Candidates() {
         </div>
       ),
     },
+
     {
       key: "job",
-      label: "Applied For",
+      label: "Applied Role",
       render: (candidate) => (
-        <div>
-          <p className="font-medium text-gray-800">
-            {candidate.job}
-          </p>
-
-          <p className="mt-0.5 text-xs text-gray-500">
-            {candidate.experience}
-          </p>
-        </div>
+        <p className="font-medium text-gray-800">
+          {candidate.job}
+        </p>
       ),
     },
+
+    {
+      key: "highestQualification",
+      label: "Highest Qualification",
+      render: (candidate) => (
+        <span className="text-sm text-gray-700">
+          {candidate.highestQualification}
+        </span>
+      ),
+    },
+
+    {
+      key: "experience",
+      label: "Experience",
+      render: (candidate) => (
+        <span className="text-sm text-gray-600">
+          {candidate.experience}
+        </span>
+      ),
+    },
+
+    {
+      key: "currentCompany",
+      label: "Current Company",
+      render: (candidate) => (
+        <span className="text-sm text-gray-700">
+          {candidate.currentCompany}
+        </span>
+      ),
+    },
+
+    {
+      key: "noticePeriod",
+      label: "Notice Period",
+      render: (candidate) => (
+        <span className="text-sm text-gray-600">
+          {candidate.noticePeriod}
+        </span>
+      ),
+    },
+
     {
       key: "location",
       label: "Location",
     },
+
     {
       key: "status",
       label: "Status",
@@ -303,6 +365,7 @@ function Candidates() {
         </span>
       ),
     },
+
     {
       key: "appliedDate",
       label: "Applied",
@@ -312,6 +375,7 @@ function Candidates() {
         </span>
       ),
     },
+
     {
       key: "resume",
       label: "Resume",
@@ -332,6 +396,7 @@ function Candidates() {
         </a>
       ),
     },
+
     {
       key: "actions",
       label: "Actions",
@@ -427,13 +492,11 @@ function Candidates() {
       </div>
 
       {/* Search & Filters */}
-      <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between max-[767px]:flex-row max-[767px]:items-center max-[767px]:gap-1.5">
-        
-        {/* Search */}
-        <div className="relative w-full lg:max-w-sm max-[767px]:min-w-0 max-[767px]:flex-[1.45]">
+      <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="relative w-full lg:max-w-sm">
           <Search
             size={18}
-            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 max-[767px]:left-2 max-[767px]:size-[13px]"
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
           />
 
           <input
@@ -441,72 +504,36 @@ function Candidates() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search candidates..."
-            className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 max-[767px]:h-8 max-[767px]:py-1 max-[767px]:pl-7 max-[767px]:pr-1.5 max-[767px]:text-[9px]"
+            className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50"
           />
         </div>
 
-        {/* Filters */}
-        <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto max-[767px]:min-w-0 max-[767px]:flex-[1.75] max-[767px]:flex-row max-[767px]:gap-1.5">
-          
-          {/* All Status */}
+        <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto">
           <select
             value={statusFilter}
             onChange={(event) =>
               setStatusFilter(event.target.value)
             }
-            className="w-full rounded-lg border border-gray-300 bg-white px-2 py-2.5 text-[11px] text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 sm:w-40 max-[767px]:h-8 max-[767px]:min-w-0 max-[767px]:flex-1 max-[767px]:px-1 max-[767px]:py-1 max-[767px]:text-[9px]"
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 sm:w-40"
           >
-            <option
-              value="All"
-              style={{
-                fontSize: "9px",
-                padding: "2px 4px",
-              }}
-            >
-              All Status
-            </option>
+            <option value="All">All Status</option>
 
             {candidateStatuses.map((status) => (
-              <option
-                key={status}
-                value={status}
-                style={{
-                  fontSize: "9px",
-                  padding: "2px 4px",
-                }}
-              >
+              <option key={status} value={status}>
                 {status}
               </option>
             ))}
           </select>
 
-          {/* All Jobs */}
           <select
             value={jobFilter}
-            onChange={(event) =>
-              setJobFilter(event.target.value)
-            }
-            className="w-full rounded-lg border border-gray-300 bg-white px-2 py-2.5 text-[11px] text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 sm:w-52 max-[767px]:h-8 max-[767px]:min-w-0 max-[767px]:flex-1 max-[767px]:px-1 max-[767px]:py-1 max-[767px]:text-[9px]"
+            onChange={(event) => setJobFilter(event.target.value)}
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 sm:w-52"
           >
-            <option
-              value="All"
-              style={{
-                fontSize: "9px",
-                padding: "2px 4px",
-              }}
-            >
-              All Jobs
-            </option>
+            <option value="All">All Jobs</option>
 
             {jobs.map((job) => (
-              <option
-                key={job}
-                value={job}
-                style={{
-                  fontSize: "9px",
-                  padding: "2px 4px",
-                }}
-              >
+              <option key={job} value={job}>
                 {job}
               </option>
             ))}
@@ -648,11 +675,62 @@ function Candidates() {
 
                   <div>
                     <p className="text-xs font-medium text-gray-400">
+                      Highest Qualification
+                    </p>
+
+                    <p className="mt-1 text-sm text-gray-700">
+                      {viewCandidate.highestQualification}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <FileText
+                    size={18}
+                    className="mt-0.5 text-gray-400"
+                  />
+
+                  <div>
+                    <p className="text-xs font-medium text-gray-400">
                       Experience
                     </p>
 
                     <p className="mt-1 text-sm text-gray-700">
                       {viewCandidate.experience}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <FileText
+                    size={18}
+                    className="mt-0.5 text-gray-400"
+                  />
+
+                  <div>
+                    <p className="text-xs font-medium text-gray-400">
+                      Current Company
+                    </p>
+
+                    <p className="mt-1 text-sm text-gray-700">
+                      {viewCandidate.currentCompany}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <FileText
+                    size={18}
+                    className="mt-0.5 text-gray-400"
+                  />
+
+                  <div>
+                    <p className="text-xs font-medium text-gray-400">
+                      Notice Period
+                    </p>
+
+                    <p className="mt-1 text-sm text-gray-700">
+                      {viewCandidate.noticePeriod}
                     </p>
                   </div>
                 </div>
