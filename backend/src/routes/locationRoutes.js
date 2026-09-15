@@ -11,7 +11,7 @@ import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", authMiddleware, getLocations);
+router.get("/", getLocations);
 router.post("/", authMiddleware, addLocation);
 router.put("/:id", authMiddleware, updateLocation);
 router.delete("/:id", authMiddleware, deleteLocation);
