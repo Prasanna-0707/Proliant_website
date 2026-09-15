@@ -1,13 +1,14 @@
-import { Bell, UserCircle } from "lucide-react";
+import { Bell, UserCircle, LogOut } from "lucide-react";
 
 function Header() {
   return (
-    <header className="flex h-20 items-center justify-between border-b border-gray-200 bg-white px-6">
+    <header className="relative flex h-20 items-center justify-between border-b border-gray-200 bg-white px-6 max-[767px]:h-17 max-[767px]:px-4">
       {/* Page Title */}
       <div>
         <h1 className="text-xl font-semibold text-gray-900">
           Admin Portal
         </h1>
+
         <p className="mt-1 text-sm text-gray-500">
           Manage your Proliant operations
         </p>
@@ -36,6 +37,7 @@ function Header() {
             <p className="text-sm font-semibold text-gray-900">
               Admin
             </p>
+
             <p className="text-xs text-gray-500">
               Administrator
             </p>

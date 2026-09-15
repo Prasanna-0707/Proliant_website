@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -7,6 +7,9 @@ import {
   MessageSquareText,
   LogOut,
 } from "lucide-react";
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
 const managementLinks = [
   {
@@ -37,7 +40,70 @@ const communicationLinks = [
   },
 ];
 
+const mobileLinks = [
+  {
+    name: "Dashboard",
+    path: "/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    name: "Employees",
+    path: "/employees",
+    icon: Users,
+  },
+  {
+    name: "Jobs",
+    path: "/jobs",
+    icon: BriefcaseBusiness,
+  },
+  {
+    name: "Candidates",
+    path: "/candidates",
+    icon: UserRoundSearch,
+  },
+  {
+    name: "Enquiries",
+    path: "/enquiries",
+    icon: MessageSquareText,
+  },
+];
+
 function Sidebar() {
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    const token = localStorage.getItem("adminToken");
+
+    try {
+      if (token) {
+        const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          console.error("Logout API failed:", response.status);
+        }
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      /*
+       * Clear local authentication data
+       * even if the API request fails.
+       */
+      localStorage.removeItem("adminToken");
+      localStorage.removeItem("adminUser");
+
+      /*
+       * Redirect to login page.
+       */
+      navigate("/login", { replace: true });
+    }
+  };
+
   return (
     <aside className="fixed inset-y-0 left-0 z-40 flex h-screen w-64 shrink-0 flex-col border-r border-gray-200 bg-white">
       {/* Logo */}
@@ -46,14 +112,15 @@ function Sidebar() {
           <h1 className="text-xl font-bold tracking-tight text-gray-900">
             PROLIANT
           </h1>
+
           <p className="mt-0.5 text-xs font-medium text-gray-500">
             Admin Portal
           </p>
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-5">
+      {/* Desktop / Tablet Navigation */}
+      <nav className="flex-1 overflow-y-auto px-3 py-5 max-[767px]:hidden">
         {/* Dashboard */}
         <NavLink
           to="/dashboard"
@@ -160,16 +227,58 @@ function Sidebar() {
         </div>
       </nav>
 
-      {/* Logout */}
-      <div className="border-t border-gray-200 p-3">
+      {/* Logout - desktop/tablet only */}
+      <div className="border-t border-gray-200 p-3 max-[767px]:hidden">
         <button
           type="button"
+          onClick={handleLogout}
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"
         >
           <LogOut size={19} strokeWidth={2} />
           <span>Logout</span>
         </button>
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 hidden h-18 border-t border-gray-800 bg-black shadow-[0_-2px_10px_rgba(0,0,0,0.25)] max-[767px]:block">
+        <div className="flex h-full w-full items-center justify-around px-1">
+          {mobileLinks.map((link) => {
+            const Icon = link.icon;
+
+            return (
+              <NavLink
+                key={link.path}
+                to={link.path}
+                className={({ isActive }) =>
+                  `flex h-full min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 transition-colors ${
+                    isActive
+                      ? "text-white!"
+                      : "text-white! hover:text-white!"
+                  }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <Icon
+                      size={22}
+                      strokeWidth={isActive ? 2.8 : 2.5}
+                      className="text-white!"
+                    />
+
+                    <span
+                      className={`truncate text-[10px] leading-3 text-white! ${
+                        isActive ? "font-bold" : "font-semibold"
+                      }`}
+                    >
+                      {link.name}
+                    </span>
+                  </>
+                )}
+              </NavLink>
+            );
+          })}
+        </div>
+      </nav>
     </aside>
   );
 }

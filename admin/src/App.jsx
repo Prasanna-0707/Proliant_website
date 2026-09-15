@@ -6,6 +6,7 @@ import {
 } from "react-router-dom";
 
 import AdminLayout from "./components/AdminLayout";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -15,19 +16,31 @@ import Candidates from "./pages/Candidates";
 import Enquiries from "./pages/Enquiries";
 
 function App() {
+  const token = localStorage.getItem("adminToken");
+
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<Login />} />
+        {/* Login Route */}
+        <Route
+          path="/login"
+          element={
+            token ? <Navigate to="/dashboard" replace /> : <Login />
+          }
+        />
 
-        <Route element={<AdminLayout />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/employees" element={<Employees />} />
-          <Route path="/jobs" element={<Jobs />} />
-          <Route path="/candidates" element={<Candidates />} />
-          <Route path="/enquiries" element={<Enquiries />} />
+        {/* Protected Admin Routes */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AdminLayout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/employees" element={<Employees />} />
+            <Route path="/jobs" element={<Jobs />} />
+            <Route path="/candidates" element={<Candidates />} />
+            <Route path="/enquiries" element={<Enquiries />} />
+          </Route>
         </Route>
 
+        {/* Unknown Routes */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>

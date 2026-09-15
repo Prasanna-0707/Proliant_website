@@ -11,12 +11,13 @@ import {
 
 import maplibreWorker from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 
-import Papa from "papaparse";
-
 import proliantBlackLogo from "../../assets/logos/ProliantBlack/proliant_black.png";
 import pinIcon from "../../assets/images/WhoweAre/Maps/Pin.png";
 
 import "maplibre-gl/dist/maplibre-gl.css";
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
 setWorkerUrl(maplibreWorker);
 
@@ -312,7 +313,7 @@ const LocationsMap = () => {
 
     const createOfficeCard = (location) => {
       const companyName =
-        location.location?.trim() ||
+        location.companyName?.trim() ||
         "Proliant Data";
 
       const country =
@@ -996,44 +997,52 @@ const LocationsMap = () => {
           }
 
           /* =====================================================
-             LOAD LOCATIONS CSV
+             LOAD LOCATIONS FROM BACKEND API
           ===================================================== */
 
-          const csvResponse =
-            await fetch(
-              "/data/locations.csv"
-            );
+          let locations = [];
 
-          if (!csvResponse.ok) {
-            throw new Error(
-              "Failed to load locations.csv"
-            );
-          }
+            try {
+              const locationsResponse = await fetch(
+                `${API_BASE_URL}/locations`
+              );
 
-          const csvText =
-            await csvResponse.text();
+              if (!locationsResponse.ok) {
+                throw new Error(
+                  `Locations API failed with status ${locationsResponse.status}`
+                );
+              }
 
-          if (!map.current) {
-            return;
-          }
+              const locationsResult =
+                await locationsResponse.json();
 
-          const parsedCSV =
-            Papa.parse(csvText, {
-              header: true,
-              skipEmptyLines: true,
-            });
+              if (!map.current) {
+                return;
+              }
 
-          const locations =
-            Array.isArray(
-              parsedCSV.data
-            )
-              ? parsedCSV.data
-              : [];
+              if (
+                locationsResult?.success !== true ||
+                !Array.isArray(locationsResult?.locations)
+              ) {
+                throw new Error(
+                  "Invalid locations response from backend"
+                );
+              }
 
-          console.log(
-            "Proliant locations:",
-            locations
-          );
+              locations = locationsResult.locations;
+
+              console.log(
+                "Proliant locations from API:",
+                locations
+              );
+            } catch (error) {
+              console.error(
+                "Failed to load Proliant locations:",
+                error
+              );
+
+              locations = [];
+            }
 
           /* =====================================================
              VALID LOCATIONS
@@ -1133,33 +1142,12 @@ const LocationsMap = () => {
              UAE
           ===================================================== */
 
-          const worldCountryNames = [
-            "USA",
-            "Germany",
-            "India",
-            "UAE",
-          ];
-
-          const worldLocations =
-            worldCountryNames
-              .map(
-                (countryName) => {
-                  const countryKey =
-                    normalizeCountry(
-                      countryName
-                    );
-
-                  return (
-                    validLocations.find(
-                      (location) =>
-                        normalizeCountry(
-                          location.country
-                        ) === countryKey
-                    ) || null
-                  );
-                }
-              )
-              .filter(Boolean);
+          const worldLocations = Object.values(
+            locationsByCountry
+          ).map(
+            (countryLocations) =>
+              countryLocations[0]
+          );
 
           /* =====================================================
              INITIAL COUNTRY HIGHLIGHTS

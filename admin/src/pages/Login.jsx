@@ -1,9 +1,16 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import { Eye, EyeOff, LockKeyhole, Mail } from "lucide-react";
 
 import proliantLogo from "../assets/logo/proliant black/proliant_black.png";
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+
 function Login() {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -11,6 +18,7 @@ function Login() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -23,6 +31,7 @@ function Login() {
     setErrors((previous) => ({
       ...previous,
       [name]: "",
+      submit: "",
     }));
   };
 
@@ -44,14 +53,68 @@ function Login() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (!validateForm()) {
       return;
     }
 
-    console.log("Login form:", formData);
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email.trim(),
+          password: formData.password,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        setErrors({
+          submit: result.message || "Invalid email or password.",
+        });
+
+        return;
+      }
+
+      /*
+       * Save JWT token for protected API requests.
+       */
+      localStorage.setItem("adminToken", result.token);
+
+      /*
+       * Save admin information if needed later.
+       */
+      localStorage.setItem(
+        "adminUser",
+        JSON.stringify(result.admin)
+      );
+
+      /*
+       * Navigate to Admin Dashboard.
+       *
+       * IMPORTANT:
+       * Change "/dashboard" below if your actual
+       * Admin Dashboard route has a different path.
+       */
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Login error:", error);
+
+      setErrors({
+        submit:
+          "Unable to connect to the server. Please try again.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -60,9 +123,7 @@ function Login() {
       <section className="relative hidden min-h-screen w-5/12 overflow-hidden bg-[#EF3B3A] lg:flex lg:flex-col lg:justify-between">
         {/* Decorative Circles */}
         <div className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full border-80 border-white/10" />
-
         <div className="pointer-events-none absolute -bottom-40 -left-40 h-128 w-lg rounded-full border-90 border-white/10" />
-
         <div className="pointer-events-none absolute bottom-24 right-16 h-24 w-24 rounded-full bg-white/5" />
 
         {/* Branding Content */}
@@ -206,7 +267,9 @@ function Login() {
 
                 <button
                   type="button"
-                  onClick={() => setShowPassword((previous) => !previous)}
+                  onClick={() =>
+                    setShowPassword((previous) => !previous)
+                  }
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 transition-colors hover:text-gray-700"
                   aria-label={
                     showPassword ? "Hide password" : "Show password"
@@ -237,12 +300,22 @@ function Login() {
               </button>
             </div>
 
+            {/* API Error */}
+            {errors.submit && (
+              <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+                <p className="text-sm font-medium text-red-600">
+                  {errors.submit}
+                </p>
+              </div>
+            )}
+
             {/* Sign In */}
             <button
               type="submit"
-              className="w-full rounded-lg bg-[#EF3B3A] px-5 py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-red-600 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-red-100"
+              disabled={isLoading}
+              className="w-full rounded-lg bg-[#EF3B3A] px-5 py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-red-600 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-red-100 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              Sign In
+              {isLoading ? "Signing In..." : "Sign In"}
             </button>
           </form>
 
