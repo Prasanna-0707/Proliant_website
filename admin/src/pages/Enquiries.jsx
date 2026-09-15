@@ -140,7 +140,6 @@ function Enquiries() {
     setViewEnquiry(enquiry);
     setOpenMenuId(null);
 
-    // Automatically mark enquiry as read when opened.
     if (enquiry.status === "Unread") {
       setEnquiries((previous) =>
         previous.map((item) =>
@@ -178,8 +177,8 @@ function Enquiries() {
           <div
             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
               enquiry.status === "Unread"
-                ? "bg-red-50 text-[#EF3B3A]"
-                : "bg-gray-100 text-gray-600"
+                ? "bg-red-50 text-[#EF3B3A] dark:bg-red-950/40 dark:text-red-400"
+                : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
             }`}
           >
             {enquiry.name.charAt(0).toUpperCase()}
@@ -191,42 +190,45 @@ function Enquiries() {
                 <span className="h-1.5 w-1.5 rounded-full bg-[#EF3B3A]" />
               )}
 
-              <p className="font-semibold text-gray-900">
+              <p className="font-semibold text-gray-900 dark:text-white">
                 {enquiry.name}
               </p>
             </div>
 
-            <p className="mt-0.5 text-xs text-gray-500">
+            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
               {enquiry.email}
             </p>
           </div>
         </div>
       ),
     },
+
     {
       key: "subject",
       label: "Subject",
       render: (enquiry) => (
         <div className="max-w-xs">
-          <p className="font-medium text-gray-800">
+          <p className="font-medium text-gray-800 dark:text-gray-100">
             {enquiry.subject}
           </p>
 
-          <p className="mt-1 truncate text-xs text-gray-500">
+          <p className="mt-1 truncate text-xs text-gray-500 dark:text-gray-400">
             {enquiry.message}
           </p>
         </div>
       ),
     },
+
     {
       key: "company",
       label: "Company",
       render: (enquiry) => (
-        <span className="text-sm text-gray-700">
+        <span className="text-sm text-gray-700 dark:text-gray-200">
           {enquiry.company || "—"}
         </span>
       ),
     },
+
     {
       key: "status",
       label: "Status",
@@ -234,23 +236,25 @@ function Enquiries() {
         <span
           className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
             enquiry.status === "Unread"
-              ? "bg-red-50 text-[#EF3B3A]"
-              : "bg-green-50 text-green-600"
+              ? "bg-red-50 text-[#EF3B3A] dark:bg-red-950/40 dark:text-red-400"
+              : "bg-green-50 text-green-600 dark:bg-green-950/40 dark:text-green-400"
           }`}
         >
           {enquiry.status}
         </span>
       ),
     },
+
     {
       key: "submittedDate",
       label: "Received",
       render: (enquiry) => (
-        <span className="text-sm text-gray-600">
+        <span className="text-sm text-gray-600 dark:text-gray-300">
           {formatDate(enquiry.submittedDate)}
         </span>
       ),
     },
+
     {
       key: "actions",
       label: "Actions",
@@ -267,18 +271,18 @@ function Enquiries() {
                   : enquiry.id
               );
             }}
-            className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700"
+            className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
             aria-label="Enquiry actions"
           >
             <MoreVertical size={18} />
           </button>
 
           {openMenuId === enquiry.id && (
-            <div className="absolute right-0 top-10 z-30 w-48 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+            <div className="absolute right-0 top-10 z-30 w-48 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900">
               <button
                 type="button"
                 onClick={() => handleViewEnquiry(enquiry)}
-                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800"
               >
                 <Eye size={16} />
                 <span>View Enquiry</span>
@@ -287,7 +291,7 @@ function Enquiries() {
               <button
                 type="button"
                 onClick={() => handleToggleStatus(enquiry)}
-                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800"
               >
                 {enquiry.status === "Unread" ? (
                   <MailOpen size={16} />
@@ -302,7 +306,7 @@ function Enquiries() {
                 </span>
               </button>
 
-              <div className="my-1 border-t border-gray-100" />
+              <div className="my-1 border-t border-gray-100 dark:border-gray-700" />
 
               <button
                 type="button"
@@ -310,7 +314,7 @@ function Enquiries() {
                   setDeleteEnquiry(enquiry);
                   setOpenMenuId(null);
                 }}
-                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
+                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30"
               >
                 <Trash2 size={16} />
                 <span>Delete Enquiry</span>
@@ -323,22 +327,22 @@ function Enquiries() {
   ];
 
   return (
-    <div className="relative p-5 sm:p-6">
+    <div className="relative bg-transparent p-5 text-gray-900 dark:text-white sm:p-6">
       {/* Page Header */}
       <div className="mb-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
               Enquiries
             </h1>
 
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               Manage enquiries and messages received from your website.
             </p>
           </div>
 
           {unreadCount > 0 && (
-            <div className="inline-flex w-fit items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-[#EF3B3A]">
+            <div className="inline-flex w-fit items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-[#EF3B3A] dark:bg-red-950/40 dark:text-red-400">
               <MessageSquareText size={17} />
               {unreadCount} unread
             </div>
@@ -351,7 +355,7 @@ function Enquiries() {
         <div className="relative w-full sm:max-w-sm max-[767px]:min-w-0 max-[767px]:flex-1">
           <Search
             size={18}
-            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
           />
 
           <input
@@ -359,7 +363,7 @@ function Enquiries() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search enquiries..."
-            className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50"
+            className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-red-500 dark:focus:ring-red-950/40"
           />
         </div>
 
@@ -368,7 +372,7 @@ function Enquiries() {
           onChange={(event) =>
             setStatusFilter(event.target.value)
           }
-          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 sm:w-40 max-[767px]:min-w-0 max-[767px]:flex-1"
+          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:focus:border-red-500 dark:focus:ring-red-950/40 sm:w-40 max-[767px]:min-w-0 max-[767px]:flex-1"
         >
           <option value="All">All Status</option>
           <option value="Unread">Unread</option>
@@ -377,13 +381,13 @@ function Enquiries() {
       </div>
 
       {/* Enquiries Table */}
-      <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-        <div className="border-b border-gray-100 px-5 py-4">
-          <h2 className="text-base font-semibold text-gray-900">
+      <section className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
+        <div className="border-b border-gray-100 px-5 py-4 dark:border-gray-700">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-white">
             Website Enquiries
           </h2>
 
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             {filteredEnquiries.length} enquir
             {filteredEnquiries.length !== 1 ? "ies" : "y"} found
           </p>
@@ -399,21 +403,21 @@ function Enquiries() {
       {/* View Enquiry Modal */}
       {viewEnquiry && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-sm"
           onClick={() => setViewEnquiry(null)}
         >
           <div
-            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white shadow-xl"
+            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white shadow-xl dark:border dark:border-gray-700 dark:bg-gray-900"
             onClick={(event) => event.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-gray-700">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Enquiry Details
                 </h2>
 
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   Message received from the website.
                 </p>
               </div>
@@ -421,7 +425,7 @@ function Enquiries() {
               <button
                 type="button"
                 onClick={() => setViewEnquiry(null)}
-                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700"
+                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
                 aria-label="Close modal"
               >
                 <X size={20} />
@@ -432,16 +436,16 @@ function Enquiries() {
             <div className="space-y-6 px-6 py-6">
               {/* Contact */}
               <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-50 text-lg font-bold text-[#EF3B3A]">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-50 text-lg font-bold text-[#EF3B3A] dark:bg-red-950/40 dark:text-red-400">
                   {viewEnquiry.name.charAt(0).toUpperCase()}
                 </div>
 
                 <div className="min-w-0">
-                  <h3 className="text-lg font-bold text-gray-900">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                     {viewEnquiry.name}
                   </h3>
 
-                  <p className="mt-1 break-all text-sm text-gray-500">
+                  <p className="mt-1 break-all text-sm text-gray-500 dark:text-gray-400">
                     {viewEnquiry.email}
                   </p>
                 </div>
@@ -452,15 +456,15 @@ function Enquiries() {
                 <div className="flex items-start gap-3">
                   <Mail
                     size={18}
-                    className="mt-0.5 text-gray-400"
+                    className="mt-0.5 text-gray-400 dark:text-gray-500"
                   />
 
                   <div>
-                    <p className="text-xs font-medium text-gray-400">
+                    <p className="text-xs font-medium text-gray-400 dark:text-gray-500">
                       Email
                     </p>
 
-                    <p className="mt-1 break-all text-sm text-gray-700">
+                    <p className="mt-1 break-all text-sm text-gray-700 dark:text-gray-200">
                       {viewEnquiry.email}
                     </p>
                   </div>
@@ -469,15 +473,15 @@ function Enquiries() {
                 <div className="flex items-start gap-3">
                   <Phone
                     size={18}
-                    className="mt-0.5 text-gray-400"
+                    className="mt-0.5 text-gray-400 dark:text-gray-500"
                   />
 
                   <div>
-                    <p className="text-xs font-medium text-gray-400">
+                    <p className="text-xs font-medium text-gray-400 dark:text-gray-500">
                       Phone
                     </p>
 
-                    <p className="mt-1 text-sm text-gray-700">
+                    <p className="mt-1 text-sm text-gray-700 dark:text-gray-200">
                       {viewEnquiry.phone}
                     </p>
                   </div>
@@ -486,15 +490,15 @@ function Enquiries() {
                 <div className="flex items-start gap-3">
                   <Building2
                     size={18}
-                    className="mt-0.5 text-gray-400"
+                    className="mt-0.5 text-gray-400 dark:text-gray-500"
                   />
 
                   <div>
-                    <p className="text-xs font-medium text-gray-400">
+                    <p className="text-xs font-medium text-gray-400 dark:text-gray-500">
                       Company
                     </p>
 
-                    <p className="mt-1 text-sm text-gray-700">
+                    <p className="mt-1 text-sm text-gray-700 dark:text-gray-200">
                       {viewEnquiry.company || "Not provided"}
                     </p>
                   </div>
@@ -503,15 +507,15 @@ function Enquiries() {
                 <div className="flex items-start gap-3">
                   <MailOpen
                     size={18}
-                    className="mt-0.5 text-gray-400"
+                    className="mt-0.5 text-gray-400 dark:text-gray-500"
                   />
 
                   <div>
-                    <p className="text-xs font-medium text-gray-400">
+                    <p className="text-xs font-medium text-gray-400 dark:text-gray-500">
                       Received
                     </p>
 
-                    <p className="mt-1 text-sm text-gray-700">
+                    <p className="mt-1 text-sm text-gray-700 dark:text-gray-200">
                       {formatDate(viewEnquiry.submittedDate)}
                     </p>
                   </div>
@@ -519,24 +523,24 @@ function Enquiries() {
               </div>
 
               {/* Subject */}
-              <div className="rounded-lg bg-gray-50 p-4">
-                <p className="text-xs font-medium text-gray-400">
+              <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+                <p className="text-xs font-medium text-gray-400 dark:text-gray-500">
                   Subject
                 </p>
 
-                <p className="mt-1 text-sm font-semibold text-gray-800">
+                <p className="mt-1 text-sm font-semibold text-gray-800 dark:text-gray-100">
                   {viewEnquiry.subject}
                 </p>
               </div>
 
               {/* Message */}
               <div>
-                <p className="mb-2 text-xs font-medium text-gray-400">
+                <p className="mb-2 text-xs font-medium text-gray-400 dark:text-gray-500">
                   Message
                 </p>
 
-                <div className="rounded-lg border border-gray-200 bg-white p-4">
-                  <p className="whitespace-pre-line text-sm leading-6 text-gray-700">
+                <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                  <p className="whitespace-pre-line text-sm leading-6 text-gray-700 dark:text-gray-200">
                     {viewEnquiry.message}
                   </p>
                 </div>
@@ -558,24 +562,24 @@ function Enquiries() {
       {/* Delete Confirmation Modal */}
       {deleteEnquiry && (
         <div
-          className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 px-4"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
           onClick={() => setDeleteEnquiry(null)}
         >
           <div
-            className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
+            className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:border dark:border-gray-700 dark:bg-gray-900"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-50 text-[#EF3B3A]">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-50 text-[#EF3B3A] dark:bg-red-950/40 dark:text-red-400">
               <Trash2 size={20} />
             </div>
 
-            <h2 className="mt-4 text-lg font-semibold text-gray-900">
+            <h2 className="mt-4 text-lg font-semibold text-gray-900 dark:text-white">
               Delete Enquiry?
             </h2>
 
-            <p className="mt-2 text-sm leading-6 text-gray-500">
+            <p className="mt-2 text-sm leading-6 text-gray-500 dark:text-gray-400">
               Are you sure you want to delete the enquiry from{" "}
-              <span className="font-semibold text-gray-700">
+              <span className="font-semibold text-gray-700 dark:text-gray-200">
                 {deleteEnquiry.name}
               </span>
               ? This action cannot be undone.
@@ -585,7 +589,7 @@ function Enquiries() {
               <button
                 type="button"
                 onClick={() => setDeleteEnquiry(null)}
-                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 sm:w-auto"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800 sm:w-auto"
               >
                 Cancel
               </button>
