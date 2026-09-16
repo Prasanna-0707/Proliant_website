@@ -1,0 +1,261 @@
+POST http://localhost:5000/api/employees
+Content-Type: application/json
+
+{
+  "name": "Rahul Kumar",
+  "email": "rahul.@proliant.com",
+  "role": "Developer",
+  "department": "IT",
+  "status": "Active"
+}
+###
+
+GET http://localhost:5000/api/employees
+
+###
+GET http://localhost:5000/api/employees
+Authorization: Bearer abc123
+
+###
+
+DELETE http://localhost:5000/api/employees/6a9fe68496c6c676a8b3046b
+
+###
+
+PUT http://localhost:5000/api/employees/6aa0f62a44f9bd6d5b035633
+Content-Type: application/json
+
+{
+  "name": "Rahul Kumar",
+  "email": "rahul.@gmail.com",
+  "role": "Senior Developer",
+  "department": "SAP",
+  "status": "Active"
+}
+
+###
+
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@proliant.com",
+  "password": "Admin@123"
+}
+
+###
+
+POST http://localhost:5000/api/auth/logout
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbklkIjoiNmE5ZmYzNGVmNmM5YTc5MGQ3Y2Q1ODQzIiwiZW1haWwiOiJhZG1pbkBwcm9saWFudC5jb20iLCJ0b2tlblZlcnNpb24iOjEsImlhdCI6MTc4ODkzMzUyMCwiZXhwIjoxNzg5MDE5OTIwfQ.e9hdzNCOQAr67q4yOMKelq0urG_y8Jm3IQb0f8_m4zc
+
+### Add Location
+POST http://localhost:5000/api/locations
+Content-Type: application/json
+
+{
+  "id": 5,
+  "country": "India",
+  "state": "Andhra Pradesh",
+  "city": "Visakhapatnam",
+  "companyName": "Proliant Data India",
+  "address": "Visakhapatnam, Andhra Pradesh, India",
+  "latitude": 17.6868,
+  "longitude": 83.2185,
+  "phone": "+91 8008199903",
+  "email": "hr@proliantdatallc.com"
+}
+
+### Get All Locations
+GET http://localhost:5000/api/locations
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbklkIjoiNmE5ZmYzNGVmNmM5YTc5MGQ3Y2Q1ODQzIiwiZW1haWwiOiJhZG1pbkBwcm9saWFudC5jb20iLCJ0b2tlblZlcnNpb24iOjIsImlhdCI6MTc4OTEyMTA1MSwiZXhwIjoxNzg5MjA3NDUxfQ.Z-La0wLvsLbbTav5Gmv8SVUGkCgK6K6ErodxlbIX4WQ
+
+### Update Location
+PUT http://localhost:5000/api/locations/5
+Content-Type: application/json
+
+{
+  "companyName": "Roliant india"
+}
+
+### Delete Test Location
+DELETE http://localhost:5000/api/locations/6aa3d4e07624102b43e5fcdb
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbklkIjoiNmE5ZmYzNGVmNmM5YTc5MGQ3Y2Q1ODQzIiwiZW1haWwiOiJhZG1pbkBwcm9saWFudC5jb20iLCJ0b2tlblZlcnNpb24iOjIsImlhdCI6MTc4OTEyMDAyMiwiZXhwIjoxNzg5MjA2NDIyfQ.VMVhMSWvg1H0In1qeF6j69BEABCcn3gMYgm6fQDjzYI
+
+###
+GET http://localhost:5000/api/locations
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbklkIjoiNmE5ZmYzNGVmNmM5YTc5MGQ3Y2Q1ODQzIiwiZW1haWwiOiJhZG1pbkBwcm9saWFudC5jb20iLCJ0b2tlblZlcnNpb24iOjIsImlhdCI6MTc4OTEyMDAyMiwiZXhwIjoxNzg5MjA2NDIyfQ.VMVhMSWvg1H0In1qeF6j69BEABCcn3gMYgm6fQDjzYI
+
+### Add Test Location
+POST http://localhost:5000/api/locations
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbklkIjoiNmE5ZmYzNGVmNmM5YTc5MGQ3Y2Q1ODQzIiwiZW1haWwiOiJhZG1pbkBwcm9saWFudC5jb20iLCJ0b2tlblZlcnNpb24iOjIsImlhdCI6MTc4OTEyMDAyMiwiZXhwIjoxNzg5MjA2NDIyfQ.VMVhMSWvg1H0In1qeF6j69BEABCcn3gMYgm6fQDjzYI
+Content-Type: application/json
+
+{
+  "country": "India",
+  "state": "Andhra Pradesh",
+  "city": "Visakhapatnam",
+  "companyName": "Proliant Data Test Office",
+  "address": "Test Address, Visakhapatnam, Andhra Pradesh, India",
+  "latitude": 17.6868,
+  "longitude": 83.2185,
+  "phone": "+91 9000000000",
+  "email": "test@proliantdatallc.com"
+}
+
+### Update Test Location
+PUT http://localhost:5000/api/locations/6aa3d4e07624102b43e5fcdb
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbklkIjoiNmE5ZmYzNGVmNmM5YTc5MGQ3Y2Q1ODQzIiwiZW1haWwiOiJhZG1pbkBwcm9saWFudC5jb20iLCJ0b2tlblZlcnNpb24iOjIsImlhdCI6MTc4OTEyMTA1MSwiZXhwIjoxNzg5MjA3NDUxfQ.Z-La0wLvsLbbTav5Gmv8SVUGkCgK6K6ErodxlbIX4WQ
+Content-Type: application/json
+
+{
+  "companyName": "Proliant Data Test Office Updated",
+  "phone": "+91 9111111111"
+}
+
+
+### Get Dashboard Stats
+GET http://localhost:5000/api/dashboard/stats
+
+### Create Contact Enquiry
+POST http://localhost:5000/api/contacts
+Content-Type: application/json
+
+{
+  "name": "Suresh Kumar",
+  "email": "suresh.kumar@gmail.com",
+  "company": "ABC Technologies",
+  "subject": "SAP Implementation Services",
+  "message": "We are looking for SAP implementation support for our organization."
+}
+
+### Get All Contact Enquiries
+
+GET http://localhost:5000/api/contacts
+
+### Get Single Contact Enquiry
+
+GET http://localhost:5000/api/contacts/6aa12fefaaad4c1f728e677c
+
+### Update Contact Status
+
+PATCH http://localhost:5000/api/contacts/6aa12fefaaad4c1f728e677c/status
+Content-Type: application/json
+
+{
+  "status": "Unread"
+}
+
+### Delete Contact Enquiry
+
+DELETE http://localhost:5000/api/contacts/6aa12fefaaad4c1f728e677c
+
+
+### Create Candidate Application
+
+POST http://localhost:5000/api/candidates
+Content-Type: application/json
+
+{
+  "position": "SAP ABAP Developer",
+  "areaOfInterest": "SAP ABAP",
+  "name": "Ravi Kumar",
+  "email": "ravi.kumar@gmail.com",
+  "phone": "9876543210",
+  "isFresher": true,
+  "location": "Hyderabad, India",
+  "yearsOfExperience": null,
+  "highestQualification": "B.Tech",
+  "currentCompany": null,
+  "noticePeriod": "Immediately",
+  "coverMessage": "I am interested in this position.",
+  "resume": null
+}
+
+### Get All Candidates
+
+GET http://localhost:5000/api/candidates
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbklkIjoiNmE5ZmYzNGVmNmM5YTc5MGQ3Y2Q1ODQzIiwiZW1haWwiOiJhZG1pbkBwcm9saWFudC5jb20iLCJ0b2tlblZlcnNpb24iOjIsImlhdCI6MTc4OTEyMDAyMiwiZXhwIjoxNzg5MjA2NDIyfQ.VMVhMSWvg1H0In1qeF6j69BEABCcn3gMYgm6fQDjzYI
+### Get Single Candidate
+
+GET http://localhost:5000/api/candidates/6aa2b53eaccfac12a65d055d
+
+### Update Candidate
+
+PUT http://localhost:5000/api/candidates/6aa2b53eaccfac12a65d055d
+Content-Type: application/json
+
+{
+  "status": "Shortlisted"
+}
+
+### Delete Candidate
+
+DELETE http://localhost:5000/api/candidates/6aa2b53eaccfac12a65d055d
+
+### Candidate submits application without JWT
+POST http://localhost:5000/api/candidates
+Content-Type: application/json
+
+{
+  "position": "SAP ABAP Consultant",
+  "areaOfInterest": "SAP ABAP",
+  "name": "Test Candidate",
+  "email": "testcandidate@gmail.com",
+  "phone": "9876543210",
+  "isFresher": true,
+  "location": "Hyderabad",
+  "yearsOfExperience": null,
+  "highestQualification": "B.Tech",
+  "currentCompany": null,
+  "noticePeriod": "Immediately",
+  "coverMessage": "I am interested in this position.",
+  "resume": null
+}
+
+### Dashboard - No Token
+GET http://localhost:5000/api/dashboard/stats
+
+### Dashboard - Admin
+GET http://localhost:5000/api/dashboard/stats
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbklkIjoiNmE5ZmYzNGVmNmM5YTc5MGQ3Y2Q1ODQzIiwiZW1haWwiOiJhZG1pbkBwcm9saWFudC5jb20iLCJ0b2tlblZlcnNpb24iOjIsImlhdCI6MTc4OTEyMDAyMiwiZXhwIjoxNzg5MjA2NDIyfQ.VMVhMSWvg1H0In1qeF6j69BEABCcn3gMYgm6fQDjzYI
+
+
+### Create Job - Admin
+POST http://localhost:5000/api/jobs
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbklkIjoiNmE5ZmYzNGVmNmM5YTc5MGQ3Y2Q1ODQzIiwiZW1haWwiOiJhZG1pbkBwcm9saWFudC5jb20iLCJ0b2tlblZlcnNpb24iOjIsImlhdCI6MTc4OTEyMDAyMiwiZXhwIjoxNzg5MjA2NDIyfQ.VMVhMSWvg1H0In1qeF6j69BEABCcn3gMYgm6fQDjzYI
+
+{
+  "title": "SAP ABAP Developer",
+  "department": "SAP",
+  "employmentType": "Full Time",
+  "location": "Hyderabad, India",
+  "status": "Published",
+  "jobDescription": "We are looking for an SAP ABAP Developer to join our team.",
+  "requirements": "Experience with ABAP, SAP development and debugging."
+}
+
+### Get All Jobs - Public
+GET http://localhost:5000/api/jobs
+
+### Get One Job - Public
+GET http://localhost:5000/api/jobs/6aa4016f27e2d62f30e3b738
+
+### Update Job - Admin
+PUT http://localhost:5000/api/jobs/6aa4016f27e2d62f30e3b738
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbklkIjoiNmE5ZmYzNGVmNmM5YTc5MGQ3Y2Q1ODQzIiwiZW1haWwiOiJhZG1pbkBwcm9saWFudC5jb20iLCJ0b2tlblZlcnNpb24iOjIsImlhdCI6MTc4OTEyMDAyMiwiZXhwIjoxNzg5MjA2NDIyfQ.VMVhMSWvg1H0In1qeF6j69BEABCcn3gMYgm6fQDjzYI
+Content-Type: application/json
+
+{
+  "title": "Senior SAP ABAP Developer",
+  "department": "SAP",
+  "employmentType": "Full Time",
+  "location": "Hyderabad, India",
+  "status": "Published",
+  "jobDescription": "We are looking for a Senior SAP ABAP Developer to join our team.",
+  "requirements": "Experience with ABAP, SAP development, debugging and SAP S/4HANA."
+}
+
+### Delete Job - Admin
+DELETE http://localhost:5000/api/jobs/6aa4016f27e2d62f30e3b738
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbklkIjoiNmE5ZmYzNGVmNmM5YTc5MGQ3Y2Q1ODQzIiwiZW1haWwiOiJhZG1pbkBwcm9saWFudC5jb20iLCJ0b2tlblZlcnNpb24iOjIsImlhdCI6MTc4OTEyMDAyMiwiZXhwIjoxNzg5MjA2NDIyfQ.VMVhMSWvg1H0In1qeF6j69BEABCcn3gMYgm6fQDjzYI

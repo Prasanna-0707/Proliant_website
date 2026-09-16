@@ -10,13 +10,26 @@ const CorePrinciples = () => {
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
       /* =========================================================
+         RESPONSIVE ANIMATION VALUES
+      ========================================================= */
+
+      const isMobile = window.matchMedia("(max-width: 639px)").matches;
+      const isTablet = window.matchMedia(
+        "(min-width: 640px) and (max-width: 1279px)"
+      ).matches;
+
+      const headingY = isMobile ? 35 : isTablet ? 50 : 70;
+      const cardX = isMobile ? 35 : isTablet ? 50 : 70;
+      const cardY = isMobile ? 25 : isTablet ? 35 : 45;
+
+      /* =========================================================
          SECTION HEADING
       ========================================================= */
 
       gsap.from(".principles-label", {
         opacity: 0,
-        y: 20,
-        duration: 0.7,
+        y: isMobile ? 12 : 20,
+        duration: isMobile ? 0.6 : 0.7,
         ease: "power3.out",
         scrollTrigger: {
           trigger: sectionRef.current,
@@ -26,10 +39,10 @@ const CorePrinciples = () => {
 
       gsap.from(".principles-heading-line", {
         opacity: 0,
-        y: 70,
-        filter: "blur(8px)",
-        duration: 1,
-        stagger: 0.12,
+        y: headingY,
+        filter: isMobile ? "blur(5px)" : "blur(8px)",
+        duration: isMobile ? 0.8 : 1,
+        stagger: isMobile ? 0.08 : 0.12,
         ease: "power4.out",
         scrollTrigger: {
           trigger: sectionRef.current,
@@ -44,14 +57,15 @@ const CorePrinciples = () => {
       gsap.utils
         .toArray(".principle-card")
         .forEach((card, index) => {
-          const direction = index % 2 === 0 ? -70 : 70;
+          const direction =
+            index % 2 === 0 ? -cardX : cardX;
 
           gsap.from(card, {
             opacity: 0,
             x: direction,
-            y: 45,
-            scale: 0.97,
-            duration: 1,
+            y: cardY,
+            scale: isMobile ? 0.985 : 0.97,
+            duration: isMobile ? 0.8 : 1,
             ease: "power4.out",
             scrollTrigger: {
               trigger: card,
@@ -65,9 +79,9 @@ const CorePrinciples = () => {
 
           gsap.from(card.querySelector(".principle-number"), {
             opacity: 0,
-            y: 20,
-            duration: 0.6,
-            delay: 0.25,
+            y: isMobile ? 12 : 20,
+            duration: isMobile ? 0.5 : 0.6,
+            delay: isMobile ? 0.15 : 0.25,
             ease: "power3.out",
             scrollTrigger: {
               trigger: card,
@@ -77,11 +91,11 @@ const CorePrinciples = () => {
 
           gsap.from(card.querySelectorAll(".principle-word"), {
             opacity: 0,
-            y: 35,
-            filter: "blur(5px)",
-            duration: 0.7,
-            stagger: 0.12,
-            delay: 0.3,
+            y: isMobile ? 20 : 35,
+            filter: isMobile ? "blur(3px)" : "blur(5px)",
+            duration: isMobile ? 0.6 : 0.7,
+            stagger: isMobile ? 0.08 : 0.12,
+            delay: isMobile ? 0.2 : 0.3,
             ease: "power4.out",
             scrollTrigger: {
               trigger: card,
@@ -91,9 +105,9 @@ const CorePrinciples = () => {
 
           gsap.from(card.querySelector(".principle-description"), {
             opacity: 0,
-            y: 25,
-            duration: 0.8,
-            delay: 0.55,
+            y: isMobile ? 15 : 25,
+            duration: isMobile ? 0.7 : 0.8,
+            delay: isMobile ? 0.35 : 0.55,
             ease: "power3.out",
             scrollTrigger: {
               trigger: card,
@@ -109,8 +123,8 @@ const CorePrinciples = () => {
             scaleY: 0,
             transformOrigin:
               index === 1 ? "top center" : "bottom center",
-            duration: 0.9,
-            delay: 0.2,
+            duration: isMobile ? 0.7 : 0.9,
+            delay: isMobile ? 0.15 : 0.2,
             ease: "power3.out",
             scrollTrigger: {
               trigger: card,
@@ -125,8 +139,8 @@ const CorePrinciples = () => {
           gsap.from(card.querySelector(".principle-line"), {
             scaleX: 0,
             transformOrigin: "left center",
-            duration: 1,
-            delay: 0.7,
+            duration: isMobile ? 0.8 : 1,
+            delay: isMobile ? 0.5 : 0.7,
             ease: "power3.out",
             scrollTrigger: {
               trigger: card,
@@ -196,13 +210,23 @@ const CorePrinciples = () => {
 
       gsap.utils.toArray(".principle-card").forEach((card, index) => {
         gsap.to(card, {
-          y: index === 1 ? -12 : 8,
+          y: isMobile
+            ? index === 1
+              ? -6
+              : 4
+            : isTablet
+            ? index === 1
+              ? -8
+              : 6
+            : index === 1
+            ? -12
+            : 8,
           ease: "none",
           scrollTrigger: {
             trigger: card,
             start: "top bottom",
             end: "bottom top",
-            scrub: 1.5,
+            scrub: isMobile ? 2 : 1.5,
           },
         });
       });
@@ -237,12 +261,21 @@ const CorePrinciples = () => {
         relative
         overflow-hidden
         bg-black
-        px-8
-        py-20
+        px-5
+        py-12
         text-white
-        md:px-16
-        md:py-24
-        lg:px-24
+
+        sm:px-6
+        sm:py-14
+
+        md:px-10
+        md:py-16
+
+        lg:px-16
+        lg:py-20
+
+        xl:px-24
+        xl:py-24
       "
     >
       <div className="mx-auto max-w-7xl">
@@ -251,7 +284,14 @@ const CorePrinciples = () => {
             SECTION HEADING
         ====================================================== */}
 
-        <div className="principles-heading-wrap relative z-10 max-w-3xl">
+        <div
+          className="
+            principles-heading-wrap
+            relative
+            z-10
+            max-w-3xl
+          "
+        >
 
           <p
             className="
@@ -268,13 +308,20 @@ const CorePrinciples = () => {
 
           <h2
             className="
-              mt-5
-              text-[clamp(1.875rem,7vw,3.75rem)]
+              mt-4
+              text-[clamp(1.875rem,7vw,3rem)]
               font-semibold
-              leading-none
+              leading-[0.95]
               tracking-tight
-              md:text-6xl
-              lg:text-7xl
+
+              sm:text-[clamp(2rem,6vw,3.25rem)]
+
+              md:mt-5
+              md:text-5xl
+
+              lg:text-6xl
+
+              xl:text-7xl
             "
           >
             <span className="principles-heading-line block">
@@ -292,7 +339,19 @@ const CorePrinciples = () => {
             PRINCIPLES
         ====================================================== */}
 
-        <div className="principles-grid relative mt-14 md:mt-18">
+        <div
+          className="
+            principles-grid
+            relative
+            mt-10
+
+            sm:mt-12
+
+            md:mt-14
+
+            lg:mt-16
+          "
+        >
 
           {/* ===================================================
               01 — MISSION
@@ -311,14 +370,18 @@ const CorePrinciples = () => {
               border
               border-white/10
               bg-neutral-950
-              px-7
-              py-9
+              px-5
+              py-7
               transition-colors
               duration-500
               hover:border-white/20
+
+              sm:px-7
+              sm:py-8
+
               md:w-5/6
               md:px-10
-              md:py-11
+              md:py-10
             "
           >
 
@@ -356,7 +419,8 @@ const CorePrinciples = () => {
                 relative
                 z-10
                 grid
-                gap-8
+                gap-6
+
                 md:grid-cols-2
                 md:items-center
                 md:gap-10
@@ -367,13 +431,17 @@ const CorePrinciples = () => {
                 <h3
                   className="
                     principle-title
-                    mt-3
-                    text-[clamp(1.5rem,5vw,2.25rem)]
+                    mt-2
+                    text-[clamp(1.5rem,5vw,2rem)]
                     font-semibold
                     italic
                     leading-none
                     tracking-tight
+
+                    sm:text-[clamp(1.75rem,4vw,2.25rem)]
+
                     md:text-5xl
+
                     lg:text-6xl
                   "
                 >
@@ -392,9 +460,12 @@ const CorePrinciples = () => {
                 className="
                   principle-description
                   max-w-2xl
-                  text-base
+                  text-sm
                   leading-relaxed
                   text-white/55
+
+                  sm:text-base
+
                   md:text-lg
                 "
               >
@@ -411,11 +482,13 @@ const CorePrinciples = () => {
             <div
               className="
                 principle-line
-                mt-9
+                mt-7
                 h-px
                 w-full
                 origin-left
                 bg-white/10
+
+                md:mt-9
               "
             />
 
@@ -432,22 +505,27 @@ const CorePrinciples = () => {
               principle-card-2
               group
               relative
-              mt-8
+              mt-6
               w-full
               overflow-hidden
               rounded-3xl
               border
               border-white/10
               bg-neutral-950
-              px-7
-              py-9
+              px-5
+              py-7
               transition-colors
               duration-500
               hover:border-white/20
+
+              sm:mt-7
+              sm:px-7
+              sm:py-8
+
               md:mt-10
               md:w-3/4
               md:px-10
-              md:py-11
+              md:py-10
             "
           >
 
@@ -485,7 +563,8 @@ const CorePrinciples = () => {
                 relative
                 z-10
                 grid
-                gap-8
+                gap-6
+
                 md:grid-cols-2
                 md:items-center
                 md:gap-10
@@ -496,13 +575,17 @@ const CorePrinciples = () => {
                 <h3
                   className="
                     principle-title
-                    mt-3
-                    text-[clamp(1.5rem,5vw,2.25rem)]
+                    mt-2
+                    text-[clamp(1.5rem,5vw,2rem)]
                     font-semibold
                     italic
                     leading-none
                     tracking-tight
+
+                    sm:text-[clamp(1.75rem,4vw,2.25rem)]
+
                     md:text-5xl
+
                     lg:text-6xl
                   "
                 >
@@ -521,9 +604,12 @@ const CorePrinciples = () => {
                 className="
                   principle-description
                   max-w-2xl
-                  text-base
+                  text-sm
                   leading-relaxed
                   text-white/55
+
+                  sm:text-base
+
                   md:text-lg
                 "
               >
@@ -538,11 +624,13 @@ const CorePrinciples = () => {
             <div
               className="
                 principle-line
-                mt-9
+                mt-7
                 h-px
                 w-full
                 origin-left
                 bg-white/10
+
+                md:mt-9
               "
             />
 
@@ -559,7 +647,7 @@ const CorePrinciples = () => {
               principle-card-3
               group
               relative
-              mt-8
+              mt-6
               ml-auto
               w-full
               overflow-hidden
@@ -567,15 +655,20 @@ const CorePrinciples = () => {
               border
               border-white/10
               bg-neutral-950
-              px-7
-              py-9
+              px-5
+              py-7
               transition-colors
               duration-500
               hover:border-white/20
+
+              sm:mt-7
+              sm:px-7
+              sm:py-8
+
               md:mt-12
               md:w-4/5
               md:px-10
-              md:py-11
+              md:py-10
             "
           >
 
@@ -613,7 +706,8 @@ const CorePrinciples = () => {
                 relative
                 z-10
                 grid
-                gap-8
+                gap-6
+
                 md:grid-cols-2
                 md:items-center
                 md:gap-10
@@ -624,13 +718,17 @@ const CorePrinciples = () => {
                 <h3
                   className="
                     principle-title
-                    mt-3
-                    text-[clamp(1.5rem,5vw,2.25rem)]
+                    mt-2
+                    text-[clamp(1.5rem,5vw,2rem)]
                     font-semibold
                     italic
                     leading-none
                     tracking-tight
+
+                    sm:text-[clamp(1.75rem,4vw,2.25rem)]
+
                     md:text-5xl
+
                     lg:text-6xl
                   "
                 >
@@ -649,9 +747,12 @@ const CorePrinciples = () => {
                 className="
                   principle-description
                   max-w-2xl
-                  text-base
+                  text-sm
                   leading-relaxed
                   text-white/55
+
+                  sm:text-base
+
                   md:text-lg
                 "
               >
@@ -667,11 +768,13 @@ const CorePrinciples = () => {
             <div
               className="
                 principle-line
-                mt-9
+                mt-7
                 h-px
                 w-full
                 origin-left
                 bg-white/10
+
+                md:mt-9
               "
             />
 

@@ -1,15 +1,10 @@
 import express from "express";
-import {
-  login,
-  logout,
-} from "../controllers/authController.js";
 
+import { getDashboardStats } from "../controllers/dashboardController.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/login", login);
-
-router.post("/logout", authMiddleware, logout);
+router.get("/stats", authMiddleware, getDashboardStats);
 
 export default router;

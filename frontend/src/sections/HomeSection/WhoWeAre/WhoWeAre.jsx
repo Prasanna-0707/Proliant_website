@@ -5,9 +5,9 @@ import whoWeAreImage from "@/assets/images/Home/whoweare.png";
 const WhoWeAre = () => {
   return (
     <section className="bg-black py-12 text-white sm:py-16 md:py-20 lg:py-24">
-      {/* MASK2 ANIMATION */}
+      {/* MASK3 ANIMATION */}
       <style>{`
-        .mask2-button {
+        .mask3-button {
           position: relative;
           width: 190px;
           height: 46px;
@@ -21,73 +21,89 @@ const WhoWeAre = () => {
           cursor: pointer;
         }
 
-        .mask2-button::before {
+        .mask3-button::before {
           content: "";
+
           position: absolute;
-          inset: 0;
+          inset: -2px;
+
+          z-index: 1;
+
           background: white;
 
-          -webkit-mask-image: url("https://raw.githubusercontent.com/robin-dela/css-mask-animation/master/img/nature-sprite.png");
-          mask-image: url("https://raw.githubusercontent.com/robin-dela/css-mask-animation/master/img/nature-sprite.png");
+          clip-path: polygon(
+            0 0,
+            0 0,
+            0 100%,
+            0 100%
+          );
 
-          -webkit-mask-size: 2300% 100%;
-          mask-size: 2300% 100%;
-
-          -webkit-mask-position: 100% 0;
-          mask-position: 100% 0;
-
-          animation: mask2Out 0.7s steps(22) forwards;
+          transition:
+            clip-path
+            0.65s
+            cubic-bezier(
+              0.76,
+              0,
+              0.24,
+              1
+            );
         }
 
-        .mask2-button:hover::before {
-          animation: mask2In 0.7s steps(22) forwards;
+        .mask3-button:hover::before {
+          clip-path: polygon(
+            0 0,
+            100% 0,
+            100% 100%,
+            0 100%
+          );
         }
 
-        @keyframes mask2In {
-          from {
-            -webkit-mask-position: 100% 0;
-            mask-position: 100% 0;
-          }
+        .mask3-button::after {
+          content: "";
 
-          to {
-            -webkit-mask-position: 0 0;
-            mask-position: 0 0;
-          }
-        }
+          position: absolute;
 
-        @keyframes mask2Out {
-          from {
-            -webkit-mask-position: 0 0;
-            mask-position: 0 0;
-          }
+          top: -20%;
+          left: -40%;
 
-          to {
-            -webkit-mask-position: 100% 0;
-            mask-position: 100% 0;
-          }
-        }
+          width: 25%;
+          height: 140%;
 
-        .mask2-text {
-          position: relative;
           z-index: 2;
-          color: white;
-          transition: color 0.3s ease;
+
+          background: rgba(255,255,255,0.25);
+
+          transform:
+            skewX(-25deg)
+            translateX(-500%);
+
+          transition: transform 0.7s ease;
         }
 
-        .mask2-button:hover .mask2-text {
+        .mask3-button:hover::after {
+          transform:
+            skewX(-25deg)
+            translateX(800%);
+        }
+
+        .mask3-text,
+        .mask3-arrow {
+          position: relative;
+          z-index: 3;
+
+          color: white;
+
+          transition:
+            color 0.3s ease,
+            transform 0.35s ease;
+        }
+
+        .mask3-button:hover .mask3-text,
+        .mask3-button:hover .mask3-arrow {
           color: black;
         }
 
-        .mask2-arrow {
-          position: relative;
-          z-index: 2;
-          margin-left: 14px;
-          color: white;
-          transition: color 0.3s ease, transform 0.3s ease;
-        }
-
-        .mask2-button:hover .mask2-arrow {
-          color: black;
+        .mask3-button:hover .mask3-arrow {
           transform: translateX(5px);
         }
       `}</style>
@@ -173,16 +189,16 @@ const WhoWeAre = () => {
               advanced analytics, and AI innovation.
             </p>
 
-            {/* READ MORE - MASK2 ANIMATION */}
+            {/* READ MORE - MASK3 */}
             <a
               href="/who-we-are"
-              className="mask2-button h-11! w-40! sm:h-12! sm:w-48!"
+              className="mask3-button h-11! w-40! sm:h-12! sm:w-48!"
             >
-              <span className="mask2-text">
+              <span className="mask3-text">
                 READ MORE
               </span>
 
-              <span className="mask2-arrow">
+              <span className="mask3-arrow">
                 →
               </span>
             </a>
