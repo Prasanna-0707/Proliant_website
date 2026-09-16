@@ -1,10 +1,12 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
+  UserCog,
   BriefcaseBusiness,
   UserRoundSearch,
   MessageSquareText,
+  Globe2,
   LogOut,
 } from "lucide-react";
 
@@ -18,9 +20,19 @@ const managementLinks = [
     icon: Users,
   },
   {
+    name: "Team Members",
+    path: "/team-members",
+    icon: UserCog,
+  },
+  {
     name: "Jobs",
     path: "/jobs",
     icon: BriefcaseBusiness,
+  },
+  {
+    name: "Countries",
+    path: "/countries",
+    icon: Globe2,
   },
 ];
 
@@ -52,9 +64,19 @@ const mobileLinks = [
     icon: Users,
   },
   {
+    name: "Team Members",
+    path: "/team-members",
+    icon: UserCog,
+  },
+  {
     name: "Jobs",
     path: "/jobs",
     icon: BriefcaseBusiness,
+  },
+  {
+    name: "Countries",
+    path: "/countries",
+    icon: Globe2,
   },
   {
     name: "Candidates",
@@ -69,8 +91,6 @@ const mobileLinks = [
 ];
 
 function Sidebar() {
-  const navigate = useNavigate();
-
   const handleLogout = async () => {
     const token = localStorage.getItem("adminToken");
 
@@ -90,17 +110,10 @@ function Sidebar() {
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      /*
-       * Clear local authentication data
-       * even if the API request fails.
-       */
       localStorage.removeItem("adminToken");
       localStorage.removeItem("adminUser");
 
-      /*
-       * Redirect to login page.
-       */
-      navigate("/login", { replace: true });
+      window.location.href = "/login";
     }
   };
 
