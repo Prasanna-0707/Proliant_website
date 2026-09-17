@@ -19,6 +19,16 @@ const adminSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+
+    resetTokenVersion: {
+      type: Number,
+      default: 0,
+    },
+
+    mustChangePassword: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

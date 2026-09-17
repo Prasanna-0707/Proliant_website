@@ -1,23 +1,28 @@
 @baseUrl = http://localhost:5000/api
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbklkIjoiNmFhNTY5YjZlNGUwOTM3OGZiZmZlN2M1IiwiZW1haWwiOiJhZG1pbkBwcm9saWFudC5jb20iLCJ0b2tlblZlcnNpb24iOjAsImlhdCI6MTc4OTQ3NjMzOSwiZXhwIjoxNzg5NTYyNzM5fQ.76zYmMt5PGxy7ug5mCFhjLkyjH9C4zc4GqLABscdpzE
+
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbklkIjoiNmFhNTY5YjZlNGUwOTM3OGZiZmZlN2M1IiwiZW1haWwiOiJib2dhY2hhbmRyYXB1QGdtYWlsLmNvbSIsInRva2VuVmVyc2lvbiI6MCwiaWF0IjoxNzg5NDc2MzM5LCJleHAiOjE3ODk1NjI3Mzl9.76zYmMt5PGxy7ug5mCFhjLkyjH9C4zc4GqLABscdpzE
 
 ############################################################
 # 1. AUTHENTICATION
 ############################################################
 
 ### 1.1 Login
+
 POST {{baseUrl}}/auth/login
+
 Content-Type: application/json
 
 {
-  "email": "admin@proliant.com",
+  "email": "bogachandrapu@gmail.com",
   "password": "Admin@123"
 }
 
 ###
 
 ### 1.2 Logout
+
 POST {{baseUrl}}/auth/logout
+
 Authorization: Bearer {{token}}
 
 ###
@@ -27,14 +32,19 @@ Authorization: Bearer {{token}}
 ############################################################
 
 ### 2.1 Get All Employees
+
 GET {{baseUrl}}/employees
+
 Authorization: Bearer {{token}}
 
 ###
 
 ### 2.2 Add Employee
+
 POST {{baseUrl}}/employees
+
 Authorization: Bearer {{token}}
+
 Content-Type: application/json
 
 {
@@ -48,9 +58,13 @@ Content-Type: application/json
 ###
 
 ### 2.3 Update Employee - Admin
+
 # Replace EMPLOYEE_ID with an actual employee _id
+
 PUT {{baseUrl}}/employees/6aa66be8df59d5cd2ec54da8
+
 Authorization: Bearer {{token}}
+
 Content-Type: application/json
 
 {
@@ -64,8 +78,11 @@ Content-Type: application/json
 ###
 
 ### 2.4 Delete Employee - Admin
+
 # Replace EMPLOYEE_ID with an actual employee _id
+
 DELETE {{baseUrl}}/employees/6aa66be8df59d5cd2ec54da8
+
 Authorization: Bearer {{token}}
 
 ###
@@ -75,13 +92,17 @@ Authorization: Bearer {{token}}
 ############################################################
 
 ### 3.1 Get Dashboard Stats - Admin
+
 GET {{baseUrl}}/dashboard/stats
+
 Authorization: Bearer {{token}}
 
 ###
 
 ### 3.2 Dashboard Stats - No Token
+
 # Expected: 401 Unauthorized
+
 GET {{baseUrl}}/dashboard/stats
 
 ###
@@ -91,13 +112,17 @@ GET {{baseUrl}}/dashboard/stats
 ############################################################
 
 ### 4.1 Get All Locations - PUBLIC
+
 GET {{baseUrl}}/locations
 
 ###
 
 ### 4.2 Add Location - ADMIN
+
 POST {{baseUrl}}/locations
+
 Authorization: Bearer {{token}}
+
 Content-Type: application/json
 
 {
@@ -115,9 +140,13 @@ Content-Type: application/json
 ###
 
 ### 4.3 Update Location - ADMIN
+
 # Replace LOCATION_ID with actual location _id
+
 PUT {{baseUrl}}/locations/6aa66c8fdf59d5cd2ec54da9
+
 Authorization: Bearer {{token}}
+
 Content-Type: application/json
 
 {
@@ -128,8 +157,11 @@ Content-Type: application/json
 ###
 
 ### 4.4 Delete Location - ADMIN
+
 # Replace LOCATION_ID with actual location _id
+
 DELETE {{baseUrl}}/locations/6aa66c8fdf59d5cd2ec54da9
+
 Authorization: Bearer {{token}}
 
 ###
@@ -139,19 +171,25 @@ Authorization: Bearer {{token}}
 ############################################################
 
 ### 5.1 Get Published Jobs - PUBLIC
+
 GET {{baseUrl}}/jobs
 
 ###
 
 ### 5.2 Get Single Published Job - PUBLIC
+
 # Replace JOB_ID with actual published job _id
+
 GET {{baseUrl}}/jobs/6aa569b6e4e09378fbffe82d
 
 ###
 
 ### 5.3 Create Job - ADMIN
+
 POST {{baseUrl}}/jobs
+
 Authorization: Bearer {{token}}
+
 Content-Type: application/json
 
 {
@@ -167,9 +205,13 @@ Content-Type: application/json
 ###
 
 ### 5.4 Update Job - ADMIN
+
 # Replace JOB_ID with actual job _id
+
 PUT {{baseUrl}}/jobs/6aa66d01df59d5cd2ec54daa
+
 Authorization: Bearer {{token}}
+
 Content-Type: application/json
 
 {
@@ -185,8 +227,11 @@ Content-Type: application/json
 ###
 
 ### 5.5 Delete Job - ADMIN
+
 # Replace JOB_ID with actual job _id
+
 DELETE {{baseUrl}}/jobs/6aa66d01df59d5cd2ec54daa
+
 Authorization: Bearer {{token}}
 
 ###
@@ -196,7 +241,9 @@ Authorization: Bearer {{token}}
 ############################################################
 
 ### 6.1 Create Contact Enquiry - PUBLIC
+
 POST {{baseUrl}}/contacts
+
 Content-Type: application/json
 
 {
@@ -210,22 +257,31 @@ Content-Type: application/json
 ###
 
 ### 6.2 Get All Contact Enquiries - ADMIN
+
 GET {{baseUrl}}/contacts
+
 Authorization: Bearer {{token}}
 
 ###
 
 ### 6.3 Get Single Contact Enquiry - ADMIN
+
 # Replace CONTACT_ID with actual contact _id
+
 GET {{baseUrl}}/contacts/6aa66d3edf59d5cd2ec54dab
+
 Authorization: Bearer {{token}}
 
 ###
 
 ### 6.4 Update Contact Status - ADMIN
+
 # Replace CONTACT_ID with actual contact _id
+
 PATCH {{baseUrl}}/contacts/6aa66d3edf59d5cd2ec54dab/status
+
 Authorization: Bearer {{token}}
+
 Content-Type: application/json
 
 {
@@ -235,8 +291,11 @@ Content-Type: application/json
 ###
 
 ### 6.5 Delete Contact Enquiry - ADMIN
+
 # Replace CONTACT_ID with actual contact _id
+
 DELETE {{baseUrl}}/contacts/6aa66d3edf59d5cd2ec54dab
+
 Authorization: Bearer {{token}}
 
 ###
@@ -246,7 +305,9 @@ Authorization: Bearer {{token}}
 ############################################################
 
 ### 7.1 Create Candidate Application - PUBLIC
+
 POST {{baseUrl}}/candidates
+
 Content-Type: application/json
 
 {
@@ -268,22 +329,31 @@ Content-Type: application/json
 ###
 
 ### 7.2 Get All Candidates - ADMIN
+
 GET {{baseUrl}}/candidates
+
 Authorization: Bearer {{token}}
 
 ###
 
 ### 7.3 Get Single Candidate - ADMIN
+
 # Replace CANDIDATE_ID with actual candidate _id
+
 GET {{baseUrl}}/candidates/6aa66d96df59d5cd2ec54dac
+
 Authorization: Bearer {{token}}
 
 ###
 
 ### 7.4 Update Candidate - ADMIN
+
 # Replace CANDIDATE_ID with actual candidate _id
+
 PUT {{baseUrl}}/candidates/6aa66d96df59d5cd2ec54dac
+
 Authorization: Bearer {{token}}
+
 Content-Type: application/json
 
 {
@@ -293,8 +363,117 @@ Content-Type: application/json
 ###
 
 ### 7.5 Delete Candidate - ADMIN
+
 # Replace CANDIDATE_ID with actual candidate _id
+
 DELETE {{baseUrl}}/candidates/6aa66d96df59d5cd2ec54dac
+
 Authorization: Bearer {{token}}
+
+###
+
+############################################################
+# 8. NEW AUTHENTICATION FLOW TESTING
+############################################################
+
+### 8.1 Login - Password Verification
+
+POST {{baseUrl}}/auth/login
+
+Content-Type: application/json
+
+{
+  "email": "bogachandrapu@gmail.com",
+  "password": "Admin@123"
+}
+
+###
+
+### 8.2 Verify Login OTP
+
+# Enter the OTP received in the admin email
+
+POST {{baseUrl}}/auth/verify-login-otp
+
+Content-Type: application/json
+
+{
+  "email": "bogachandrapu@gmail.com",
+  "otp": "ENTER_LOGIN_OTP_HERE"
+}
+
+###
+
+### 8.3 Forgot Password
+
+POST {{baseUrl}}/auth/forgot-password
+
+Content-Type: application/json
+
+{
+  "email": "bogachandrapu@gmail.com"
+}
+
+###
+
+### 8.4 Verify Reset OTP
+
+# Enter the OTP received in the password-reset email
+
+POST {{baseUrl}}/auth/verify-reset-otp
+
+Content-Type: application/json
+
+{
+  "email": "bogachandrapu@gmail.com",
+  "otp": "ENTER_RESET_OTP_HERE"
+}
+
+###
+
+### 8.5 Reset Password
+
+# Replace RESET_TOKEN with the token returned by 8.4
+
+POST {{baseUrl}}/auth/reset-password
+
+Content-Type: application/json
+
+{
+  "email": "bogachandrapu@gmail.com",
+  "resetToken": "RESET_TOKEN_HERE",
+  "newPassword": "NewAdmin@123"
+}
+
+###
+
+### 8.6 Change Password
+
+# Replace TOKEN with a newly generated login JWT
+
+PATCH {{baseUrl}}/auth/change-password
+
+Authorization: Bearer TOKEN
+
+Content-Type: application/json
+
+{
+  "currentPassword": "NewAdmin@123",
+  "newPassword": "AnotherAdmin@123"
+}
+
+###
+
+############################################################
+# 9. EXCEL EXPORT
+############################################################
+
+### 9.1 Export Candidates to Excel
+
+# Replace TOKEN with a valid Admin/HR JWT
+
+GET {{baseUrl}}/candidates/export/excel
+
+Authorization: Bearer TOKEN
 
 ###

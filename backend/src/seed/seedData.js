@@ -24,7 +24,7 @@ const seedDatabase = async () => {
       );
 
       await Admin.create({
-        email: "admin@proliant.com",
+        email: "bogachandrapu@gmail.com",
         password: hashedPassword,
       });
 
