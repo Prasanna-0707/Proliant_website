@@ -20,7 +20,6 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   "http://localhost:5000/api";
 
-
 const candidateStatuses = [
   "New",
   "Shortlisted",
@@ -41,39 +40,22 @@ const normalizeCandidate = (candidate) => {
     candidate.yearsOfExperience !== null
   ) {
     experience = `${candidate.yearsOfExperience} ${
-      candidate.yearsOfExperience === 1
-        ? "Year"
-        : "Years"
+      candidate.yearsOfExperience === 1 ? "Year" : "Years"
     }`;
   }
 
   return {
     ...candidate,
-
     id: candidate._id,
-
     job: candidate.position || "N/A",
-
     experience,
-
     appliedDate: candidate.createdAt,
-
     resumeUrl: candidate.resume || "#",
-
-    currentCompany:
-      candidate.currentCompany || "N/A",
-
-    location:
-      candidate.location || "N/A",
-
-    noticePeriod:
-      candidate.noticePeriod || "N/A",
-
-    areaOfInterest:
-      candidate.areaOfInterest || "N/A",
-
-    coverMessage:
-      candidate.coverMessage || "",
+    currentCompany: candidate.currentCompany || "N/A",
+    location: candidate.location || "N/A",
+    noticePeriod: candidate.noticePeriod || "N/A",
+    areaOfInterest: candidate.areaOfInterest || "N/A",
+    coverMessage: candidate.coverMessage || "",
   };
 };
 
@@ -86,28 +68,18 @@ function Candidates() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] =
-    useState("All");
+  const [statusFilter, setStatusFilter] = useState("All");
   const [jobFilter, setJobFilter] = useState("All");
 
-  const [openMenuId, setOpenMenuId] =
-    useState(null);
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const [viewCandidate, setViewCandidate] = useState(null);
+  const [editingCandidate, setEditingCandidate] = useState(null);
+  const [deleteCandidate, setDeleteCandidate] = useState(null);
 
-  const [viewCandidate, setViewCandidate] =
-    useState(null);
-
-  const [editingCandidate, setEditingCandidate] =
-    useState(null);
-
-  const [deleteCandidate, setDeleteCandidate] =
-    useState(null);
-
-  const [editStatus, setEditStatus] =
-    useState("");
+  const [editStatus, setEditStatus] = useState("");
 
   const getAuthHeaders = () => {
-    const token =
-      localStorage.getItem("adminToken");
+    const token = localStorage.getItem("adminToken");
 
     return {
       Authorization: `Bearer ${token}`,
@@ -156,21 +128,17 @@ function Candidates() {
         );
       }
 
-      const normalizedCandidates =
-        result.candidates
-          .map(normalizeCandidate)
-          .sort(
-            (a, b) =>
-              new Date(b.appliedDate) -
-              new Date(a.appliedDate)
-          );
+      const normalizedCandidates = result.candidates
+        .map(normalizeCandidate)
+        .sort(
+          (a, b) =>
+            new Date(b.appliedDate) -
+            new Date(a.appliedDate)
+        );
 
       setCandidates(normalizedCandidates);
     } catch (error) {
-      console.error(
-        "Failed to load candidates:",
-        error
-      );
+      console.error("Failed to load candidates:", error);
 
       setPageError(
         "Unable to load candidate applications."
@@ -189,20 +157,16 @@ function Candidates() {
   const jobs = useMemo(() => {
     return [
       ...new Set(
-        candidates.map(
-          (candidate) => candidate.job
-        )
+        candidates.map((candidate) => candidate.job)
       ),
     ].filter(Boolean);
   }, [candidates]);
 
   const filteredCandidates = useMemo(() => {
     return candidates.filter((candidate) => {
-      const searchValue =
-        search.toLowerCase().trim();
+      const searchValue = search.toLowerCase().trim();
 
       const matchesSearch =
-
         (candidate.name || "")
           .toLowerCase()
           .includes(searchValue) ||
@@ -230,6 +194,7 @@ function Candidates() {
         (candidate.areaOfInterest || "")
           .toLowerCase()
           .includes(searchValue);
+
       const matchesStatus =
         statusFilter === "All" ||
         candidate.status === statusFilter;
@@ -295,9 +260,7 @@ function Candidates() {
               editingCandidate.areaOfInterest || "",
 
             name: editingCandidate.name,
-
             email: editingCandidate.email,
-
             phone: editingCandidate.phone,
 
             isFresher:
@@ -349,12 +312,9 @@ function Candidates() {
         );
       }
 
-      const updatedCandidate =
-        result.candidate
-          ? normalizeCandidate(
-              result.candidate
-            )
-          : null;
+      const updatedCandidate = result.candidate
+        ? normalizeCandidate(result.candidate)
+        : null;
 
       setCandidates((previous) =>
         previous.map((candidate) =>
@@ -447,22 +407,22 @@ function Candidates() {
   const getStatusClass = (status) => {
     switch (status) {
       case "New":
-        return "bg-blue-50 text-blue-600";
+        return "bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300";
 
       case "Shortlisted":
-        return "bg-green-50 text-green-600";
+        return "bg-green-50 text-green-600 dark:bg-green-950/40 dark:text-green-300";
 
       case "Interview":
-        return "bg-yellow-50 text-yellow-600";
+        return "bg-yellow-50 text-yellow-600 dark:bg-yellow-950/40 dark:text-yellow-300";
 
       case "Selected":
-        return "bg-purple-50 text-purple-600";
+        return "bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-300";
 
       case "Rejected":
-        return "bg-red-50 text-red-600";
+        return "bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-300";
 
       default:
-        return "bg-gray-100 text-gray-500";
+        return "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-300";
     }
   };
 
@@ -477,29 +437,32 @@ function Candidates() {
       "Area of Interest",
       "Highest Qualification",
       "Experience",
+      "Current Company",
+      "Notice Period",
       "Location",
       "Status",
       "Applied Date",
       "Resume",
     ];
-    const rows =
-      filteredCandidates.map((candidate) => [
-        candidate.name,
-        candidate.email,
-        candidate.phone,
-        candidate.job,
-        candidate.areaOfInterest,
-        candidate.highestQualification,
-        candidate.experience,
-        candidate.currentCompany,
-        candidate.noticePeriod,
-        candidate.location,
-        candidate.status,
-        formatDate(candidate.appliedDate),
-        candidate.resumeUrl === "#"
-          ? ""
-          : candidate.resumeUrl,
-      ]);
+
+    const rows = filteredCandidates.map((candidate) => [
+      candidate.name,
+      candidate.email,
+      candidate.phone,
+      candidate.job,
+      candidate.areaOfInterest,
+      candidate.highestQualification,
+      candidate.experience,
+      candidate.currentCompany,
+      candidate.noticePeriod,
+      candidate.location,
+      candidate.status,
+      formatDate(candidate.appliedDate),
+      candidate.resumeUrl === "#"
+        ? ""
+        : candidate.resumeUrl,
+    ]);
+
     const csvContent = [
       headers,
       ...rows,
@@ -507,9 +470,7 @@ function Candidates() {
       .map((row) =>
         row
           .map((value) => {
-            const stringValue = String(
-              value ?? ""
-            );
+            const stringValue = String(value ?? "");
 
             return `"${stringValue.replace(
               /"/g,
@@ -552,38 +513,39 @@ function Candidates() {
       label: "Candidate",
       render: (candidate) => (
         <div>
-          <p className="font-semibold text-gray-900">
+          <p className="font-semibold text-gray-900 dark:text-white">
             {candidate.name}
           </p>
 
-          <p className="mt-0.5 text-xs text-gray-500">
+          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
             {candidate.email}
           </p>
         </div>
       ),
     },
+
     {
       key: "job",
       label: "Applied For",
       render: (candidate) => (
         <div>
-          <p className="font-medium text-gray-800">
+          <p className="font-medium text-gray-800 dark:text-gray-200">
             {candidate.job}
           </p>
 
-          <p className="mt-0.5 text-xs text-gray-500">
+          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
             {candidate.experience}
           </p>
         </div>
       ),
     },
+
     {
       key: "highestQualification",
       label: "Highest Qualification",
       render: (candidate) => (
-        <span className="text-sm text-gray-700">
-          {candidate.highestQualification ||
-            "N/A"}
+        <span className="text-sm text-gray-700 dark:text-gray-300">
+          {candidate.highestQualification || "N/A"}
         </span>
       ),
     },
@@ -592,7 +554,7 @@ function Candidates() {
       key: "experience",
       label: "Experience",
       render: (candidate) => (
-        <span className="text-sm text-gray-600">
+        <span className="text-sm text-gray-600 dark:text-gray-300">
           {candidate.experience}
         </span>
       ),
@@ -602,7 +564,7 @@ function Candidates() {
       key: "currentCompany",
       label: "Current Company",
       render: (candidate) => (
-        <span className="text-sm text-gray-700">
+        <span className="text-sm text-gray-700 dark:text-gray-300">
           {candidate.currentCompany}
         </span>
       ),
@@ -612,15 +574,22 @@ function Candidates() {
       key: "noticePeriod",
       label: "Notice Period",
       render: (candidate) => (
-        <span className="text-sm text-gray-600">
+        <span className="text-sm text-gray-600 dark:text-gray-300">
           {candidate.noticePeriod}
         </span>
       ),
     },
+
     {
       key: "location",
       label: "Location",
+      render: (candidate) => (
+        <span className="text-sm text-gray-700 dark:text-gray-300">
+          {candidate.location}
+        </span>
+      ),
     },
+
     {
       key: "status",
       label: "Status",
@@ -634,17 +603,17 @@ function Candidates() {
         </span>
       ),
     },
+
     {
       key: "appliedDate",
       label: "Applied",
       render: (candidate) => (
-        <span className="text-sm text-gray-600">
-          {formatDate(
-            candidate.appliedDate
-          )}
+        <span className="text-sm text-gray-600 dark:text-gray-300">
+          {formatDate(candidate.appliedDate)}
         </span>
       ),
     },
+
     {
       key: "resume",
       label: "Resume",
@@ -652,9 +621,7 @@ function Candidates() {
         <a
           href={candidate.resumeUrl}
           onClick={(event) => {
-            if (
-              candidate.resumeUrl === "#"
-            ) {
+            if (candidate.resumeUrl === "#") {
               event.preventDefault();
             }
           }}
@@ -667,6 +634,7 @@ function Candidates() {
         </a>
       ),
     },
+
     {
       key: "actions",
       label: "Actions",
@@ -677,75 +645,62 @@ function Candidates() {
             onClick={(event) => {
               event.stopPropagation();
 
-              setOpenMenuId(
-                (previous) =>
-                  previous === candidate.id
-                    ? null
-                    : candidate.id
+              setOpenMenuId((previous) =>
+                previous === candidate.id
+                  ? null
+                  : candidate.id
               );
             }}
-            className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700"
+            className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
             aria-label="Candidate actions"
           >
             <MoreVertical size={18} />
           </button>
 
-          {openMenuId ===
-            candidate.id && (
-            <div className="absolute right-0 top-10 z-30 w-48 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+          {openMenuId === candidate.id && (
+            <div className="absolute right-0 top-10 z-30 w-48 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900">
               <button
                 type="button"
                 onClick={() => {
-                  setViewCandidate(
-                    candidate
-                  );
+                  setViewCandidate(candidate);
                   setOpenMenuId(null);
                 }}
-                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800"
               >
                 <Eye size={16} />
-                <span>
-                  View Candidate
-                </span>
+
+                <span>View Candidate</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => {
-                  setEditingCandidate(
-                    candidate
-                  );
-                  setEditStatus(
-                    candidate.status
-                  );
+                  setEditingCandidate(candidate);
+                  setEditStatus(candidate.status);
                   setActionError("");
                   setOpenMenuId(null);
                 }}
-                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800"
               >
                 <Pencil size={16} />
-                <span>
-                  Update Status
-                </span>
+
+                <span>Update Status</span>
               </button>
 
-              <div className="my-1 border-t border-gray-100" />
+              <div className="my-1 border-t border-gray-100 dark:border-gray-700" />
 
               <button
                 type="button"
                 onClick={() => {
-                  setDeleteCandidate(
-                    candidate
-                  );
+                  setDeleteCandidate(candidate);
                   setActionError("");
                   setOpenMenuId(null);
                 }}
-                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
+                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:hover:bg-red-950/30"
               >
                 <Trash2 size={16} />
-                <span>
-                  Delete Candidate
-                </span>
+
+                <span>Delete Candidate</span>
               </button>
             </div>
           )}
@@ -755,17 +710,16 @@ function Candidates() {
   ];
 
   return (
-    <div className="relative p-5 sm:p-6">
+    <div className="relative min-h-screen bg-gray-200 p-5 transition-colors dark:bg-gray-950 sm:p-6">
       {/* Page Header */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
             Candidates
           </h1>
 
-          <p className="mt-1 text-sm text-gray-500">
-            Manage applications and track
-            candidate progress.
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Manage applications and track candidate progress.
           </p>
         </div>
 
@@ -776,7 +730,7 @@ function Candidates() {
             isLoading ||
             filteredCandidates.length === 0
           }
-          className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800 sm:w-auto"
         >
           <Download size={18} />
           Download Excel
@@ -785,7 +739,7 @@ function Candidates() {
 
       {/* Action Error */}
       {actionError && (
-        <div className="mb-5 rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
+        <div className="mb-5 rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
           {actionError}
         </div>
       )}
@@ -795,7 +749,7 @@ function Candidates() {
         <div className="relative w-full lg:max-w-sm">
           <Search
             size={18}
-            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
           />
 
           <input
@@ -805,7 +759,7 @@ function Candidates() {
               setSearch(event.target.value)
             }
             placeholder="Search candidates..."
-            className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50"
+            className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-red-950/40"
           />
         </div>
 
@@ -813,46 +767,34 @@ function Candidates() {
           <select
             value={statusFilter}
             onChange={(event) =>
-              setStatusFilter(
-                event.target.value
-              )
+              setStatusFilter(event.target.value)
             }
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 sm:w-40"
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:focus:ring-red-950/40 sm:w-40"
           >
             <option value="All">
               All Status
             </option>
 
-            {candidateStatuses.map(
-              (status) => (
-                <option
-                  key={status}
-                  value={status}
-                >
-                  {status}
-                </option>
-              )
-            )}
+            {candidateStatuses.map((status) => (
+              <option key={status} value={status}>
+                {status}
+              </option>
+            ))}
           </select>
 
           <select
             value={jobFilter}
             onChange={(event) =>
-              setJobFilter(
-                event.target.value
-              )
+              setJobFilter(event.target.value)
             }
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 sm:w-52"
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:focus:ring-red-950/40 sm:w-52"
           >
             <option value="All">
               All Jobs
             </option>
 
             {jobs.map((job) => (
-              <option
-                key={job}
-                value={job}
-              >
+              <option key={job} value={job}>
                 {job}
               </option>
             ))}
@@ -861,18 +803,17 @@ function Candidates() {
       </div>
 
       {/* Candidates Table */}
-      <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-        <div className="border-b border-gray-100 px-5 py-4">
-          <h2 className="text-base font-semibold text-gray-900">
+      <section className="overflow-hidden rounded-xl border border-gray-200 bg-white transition-colors dark:border-gray-800 dark:bg-gray-900">
+        <div className="border-b border-gray-100 px-5 py-4 dark:border-gray-800">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-white">
             Candidate Applications
           </h2>
 
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             {isLoading
               ? "Loading candidates..."
               : `${filteredCandidates.length} candidate${
-                  filteredCandidates.length !==
-                  1
+                  filteredCandidates.length !== 1
                     ? "s"
                     : ""
                 } found`}
@@ -881,7 +822,7 @@ function Candidates() {
 
         {isLoading ? (
           <div className="px-5 py-12 text-center">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               Loading candidate applications...
             </p>
           </div>
@@ -903,34 +844,30 @@ function Candidates() {
       {/* View Candidate Modal */}
       {viewCandidate && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6"
-          onClick={() =>
-            setViewCandidate(null)
-          }
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-sm"
+          onClick={() => setViewCandidate(null)}
         >
           <div
-            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white shadow-xl"
+            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white shadow-xl dark:border dark:border-gray-800 dark:bg-gray-900"
             onClick={(event) =>
               event.stopPropagation()
             }
           >
-            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-gray-800">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Candidate Details
                 </h2>
 
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   Application information
                 </p>
               </div>
 
               <button
                 type="button"
-                onClick={() =>
-                  setViewCandidate(null)
-                }
-                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700"
+                onClick={() => setViewCandidate(null)}
+                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-white"
                 aria-label="Close modal"
               >
                 <X size={20} />
@@ -941,11 +878,11 @@ function Candidates() {
               <div>
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                       {viewCandidate.name}
                     </h3>
 
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                       {viewCandidate.job}
                     </p>
                   </div>
@@ -964,15 +901,15 @@ function Candidates() {
                 <div className="flex items-start gap-3">
                   <Mail
                     size={18}
-                    className="mt-0.5 text-gray-400"
+                    className="mt-0.5 text-gray-400 dark:text-gray-500"
                   />
 
                   <div>
-                    <p className="text-xs font-medium text-gray-400">
+                    <p className="text-xs font-medium text-gray-400 dark:text-gray-500">
                       Email
                     </p>
 
-                    <p className="mt-1 break-all text-sm text-gray-700">
+                    <p className="mt-1 break-all text-sm text-gray-700 dark:text-gray-300">
                       {viewCandidate.email}
                     </p>
                   </div>
@@ -981,15 +918,15 @@ function Candidates() {
                 <div className="flex items-start gap-3">
                   <Phone
                     size={18}
-                    className="mt-0.5 text-gray-400"
+                    className="mt-0.5 text-gray-400 dark:text-gray-500"
                   />
 
                   <div>
-                    <p className="text-xs font-medium text-gray-400">
+                    <p className="text-xs font-medium text-gray-400 dark:text-gray-500">
                       Phone
                     </p>
 
-                    <p className="mt-1 text-sm text-gray-700">
+                    <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
                       {viewCandidate.phone}
                     </p>
                   </div>
@@ -998,15 +935,15 @@ function Candidates() {
                 <div className="flex items-start gap-3">
                   <MapPin
                     size={18}
-                    className="mt-0.5 text-gray-400"
+                    className="mt-0.5 text-gray-400 dark:text-gray-500"
                   />
 
                   <div>
-                    <p className="text-xs font-medium text-gray-400">
+                    <p className="text-xs font-medium text-gray-400 dark:text-gray-500">
                       Location
                     </p>
 
-                    <p className="mt-1 text-sm text-gray-700">
+                    <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
                       {viewCandidate.location}
                     </p>
                   </div>
@@ -1015,15 +952,15 @@ function Candidates() {
                 <div className="flex items-start gap-3">
                   <FileText
                     size={18}
-                    className="mt-0.5 text-gray-400"
+                    className="mt-0.5 text-gray-400 dark:text-gray-500"
                   />
 
                   <div>
-                    <p className="text-xs font-medium text-gray-400">
+                    <p className="text-xs font-medium text-gray-400 dark:text-gray-500">
                       Highest Qualification
                     </p>
 
-                    <p className="mt-1 text-sm text-gray-700">
+                    <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
                       {viewCandidate.highestQualification ||
                         "N/A"}
                     </p>
@@ -1033,31 +970,32 @@ function Candidates() {
                 <div className="flex items-start gap-3">
                   <FileText
                     size={18}
-                    className="mt-0.5 text-gray-400"
+                    className="mt-0.5 text-gray-400 dark:text-gray-500"
                   />
 
                   <div>
-                    <p className="text-xs font-medium text-gray-400">
+                    <p className="text-xs font-medium text-gray-400 dark:text-gray-500">
                       Experience
                     </p>
 
-                    <p className="mt-1 text-sm text-gray-700">
+                    <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
                       {viewCandidate.experience}
                     </p>
                   </div>
                 </div>
+
                 <div className="flex items-start gap-3">
                   <FileText
                     size={18}
-                    className="mt-0.5 text-gray-400"
+                    className="mt-0.5 text-gray-400 dark:text-gray-500"
                   />
 
                   <div>
-                    <p className="text-xs font-medium text-gray-400">
+                    <p className="text-xs font-medium text-gray-400 dark:text-gray-500">
                       Current Company
                     </p>
 
-                    <p className="mt-1 text-sm text-gray-700">
+                    <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
                       {viewCandidate.currentCompany}
                     </p>
                   </div>
@@ -1066,15 +1004,15 @@ function Candidates() {
                 <div className="flex items-start gap-3">
                   <FileText
                     size={18}
-                    className="mt-0.5 text-gray-400"
+                    className="mt-0.5 text-gray-400 dark:text-gray-500"
                   />
 
                   <div>
-                    <p className="text-xs font-medium text-gray-400">
+                    <p className="text-xs font-medium text-gray-400 dark:text-gray-500">
                       Notice Period
                     </p>
 
-                    <p className="mt-1 text-sm text-gray-700">
+                    <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
                       {viewCandidate.noticePeriod}
                     </p>
                   </div>
@@ -1083,48 +1021,46 @@ function Candidates() {
                 <div className="flex items-start gap-3">
                   <FileText
                     size={18}
-                    className="mt-0.5 text-gray-400"
+                    className="mt-0.5 text-gray-400 dark:text-gray-500"
                   />
 
                   <div>
-                    <p className="text-xs font-medium text-gray-400">
+                    <p className="text-xs font-medium text-gray-400 dark:text-gray-500">
                       Area of Interest
                     </p>
 
-                    <p className="mt-1 text-sm text-gray-700">
+                    <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
                       {viewCandidate.areaOfInterest}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="rounded-lg bg-gray-50 p-4">
-                <p className="text-xs font-medium text-gray-400">
+              <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+                <p className="text-xs font-medium text-gray-400 dark:text-gray-500">
                   Applied For
                 </p>
 
-                <p className="mt-1 text-sm font-semibold text-gray-800">
+                <p className="mt-1 text-sm font-semibold text-gray-800 dark:text-gray-200">
                   {viewCandidate.job}
                 </p>
 
-                <p className="mt-3 text-xs font-medium text-gray-400">
+                <p className="mt-3 text-xs font-medium text-gray-400 dark:text-gray-500">
                   Applied Date
                 </p>
 
-                <p className="mt-1 text-sm text-gray-700">
-                  {formatDate(
-                    viewCandidate.appliedDate
-                  )}
+                <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
+                  {formatDate(viewCandidate.appliedDate)}
                 </p>
               </div>
 
               {viewCandidate.coverMessage && (
-                <div className="rounded-lg bg-gray-50 p-4">
-                  <p className="text-xs font-medium text-gray-400">
+                <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+                  <p className="text-xs font-medium text-gray-400 dark:text-gray-500">
                     Cover Message
                   </p>
 
-                  <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-gray-700">
+                  <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-gray-700 dark:text-gray-300">
                     {viewCandidate.coverMessage}
                   </p>
                 </div>
@@ -1133,16 +1069,13 @@ function Candidates() {
               <a
                 href={viewCandidate.resumeUrl}
                 onClick={(event) => {
-                  if (
-                    viewCandidate.resumeUrl ===
-                    "#"
-                  ) {
+                  if (viewCandidate.resumeUrl === "#") {
                     event.preventDefault();
                   }
                 }}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
               >
                 <FileText size={17} />
                 View Resume
@@ -1155,34 +1088,30 @@ function Candidates() {
       {/* Update Status Modal */}
       {editingCandidate && (
         <div
-          className="fixed inset-0 z-55 flex items-center justify-center bg-black/40 px-4"
-          onClick={() =>
-            setEditingCandidate(null)
-          }
+          className="fixed inset-0 z-55 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
+          onClick={() => setEditingCandidate(null)}
         >
           <div
-            className="w-full max-w-md rounded-xl bg-white shadow-xl"
+            className="w-full max-w-md rounded-xl bg-white shadow-xl dark:border dark:border-gray-800 dark:bg-gray-900"
             onClick={(event) =>
               event.stopPropagation()
             }
           >
-            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-gray-800">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Update Candidate Status
                 </h2>
 
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   Update the application status.
                 </p>
               </div>
 
               <button
                 type="button"
-                onClick={() =>
-                  setEditingCandidate(null)
-                }
-                className="rounded-lg p-2 text-gray-400 hover:bg-gray-50 hover:text-gray-700"
+                onClick={() => setEditingCandidate(null)}
+                className="rounded-lg p-2 text-gray-400 hover:bg-gray-50 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-white"
                 aria-label="Close modal"
               >
                 <X size={20} />
@@ -1190,40 +1119,36 @@ function Candidates() {
             </div>
 
             <div className="px-6 py-6">
-              <p className="mb-3 text-sm font-semibold text-gray-800">
+              <p className="mb-3 text-sm font-semibold text-gray-800 dark:text-gray-200">
                 {editingCandidate.name}
               </p>
 
               <select
                 value={editStatus}
                 onChange={(event) =>
-                  setEditStatus(
-                    event.target.value
-                  )
+                  setEditStatus(event.target.value)
                 }
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50"
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:ring-red-950/40"
               >
-                {candidateStatuses.map(
-                  (status) => (
-                    <option
-                      key={status}
-                      value={status}
-                    >
-                      {status}
-                    </option>
-                  )
-                )}
+                {candidateStatuses.map((status) => (
+                  <option
+                    key={status}
+                    value={status}
+                  >
+                    {status}
+                  </option>
+                ))}
               </select>
             </div>
 
-            <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-6 py-4 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-6 py-4 dark:border-gray-800 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={() =>
                   setEditingCandidate(null)
                 }
                 disabled={isSubmitting}
-                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 sm:w-auto"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800 sm:w-auto"
               >
                 Cancel
               </button>
@@ -1246,33 +1171,29 @@ function Candidates() {
       {/* Delete Confirmation Modal */}
       {deleteCandidate && (
         <div
-          className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 px-4"
-          onClick={() =>
-            setDeleteCandidate(null)
-          }
+          className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
+          onClick={() => setDeleteCandidate(null)}
         >
           <div
-            className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
+            className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:border dark:border-gray-800 dark:bg-gray-900"
             onClick={(event) =>
               event.stopPropagation()
             }
           >
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-50 text-[#EF3B3A]">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-50 text-[#EF3B3A] dark:bg-red-950/40">
               <Trash2 size={20} />
             </div>
 
-            <h2 className="mt-4 text-lg font-semibold text-gray-900">
+            <h2 className="mt-4 text-lg font-semibold text-gray-900 dark:text-white">
               Delete Candidate?
             </h2>
 
-            <p className="mt-2 text-sm leading-6 text-gray-500">
-              Are you sure you want to
-              delete{" "}
-              <span className="font-semibold text-gray-700">
+            <p className="mt-2 text-sm leading-6 text-gray-500 dark:text-gray-400">
+              Are you sure you want to delete{" "}
+              <span className="font-semibold text-gray-700 dark:text-gray-200">
                 {deleteCandidate.name}
               </span>
-              ? This action cannot be
-              undone.
+              ? This action cannot be undone.
             </p>
 
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
@@ -1282,7 +1203,7 @@ function Candidates() {
                   setDeleteCandidate(null)
                 }
                 disabled={isSubmitting}
-                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 sm:w-auto"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800 sm:w-auto"
               >
                 Cancel
               </button>

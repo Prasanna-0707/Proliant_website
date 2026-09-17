@@ -82,13 +82,10 @@ function Employees() {
     setPageError("");
 
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/employees`,
-        {
-          method: "GET",
-          headers: getAuthHeaders(),
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/employees`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
 
       if (response.status === 401) {
         handleUnauthorized();
@@ -273,13 +270,22 @@ function Employees() {
     setIsSubmitting(true);
 
     try {
-      const isEditing = Boolean(editingEmployee);
+      const isEditing = Boolean(
+        editingEmployee
+      );
+
+      const employeeId = editingEmployee
+        ? editingEmployee._id ||
+          editingEmployee.id
+        : null;
 
       const url = isEditing
-        ? `${API_BASE_URL}/employees/${editingEmployee._id || editingEmployee.id}`
+        ? `${API_BASE_URL}/employees/${employeeId}`
         : `${API_BASE_URL}/employees`;
 
-      const method = isEditing ? "PUT" : "POST";
+      const method = isEditing
+        ? "PUT"
+        : "POST";
 
       const response = await fetch(url, {
         method,
@@ -356,8 +362,12 @@ function Employees() {
    * TOGGLE EMPLOYEE STATUS
    * ---------------------------------------------------------
    */
-  const handleToggleStatus = async (employee) => {
-    const token = localStorage.getItem("adminToken");
+  const handleToggleStatus = async (
+    employee
+  ) => {
+    const token = localStorage.getItem(
+      "adminToken"
+    );
 
     if (!token) {
       handleUnauthorized();
@@ -431,7 +441,9 @@ function Employees() {
       return;
     }
 
-    const token = localStorage.getItem("adminToken");
+    const token = localStorage.getItem(
+      "adminToken"
+    );
 
     if (!token) {
       handleUnauthorized();
@@ -439,7 +451,8 @@ function Employees() {
     }
 
     const employeeId =
-      deleteEmployee._id || deleteEmployee.id;
+      deleteEmployee._id ||
+      deleteEmployee.id;
 
     setIsDeleting(true);
 
@@ -504,24 +517,37 @@ function Employees() {
       label: "Employee",
       render: (employee) => (
         <div>
-          <p className="font-semibold text-gray-900">
+          <p className="font-semibold text-gray-900 dark:text-white">
             {employee.name}
           </p>
 
-          <p className="mt-0.5 text-xs text-gray-500">
+          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
             {employee.email}
           </p>
         </div>
       ),
     },
+
     {
       key: "role",
       label: "Role",
+      render: (employee) => (
+        <span className="text-gray-700 dark:text-gray-200">
+          {employee.role || "N/A"}
+        </span>
+      ),
     },
+
     {
       key: "department",
       label: "Department",
+      render: (employee) => (
+        <span className="text-gray-700 dark:text-gray-200">
+          {employee.department || "N/A"}
+        </span>
+      ),
     },
+
     {
       key: "status",
       label: "Status",
@@ -529,17 +555,19 @@ function Employees() {
         <span
           className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
             employee.status === "Active"
-              ? "bg-green-50 text-green-600"
-              : "bg-gray-100 text-gray-500"
+              ? "bg-green-50 text-green-600 dark:bg-green-950/50 dark:text-green-400"
+              : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
           }`}
         >
           {employee.status}
         </span>
       ),
     },
+
     {
       key: "actions",
       label: "Actions",
+
       render: (employee) => {
         const employeeId =
           employee._id || employee.id;
@@ -551,26 +579,27 @@ function Employees() {
               onClick={(event) => {
                 event.stopPropagation();
 
-                setOpenMenuId((previous) =>
-                  previous === employeeId
-                    ? null
-                    : employeeId
+                setOpenMenuId(
+                  (previous) =>
+                    previous === employeeId
+                      ? null
+                      : employeeId
                 );
               }}
-              className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700"
+              className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
               aria-label="Employee actions"
             >
               <MoreVertical size={18} />
             </button>
 
             {openMenuId === employeeId && (
-              <div className="absolute right-0 top-10 z-30 w-48 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+              <div className="absolute right-0 top-10 z-30 w-48 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900">
                 <button
                   type="button"
                   onClick={() =>
                     openEditModal(employee)
                   }
-                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800"
                 >
                   <Pencil size={16} />
                   <span>Edit Employee</span>
@@ -579,32 +608,38 @@ function Employees() {
                 <button
                   type="button"
                   onClick={() =>
-                    handleToggleStatus(employee)
+                    handleToggleStatus(
+                      employee
+                    )
                   }
-                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800"
                 >
-                  {employee.status === "Active" ? (
+                  {employee.status ===
+                  "Active" ? (
                     <UserX size={16} />
                   ) : (
                     <UserCheck size={16} />
                   )}
 
                   <span>
-                    {employee.status === "Active"
+                    {employee.status ===
+                    "Active"
                       ? "Set Inactive"
                       : "Set Active"}
                   </span>
                 </button>
 
-                <div className="my-1 border-t border-gray-100" />
+                <div className="my-1 border-t border-gray-100 dark:border-gray-700" />
 
                 <button
                   type="button"
                   onClick={() => {
-                    setDeleteEmployee(employee);
+                    setDeleteEmployee(
+                      employee
+                    );
                     setOpenMenuId(null);
                   }}
-                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
+                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:hover:bg-red-950/30"
                 >
                   <Trash2 size={16} />
                   <span>Delete Employee</span>
@@ -618,15 +653,15 @@ function Employees() {
   ];
 
   return (
-    <div className="relative p-5 sm:p-6">
+    <div className="relative min-h-screen bg-gray-200 p-5 transition-colors dark:bg-gray-950 sm:p-6">
       {/* Page Header */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
             Employees
           </h1>
 
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Manage your Proliant employees and their status.
           </p>
         </div>
@@ -643,15 +678,17 @@ function Employees() {
 
       {/* Page Error */}
       {pageError && (
-        <div className="mb-5 flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3">
-          <p className="text-sm font-medium text-red-600">
+        <div className="mb-5 flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3 dark:border-red-900/50 dark:bg-red-950/30">
+          <p className="text-sm font-medium text-red-600 dark:text-red-400">
             {pageError}
           </p>
 
           <button
             type="button"
-            onClick={() => setPageError("")}
-            className="text-red-500 hover:text-red-700"
+            onClick={() =>
+              setPageError("")
+            }
+            className="text-red-500 hover:text-red-700 dark:hover:text-red-300"
             aria-label="Close error"
           >
             <X size={17} />
@@ -664,7 +701,7 @@ function Employees() {
         <div className="relative w-full sm:max-w-sm">
           <Search
             size={18}
-            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
           />
 
           <input
@@ -674,35 +711,46 @@ function Employees() {
               setSearch(event.target.value)
             }
             placeholder="Search employees..."
-            className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50"
+            className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-red-950/40"
           />
         </div>
 
         <select
           value={statusFilter}
           onChange={(event) =>
-            setStatusFilter(event.target.value)
+            setStatusFilter(
+              event.target.value
+            )
           }
-          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 sm:w-40 max-[767px]:min-w-0 max-[767px]:flex-1"
+          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:focus:ring-red-950/40 sm:w-40 max-[767px]:min-w-0 max-[767px]:flex-1"
         >
-          <option value="All">All Status</option>
-          <option value="Active">Active</option>
-          <option value="Inactive">Inactive</option>
+          <option value="All">
+            All Status
+          </option>
+
+          <option value="Active">
+            Active
+          </option>
+
+          <option value="Inactive">
+            Inactive
+          </option>
         </select>
       </div>
 
       {/* Employee Table */}
-      <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-        <div className="border-b border-gray-100 px-5 py-4">
-          <h2 className="text-base font-semibold text-gray-900">
+      <section className="overflow-hidden rounded-xl border border-gray-200 bg-white transition-colors dark:border-gray-800 dark:bg-gray-900">
+        <div className="border-b border-gray-100 px-5 py-4 dark:border-gray-800">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-white">
             Employee List
           </h2>
 
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             {isLoading
               ? "Loading employees..."
               : `${filteredEmployees.length} employee${
-                  filteredEmployees.length !== 1
+                  filteredEmployees.length !==
+                  1
                     ? "s"
                     : ""
                 } found`}
@@ -711,7 +759,7 @@ function Employees() {
 
         {isLoading ? (
           <div className="px-5 py-12 text-center">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               Loading employees...
             </p>
           </div>
@@ -727,24 +775,24 @@ function Employees() {
       {/* Add / Edit Employee Modal */}
       {isModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-sm"
           onClick={handleCloseModal}
         >
           <div
-            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white shadow-xl"
+            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white shadow-xl dark:border dark:border-gray-800 dark:bg-gray-900"
             onClick={(event) =>
               event.stopPropagation()
             }
           >
-            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-gray-800">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                   {editingEmployee
                     ? "Edit Employee"
                     : "Add Employee"}
                 </h2>
 
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   {editingEmployee
                     ? "Update employee information."
                     : "Add a new employee to your organization."}
@@ -755,7 +803,7 @@ function Employees() {
                 type="button"
                 onClick={handleCloseModal}
                 disabled={isSubmitting}
-                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-800 dark:hover:text-white"
                 aria-label="Close modal"
               >
                 <X size={20} />
@@ -768,7 +816,7 @@ function Employees() {
                 <div>
                   <label
                     htmlFor="name"
-                    className="mb-2 block text-sm font-semibold text-gray-800"
+                    className="mb-2 block text-sm font-semibold text-gray-800 dark:text-gray-200"
                   >
                     Full Name
                   </label>
@@ -780,10 +828,10 @@ function Employees() {
                     value={formData.name}
                     onChange={handleChange}
                     placeholder="Enter employee name"
-                    className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:ring-4 ${
+                    className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:ring-4 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 ${
                       errors.name
-                        ? "border-red-300 focus:border-red-400 focus:ring-red-50"
-                        : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50"
+                        ? "border-red-300 focus:border-red-400 focus:ring-red-50 dark:border-red-700 dark:focus:ring-red-950/40"
+                        : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50 dark:border-gray-700 dark:focus:ring-red-950/40"
                     }`}
                   />
 
@@ -798,7 +846,7 @@ function Employees() {
                 <div>
                   <label
                     htmlFor="email"
-                    className="mb-2 block text-sm font-semibold text-gray-800"
+                    className="mb-2 block text-sm font-semibold text-gray-800 dark:text-gray-200"
                   >
                     Email Address
                   </label>
@@ -810,10 +858,10 @@ function Employees() {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="employee@proliant.com"
-                    className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:ring-4 ${
+                    className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:ring-4 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 ${
                       errors.email
-                        ? "border-red-300 focus:border-red-400 focus:ring-red-50"
-                        : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50"
+                        ? "border-red-300 focus:border-red-400 focus:ring-red-50 dark:border-red-700 dark:focus:ring-red-950/40"
+                        : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50 dark:border-gray-700 dark:focus:ring-red-950/40"
                     }`}
                   />
 
@@ -829,7 +877,7 @@ function Employees() {
                   <div>
                     <label
                       htmlFor="role"
-                      className="mb-2 block text-sm font-semibold text-gray-800"
+                      className="mb-2 block text-sm font-semibold text-gray-800 dark:text-gray-200"
                     >
                       Role
                     </label>
@@ -841,10 +889,10 @@ function Employees() {
                       value={formData.role}
                       onChange={handleChange}
                       placeholder="e.g. Developer"
-                      className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:ring-4 ${
+                      className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:ring-4 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 ${
                         errors.role
-                          ? "border-red-300 focus:border-red-400 focus:ring-red-50"
-                          : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50"
+                          ? "border-red-300 focus:border-red-400 focus:ring-red-50 dark:border-red-700 dark:focus:ring-red-950/40"
+                          : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50 dark:border-gray-700 dark:focus:ring-red-950/40"
                       }`}
                     />
 
@@ -858,7 +906,7 @@ function Employees() {
                   <div>
                     <label
                       htmlFor="department"
-                      className="mb-2 block text-sm font-semibold text-gray-800"
+                      className="mb-2 block text-sm font-semibold text-gray-800 dark:text-gray-200"
                     >
                       Department
                     </label>
@@ -870,10 +918,10 @@ function Employees() {
                       value={formData.department}
                       onChange={handleChange}
                       placeholder="e.g. Engineering"
-                      className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:ring-4 ${
+                      className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:ring-4 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 ${
                         errors.department
-                          ? "border-red-300 focus:border-red-400 focus:ring-red-50"
-                          : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50"
+                          ? "border-red-300 focus:border-red-400 focus:ring-red-50 dark:border-red-700 dark:focus:ring-red-950/40"
+                          : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50 dark:border-gray-700 dark:focus:ring-red-950/40"
                       }`}
                     />
 
@@ -889,7 +937,7 @@ function Employees() {
                 <div>
                   <label
                     htmlFor="status"
-                    className="mb-2 block text-sm font-semibold text-gray-800"
+                    className="mb-2 block text-sm font-semibold text-gray-800 dark:text-gray-200"
                   >
                     Status
                   </label>
@@ -899,7 +947,7 @@ function Employees() {
                     name="status"
                     value={formData.status}
                     onChange={handleChange}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:ring-red-950/40"
                   >
                     <option value="Active">
                       Active
@@ -913,8 +961,8 @@ function Employees() {
 
                 {/* Submit Error */}
                 {errors.submit && (
-                  <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3">
-                    <p className="text-sm font-medium text-red-600">
+                  <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 dark:border-red-900/50 dark:bg-red-950/30">
+                    <p className="text-sm font-medium text-red-600 dark:text-red-400">
                       {errors.submit}
                     </p>
                   </div>
@@ -922,12 +970,12 @@ function Employees() {
               </div>
 
               {/* Modal Footer */}
-              <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-6 py-4 sm:flex-row sm:justify-end">
+              <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-6 py-4 dark:border-gray-800 sm:flex-row sm:justify-end">
                 <button
                   type="button"
                   onClick={handleCloseModal}
                   disabled={isSubmitting}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800 sm:w-auto"
                 >
                   Cancel
                 </button>
@@ -942,8 +990,8 @@ function Employees() {
                       ? "Saving..."
                       : "Adding..."
                     : editingEmployee
-                      ? "Save Changes"
-                      : "Add Employee"}
+                    ? "Save Changes"
+                    : "Add Employee"}
                 </button>
               </div>
             </form>
@@ -954,29 +1002,30 @@ function Employees() {
       {/* Delete Confirmation Modal */}
       {deleteEmployee && (
         <div
-          className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 px-4"
-          onClick={() =>
-            !isDeleting &&
-            setDeleteEmployee(null)
-          }
+          className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
+          onClick={() => {
+            if (!isDeleting) {
+              setDeleteEmployee(null);
+            }
+          }}
         >
           <div
-            className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
+            className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:border dark:border-gray-800 dark:bg-gray-900"
             onClick={(event) =>
               event.stopPropagation()
             }
           >
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-50 text-[#EF3B3A]">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-50 text-[#EF3B3A] dark:bg-red-950/50">
               <Trash2 size={20} />
             </div>
 
-            <h2 className="mt-4 text-lg font-semibold text-gray-900">
+            <h2 className="mt-4 text-lg font-semibold text-gray-900 dark:text-white">
               Delete Employee?
             </h2>
 
-            <p className="mt-2 text-sm leading-6 text-gray-500">
+            <p className="mt-2 text-sm leading-6 text-gray-500 dark:text-gray-400">
               Are you sure you want to delete{" "}
-              <span className="font-semibold text-gray-700">
+              <span className="font-semibold text-gray-700 dark:text-gray-200">
                 {deleteEmployee.name}
               </span>
               ? This action cannot be undone.
@@ -989,7 +1038,7 @@ function Employees() {
                   setDeleteEmployee(null)
                 }
                 disabled={isDeleting}
-                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800 sm:w-auto"
               >
                 Cancel
               </button>
