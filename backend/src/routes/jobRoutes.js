@@ -12,11 +12,11 @@ import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Public - anyone can view jobs
+// Public routes
 router.get("/", getJobs);
 router.get("/:id", getJob);
 
-// Admin/HR only
+// Protected routes
 router.post("/", authMiddleware, createJob);
 router.put("/:id", authMiddleware, updateJob);
 router.delete("/:id", authMiddleware, deleteJob);
