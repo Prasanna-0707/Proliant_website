@@ -22,11 +22,8 @@ const API_BASE_URL =
 const normalizeEnquiry = (enquiry) => {
   return {
     ...enquiry,
-
     id: enquiry._id,
-
     submittedDate: enquiry.createdAt,
-
     company: enquiry.company || "",
   };
 };
@@ -40,21 +37,16 @@ function Enquiries() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] =
-    useState("All");
+  const [statusFilter, setStatusFilter] = useState("All");
 
-  const [openMenuId, setOpenMenuId] =
-    useState(null);
+  const [openMenuId, setOpenMenuId] = useState(null);
 
-  const [viewEnquiry, setViewEnquiry] =
-    useState(null);
+  const [viewEnquiry, setViewEnquiry] = useState(null);
 
-  const [deleteEnquiry, setDeleteEnquiry] =
-    useState(null);
+  const [deleteEnquiry, setDeleteEnquiry] = useState(null);
 
   const getAuthHeaders = () => {
-    const token =
-      localStorage.getItem("adminToken");
+    const token = localStorage.getItem("adminToken");
 
     return {
       Authorization: `Bearer ${token}`,
@@ -74,12 +66,9 @@ function Enquiries() {
       setIsLoading(true);
       setPageError("");
 
-      const response = await fetch(
-        `${API_BASE_URL}/contacts`,
-        {
-          headers: getAuthHeaders(),
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/contacts`, {
+        headers: getAuthHeaders(),
+      });
 
       if (response.status === 401) {
         handleUnauthorized();
@@ -103,25 +92,19 @@ function Enquiries() {
         );
       }
 
-      const normalizedEnquiries =
-        result.contacts
-          .map(normalizeEnquiry)
-          .sort(
-            (a, b) =>
-              new Date(b.submittedDate) -
-              new Date(a.submittedDate)
-          );
+      const normalizedEnquiries = result.contacts
+        .map(normalizeEnquiry)
+        .sort(
+          (a, b) =>
+            new Date(b.submittedDate) -
+            new Date(a.submittedDate)
+        );
 
       setEnquiries(normalizedEnquiries);
     } catch (error) {
-      console.error(
-        "Failed to load enquiries:",
-        error
-      );
+      console.error("Failed to load enquiries:", error);
 
-      setPageError(
-        "Unable to load website enquiries."
-      );
+      setPageError("Unable to load website enquiries.");
 
       setEnquiries([]);
     } finally {
@@ -135,8 +118,7 @@ function Enquiries() {
 
   const filteredEnquiries = useMemo(() => {
     return enquiries.filter((enquiry) => {
-      const searchValue =
-        search.toLowerCase().trim();
+      const searchValue = search.toLowerCase().trim();
 
       const matchesSearch =
         (enquiry.name || "")
@@ -168,8 +150,7 @@ function Enquiries() {
 
   const unreadCount = useMemo(() => {
     return enquiries.filter(
-      (enquiry) =>
-        enquiry.status === "Unread"
+      (enquiry) => enquiry.status === "Unread"
     ).length;
   }, [enquiries]);
 
@@ -184,19 +165,14 @@ function Enquiries() {
       return "N/A";
     }
 
-    return parsedDate.toLocaleDateString(
-      "en-IN",
-      {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      }
-    );
+    return parsedDate.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
   };
 
-  const handleToggleStatus = async (
-    enquiry
-  ) => {
+  const handleToggleStatus = async (enquiry) => {
     const newStatus =
       enquiry.status === "Unread"
         ? "Read"
@@ -237,12 +213,9 @@ function Enquiries() {
         );
       }
 
-      const updatedEnquiry =
-        result.contact
-          ? normalizeEnquiry(
-              result.contact
-            )
-          : null;
+      const updatedEnquiry = result.contact
+        ? normalizeEnquiry(result.contact)
+        : null;
 
       setEnquiries((previous) =>
         previous.map((item) =>
@@ -255,9 +228,7 @@ function Enquiries() {
         )
       );
 
-      if (
-        viewEnquiry?.id === enquiry.id
-      ) {
+      if (viewEnquiry?.id === enquiry.id) {
         setViewEnquiry(
           updatedEnquiry || {
             ...enquiry,
@@ -282,9 +253,7 @@ function Enquiries() {
     }
   };
 
-  const handleViewEnquiry = async (
-    enquiry
-  ) => {
+  const handleViewEnquiry = async (enquiry) => {
     setViewEnquiry(enquiry);
     setOpenMenuId(null);
 
@@ -326,15 +295,12 @@ function Enquiries() {
         );
       }
 
-      const updatedEnquiry =
-        result.contact
-          ? normalizeEnquiry(
-              result.contact
-            )
-          : {
-              ...enquiry,
-              status: "Read",
-            };
+      const updatedEnquiry = result.contact
+        ? normalizeEnquiry(result.contact)
+        : {
+            ...enquiry,
+            status: "Read",
+          };
 
       setEnquiries((previous) =>
         previous.map((item) =>
@@ -397,8 +363,7 @@ function Enquiries() {
       setEnquiries((previous) =>
         previous.filter(
           (enquiry) =>
-            enquiry.id !==
-            deleteEnquiry.id
+            enquiry.id !== deleteEnquiry.id
         )
       );
 
@@ -438,8 +403,7 @@ function Enquiries() {
 
           <div>
             <div className="flex items-center gap-2">
-              {enquiry.status ===
-                "Unread" && (
+              {enquiry.status === "Unread" && (
                 <span className="h-1.5 w-1.5 rounded-full bg-[#EF3B3A]" />
               )}
 
@@ -503,9 +467,7 @@ function Enquiries() {
       label: "Received",
       render: (enquiry) => (
         <span className="text-sm text-gray-600">
-          {formatDate(
-            enquiry.submittedDate
-          )}
+          {formatDate(enquiry.submittedDate)}
         </span>
       ),
     },
@@ -520,11 +482,10 @@ function Enquiries() {
             onClick={(event) => {
               event.stopPropagation();
 
-              setOpenMenuId(
-                (previous) =>
-                  previous === enquiry.id
-                    ? null
-                    : enquiry.id
+              setOpenMenuId((previous) =>
+                previous === enquiry.id
+                  ? null
+                  : enquiry.id
               );
             }}
             className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700"
@@ -533,45 +494,37 @@ function Enquiries() {
             <MoreVertical size={18} />
           </button>
 
-          {openMenuId ===
-            enquiry.id && (
+          {openMenuId === enquiry.id && (
             <div className="absolute right-0 top-10 z-30 w-48 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
               <button
                 type="button"
                 onClick={() =>
-                  handleViewEnquiry(
-                    enquiry
-                  )
+                  handleViewEnquiry(enquiry)
                 }
                 disabled={isSubmitting}
                 className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
               >
                 <Eye size={16} />
-                <span>
-                  View Enquiry
-                </span>
+
+                <span>View Enquiry</span>
               </button>
 
               <button
                 type="button"
                 onClick={() =>
-                  handleToggleStatus(
-                    enquiry
-                  )
+                  handleToggleStatus(enquiry)
                 }
                 disabled={isSubmitting}
                 className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
               >
-                {enquiry.status ===
-                "Unread" ? (
+                {enquiry.status === "Unread" ? (
                   <MailOpen size={16} />
                 ) : (
                   <Mail size={16} />
                 )}
 
                 <span>
-                  {enquiry.status ===
-                  "Unread"
+                  {enquiry.status === "Unread"
                     ? "Mark as Read"
                     : "Mark as Unread"}
                 </span>
@@ -582,9 +535,7 @@ function Enquiries() {
               <button
                 type="button"
                 onClick={() => {
-                  setDeleteEnquiry(
-                    enquiry
-                  );
+                  setDeleteEnquiry(enquiry);
                   setActionError("");
                   setOpenMenuId(null);
                 }}
@@ -592,9 +543,8 @@ function Enquiries() {
                 className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
               >
                 <Trash2 size={16} />
-                <span>
-                  Delete Enquiry
-                </span>
+
+                <span>Delete Enquiry</span>
               </button>
             </div>
           )}
@@ -614,16 +564,15 @@ function Enquiries() {
             </h1>
 
             <p className="mt-1 text-sm text-gray-500">
-              Manage enquiries and messages
-              received from your website.
+              Manage enquiries and messages received from
+              your website.
             </p>
           </div>
 
           {unreadCount > 0 && (
             <div className="inline-flex w-fit items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-[#EF3B3A]">
-              <MessageSquareText
-                size={17}
-              />
+              <MessageSquareText size={17} />
+
               {unreadCount} unread
             </div>
           )}
@@ -659,23 +608,15 @@ function Enquiries() {
         <select
           value={statusFilter}
           onChange={(event) =>
-            setStatusFilter(
-              event.target.value
-            )
+            setStatusFilter(event.target.value)
           }
           className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 sm:w-40 max-[767px]:min-w-0 max-[767px]:flex-1"
         >
-          <option value="All">
-            All Status
-          </option>
+          <option value="All">All Status</option>
 
-          <option value="Unread">
-            Unread
-          </option>
+          <option value="Unread">Unread</option>
 
-          <option value="Read">
-            Read
-          </option>
+          <option value="Read">Read</option>
         </select>
       </div>
 
@@ -690,8 +631,7 @@ function Enquiries() {
             {isLoading
               ? "Loading enquiries..."
               : `${filteredEnquiries.length} enquir${
-                  filteredEnquiries.length !==
-                  1
+                  filteredEnquiries.length !== 1
                     ? "ies"
                     : "y"
                 } found`}
@@ -723,9 +663,7 @@ function Enquiries() {
       {viewEnquiry && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6"
-          onClick={() =>
-            setViewEnquiry(null)
-          }
+          onClick={() => setViewEnquiry(null)}
         >
           <div
             className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white shadow-xl"
@@ -741,8 +679,7 @@ function Enquiries() {
                 </h2>
 
                 <p className="mt-1 text-xs text-gray-500">
-                  Message received from the
-                  website.
+                  Message received from the website.
                 </p>
               </div>
 
@@ -763,8 +700,7 @@ function Enquiries() {
               {/* Contact */}
               <div className="flex items-start gap-4">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-50 text-lg font-bold text-[#EF3B3A]">
-                  {(viewEnquiry.name ||
-                    "?")
+                  {(viewEnquiry.name || "?")
                     .charAt(0)
                     .toUpperCase()}
                 </div>
@@ -885,6 +821,7 @@ function Enquiries() {
                 className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#EF3B3A] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-600"
               >
                 <Mail size={17} />
+
                 Reply via Email
               </a>
             </div>
@@ -895,10 +832,12 @@ function Enquiries() {
       {/* Delete Confirmation Modal */}
       {deleteEnquiry && (
         <div
-          className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 px-4"
-          onClick={() =>
-            setDeleteEnquiry(null)
-          }
+          className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
+          onClick={() => {
+            if (!isSubmitting) {
+              setDeleteEnquiry(null);
+            }
+          }}
         >
           <div
             className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
@@ -915,13 +854,12 @@ function Enquiries() {
             </h2>
 
             <p className="mt-2 text-sm leading-6 text-gray-500">
-              Are you sure you want to
-              delete the enquiry from{" "}
+              Are you sure you want to delete the
+              enquiry from{" "}
               <span className="font-semibold text-gray-700">
                 {deleteEnquiry.name}
               </span>
-              ? This action cannot be
-              undone.
+              ? This action cannot be undone.
             </p>
 
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
