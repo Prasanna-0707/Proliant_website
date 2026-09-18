@@ -4,10 +4,9 @@ import {
   Search,
   MoreVertical,
   X,
-  Pencil,
-  Trash2,
   UserCheck,
   UserX,
+  Trash2,
 } from "lucide-react";
 
 import DataTable from "../components/DataTable";
@@ -18,34 +17,35 @@ const API_BASE_URL =
 const emptyForm = {
   name: "",
   email: "",
-  role: "",
-  department: "",
-  status: "Active",
+  role: "HR",
 };
 
-function Employees() {
-  const [employees, setEmployees] = useState([]);
+function TeamMembers() {
+  const [teamMembers, setTeamMembers] = useState([]);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingEmployee, setEditingEmployee] = useState(null);
 
   const [formData, setFormData] = useState(emptyForm);
   const [errors, setErrors] = useState({});
 
   const [openMenuId, setOpenMenuId] = useState(null);
-  const [deleteEmployee, setDeleteEmployee] = useState(null);
+  const [deleteMember, setDeleteMember] = useState(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
   const [pageError, setPageError] = useState("");
 
   /*
-   * Get JWT token for protected API requests.
+   * ---------------------------------------------------------
+   * AUTH HELPERS
+   * ---------------------------------------------------------
    */
+
   const getAuthHeaders = () => {
     const token = localStorage.getItem("adminToken");
 
@@ -55,9 +55,6 @@ function Employees() {
     };
   };
 
-  /*
-   * Handle expired / invalid token.
-   */
   const handleUnauthorized = () => {
     localStorage.removeItem("adminToken");
     localStorage.removeItem("adminUser");
@@ -67,10 +64,11 @@ function Employees() {
 
   /*
    * ---------------------------------------------------------
-   * FETCH EMPLOYEES
+   * FETCH TEAM MEMBERS
    * ---------------------------------------------------------
    */
-  const fetchEmployees = async () => {
+
+  const fetchTeamMembers = async () => {
     const token = localStorage.getItem("adminToken");
 
     if (!token) {
@@ -82,8 +80,11 @@ function Employees() {
     setPageError("");
 
     try {
+      /*
+       * This endpoint will be added with the Team Members backend.
+       */
       const response = await fetch(
-        `${API_BASE_URL}/employees`,
+        `${API_BASE_URL}/auth/team-members`,
         {
           method: "GET",
           headers: getAuthHeaders(),
@@ -99,40 +100,33 @@ function Employees() {
 
       if (!response.ok || !result.success) {
         throw new Error(
-          result.message || "Failed to load employees."
+          result.message || "Failed to load team members."
         );
       }
 
-      /*
-       * Backend currently returns employees array.
-       * This also safely handles a data wrapper if present.
-       */
-      const employeeData =
-        result.employees ||
+      const memberData =
+        result.teamMembers ||
         result.data ||
         [];
 
-      setEmployees(employeeData);
+      setTeamMembers(memberData);
     } catch (error) {
       console.error(
-        "Failed to fetch employees:",
+        "Failed to fetch team members:",
         error
       );
 
       setPageError(
         error.message ||
-          "Unable to load employees. Please try again."
+          "Unable to load team members. Please try again."
       );
     } finally {
       setIsLoading(false);
     }
   };
 
-  /*
-   * Load employees when page opens.
-   */
   useEffect(() => {
-    fetchEmployees();
+    fetchTeamMembers();
   }, []);
 
   /*
@@ -140,37 +134,36 @@ function Employees() {
    * SEARCH + STATUS FILTER
    * ---------------------------------------------------------
    */
-  const filteredEmployees = useMemo(() => {
-    return employees.filter((employee) => {
+
+  const filteredTeamMembers = useMemo(() => {
+    return teamMembers.filter((member) => {
       const searchValue = search.toLowerCase().trim();
 
       const matchesSearch =
-        employee.name
+        member.name
           ?.toLowerCase()
           .includes(searchValue) ||
-        employee.email
+        member.email
           ?.toLowerCase()
           .includes(searchValue) ||
-        employee.role
-          ?.toLowerCase()
-          .includes(searchValue) ||
-        employee.department
+        member.role
           ?.toLowerCase()
           .includes(searchValue);
 
       const matchesStatus =
         statusFilter === "All" ||
-        employee.status === statusFilter;
+        member.status === statusFilter;
 
       return matchesSearch && matchesStatus;
     });
-  }, [employees, search, statusFilter]);
+  }, [teamMembers, search, statusFilter]);
 
   /*
    * ---------------------------------------------------------
    * FORM HANDLING
    * ---------------------------------------------------------
    */
+
   const handleChange = (event) => {
     const { name, value } = event.target;
 
@@ -204,13 +197,8 @@ function Employees() {
         "Enter a valid email address.";
     }
 
-    if (!formData.role.trim()) {
+    if (!formData.role) {
       newErrors.role = "Role is required.";
-    }
-
-    if (!formData.department.trim()) {
-      newErrors.department =
-        "Department is required.";
     }
 
     setErrors(newErrors);
@@ -220,11 +208,11 @@ function Employees() {
 
   /*
    * ---------------------------------------------------------
-   * ADD EMPLOYEE
+   * OPEN ADD MODAL
    * ---------------------------------------------------------
    */
+
   const openAddModal = () => {
-    setEditingEmployee(null);
     setFormData(emptyForm);
     setErrors({});
     setIsModalOpen(true);
@@ -232,30 +220,10 @@ function Employees() {
 
   /*
    * ---------------------------------------------------------
-   * EDIT EMPLOYEE
+   * ADD TEAM MEMBER
    * ---------------------------------------------------------
    */
-  const openEditModal = (employee) => {
-    setEditingEmployee(employee);
 
-    setFormData({
-      name: employee.name || "",
-      email: employee.email || "",
-      role: employee.role || "",
-      department: employee.department || "",
-      status: employee.status || "Active",
-    });
-
-    setErrors({});
-    setOpenMenuId(null);
-    setIsModalOpen(true);
-  };
-
-  /*
-   * ---------------------------------------------------------
-   * ADD / UPDATE EMPLOYEE
-   * ---------------------------------------------------------
-   */
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -273,25 +241,18 @@ function Employees() {
     setIsSubmitting(true);
 
     try {
-      const isEditing = Boolean(editingEmployee);
-
-      const url = isEditing
-        ? `${API_BASE_URL}/employees/${editingEmployee._id || editingEmployee.id}`
-        : `${API_BASE_URL}/employees`;
-
-      const method = isEditing ? "PUT" : "POST";
-
-      const response = await fetch(url, {
-        method,
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
-          name: formData.name.trim(),
-          email: formData.email.trim(),
-          role: formData.role.trim(),
-          department: formData.department.trim(),
-          status: formData.status,
-        }),
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/auth/team-members`,
+        {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            name: formData.name.trim(),
+            email: formData.email.trim(),
+            role: formData.role,
+          }),
+        }
+      );
 
       if (response.status === 401) {
         handleUnauthorized();
@@ -303,32 +264,28 @@ function Employees() {
       if (!response.ok || !result.success) {
         throw new Error(
           result.message ||
-            `Failed to ${
-              isEditing ? "update" : "add"
-            } employee.`
+            "Failed to add team member."
         );
       }
 
       /*
-       * Refresh data from MongoDB after successful
-       * add/update so the UI always reflects backend data.
+       * Refresh from backend after successful creation.
        */
-      await fetchEmployees();
+      await fetchTeamMembers();
 
       setFormData(emptyForm);
       setErrors({});
-      setEditingEmployee(null);
       setIsModalOpen(false);
     } catch (error) {
       console.error(
-        "Employee save failed:",
+        "Team member creation failed:",
         error
       );
 
       setErrors({
         submit:
           error.message ||
-          "Unable to save employee. Please try again.",
+          "Unable to add team member. Please try again.",
       });
     } finally {
       setIsSubmitting(false);
@@ -340,23 +297,24 @@ function Employees() {
    * CLOSE MODAL
    * ---------------------------------------------------------
    */
+
   const handleCloseModal = () => {
     if (isSubmitting) {
       return;
     }
 
     setIsModalOpen(false);
-    setEditingEmployee(null);
     setFormData(emptyForm);
     setErrors({});
   };
 
   /*
    * ---------------------------------------------------------
-   * TOGGLE EMPLOYEE STATUS
+   * TOGGLE STATUS
    * ---------------------------------------------------------
    */
-  const handleToggleStatus = async (employee) => {
+
+  const handleToggleStatus = async (member) => {
     const token = localStorage.getItem("adminToken");
 
     if (!token) {
@@ -364,27 +322,27 @@ function Employees() {
       return;
     }
 
-    const employeeId =
-      employee._id || employee.id;
+    const memberId =
+      member._id || member.id;
 
     const newStatus =
-      employee.status === "Active"
+      member.status === "Active"
         ? "Inactive"
         : "Active";
 
     setOpenMenuId(null);
 
     try {
+      /*
+       * Backend status endpoint will be finalized
+       * when the Team Members API is implemented.
+       */
       const response = await fetch(
-        `${API_BASE_URL}/employees/${employeeId}`,
+        `${API_BASE_URL}/auth/team-members/${memberId}`,
         {
-          method: "PUT",
+          method: "PATCH",
           headers: getAuthHeaders(),
           body: JSON.stringify({
-            name: employee.name,
-            email: employee.email,
-            role: employee.role,
-            department: employee.department,
             status: newStatus,
           }),
         }
@@ -400,34 +358,32 @@ function Employees() {
       if (!response.ok || !result.success) {
         throw new Error(
           result.message ||
-            "Failed to update employee status."
+            "Failed to update team member status."
         );
       }
 
-      /*
-       * Reload from backend.
-       */
-      await fetchEmployees();
+      await fetchTeamMembers();
     } catch (error) {
       console.error(
-        "Employee status update failed:",
+        "Team member status update failed:",
         error
       );
 
       setPageError(
         error.message ||
-          "Unable to update employee status."
+          "Unable to update team member status."
       );
     }
   };
 
   /*
    * ---------------------------------------------------------
-   * DELETE EMPLOYEE
+   * DELETE TEAM MEMBER
    * ---------------------------------------------------------
    */
+
   const handleDelete = async () => {
-    if (!deleteEmployee) {
+    if (!deleteMember) {
       return;
     }
 
@@ -438,14 +394,14 @@ function Employees() {
       return;
     }
 
-    const employeeId =
-      deleteEmployee._id || deleteEmployee.id;
+    const memberId =
+      deleteMember._id || deleteMember.id;
 
     setIsDeleting(true);
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/employees/${employeeId}`,
+        `${API_BASE_URL}/auth/team-members/${memberId}`,
         {
           method: "DELETE",
           headers: getAuthHeaders(),
@@ -462,31 +418,27 @@ function Employees() {
       if (!response.ok || !result.success) {
         throw new Error(
           result.message ||
-            "Failed to delete employee."
+            "Failed to delete team member."
         );
       }
 
-      /*
-       * Remove deleted employee from UI immediately.
-       */
-      setEmployees((previous) =>
+      setTeamMembers((previous) =>
         previous.filter(
-          (employee) =>
-            (employee._id || employee.id) !==
-            employeeId
+          (member) =>
+            (member._id || member.id) !== memberId
         )
       );
 
-      setDeleteEmployee(null);
+      setDeleteMember(null);
     } catch (error) {
       console.error(
-        "Employee deletion failed:",
+        "Team member deletion failed:",
         error
       );
 
       setPageError(
         error.message ||
-          "Unable to delete employee. Please try again."
+          "Unable to delete team member. Please try again."
       );
     } finally {
       setIsDeleting(false);
@@ -498,51 +450,56 @@ function Employees() {
    * TABLE COLUMNS
    * ---------------------------------------------------------
    */
-  const employeeColumns = [
+
+  const teamMemberColumns = [
     {
       key: "name",
-      label: "Employee",
-      render: (employee) => (
+      label: "Team Member",
+      render: (member) => (
         <div>
           <p className="font-semibold text-gray-900">
-            {employee.name}
+            {member.name}
           </p>
 
           <p className="mt-0.5 text-xs text-gray-500">
-            {employee.email}
+            {member.email}
           </p>
         </div>
       ),
     },
+
     {
       key: "role",
       label: "Role",
+      render: (member) => (
+        <span className="font-medium text-gray-700">
+          {member.role}
+        </span>
+      ),
     },
-    {
-      key: "department",
-      label: "Department",
-    },
+
     {
       key: "status",
       label: "Status",
-      render: (employee) => (
+      render: (member) => (
         <span
           className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-            employee.status === "Active"
+            member.status === "Active"
               ? "bg-green-50 text-green-600"
               : "bg-gray-100 text-gray-500"
           }`}
         >
-          {employee.status}
+          {member.status}
         </span>
       ),
     },
+
     {
       key: "actions",
       label: "Actions",
-      render: (employee) => {
-        const employeeId =
-          employee._id || employee.id;
+      render: (member) => {
+        const memberId =
+          member._id || member.id;
 
         return (
           <div className="relative">
@@ -552,45 +509,34 @@ function Employees() {
                 event.stopPropagation();
 
                 setOpenMenuId((previous) =>
-                  previous === employeeId
+                  previous === memberId
                     ? null
-                    : employeeId
+                    : memberId
                 );
               }}
               className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700"
-              aria-label="Employee actions"
+              aria-label="Team member actions"
             >
               <MoreVertical size={18} />
             </button>
 
-            {openMenuId === employeeId && (
+            {openMenuId === memberId && (
               <div className="absolute right-0 top-10 z-30 w-48 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
                 <button
                   type="button"
                   onClick={() =>
-                    openEditModal(employee)
+                    handleToggleStatus(member)
                   }
                   className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
                 >
-                  <Pencil size={16} />
-                  <span>Edit Employee</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    handleToggleStatus(employee)
-                  }
-                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
-                >
-                  {employee.status === "Active" ? (
+                  {member.status === "Active" ? (
                     <UserX size={16} />
                   ) : (
                     <UserCheck size={16} />
                   )}
 
                   <span>
-                    {employee.status === "Active"
+                    {member.status === "Active"
                       ? "Set Inactive"
                       : "Set Active"}
                   </span>
@@ -601,13 +547,16 @@ function Employees() {
                 <button
                   type="button"
                   onClick={() => {
-                    setDeleteEmployee(employee);
+                    setDeleteMember(member);
                     setOpenMenuId(null);
                   }}
                   className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
                 >
                   <Trash2 size={16} />
-                  <span>Delete Employee</span>
+
+                  <span>
+                    Delete Team Member
+                  </span>
                 </button>
               </div>
             )}
@@ -617,17 +566,24 @@ function Employees() {
     },
   ];
 
+  /*
+   * ---------------------------------------------------------
+   * RENDER
+   * ---------------------------------------------------------
+   */
+
   return (
     <div className="relative p-5 sm:p-6">
       {/* Page Header */}
+
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-            Employees
+            Team Members
           </h1>
 
           <p className="mt-1 text-sm text-gray-500">
-            Manage your Proliant employees and their status.
+            Manage your internal admin and HR team members.
           </p>
         </div>
 
@@ -637,11 +593,12 @@ function Employees() {
           className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#EF3B3A] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-600 sm:w-auto"
         >
           <Plus size={18} />
-          Add Employee
+          Add Team Member
         </button>
       </div>
 
       {/* Page Error */}
+
       {pageError && (
         <div className="mb-5 flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3">
           <p className="text-sm font-medium text-red-600">
@@ -660,6 +617,7 @@ function Employees() {
       )}
 
       {/* Search & Filter */}
+
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative w-full sm:max-w-sm">
           <Search
@@ -673,7 +631,7 @@ function Employees() {
             onChange={(event) =>
               setSearch(event.target.value)
             }
-            placeholder="Search employees..."
+            placeholder="Search team members..."
             className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50"
           />
         </div>
@@ -683,7 +641,7 @@ function Employees() {
           onChange={(event) =>
             setStatusFilter(event.target.value)
           }
-          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 sm:w-40 max-[767px]:min-w-0 max-[767px]:flex-1"
+          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 sm:w-40"
         >
           <option value="All">All Status</option>
           <option value="Active">Active</option>
@@ -691,18 +649,19 @@ function Employees() {
         </select>
       </div>
 
-      {/* Employee Table */}
+      {/* Team Members Table */}
+
       <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
         <div className="border-b border-gray-100 px-5 py-4">
           <h2 className="text-base font-semibold text-gray-900">
-            Employee List
+            Team Member List
           </h2>
 
           <p className="mt-1 text-xs text-gray-500">
             {isLoading
-              ? "Loading employees..."
-              : `${filteredEmployees.length} employee${
-                  filteredEmployees.length !== 1
+              ? "Loading team members..."
+              : `${filteredTeamMembers.length} team member${
+                  filteredTeamMembers.length !== 1
                     ? "s"
                     : ""
                 } found`}
@@ -712,19 +671,20 @@ function Employees() {
         {isLoading ? (
           <div className="px-5 py-12 text-center">
             <p className="text-sm text-gray-500">
-              Loading employees...
+              Loading team members...
             </p>
           </div>
         ) : (
           <DataTable
-            columns={employeeColumns}
-            data={filteredEmployees}
-            emptyMessage="No employees found."
+            columns={teamMemberColumns}
+            data={filteredTeamMembers}
+            emptyMessage="No team members found."
           />
         )}
       </section>
 
-      {/* Add / Edit Employee Modal */}
+      {/* Add Team Member Modal */}
+
       {isModalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6"
@@ -736,18 +696,16 @@ function Employees() {
               event.stopPropagation()
             }
           >
+            {/* Modal Header */}
+
             <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">
-                  {editingEmployee
-                    ? "Edit Employee"
-                    : "Add Employee"}
+                  Add Team Member
                 </h2>
 
                 <p className="mt-1 text-xs text-gray-500">
-                  {editingEmployee
-                    ? "Update employee information."
-                    : "Add a new employee to your organization."}
+                  Add a new admin or HR team member.
                 </p>
               </div>
 
@@ -762,9 +720,12 @@ function Employees() {
               </button>
             </div>
 
+            {/* Form */}
+
             <form onSubmit={handleSubmit}>
               <div className="space-y-5 px-6 py-6">
                 {/* Full Name */}
+
                 <div>
                   <label
                     htmlFor="name"
@@ -779,7 +740,7 @@ function Employees() {
                     type="text"
                     value={formData.name}
                     onChange={handleChange}
-                    placeholder="Enter employee name"
+                    placeholder="Enter team member name"
                     className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:ring-4 ${
                       errors.name
                         ? "border-red-300 focus:border-red-400 focus:ring-red-50"
@@ -795,6 +756,7 @@ function Employees() {
                 </div>
 
                 {/* Email */}
+
                 <div>
                   <label
                     htmlFor="email"
@@ -809,7 +771,7 @@ function Employees() {
                     type="email"
                     value={formData.email}
                     onChange={handleChange}
-                    placeholder="employee@proliant.com"
+                    placeholder="member@proliant.com"
                     className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:ring-4 ${
                       errors.email
                         ? "border-red-300 focus:border-red-400 focus:ring-red-50"
@@ -824,94 +786,52 @@ function Employees() {
                   )}
                 </div>
 
-                {/* Role & Department */}
-                <div className="grid gap-5 sm:grid-cols-2">
-                  <div>
-                    <label
-                      htmlFor="role"
-                      className="mb-2 block text-sm font-semibold text-gray-800"
-                    >
-                      Role
-                    </label>
+                {/* Role */}
 
-                    <input
-                      id="role"
-                      name="role"
-                      type="text"
-                      value={formData.role}
-                      onChange={handleChange}
-                      placeholder="e.g. Developer"
-                      className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:ring-4 ${
-                        errors.role
-                          ? "border-red-300 focus:border-red-400 focus:ring-red-50"
-                          : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50"
-                      }`}
-                    />
-
-                    {errors.role && (
-                      <p className="mt-1.5 text-xs font-medium text-red-500">
-                        {errors.role}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="department"
-                      className="mb-2 block text-sm font-semibold text-gray-800"
-                    >
-                      Department
-                    </label>
-
-                    <input
-                      id="department"
-                      name="department"
-                      type="text"
-                      value={formData.department}
-                      onChange={handleChange}
-                      placeholder="e.g. Engineering"
-                      className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:ring-4 ${
-                        errors.department
-                          ? "border-red-300 focus:border-red-400 focus:ring-red-50"
-                          : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50"
-                      }`}
-                    />
-
-                    {errors.department && (
-                      <p className="mt-1.5 text-xs font-medium text-red-500">
-                        {errors.department}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Status */}
                 <div>
                   <label
-                    htmlFor="status"
+                    htmlFor="role"
                     className="mb-2 block text-sm font-semibold text-gray-800"
                   >
-                    Status
+                    Role
                   </label>
 
                   <select
-                    id="status"
-                    name="status"
-                    value={formData.status}
+                    id="role"
+                    name="role"
+                    value={formData.role}
                     onChange={handleChange}
                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50"
                   >
-                    <option value="Active">
-                      Active
+                    <option value="Admin">
+                      Admin
                     </option>
 
-                    <option value="Inactive">
-                      Inactive
+                    <option value="HR">
+                      HR
                     </option>
                   </select>
+
+                  {errors.role && (
+                    <p className="mt-1.5 text-xs font-medium text-red-500">
+                      {errors.role}
+                    </p>
+                  )}
+                </div>
+
+                {/* Information */}
+
+                <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                  <p className="text-xs leading-5 text-gray-500">
+                    A temporary password will be generated
+                    and provided by the backend. The team
+                    member will be required to change it
+                    after their first login.
+                  </p>
                 </div>
 
                 {/* Submit Error */}
+
                 {errors.submit && (
                   <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3">
                     <p className="text-sm font-medium text-red-600">
@@ -922,6 +842,7 @@ function Employees() {
               </div>
 
               {/* Modal Footer */}
+
               <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-6 py-4 sm:flex-row sm:justify-end">
                 <button
                   type="button"
@@ -938,12 +859,8 @@ function Employees() {
                   className="w-full rounded-lg bg-[#EF3B3A] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
                 >
                   {isSubmitting
-                    ? editingEmployee
-                      ? "Saving..."
-                      : "Adding..."
-                    : editingEmployee
-                      ? "Save Changes"
-                      : "Add Employee"}
+                    ? "Adding..."
+                    : "Add Team Member"}
                 </button>
               </div>
             </form>
@@ -952,12 +869,13 @@ function Employees() {
       )}
 
       {/* Delete Confirmation Modal */}
-      {deleteEmployee && (
+
+      {deleteMember && (
         <div
-          className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 px-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
           onClick={() =>
             !isDeleting &&
-            setDeleteEmployee(null)
+            setDeleteMember(null)
           }
         >
           <div
@@ -971,13 +889,13 @@ function Employees() {
             </div>
 
             <h2 className="mt-4 text-lg font-semibold text-gray-900">
-              Delete Employee?
+              Delete Team Member?
             </h2>
 
             <p className="mt-2 text-sm leading-6 text-gray-500">
               Are you sure you want to delete{" "}
               <span className="font-semibold text-gray-700">
-                {deleteEmployee.name}
+                {deleteMember.name}
               </span>
               ? This action cannot be undone.
             </p>
@@ -986,7 +904,7 @@ function Employees() {
               <button
                 type="button"
                 onClick={() =>
-                  setDeleteEmployee(null)
+                  setDeleteMember(null)
                 }
                 disabled={isDeleting}
                 className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
@@ -1002,7 +920,7 @@ function Employees() {
               >
                 {isDeleting
                   ? "Deleting..."
-                  : "Delete Employee"}
+                  : "Delete Team Member"}
               </button>
             </div>
           </div>
@@ -1012,4 +930,4 @@ function Employees() {
   );
 }
 
-export default Employees;
+export default TeamMembers;

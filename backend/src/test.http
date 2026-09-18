@@ -1,0 +1,300 @@
+@baseUrl = http://localhost:5000/api
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbklkIjoiNmFhNTY5YjZlNGUwOTM3OGZiZmZlN2M1IiwiZW1haWwiOiJhZG1pbkBwcm9saWFudC5jb20iLCJ0b2tlblZlcnNpb24iOjAsImlhdCI6MTc4OTQ3NjMzOSwiZXhwIjoxNzg5NTYyNzM5fQ.76zYmMt5PGxy7ug5mCFhjLkyjH9C4zc4GqLABscdpzE
+
+############################################################
+# 1. AUTHENTICATION
+############################################################
+
+### 1.1 Login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@proliant.com",
+  "password": "Admin@123"
+}
+
+###
+
+### 1.2 Logout
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{token}}
+
+###
+
+############################################################
+# 2. EMPLOYEES
+############################################################
+
+### 2.1 Get All Employees
+GET {{baseUrl}}/employees
+Authorization: Bearer {{token}}
+
+###
+
+### 2.2 Add Employee
+POST {{baseUrl}}/employees
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Rahul Kumar",
+  "email": "rahul.test@proliant.com",
+  "role": "Developer",
+  "department": "IT",
+  "status": "Active"
+}
+
+###
+
+### 2.3 Update Employee - Admin
+# Replace EMPLOYEE_ID with an actual employee _id
+PUT {{baseUrl}}/employees/6aa66be8df59d5cd2ec54da8
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Rahul Kumar",
+  "email": "rahul.updated@proliant.com",
+  "role": "Senior Developer",
+  "department": "SAP",
+  "status": "Active"
+}
+
+###
+
+### 2.4 Delete Employee - Admin
+# Replace EMPLOYEE_ID with an actual employee _id
+DELETE {{baseUrl}}/employees/6aa66be8df59d5cd2ec54da8
+Authorization: Bearer {{token}}
+
+###
+
+############################################################
+# 3. DASHBOARD
+############################################################
+
+### 3.1 Get Dashboard Stats - Admin
+GET {{baseUrl}}/dashboard/stats
+Authorization: Bearer {{token}}
+
+###
+
+### 3.2 Dashboard Stats - No Token
+# Expected: 401 Unauthorized
+GET {{baseUrl}}/dashboard/stats
+
+###
+
+############################################################
+# 4. LOCATIONS
+############################################################
+
+### 4.1 Get All Locations - PUBLIC
+GET {{baseUrl}}/locations
+
+###
+
+### 4.2 Add Location - ADMIN
+POST {{baseUrl}}/locations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "country": "India",
+  "state": "Andhra Pradesh",
+  "city": "Visakhapatnam",
+  "companyName": "Proliant Data India",
+  "address": "Visakhapatnam, Andhra Pradesh, India",
+  "latitude": 17.6868,
+  "longitude": 83.2185,
+  "phone": "+91 8008199903",
+  "email": "hr@proliantdatallc.com"
+}
+
+###
+
+### 4.3 Update Location - ADMIN
+# Replace LOCATION_ID with actual location _id
+PUT {{baseUrl}}/locations/6aa66c8fdf59d5cd2ec54da9
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "companyName": "Proliant Data India Updated",
+  "phone": "+91 9111111111"
+}
+
+###
+
+### 4.4 Delete Location - ADMIN
+# Replace LOCATION_ID with actual location _id
+DELETE {{baseUrl}}/locations/6aa66c8fdf59d5cd2ec54da9
+Authorization: Bearer {{token}}
+
+###
+
+############################################################
+# 5. JOBS
+############################################################
+
+### 5.1 Get Published Jobs - PUBLIC
+GET {{baseUrl}}/jobs
+
+###
+
+### 5.2 Get Single Published Job - PUBLIC
+# Replace JOB_ID with actual published job _id
+GET {{baseUrl}}/jobs/6aa569b6e4e09378fbffe82d
+
+###
+
+### 5.3 Create Job - ADMIN
+POST {{baseUrl}}/jobs
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "SAP ABAP Developer",
+  "department": "SAP",
+  "employmentType": "Full Time",
+  "location": "Hyderabad, India",
+  "status": "Published",
+  "jobDescription": "We are looking for an SAP ABAP Developer to join our team.",
+  "requirements": "Experience with ABAP, SAP development and debugging."
+}
+
+###
+
+### 5.4 Update Job - ADMIN
+# Replace JOB_ID with actual job _id
+PUT {{baseUrl}}/jobs/6aa66d01df59d5cd2ec54daa
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Senior SAP ABAP Developer",
+  "department": "SAP",
+  "employmentType": "Full Time",
+  "location": "Hyderabad, India",
+  "status": "Published",
+  "jobDescription": "We are looking for a Senior SAP ABAP Developer to join our team.",
+  "requirements": "Experience with ABAP, SAP development, debugging and SAP S/4HANA."
+}
+
+###
+
+### 5.5 Delete Job - ADMIN
+# Replace JOB_ID with actual job _id
+DELETE {{baseUrl}}/jobs/6aa66d01df59d5cd2ec54daa
+Authorization: Bearer {{token}}
+
+###
+
+############################################################
+# 6. CONTACT ENQUIRIES
+############################################################
+
+### 6.1 Create Contact Enquiry - PUBLIC
+POST {{baseUrl}}/contacts
+Content-Type: application/json
+
+{
+  "name": "Suresh Kumar",
+  "email": "suresh.kumar@gmail.com",
+  "company": "ABC Technologies",
+  "subject": "SAP Implementation Services",
+  "message": "We are looking for SAP implementation support for our organization."
+}
+
+###
+
+### 6.2 Get All Contact Enquiries - ADMIN
+GET {{baseUrl}}/contacts
+Authorization: Bearer {{token}}
+
+###
+
+### 6.3 Get Single Contact Enquiry - ADMIN
+# Replace CONTACT_ID with actual contact _id
+GET {{baseUrl}}/contacts/6aa66d3edf59d5cd2ec54dab
+Authorization: Bearer {{token}}
+
+###
+
+### 6.4 Update Contact Status - ADMIN
+# Replace CONTACT_ID with actual contact _id
+PATCH {{baseUrl}}/contacts/6aa66d3edf59d5cd2ec54dab/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "Read"
+}
+
+###
+
+### 6.5 Delete Contact Enquiry - ADMIN
+# Replace CONTACT_ID with actual contact _id
+DELETE {{baseUrl}}/contacts/6aa66d3edf59d5cd2ec54dab
+Authorization: Bearer {{token}}
+
+###
+
+############################################################
+# 7. CANDIDATES
+############################################################
+
+### 7.1 Create Candidate Application - PUBLIC
+POST {{baseUrl}}/candidates
+Content-Type: application/json
+
+{
+  "position": "SAP ABAP Developer",
+  "areaOfInterest": "SAP ABAP",
+  "name": "Ravi Kumar",
+  "email": "ravi.kumar.test@gmail.com",
+  "phone": "9876543210",
+  "isFresher": true,
+  "location": "Hyderabad, India",
+  "yearsOfExperience": null,
+  "highestQualification": "B.Tech",
+  "currentCompany": null,
+  "noticePeriod": "Immediately",
+  "coverMessage": "I am interested in this position.",
+  "resume": null
+}
+
+###
+
+### 7.2 Get All Candidates - ADMIN
+GET {{baseUrl}}/candidates
+Authorization: Bearer {{token}}
+
+###
+
+### 7.3 Get Single Candidate - ADMIN
+# Replace CANDIDATE_ID with actual candidate _id
+GET {{baseUrl}}/candidates/6aa66d96df59d5cd2ec54dac
+Authorization: Bearer {{token}}
+
+###
+
+### 7.4 Update Candidate - ADMIN
+# Replace CANDIDATE_ID with actual candidate _id
+PUT {{baseUrl}}/candidates/6aa66d96df59d5cd2ec54dac
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "Shortlisted"
+}
+
+###
+
+### 7.5 Delete Candidate - ADMIN
+# Replace CANDIDATE_ID with actual candidate _id
+DELETE {{baseUrl}}/candidates/6aa66d96df59d5cd2ec54dac
+Authorization: Bearer {{token}}
+
+###

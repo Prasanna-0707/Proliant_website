@@ -1,131 +1,11 @@
+import { useEffect, useState } from "react";
 import { ArrowRight, Plus } from "lucide-react";
 
 import StatCard from "../components/StatCard";
 import DataTable from "../components/DataTable";
 
-const stats = [
-  {
-    title: "Active Employees",
-    value: 150,
-    type: "employees",
-    description: "Currently active employees",
-  },
-  // {
-  //   title: "Active Projects",
-  //   value: 18,
-  //   type: "projects",
-  //   description: "Projects currently active",
-  // },
-  {
-    title: "Deployments",
-    value: 5,
-    type: "deployments",
-    description: "Current deployment count",
-  },
-  {
-    title: "New Candidates",
-    value: 15,
-    type: "candidates",
-    description: "Recently received applications",
-  },
-  {
-    title: "New Enquiries",
-    value: 8,
-    type: "enquiries",
-    description: "Unread contact enquiries",
-  },
-];
-
-const recentApplications = [
-  {
-    id: 1,
-    name: "Rahul Kumar",
-    position: "SAP Consultant",
-    experience: "3 Years",
-    date: "06 Sep 2026",
-    status: "New",
-  },
-  {
-    id: 2,
-    name: "Priya Sharma",
-    position: "HR Executive",
-    experience: "2 Years",
-    date: "05 Sep 2026",
-    status: "Review",
-  },
-  {
-    id: 3,
-    name: "Arjun Reddy",
-    position: "ABAP Developer",
-    experience: "4 Years",
-    date: "04 Sep 2026",
-    status: "New",
-  },
-  {
-    id: 4,
-    name: "Sneha Rao",
-    position: "SAP Functional Consultant",
-    experience: "3 Years",
-    date: "03 Sep 2026",
-    status: "Review",
-  },
-  {
-    id: 5,
-    name: "Kiran Kumar",
-    position: "Basis Administrator",
-    experience: "2 Years",
-    date: "02 Sep 2026",
-    status: "Shortlisted",
-  },
-];
-
-const recentlyPostedJobs = [
-  {
-    id: 1,
-    title: "SAP ABAP Developer",
-    department: "SAP",
-    location: "Hyderabad, India",
-    type: "Full Time",
-    date: "06 Sep 2026",
-    status: "Published",
-  },
-  {
-    id: 2,
-    title: "SAP SD Consultant",
-    department: "SAP",
-    location: "Bangalore, India",
-    type: "Full Time",
-    date: "05 Sep 2026",
-    status: "Published",
-  },
-  {
-    id: 3,
-    title: "HR Executive",
-    department: "Human Resources",
-    location: "Hyderabad, India",
-    type: "Full Time",
-    date: "04 Sep 2026",
-    status: "Draft",
-  },
-  {
-    id: 4,
-    title: "Business Analyst",
-    department: "Business",
-    location: "Remote",
-    type: "Contract",
-    date: "03 Sep 2026",
-    status: "Published",
-  },
-  {
-    id: 5,
-    title: "Basis Administrator",
-    department: "SAP",
-    location: "Pune, India",
-    type: "Full Time",
-    date: "02 Sep 2026",
-    status: "Draft",
-  },
-];
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
 const applicationColumns = [
   {
@@ -208,7 +88,282 @@ const jobColumns = [
   },
 ];
 
+const formatDate = (date) => {
+  if (!date) {
+    return "-";
+  }
+
+  return new Date(date).toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+const formatExperience = (candidate) => {
+  if (candidate.isFresher) {
+    return "Fresher";
+  }
+
+  if (
+    candidate.yearsOfExperience !== undefined &&
+    candidate.yearsOfExperience !== null
+  ) {
+    return `${candidate.yearsOfExperience} ${
+      candidate.yearsOfExperience === 1
+        ? "Year"
+        : "Years"
+    }`;
+  }
+
+  return "-";
+};
+
 function Dashboard() {
+  const [stats, setStats] = useState([
+    {
+      title: "Active Employees",
+      value: 0,
+      type: "employees",
+      description: "Currently active employees",
+    },
+    {
+      title: "Deployments",
+      value: 5,
+      type: "deployments",
+      description: "Current deployment count",
+    },
+    {
+      title: "New Candidates",
+      value: 0,
+      type: "candidates",
+      description: "Recently received applications",
+    },
+    {
+      title: "New Enquiries",
+      value: 0,
+      type: "enquiries",
+      description: "Unread contact enquiries",
+    },
+  ]);
+
+  const [recentApplications, setRecentApplications] =
+    useState([]);
+
+  const [recentlyPostedJobs, setRecentlyPostedJobs] =
+    useState([]);
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      const token = localStorage.getItem("adminToken");
+
+      if (!token) {
+        return;
+      }
+
+      setIsLoading(true);
+      setError("");
+
+      try {
+        const authHeaders = {
+          Authorization: `Bearer ${token}`,
+        };
+
+        /*
+         * Fetch dashboard statistics,
+         * jobs and candidates in parallel.
+         */
+        const [
+          statsResponse,
+          jobsResponse,
+          candidatesResponse,
+        ] = await Promise.all([
+          fetch(`${API_BASE_URL}/dashboard/stats`, {
+            headers: authHeaders,
+          }),
+
+          fetch(`${API_BASE_URL}/jobs`, {
+            headers: authHeaders,
+          }),
+
+          fetch(`${API_BASE_URL}/candidates`, {
+            headers: authHeaders,
+          }),
+        ]);
+
+        /*
+         * If any protected API returns 401,
+         * the token is no longer valid.
+         */
+        if (
+          statsResponse.status === 401 ||
+          jobsResponse.status === 401 ||
+          candidatesResponse.status === 401
+        ) {
+          localStorage.removeItem("adminToken");
+          localStorage.removeItem("adminUser");
+          window.location.href = "/login";
+          return;
+        }
+
+        if (!statsResponse.ok) {
+          throw new Error(
+            "Failed to load dashboard statistics."
+          );
+        }
+
+        if (!jobsResponse.ok) {
+          throw new Error("Failed to load jobs.");
+        }
+
+        if (!candidatesResponse.ok) {
+          throw new Error("Failed to load candidates.");
+        }
+
+        const statsResult =
+          await statsResponse.json();
+
+        const jobsResult =
+          await jobsResponse.json();
+
+        const candidatesResult =
+          await candidatesResponse.json();
+
+        /*
+         * ---------------------------------------------------------
+         * DASHBOARD STATS
+         * ---------------------------------------------------------
+         */
+
+        const dashboardStats =
+          statsResult?.stats || statsResult;
+
+        const employeeCount =
+          dashboardStats?.employees ??
+          dashboardStats?.employeeCount ??
+          0;
+
+        const candidateCount =
+          dashboardStats?.candidates ??
+          dashboardStats?.candidateCount ??
+          0;
+
+        const enquiryCount =
+          dashboardStats?.enquiries ??
+          dashboardStats?.enquiryCount ??
+          dashboardStats?.unreadEnquiries ??
+          0;
+
+        setStats([
+          {
+            title: "Active Employees",
+            value: employeeCount,
+            type: "employees",
+            description: "Currently active employees",
+          },
+          {
+            title: "Deployments",
+            value: 5,
+            type: "deployments",
+            description: "Current deployment count",
+          },
+          {
+            title: "New Candidates",
+            value: candidateCount,
+            type: "candidates",
+            description: "Recently received applications",
+          },
+          {
+            title: "New Enquiries",
+            value: enquiryCount,
+            type: "enquiries",
+            description: "Unread contact enquiries",
+          },
+        ]);
+
+        /*
+         * ---------------------------------------------------------
+         * RECENT JOBS
+         * ---------------------------------------------------------
+         */
+
+        const jobs =
+          jobsResult?.jobs ||
+          jobsResult?.data ||
+          [];
+
+        const sortedJobs = [...jobs]
+          .sort(
+            (a, b) =>
+              new Date(b.createdAt) -
+              new Date(a.createdAt)
+          )
+          .slice(0, 5);
+
+        const formattedJobs = sortedJobs.map((job) => ({
+          id: job._id,
+          title: job.title,
+          department: job.department,
+          location: job.location,
+          type: job.employmentType,
+          date: formatDate(job.createdAt),
+          status: job.status,
+        }));
+
+        setRecentlyPostedJobs(formattedJobs);
+
+        /*
+         * ---------------------------------------------------------
+         * RECENT APPLICATIONS
+         * ---------------------------------------------------------
+         */
+
+        const candidates =
+          candidatesResult?.candidates ||
+          candidatesResult?.data ||
+          [];
+
+        const sortedCandidates = [...candidates]
+          .sort(
+            (a, b) =>
+              new Date(b.createdAt) -
+              new Date(a.createdAt)
+          )
+          .slice(0, 5);
+
+        const formattedApplications =
+          sortedCandidates.map((candidate) => ({
+            id: candidate._id,
+            name: candidate.name,
+            position: candidate.position,
+            experience: formatExperience(candidate),
+            date: formatDate(candidate.createdAt),
+            status: candidate.status || "New",
+          }));
+
+        setRecentApplications(
+          formattedApplications
+        );
+      } catch (error) {
+        console.error(
+          "Dashboard data loading failed:",
+          error
+        );
+
+        setError(
+          "Unable to load dashboard data. Please try again."
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-200 p-5 transition-colors dark:bg-gray-950 sm:p-6">
       {/* Page Heading */}
@@ -222,13 +377,22 @@ function Dashboard() {
         </p>
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+          <p className="text-sm font-medium text-red-600">
+            {error}
+          </p>
+        </div>
+      )}
+
       {/* Statistics */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
           <StatCard
             key={stat.title}
             title={stat.title}
-            value={stat.value}
+            value={isLoading ? "..." : stat.value}
             type={stat.type}
             description={stat.description}
           />

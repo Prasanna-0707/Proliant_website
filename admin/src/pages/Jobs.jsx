@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Plus,
   Search,
@@ -12,60 +12,8 @@ import {
 
 import DataTable from "../components/DataTable";
 
-const initialJobs = [
-  {
-    id: 1,
-    title: "SAP ABAP Developer",
-    department: "SAP",
-    location: "Hyderabad, India",
-    employmentType: "Full Time",
-    status: "Published",
-    description:
-      "We are looking for an experienced SAP ABAP Developer to join our team.",
-    requirements:
-      "3+ years of SAP ABAP experience, strong knowledge of reports, interfaces and enhancements.",
-    postedDate: "2026-09-01",
-  },
-  {
-    id: 2,
-    title: "HR Executive",
-    department: "Human Resources",
-    location: "Hyderabad, India",
-    employmentType: "Full Time",
-    status: "Draft",
-    description:
-      "We are looking for an HR Executive to support our growing organization.",
-    requirements:
-      "2+ years of HR experience with strong communication and employee management skills.",
-    postedDate: "2026-08-28",
-  },
-  {
-    id: 3,
-    title: "SAP SD Consultant",
-    department: "SAP",
-    location: "Bangalore, India",
-    employmentType: "Full Time",
-    status: "Published",
-    description:
-      "Join our SAP consulting team as an experienced SAP SD Consultant.",
-    requirements:
-      "3+ years of SAP SD experience with strong knowledge of sales and distribution processes.",
-    postedDate: "2026-08-25",
-  },
-  {
-    id: 4,
-    title: "Business Analyst",
-    department: "Business",
-    location: "Remote",
-    employmentType: "Contract",
-    status: "Draft",
-    description:
-      "We are seeking a Business Analyst to work with our clients and internal teams.",
-    requirements:
-      "Strong analytical skills, requirement gathering experience and excellent communication.",
-    postedDate: "2026-08-20",
-  },
-];
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
 const emptyForm = {
   title: "",
@@ -78,7 +26,7 @@ const emptyForm = {
 };
 
 function Jobs() {
-  const [jobs, setJobs] = useState(initialJobs);
+  const [jobs, setJobs] = useState([]);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -93,25 +41,179 @@ function Jobs() {
   const [openMenuId, setOpenMenuId] = useState(null);
   const [deleteJob, setDeleteJob] = useState(null);
 
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const [pageError, setPageError] = useState("");
+
+  /*
+   * ---------------------------------------------------------
+   * AUTH HEADERS
+   * ---------------------------------------------------------
+   */
+
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("adminToken");
+
+    return {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    };
+  };
+
+  /*
+   * ---------------------------------------------------------
+   * HANDLE UNAUTHORIZED
+   * ---------------------------------------------------------
+   */
+
+  const handleUnauthorized = () => {
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("adminUser");
+
+    window.location.href = "/login";
+  };
+
+  /*
+   * ---------------------------------------------------------
+   * FORMAT DATE
+   * ---------------------------------------------------------
+   */
+
+  const formatDate = (date) => {
+    if (!date) {
+      return "-";
+    }
+
+    return new Date(date).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  /*
+   * ---------------------------------------------------------
+   * FETCH JOBS
+   * ---------------------------------------------------------
+   */
+
+  const fetchJobs = async () => {
+    const token = localStorage.getItem("adminToken");
+
+    if (!token) {
+      handleUnauthorized();
+      return;
+    }
+
+    setIsLoading(true);
+    setPageError("");
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/jobs`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+
+      if (response.status === 401) {
+        handleUnauthorized();
+        return;
+      }
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.message || "Failed to load jobs."
+        );
+      }
+
+      const jobData =
+        result.jobs ||
+        result.data ||
+        [];
+
+      /*
+       * Latest jobs first.
+       */
+      const sortedJobs = [...jobData].sort(
+        (a, b) =>
+          new Date(b.createdAt || b.postedDate) -
+          new Date(a.createdAt || a.postedDate)
+      );
+
+      setJobs(sortedJobs);
+    } catch (error) {
+      console.error(
+        "Failed to fetch jobs:",
+        error
+      );
+
+      setPageError(
+        error.message ||
+          "Unable to load jobs. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /*
+   * Load jobs when page opens.
+   */
+
+  useEffect(() => {
+    fetchJobs();
+  }, []);
+
+  /*
+   * ---------------------------------------------------------
+   * SEARCH + FILTER
+   * ---------------------------------------------------------
+   */
+
   const filteredJobs = useMemo(() => {
     return jobs.filter((job) => {
-      const searchValue = search.toLowerCase();
+      const searchValue = search
+        .toLowerCase()
+        .trim();
 
       const matchesSearch =
-        job.title.toLowerCase().includes(searchValue) ||
-        job.department.toLowerCase().includes(searchValue) ||
-        job.location.toLowerCase().includes(searchValue) ||
-        job.employmentType.toLowerCase().includes(searchValue);
+        job.title
+          ?.toLowerCase()
+          .includes(searchValue) ||
+        job.department
+          ?.toLowerCase()
+          .includes(searchValue) ||
+        job.location
+          ?.toLowerCase()
+          .includes(searchValue) ||
+        job.employmentType
+          ?.toLowerCase()
+          .includes(searchValue);
 
       const matchesStatus =
-        statusFilter === "All" || job.status === statusFilter;
+        statusFilter === "All" ||
+        job.status === statusFilter;
 
       const matchesType =
-        typeFilter === "All" || job.employmentType === typeFilter;
+        typeFilter === "All" ||
+        job.employmentType === typeFilter;
 
-      return matchesSearch && matchesStatus && matchesType;
+      return (
+        matchesSearch &&
+        matchesStatus &&
+        matchesType
+      );
     });
   }, [jobs, search, statusFilter, typeFilter]);
+
+  /*
+   * ---------------------------------------------------------
+   * FORM CHANGE
+   * ---------------------------------------------------------
+   */
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -124,8 +226,15 @@ function Jobs() {
     setErrors((previous) => ({
       ...previous,
       [name]: "",
+      submit: "",
     }));
   };
+
+  /*
+   * ---------------------------------------------------------
+   * FORM VALIDATION
+   * ---------------------------------------------------------
+   */
 
   const validateForm = () => {
     const newErrors = {};
@@ -135,25 +244,35 @@ function Jobs() {
     }
 
     if (!formData.department.trim()) {
-      newErrors.department = "Department is required.";
+      newErrors.department =
+        "Department is required.";
     }
 
     if (!formData.location.trim()) {
-      newErrors.location = "Location is required.";
+      newErrors.location =
+        "Location is required.";
     }
 
     if (!formData.description.trim()) {
-      newErrors.description = "Job description is required.";
+      newErrors.description =
+        "Job description is required.";
     }
 
     if (!formData.requirements.trim()) {
-      newErrors.requirements = "Job requirements are required.";
+      newErrors.requirements =
+        "Job requirements are required.";
     }
 
     setErrors(newErrors);
 
     return Object.keys(newErrors).length === 0;
   };
+
+  /*
+   * ---------------------------------------------------------
+   * OPEN ADD MODAL
+   * ---------------------------------------------------------
+   */
 
   const openAddModal = () => {
     setEditingJob(null);
@@ -162,17 +281,28 @@ function Jobs() {
     setIsModalOpen(true);
   };
 
+  /*
+   * ---------------------------------------------------------
+   * OPEN EDIT MODAL
+   * ---------------------------------------------------------
+   */
+
   const openEditModal = (job) => {
     setEditingJob(job);
 
     setFormData({
-      title: job.title,
-      department: job.department,
-      location: job.location,
-      employmentType: job.employmentType,
-      description: job.description,
-      requirements: job.requirements,
-      status: job.status,
+      title: job.title || "",
+      department: job.department || "",
+      location: job.location || "",
+      employmentType:
+        job.employmentType || "Full Time",
+      description:
+        job.jobDescription ||
+        job.description ||
+        "",
+      requirements:
+        job.requirements || "",
+      status: job.status || "Draft",
     });
 
     setErrors({});
@@ -180,82 +310,279 @@ function Jobs() {
     setIsModalOpen(true);
   };
 
-  const handleSubmit = (event) => {
+  /*
+   * ---------------------------------------------------------
+   * ADD / UPDATE JOB
+   * ---------------------------------------------------------
+   */
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (!validateForm()) {
       return;
     }
 
-    if (editingJob) {
-      setJobs((previous) =>
-        previous.map((job) =>
-          job.id === editingJob.id
-            ? {
-                ...job,
-                ...formData,
-              }
-            : job
-        )
-      );
-    } else {
-      const newJob = {
-        id: Date.now(),
-        ...formData,
-        postedDate: new Date().toISOString().split("T")[0],
-      };
+    const token = localStorage.getItem("adminToken");
 
-      setJobs((previous) => [newJob, ...previous]);
+    if (!token) {
+      handleUnauthorized();
+      return;
     }
 
-    setFormData(emptyForm);
-    setErrors({});
-    setEditingJob(null);
-    setIsModalOpen(false);
+    setIsSubmitting(true);
+
+    try {
+      const isEditing = Boolean(editingJob);
+
+      const jobId =
+        editingJob?._id ||
+        editingJob?.id;
+
+      const url = isEditing
+        ? `${API_BASE_URL}/jobs/${jobId}`
+        : `${API_BASE_URL}/jobs`;
+
+      const method = isEditing
+        ? "PUT"
+        : "POST";
+
+      /*
+       * Map frontend form fields to backend
+       * Job model fields.
+       */
+      const requestBody = {
+        title: formData.title.trim(),
+        department: formData.department.trim(),
+        employmentType:
+          formData.employmentType,
+        location: formData.location.trim(),
+        status: formData.status,
+        jobDescription:
+          formData.description.trim(),
+        requirements:
+          formData.requirements.trim(),
+      };
+
+      const response = await fetch(url, {
+        method,
+        headers: getAuthHeaders(),
+        body: JSON.stringify(requestBody),
+      });
+
+      if (response.status === 401) {
+        handleUnauthorized();
+        return;
+      }
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.message ||
+            `Failed to ${
+              isEditing ? "update" : "create"
+            } job.`
+        );
+      }
+
+      /*
+       * Refresh from MongoDB.
+       */
+      await fetchJobs();
+
+      setFormData(emptyForm);
+      setErrors({});
+      setEditingJob(null);
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error(
+        "Job save failed:",
+        error
+      );
+
+      setErrors({
+        submit:
+          error.message ||
+          "Unable to save job. Please try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  /*
+   * ---------------------------------------------------------
+   * CLOSE MODAL
+   * ---------------------------------------------------------
+   */
 
   const handleCloseModal = () => {
+    if (isSubmitting) {
+      return;
+    }
+
     setIsModalOpen(false);
     setEditingJob(null);
     setFormData(emptyForm);
     setErrors({});
   };
 
-  const handleTogglePublish = (job) => {
-    setJobs((previous) =>
-      previous.map((item) =>
-        item.id === job.id
-          ? {
-              ...item,
-              status:
-                item.status === "Published" ? "Draft" : "Published",
-            }
-          : item
-      )
-    );
+  /*
+   * ---------------------------------------------------------
+   * PUBLISH / UNPUBLISH
+   * ---------------------------------------------------------
+   */
+
+  const handleTogglePublish = async (job) => {
+    const token = localStorage.getItem("adminToken");
+
+    if (!token) {
+      handleUnauthorized();
+      return;
+    }
+
+    const jobId =
+      job._id ||
+      job.id;
+
+    const newStatus =
+      job.status === "Published"
+        ? "Draft"
+        : "Published";
 
     setOpenMenuId(null);
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/jobs/${jobId}`,
+        {
+          method: "PUT",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            title: job.title,
+            department: job.department,
+            employmentType:
+              job.employmentType,
+            location: job.location,
+            status: newStatus,
+            jobDescription:
+              job.jobDescription ||
+              job.description ||
+              "",
+            requirements:
+              job.requirements || "",
+          }),
+        }
+      );
+
+      if (response.status === 401) {
+        handleUnauthorized();
+        return;
+      }
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.message ||
+            "Failed to update job status."
+        );
+      }
+
+      await fetchJobs();
+    } catch (error) {
+      console.error(
+        "Job status update failed:",
+        error
+      );
+
+      setPageError(
+        error.message ||
+          "Unable to update job status."
+      );
+    }
   };
 
-  const handleDelete = () => {
+  /*
+   * ---------------------------------------------------------
+   * DELETE JOB
+   * ---------------------------------------------------------
+   */
+
+  const handleDelete = async () => {
     if (!deleteJob) {
       return;
     }
 
-    setJobs((previous) =>
-      previous.filter((job) => job.id !== deleteJob.id)
-    );
+    const token = localStorage.getItem("adminToken");
 
-    setDeleteJob(null);
+    if (!token) {
+      handleUnauthorized();
+      return;
+    }
+
+    const jobId =
+      deleteJob._id ||
+      deleteJob.id;
+
+    setIsDeleting(true);
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/jobs/${jobId}`,
+        {
+          method: "DELETE",
+          headers: getAuthHeaders(),
+        }
+      );
+
+      if (response.status === 401) {
+        handleUnauthorized();
+        return;
+      }
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.message ||
+            "Failed to delete job."
+        );
+      }
+
+      /*
+       * Remove from UI after successful backend delete.
+       */
+      setJobs((previous) =>
+        previous.filter(
+          (job) =>
+            (job._id || job.id) !==
+            jobId
+        )
+      );
+
+      setDeleteJob(null);
+    } catch (error) {
+      console.error(
+        "Job deletion failed:",
+        error
+      );
+
+      setPageError(
+        error.message ||
+          "Unable to delete job. Please try again."
+      );
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
-  const formatDate = (date) => {
-    return new Date(date).toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  };
+  /*
+   * ---------------------------------------------------------
+   * TABLE COLUMNS
+   * ---------------------------------------------------------
+   */
 
   const jobColumns = [
     {
@@ -263,11 +590,11 @@ function Jobs() {
       label: "Job",
       render: (job) => (
         <div>
-          <p className="font-semibold text-gray-900 dark:text-white">
+          <p className="font-semibold text-gray-900">
             {job.title}
           </p>
 
-          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+          <p className="mt-0.5 text-xs text-gray-500">
             {job.department}
           </p>
         </div>
@@ -277,18 +604,13 @@ function Jobs() {
     {
       key: "location",
       label: "Location",
-      render: (job) => (
-        <span className="text-sm text-gray-700 dark:text-gray-300">
-          {job.location}
-        </span>
-      ),
     },
 
     {
       key: "employmentType",
       label: "Type",
       render: (job) => (
-        <span className="text-sm text-gray-700 dark:text-gray-300">
+        <span className="text-sm text-gray-700">
           {job.employmentType}
         </span>
       ),
@@ -301,8 +623,8 @@ function Jobs() {
         <span
           className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
             job.status === "Published"
-              ? "bg-green-50 text-green-600 dark:bg-green-950/50 dark:text-green-400"
-              : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
+              ? "bg-green-50 text-green-600"
+              : "bg-gray-100 text-gray-500"
           }`}
         >
           {job.status}
@@ -314,8 +636,11 @@ function Jobs() {
       key: "postedDate",
       label: "Posted",
       render: (job) => (
-        <span className="text-sm text-gray-600 dark:text-gray-300">
-          {formatDate(job.postedDate)}
+        <span className="text-sm text-gray-600">
+          {formatDate(
+            job.createdAt ||
+              job.postedDate
+          )}
         </span>
       ),
     },
@@ -323,82 +648,99 @@ function Jobs() {
     {
       key: "actions",
       label: "Actions",
-      render: (job) => (
-        <div className="relative">
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
+      render: (job) => {
+        const jobId =
+          job._id ||
+          job.id;
 
-              setOpenMenuId((previous) =>
-                previous === job.id ? null : job.id
-              );
-            }}
-            className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
-            aria-label="Job actions"
-          >
-            <MoreVertical size={18} />
-          </button>
+        return (
+          <div className="relative">
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
 
-          {openMenuId === job.id && (
-            <div className="absolute right-0 top-10 z-30 w-48 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900">
-              <button
-                type="button"
-                onClick={() => openEditModal(job)}
-                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800"
-              >
-                <Pencil size={16} />
-                <span>Edit Job</span>
-              </button>
+                setOpenMenuId((previous) =>
+                  previous === jobId
+                    ? null
+                    : jobId
+                );
+              }}
+              className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700"
+              aria-label="Job actions"
+            >
+              <MoreVertical size={18} />
+            </button>
 
-              <button
-                type="button"
-                onClick={() => handleTogglePublish(job)}
-                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800"
-              >
-                {job.status === "Published" ? (
-                  <EyeOff size={16} />
-                ) : (
-                  <Eye size={16} />
-                )}
+            {openMenuId === jobId && (
+              <div className="absolute right-0 top-10 z-30 w-48 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+                {/* Edit */}
+                <button
+                  type="button"
+                  onClick={() =>
+                    openEditModal(job)
+                  }
+                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                >
+                  <Pencil size={16} />
+                  <span>Edit Job</span>
+                </button>
 
-                <span>
-                  {job.status === "Published"
-                    ? "Unpublish Job"
-                    : "Publish Job"}
-                </span>
-              </button>
+                {/* Publish / Unpublish */}
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleTogglePublish(job)
+                  }
+                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                >
+                  {job.status ===
+                  "Published" ? (
+                    <EyeOff size={16} />
+                  ) : (
+                    <Eye size={16} />
+                  )}
 
-              <div className="my-1 border-t border-gray-100 dark:border-gray-700" />
+                  <span>
+                    {job.status ===
+                    "Published"
+                      ? "Unpublish Job"
+                      : "Publish Job"}
+                  </span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setDeleteJob(job);
-                  setOpenMenuId(null);
-                }}
-                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:hover:bg-red-950/30"
-              >
-                <Trash2 size={16} />
-                <span>Delete Job</span>
-              </button>
-            </div>
-          )}
-        </div>
-      ),
+                <div className="my-1 border-t border-gray-100" />
+
+                {/* Delete */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleteJob(job);
+                    setOpenMenuId(null);
+                  }}
+                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
+                >
+                  <Trash2 size={16} />
+                  <span>Delete Job</span>
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      },
     },
   ];
 
   return (
-    <div className="relative min-h-screen bg-gray-200 p-5 transition-colors dark:bg-gray-950 sm:p-6">
+    <div className="relative p-5 sm:p-6">
       {/* Page Header */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
             Jobs
           </h1>
 
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-sm text-gray-500">
             Manage job openings and recruitment opportunities.
           </p>
         </div>
@@ -413,86 +755,172 @@ function Jobs() {
         </button>
       </div>
 
+      {/* Page Error */}
+      {pageError && (
+        <div className="mb-5 flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+          <p className="text-sm font-medium text-red-600">
+            {pageError}
+          </p>
+
+          <button
+            type="button"
+            onClick={() => setPageError("")}
+            className="text-red-500 hover:text-red-700"
+            aria-label="Close error"
+          >
+            <X size={17} />
+          </button>
+        </div>
+      )}
+
       {/* Search & Filters */}
-      <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between max-[767px]:flex-row max-[767px]:items-center max-[767px]:gap-2">
-        <div className="relative w-full lg:max-w-sm max-[767px]:min-w-0 max-[767px]:flex-[1.8]">
+      <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="relative w-full lg:max-w-sm">
           <Search
-            size={16}
-            className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 max-[767px]:h-3.5 max-[767px]:w-3.5"
+            size={18}
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
           />
 
           <input
             type="search"
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) =>
+              setSearch(event.target.value)
+            }
             placeholder="Search jobs..."
-            className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-red-950/40 max-[767px]:h-8 max-[767px]:rounded-md max-[767px]:py-1.5 max-[767px]:pl-7 max-[767px]:pr-2 max-[767px]:text-[10px]"
+            className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50"
           />
         </div>
-
-        <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto max-[767px]:min-w-0 max-[767px]:flex-[2] max-[767px]:flex-row max-[767px]:gap-2">
+        <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto max-[767px]:min-w-0 max-[767px]:flex-2 max-[767px]:flex-row max-[767px]:gap-2">
           <select
             value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-            className="w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:focus:ring-red-950/40 sm:w-40 max-[767px]:h-8 max-[767px]:w-auto max-[767px]:flex-1 max-[767px]:rounded-md max-[767px]:px-2 max-[767px]:py-1 max-[767px]:text-[10px]"
+            onChange={(event) =>
+              setStatusFilter(event.target.value)
+            }
+            className="w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 sm:w-40 max-[767px]:h-8 max-[767px]:w-auto max-[767px]:flex-1 max-[767px]:rounded-md max-[767px]:px-2 max-[767px]:py-1 max-[767px]:text-[10px]"
           >
-            <option value="All">All Status</option>
-            <option value="Published">Published</option>
-            <option value="Draft">Draft</option>
+            <option
+              value="All"
+              className="text-[10px]"
+            >
+              All Status
+            </option>
+
+            <option
+              value="Published"
+              className="text-[10px]"
+            >
+              Published
+            </option>
+
+            <option
+              value="Draft"
+              className="text-[10px]"
+            >
+              Draft
+            </option>
           </select>
 
           <select
             value={typeFilter}
-            onChange={(event) => setTypeFilter(event.target.value)}
-            className="w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:focus:ring-red-950/40 sm:w-40 max-[767px]:h-8 max-[767px]:w-auto max-[767px]:flex-1 max-[767px]:rounded-md max-[767px]:px-2 max-[767px]:py-1 max-[767px]:text-[10px]"
+            onChange={(event) =>
+              setTypeFilter(event.target.value)
+            }
+            className="w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 sm:w-40 max-[767px]:h-8 max-[767px]:w-auto max-[767px]:flex-1 max-[767px]:rounded-md max-[767px]:px-2 max-[767px]:py-1 max-[767px]:text-[10px]"
           >
-            <option value="All">All Types</option>
-            <option value="Full Time">Full Time</option>
-            <option value="Part Time">Part Time</option>
-            <option value="Contract">Contract</option>
-            <option value="Internship">Internship</option>
+            <option
+              value="All"
+              className="text-[10px]"
+            >
+              All Types
+            </option>
+
+            <option
+              value="Full Time"
+              className="text-[10px]"
+            >
+              Full Time
+            </option>
+
+            <option
+              value="Part Time"
+              className="text-[10px]"
+            >
+              Part Time
+            </option>
+
+            <option
+              value="Contract"
+              className="text-[10px]"
+            >
+              Contract
+            </option>
+
+            <option
+              value="Internship"
+              className="text-[10px]"
+            >
+              Internship
+            </option>
           </select>
         </div>
       </div>
 
       {/* Jobs Table */}
-      <section className="overflow-hidden rounded-xl border border-gray-200 bg-white transition-colors dark:border-gray-800 dark:bg-gray-900">
-        <div className="border-b border-gray-100 px-5 py-4 dark:border-gray-800">
-          <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+      <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+        <div className="border-b border-gray-100 px-5 py-4">
+          <h2 className="text-base font-semibold text-gray-900">
             Job Listings
           </h2>
 
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            {filteredJobs.length} job
-            {filteredJobs.length !== 1 ? "s" : ""} found
+          <p className="mt-1 text-xs text-gray-500">
+            {isLoading
+              ? "Loading jobs..."
+              : `${filteredJobs.length} job${
+                  filteredJobs.length !== 1
+                    ? "s"
+                    : ""
+                } found`}
           </p>
         </div>
 
-        <DataTable
-          columns={jobColumns}
-          data={filteredJobs}
-          emptyMessage="No jobs found."
-        />
+        {isLoading ? (
+          <div className="px-5 py-12 text-center">
+            <p className="text-sm text-gray-500">
+              Loading jobs...
+            </p>
+          </div>
+        ) : (
+          <DataTable
+            columns={jobColumns}
+            data={filteredJobs}
+            emptyMessage="No jobs found."
+          />
+        )}
       </section>
 
       {/* Add / Edit Job Modal */}
       {isModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6"
           onClick={handleCloseModal}
         >
           <div
-            className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white shadow-xl dark:border dark:border-gray-800 dark:bg-gray-900"
-            onClick={(event) => event.stopPropagation()}
+            className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white shadow-xl"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-gray-800">
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {editingJob ? "Edit Job" : "Create Job"}
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {editingJob
+                    ? "Edit Job"
+                    : "Create Job"}
                 </h2>
 
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                <p className="mt-1 text-xs text-gray-500">
                   {editingJob
                     ? "Update job posting information."
                     : "Create a new job opportunity for your organization."}
@@ -502,7 +930,8 @@ function Jobs() {
               <button
                 type="button"
                 onClick={handleCloseModal}
-                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-white"
+                disabled={isSubmitting}
+                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label="Close modal"
               >
                 <X size={20} />
@@ -516,7 +945,7 @@ function Jobs() {
                 <div>
                   <label
                     htmlFor="title"
-                    className="mb-2 block text-sm font-semibold text-gray-800 dark:text-gray-200"
+                    className="mb-2 block text-sm font-semibold text-gray-800"
                   >
                     Job Title
                   </label>
@@ -528,10 +957,10 @@ function Jobs() {
                     value={formData.title}
                     onChange={handleChange}
                     placeholder="e.g. SAP ABAP Developer"
-                    className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:ring-4 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 ${
+                    className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:ring-4 ${
                       errors.title
-                        ? "border-red-300 focus:border-red-400 focus:ring-red-50 dark:border-red-700 dark:focus:ring-red-950/40"
-                        : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50 dark:border-gray-700 dark:focus:ring-red-950/40"
+                        ? "border-red-300 focus:border-red-400 focus:ring-red-50"
+                        : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50"
                     }`}
                   />
 
@@ -547,7 +976,7 @@ function Jobs() {
                   <div>
                     <label
                       htmlFor="department"
-                      className="mb-2 block text-sm font-semibold text-gray-800 dark:text-gray-200"
+                      className="mb-2 block text-sm font-semibold text-gray-800"
                     >
                       Department
                     </label>
@@ -559,10 +988,10 @@ function Jobs() {
                       value={formData.department}
                       onChange={handleChange}
                       placeholder="e.g. SAP"
-                      className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:ring-4 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 ${
+                      className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:ring-4 ${
                         errors.department
-                          ? "border-red-300 focus:border-red-400 focus:ring-red-50 dark:border-red-700 dark:focus:ring-red-950/40"
-                          : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50 dark:border-gray-700 dark:focus:ring-red-950/40"
+                          ? "border-red-300 focus:border-red-400 focus:ring-red-50"
+                          : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50"
                       }`}
                     />
 
@@ -576,7 +1005,7 @@ function Jobs() {
                   <div>
                     <label
                       htmlFor="employmentType"
-                      className="mb-2 block text-sm font-semibold text-gray-800 dark:text-gray-200"
+                      className="mb-2 block text-sm font-semibold text-gray-800"
                     >
                       Employment Type
                     </label>
@@ -584,14 +1013,27 @@ function Jobs() {
                     <select
                       id="employmentType"
                       name="employmentType"
-                      value={formData.employmentType}
+                      value={
+                        formData.employmentType
+                      }
                       onChange={handleChange}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:ring-red-950/40"
+                      className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50"
                     >
-                      <option value="Full Time">Full Time</option>
-                      <option value="Part Time">Part Time</option>
-                      <option value="Contract">Contract</option>
-                      <option value="Internship">Internship</option>
+                      <option value="Full Time">
+                        Full Time
+                      </option>
+
+                      <option value="Part Time">
+                        Part Time
+                      </option>
+
+                      <option value="Contract">
+                        Contract
+                      </option>
+
+                      <option value="Internship">
+                        Internship
+                      </option>
                     </select>
                   </div>
                 </div>
@@ -601,7 +1043,7 @@ function Jobs() {
                   <div>
                     <label
                       htmlFor="location"
-                      className="mb-2 block text-sm font-semibold text-gray-800 dark:text-gray-200"
+                      className="mb-2 block text-sm font-semibold text-gray-800"
                     >
                       Location
                     </label>
@@ -613,10 +1055,10 @@ function Jobs() {
                       value={formData.location}
                       onChange={handleChange}
                       placeholder="e.g. Hyderabad, India"
-                      className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:ring-4 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 ${
+                      className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:ring-4 ${
                         errors.location
-                          ? "border-red-300 focus:border-red-400 focus:ring-red-50 dark:border-red-700 dark:focus:ring-red-950/40"
-                          : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50 dark:border-gray-700 dark:focus:ring-red-950/40"
+                          ? "border-red-300 focus:border-red-400 focus:ring-red-50"
+                          : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50"
                       }`}
                     />
 
@@ -630,7 +1072,7 @@ function Jobs() {
                   <div>
                     <label
                       htmlFor="status"
-                      className="mb-2 block text-sm font-semibold text-gray-800 dark:text-gray-200"
+                      className="mb-2 block text-sm font-semibold text-gray-800"
                     >
                       Status
                     </label>
@@ -640,10 +1082,15 @@ function Jobs() {
                       name="status"
                       value={formData.status}
                       onChange={handleChange}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:ring-red-950/40"
+                      className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50"
                     >
-                      <option value="Draft">Draft</option>
-                      <option value="Published">Published</option>
+                      <option value="Draft">
+                        Draft
+                      </option>
+
+                      <option value="Published">
+                        Published
+                      </option>
                     </select>
                   </div>
                 </div>
@@ -652,7 +1099,7 @@ function Jobs() {
                 <div>
                   <label
                     htmlFor="description"
-                    className="mb-2 block text-sm font-semibold text-gray-800 dark:text-gray-200"
+                    className="mb-2 block text-sm font-semibold text-gray-800"
                   >
                     Job Description
                   </label>
@@ -664,10 +1111,10 @@ function Jobs() {
                     value={formData.description}
                     onChange={handleChange}
                     placeholder="Describe the job role and responsibilities..."
-                    className={`w-full resize-none rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:ring-4 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 ${
+                    className={`w-full resize-none rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:ring-4 ${
                       errors.description
-                        ? "border-red-300 focus:border-red-400 focus:ring-red-50 dark:border-red-700 dark:focus:ring-red-950/40"
-                        : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50 dark:border-gray-700 dark:focus:ring-red-950/40"
+                        ? "border-red-300 focus:border-red-400 focus:ring-red-50"
+                        : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50"
                     }`}
                   />
 
@@ -682,7 +1129,7 @@ function Jobs() {
                 <div>
                   <label
                     htmlFor="requirements"
-                    className="mb-2 block text-sm font-semibold text-gray-800 dark:text-gray-200"
+                    className="mb-2 block text-sm font-semibold text-gray-800"
                   >
                     Requirements
                   </label>
@@ -694,10 +1141,10 @@ function Jobs() {
                     value={formData.requirements}
                     onChange={handleChange}
                     placeholder="Mention skills, experience and qualifications..."
-                    className={`w-full resize-none rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:ring-4 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 ${
+                    className={`w-full resize-none rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:ring-4 ${
                       errors.requirements
-                        ? "border-red-300 focus:border-red-400 focus:ring-red-50 dark:border-red-700 dark:focus:ring-red-950/40"
-                        : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50 dark:border-gray-700 dark:focus:ring-red-950/40"
+                        ? "border-red-300 focus:border-red-400 focus:ring-red-50"
+                        : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50"
                     }`}
                   />
 
@@ -707,23 +1154,40 @@ function Jobs() {
                     </p>
                   )}
                 </div>
+
+                {/* API Error */}
+                {errors.submit && (
+                  <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+                    <p className="text-sm font-medium text-red-600">
+                      {errors.submit}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Modal Footer */}
-              <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-6 py-4 dark:border-gray-800 sm:flex-row sm:justify-end">
+              <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-6 py-4 sm:flex-row sm:justify-end">
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800 sm:w-auto"
+                  disabled={isSubmitting}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                 >
                   Cancel
                 </button>
 
                 <button
                   type="submit"
-                  className="w-full rounded-lg bg-[#EF3B3A] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-600 sm:w-auto"
+                  disabled={isSubmitting}
+                  className="w-full rounded-lg bg-[#EF3B3A] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
                 >
-                  {editingJob ? "Save Changes" : "Create Job"}
+                  {isSubmitting
+                    ? editingJob
+                      ? "Saving..."
+                      : "Creating..."
+                    : editingJob
+                      ? "Save Changes"
+                      : "Create Job"}
                 </button>
               </div>
             </form>
@@ -734,24 +1198,29 @@ function Jobs() {
       {/* Delete Confirmation Modal */}
       {deleteJob && (
         <div
-          className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
-          onClick={() => setDeleteJob(null)}
+          className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 px-4"
+          onClick={() =>
+            !isDeleting &&
+            setDeleteJob(null)
+          }
         >
           <div
-            className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:border dark:border-gray-800 dark:bg-gray-900"
-            onClick={(event) => event.stopPropagation()}
+            className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
           >
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-50 text-[#EF3B3A] dark:bg-red-950/50">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-50 text-[#EF3B3A]">
               <Trash2 size={20} />
             </div>
 
-            <h2 className="mt-4 text-lg font-semibold text-gray-900 dark:text-white">
+            <h2 className="mt-4 text-lg font-semibold text-gray-900">
               Delete Job?
             </h2>
 
-            <p className="mt-2 text-sm leading-6 text-gray-500 dark:text-gray-400">
+            <p className="mt-2 text-sm leading-6 text-gray-500">
               Are you sure you want to delete{" "}
-              <span className="font-semibold text-gray-700 dark:text-gray-200">
+              <span className="font-semibold text-gray-700">
                 {deleteJob.title}
               </span>
               ? This action cannot be undone.
@@ -760,8 +1229,11 @@ function Jobs() {
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <button
                 type="button"
-                onClick={() => setDeleteJob(null)}
-                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800 sm:w-auto"
+                onClick={() =>
+                  setDeleteJob(null)
+                }
+                disabled={isDeleting}
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
               >
                 Cancel
               </button>
@@ -769,9 +1241,12 @@ function Jobs() {
               <button
                 type="button"
                 onClick={handleDelete}
-                className="w-full rounded-lg bg-[#EF3B3A] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-600 sm:w-auto"
+                disabled={isDeleting}
+                className="w-full rounded-lg bg-[#EF3B3A] px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
               >
-                Delete Job
+                {isDeleting
+                  ? "Deleting..."
+                  : "Delete Job"}
               </button>
             </div>
           </div>
