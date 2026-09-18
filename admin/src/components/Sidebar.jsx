@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -91,8 +91,6 @@ const mobileLinks = [
 ];
 
 function Sidebar() {
-  const navigate = useNavigate();
-
   const handleLogout = async () => {
     const token = localStorage.getItem("adminToken");
 
@@ -112,15 +110,19 @@ function Sidebar() {
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      // Clear local authentication data
-      // even if the API request fails.
       localStorage.removeItem("adminToken");
       localStorage.removeItem("adminUser");
 
-      // Redirect to login page.
-      navigate("/login", { replace: true });
+      window.location.href = "/login";
     }
   };
+
+  const navLinkClass = ({ isActive }) =>
+    `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+      isActive
+        ? "bg-red-50 text-[#EF3B3A] dark:bg-red-950/50 dark:text-red-400"
+        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-200 dark:hover:bg-gray-800 dark:hover:text-white"
+    }`;
 
   return (
     <>
@@ -131,11 +133,11 @@ function Sidebar() {
         {/* Logo */}
         <div className="flex h-20 items-center border-b border-gray-200 px-6 dark:border-gray-800">
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-gray-900 dark:!text-white">
+            <h1 className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">
               PROLIANT
             </h1>
 
-            <p className="mt-0.5 text-xs font-medium text-gray-500 dark:!text-gray-400">
+            <p className="mt-0.5 text-xs font-medium text-gray-500 dark:text-gray-400">
               Admin Portal
             </p>
           </div>
@@ -149,8 +151,8 @@ function Sidebar() {
             className={({ isActive }) =>
               `mb-5 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                 isActive
-                  ? "bg-red-50 !text-[#EF3B3A] dark:bg-red-950/50 dark:!text-red-400"
-                  : "!text-gray-600 hover:bg-gray-50 hover:!text-gray-900 dark:!text-gray-200 dark:hover:bg-gray-800 dark:hover:!text-white"
+                  ? "bg-red-50 text-[#EF3B3A] dark:bg-red-950/50 dark:text-red-400"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-200 dark:hover:bg-gray-800 dark:hover:text-white"
               }`
             }
           >
@@ -165,7 +167,7 @@ function Sidebar() {
 
           {/* Management */}
           <div className="mb-5">
-            <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:!text-gray-500">
+            <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
               Management
             </p>
 
@@ -177,13 +179,7 @@ function Sidebar() {
                   <NavLink
                     key={link.path}
                     to={link.path}
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                        isActive
-                          ? "bg-red-50 !text-[#EF3B3A] dark:bg-red-950/50 dark:!text-red-400"
-                          : "!text-gray-600 hover:bg-gray-50 hover:!text-gray-900 dark:!text-gray-200 dark:hover:bg-gray-800 dark:hover:!text-white"
-                      }`
-                    }
+                    className={navLinkClass}
                   >
                     <Icon
                       size={19}
@@ -200,7 +196,7 @@ function Sidebar() {
 
           {/* Recruitment */}
           <div className="mb-5">
-            <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:!text-gray-500">
+            <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
               Recruitment
             </p>
 
@@ -212,13 +208,7 @@ function Sidebar() {
                   <NavLink
                     key={link.path}
                     to={link.path}
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                        isActive
-                          ? "bg-red-50 !text-[#EF3B3A] dark:bg-red-950/50 dark:!text-red-400"
-                          : "!text-gray-600 hover:bg-gray-50 hover:!text-gray-900 dark:!text-gray-200 dark:hover:bg-gray-800 dark:hover:!text-white"
-                      }`
-                    }
+                    className={navLinkClass}
                   >
                     <Icon
                       size={19}
@@ -235,7 +225,7 @@ function Sidebar() {
 
           {/* Communication */}
           <div>
-            <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:!text-gray-500">
+            <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
               Communication
             </p>
 
@@ -247,13 +237,7 @@ function Sidebar() {
                   <NavLink
                     key={link.path}
                     to={link.path}
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                        isActive
-                          ? "bg-red-50 !text-[#EF3B3A] dark:bg-red-950/50 dark:!text-red-400"
-                          : "!text-gray-600 hover:bg-gray-50 hover:!text-gray-900 dark:!text-gray-200 dark:hover:bg-gray-800 dark:hover:!text-white"
-                      }`
-                    }
+                    className={navLinkClass}
                   >
                     <Icon
                       size={19}
@@ -274,7 +258,7 @@ function Sidebar() {
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium !text-gray-600 transition-colors hover:bg-gray-50 hover:!text-gray-900 dark:!text-gray-200 dark:hover:bg-gray-800 dark:hover:!text-white"
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900 dark:text-gray-200 dark:hover:bg-gray-800 dark:hover:text-white"
           >
             <LogOut size={19} strokeWidth={2} />
 
@@ -286,7 +270,7 @@ function Sidebar() {
       {/* =========================================================
           MOBILE BOTTOM NAVIGATION
       ========================================================== */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 hidden h-[72px] border-t border-gray-800 bg-black shadow-[0_-2px_10px_rgba(0,0,0,0.25)] max-[767px]:block">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 hidden h-18 border-t border-gray-800 bg-black shadow-[0_-2px_10px_rgba(0,0,0,0.25)] max-[767px]:block">
         <div className="flex h-full w-full items-center justify-around px-1">
           {mobileLinks.map((link) => {
             const Icon = link.icon;
@@ -298,8 +282,8 @@ function Sidebar() {
                 className={({ isActive }) =>
                   `flex h-full min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 transition-colors ${
                     isActive
-                      ? "text-white!"
-                      : "text-white! hover:text-white!"
+                      ? "text-white"
+                      : "text-white hover:text-white"
                   }`
                 }
               >
@@ -308,11 +292,11 @@ function Sidebar() {
                     <Icon
                       size={22}
                       strokeWidth={isActive ? 2.8 : 2.5}
-                      className="text-white!"
+                      className="text-white"
                     />
 
                     <span
-                      className={`truncate text-[10px] leading-3 text-white! ${
+                      className={`truncate text-[10px] leading-3 text-white ${
                         isActive ? "font-bold" : "font-semibold"
                       }`}
                     >

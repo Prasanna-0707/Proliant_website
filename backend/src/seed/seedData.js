@@ -23,12 +23,20 @@ const seedDatabase = async () => {
         10
       );
 
-      await Admin.create({
-        email: "bogachandrapu@gmail.com",
-        password: hashedPassword,
-      });
+      const admins = [
+        {
+          email: "admin@proliant.com",
+          password: hashedPassword,
+        },
+        {
+          email: "bogachandrapu@gmail.com",
+          password: hashedPassword,
+        },
+      ];
 
-      console.log("✓ Admin seeded");
+      await Admin.insertMany(admins);
+
+      console.log("✓ 2 Admins seeded");
     } else {
       console.log("→ Admin data already exists. Skipping.");
     }
@@ -41,34 +49,34 @@ const seedDatabase = async () => {
 
     if (employeeCount === 0) {
       const departments = [
-        "Engineering",
+        "SAP",
+        "SAP Functional",
+        "SAP Technical",
         "Human Resources",
         "Finance",
         "Sales",
-        "Marketing",
         "Operations",
         "Quality Assurance",
         "IT",
         "Business Development",
-        "Administration",
       ];
 
       const roles = [
-        "Software Engineer",
-        "Senior Software Engineer",
-        "Frontend Developer",
-        "Backend Developer",
-        "Full Stack Developer",
-        "HR Executive",
-        "HR Manager",
-        "Finance Executive",
-        "Business Analyst",
-        "Project Coordinator",
-        "QA Engineer",
-        "DevOps Engineer",
-        "UI/UX Designer",
-        "Sales Executive",
-        "Marketing Executive",
+        "SAP MM Consultant",
+        "SAP SD Consultant",
+        "SAP FICO Consultant",
+        "SAP ABAP Developer",
+        "SAP Basis Administrator",
+        "SAP HCM Consultant",
+        "SAP PP Consultant",
+        "SAP QM Consultant",
+        "SAP SuccessFactors Consultant",
+        "SAP Functional Consultant",
+        "SAP Technical Consultant",
+        "SAP Integration Consultant",
+        "SAP Security Consultant",
+        "SAP Business Analyst",
+        "SAP Project Coordinator",
       ];
 
       const firstNames = [
@@ -108,14 +116,17 @@ const seedDatabase = async () => {
 
       // 101 employees
       for (let i = 1; i <= 101; i++) {
-        const firstName = firstNames[(i - 1) % firstNames.length];
-        const name = `${firstName} ${i}`;
+        const firstName =
+          firstNames[(i - 1) % firstNames.length];
+
+        const name = firstName;
 
         employees.push({
           name,
           email: `employee${i}@proliant.com`,
           role: roles[(i - 1) % roles.length],
-          department: departments[(i - 1) % departments.length],
+          department:
+            departments[(i - 1) % departments.length],
           status: i % 12 === 0 ? "Inactive" : "Active",
         });
       }
@@ -136,120 +147,130 @@ const seedDatabase = async () => {
     if (jobCount === 0) {
       const jobs = [
         {
-          title: "Frontend Developer",
-          department: "Engineering",
+          title: "SAP MM Consultant",
+          department: "SAP Functional",
           employmentType: "Full Time",
           location: "Hyderabad, India",
+          experience: "3+ Years",
           status: "Published",
           jobDescription:
-            "We are looking for a frontend developer to build responsive and modern web applications.",
+            "We are looking for an SAP MM Consultant to support procurement and inventory management processes across SAP S/4HANA implementations.",
           requirements:
-            "Strong knowledge of HTML, CSS, JavaScript and React.js.",
+            "Strong knowledge of SAP MM, Procure-to-Pay processes, purchasing, inventory management, source determination and SAP S/4HANA.",
         },
         {
-          title: "Backend Developer",
-          department: "Engineering",
+          title: "SAP SD Consultant",
+          department: "SAP Functional",
           employmentType: "Full Time",
           location: "Hyderabad, India",
+          experience: "3+ Years",
           status: "Published",
           jobDescription:
-            "Develop scalable backend services and REST APIs for enterprise applications.",
+            "Join our SAP team as an SAP SD Consultant and work on Order-to-Cash processes, sales orders, deliveries, billing and pricing.",
           requirements:
-            "Experience with Node.js, Express.js, MongoDB and REST APIs.",
+            "Experience with SAP SD, Order-to-Cash, sales order processing, outbound delivery, billing, pricing procedures and SAP S/4HANA.",
         },
         {
-          title: "Full Stack Developer",
-          department: "Engineering",
+          title: "SAP FICO Consultant",
+          department: "SAP Functional",
           employmentType: "Full Time",
           location: "Bengaluru, India",
+          experience: "4+ Years",
           status: "Published",
           jobDescription:
-            "Work across frontend and backend technologies to deliver complete web solutions.",
+            "We are seeking an SAP FICO Consultant to support financial accounting and controlling processes in SAP S/4HANA environments.",
           requirements:
-            "Experience with React, Node.js, Express and MongoDB.",
+            "Strong knowledge of SAP FI and CO, general ledger, accounts payable, accounts receivable, asset accounting, cost centers and controlling.",
         },
         {
-          title: "QA Engineer",
-          department: "Quality Assurance",
+          title: "SAP ABAP Developer",
+          department: "SAP Technical",
           employmentType: "Full Time",
           location: "Hyderabad, India",
+          experience: "2+ Years",
           status: "Published",
           jobDescription:
-            "Design and execute test cases to ensure software quality and reliability.",
+            "Develop and maintain custom SAP solutions using ABAP while working closely with functional consultants and business teams.",
           requirements:
-            "Knowledge of manual testing, API testing and automation concepts.",
+            "Strong knowledge of ABAP, reports, internal tables, Open SQL, BAPIs, user exits, enhancements, debugging and SAP S/4HANA development.",
         },
         {
-          title: "UI/UX Designer",
-          department: "Design",
+          title: "SAP Basis Administrator",
+          department: "SAP Technical",
+          employmentType: "Full Time",
+          location: "Pune, India",
+          experience: "3+ Years",
+          status: "Published",
+          jobDescription:
+            "Manage SAP technical environments, system monitoring, transports, user administration and SAP system operations.",
+          requirements:
+            "Experience with SAP Basis administration, system monitoring, transport management, user administration, performance monitoring and database concepts.",
+        },
+        {
+          title: "SAP SuccessFactors Consultant",
+          department: "SAP HCM",
+          employmentType: "Full Time",
+          location: "Bengaluru, India",
+          experience: "3+ Years",
+          status: "Published",
+          jobDescription:
+            "Support SAP SuccessFactors implementations and help organizations optimize their human capital management processes.",
+          requirements:
+            "Knowledge of SAP SuccessFactors modules, employee central, HR processes, configuration and integration concepts.",
+        },
+        {
+          title: "SAP PP Consultant",
+          department: "SAP Functional",
+          employmentType: "Full Time",
+          location: "Hyderabad, India",
+          experience: "3+ Years",
+          status: "Published",
+          jobDescription:
+            "Work with manufacturing teams to implement and support SAP Production Planning processes in SAP S/4HANA.",
+          requirements:
+            "Experience with SAP PP, material requirements planning, production orders, BOMs, work centers and production processes.",
+        },
+        {
+          title: "SAP QM Consultant",
+          department: "SAP Functional",
           employmentType: "Full Time",
           location: "Chennai, India",
+          experience: "2+ Years",
           status: "Published",
           jobDescription:
-            "Create intuitive and engaging user experiences for digital products.",
+            "Support quality management processes and SAP QM implementations for enterprise customers.",
           requirements:
-            "Strong knowledge of Figma, UI design principles and user research.",
+            "Knowledge of SAP QM, inspection planning, inspection lots, quality notifications, results recording and usage decisions.",
         },
         {
-          title: "HR Executive",
-          department: "Human Resources",
-          employmentType: "Full Time",
-          location: "Hyderabad, India",
-          status: "Published",
-          jobDescription:
-            "Support recruitment, employee engagement and HR operations.",
-          requirements:
-            "Good communication skills and knowledge of HR processes.",
-        },
-        {
-          title: "Business Analyst",
-          department: "Business Development",
-          employmentType: "Full Time",
-          location: "Bengaluru, India",
-          status: "Published",
-          jobDescription:
-            "Analyze business requirements and translate them into actionable solutions.",
-          requirements:
-            "Analytical thinking, documentation and stakeholder communication skills.",
-        },
-        {
-          title: "DevOps Engineer",
-          department: "IT",
+          title: "SAP Integration Consultant",
+          department: "SAP Technical",
           employmentType: "Contract",
           location: "Pune, India",
+          experience: "4+ Years",
           status: "Published",
           jobDescription:
-            "Manage deployment pipelines, infrastructure and application reliability.",
+            "Design and support integrations between SAP systems and external enterprise applications.",
           requirements:
-            "Knowledge of CI/CD, Docker, Linux and cloud platforms.",
+            "Experience with SAP integration technologies, APIs, web services, middleware, SAP Integration Suite and integration architecture.",
         },
         {
-          title: "Marketing Executive",
-          department: "Marketing",
+          title: "SAP Business Analyst",
+          department: "Business Development",
           employmentType: "Full Time",
-          location: "Chennai, India",
-          status: "Draft",
-          jobDescription:
-            "Support digital marketing campaigns and brand communication activities.",
-          requirements:
-            "Knowledge of digital marketing, social media and content creation.",
-        },
-        {
-          title: "Software Engineer Intern",
-          department: "Engineering",
-          employmentType: "Internship",
           location: "Hyderabad, India",
+          experience: "2+ Years",
           status: "Published",
           jobDescription:
-            "Join our engineering team and gain practical experience working on software projects.",
+            "Work with business stakeholders to understand requirements and translate them into SAP-based business solutions.",
           requirements:
-            "Basic programming knowledge and willingness to learn modern web technologies.",
+            "Strong business analysis, requirement gathering, process documentation, stakeholder communication and knowledge of SAP business processes.",
         },
       ];
 
       await Job.insertMany(jobs);
 
-      console.log("✓ 10 jobs seeded");
+      console.log("✓ 10 SAP jobs seeded");
     } else {
       console.log("→ Job data already exists. Skipping.");
     }
@@ -295,22 +316,29 @@ const seedDatabase = async () => {
       ];
 
       const positions = [
-        "Frontend Developer",
-        "Backend Developer",
-        "Full Stack Developer",
-        "QA Engineer",
-        "UI/UX Designer",
-        "HR Executive",
-        "Business Analyst",
+        "SAP MM Consultant",
+        "SAP SD Consultant",
+        "SAP FICO Consultant",
+        "SAP ABAP Developer",
+        "SAP Basis Administrator",
+        "SAP SuccessFactors Consultant",
+        "SAP PP Consultant",
+        "SAP QM Consultant",
+        "SAP Integration Consultant",
+        "SAP Business Analyst",
       ];
 
       const interests = [
-        "Web Development",
-        "Software Engineering",
-        "UI/UX Design",
-        "Quality Assurance",
-        "Human Resources",
-        "Business Analysis",
+        "SAP MM",
+        "SAP SD",
+        "SAP FICO",
+        "SAP ABAP",
+        "SAP Basis",
+        "SAP SuccessFactors",
+        "SAP PP",
+        "SAP QM",
+        "SAP Integration",
+        "SAP Business Analysis",
       ];
 
       const qualifications = [
@@ -352,17 +380,22 @@ const seedDatabase = async () => {
       // 55 candidates
       for (let i = 1; i <= 55; i++) {
         const firstName =
-          candidateFirstNames[(i - 1) % candidateFirstNames.length];
+          candidateFirstNames[
+            (i - 1) % candidateFirstNames.length
+          ];
 
         const isFresher = i % 3 === 0;
 
+        const position =
+          positions[(i - 1) % positions.length];
+
         candidates.push({
-          position: positions[(i - 1) % positions.length],
+          position,
 
           areaOfInterest:
             interests[(i - 1) % interests.length],
 
-          name: `${firstName} Candidate ${i}`,
+          name: firstName,
 
           email: `candidate${i}@example.com`,
 
@@ -370,31 +403,36 @@ const seedDatabase = async () => {
 
           isFresher,
 
-          location: locations[(i - 1) % locations.length],
+          location:
+            locations[(i - 1) % locations.length],
 
           yearsOfExperience: isFresher
             ? 0
             : ((i - 1) % 6) + 1,
 
           highestQualification:
-            qualifications[(i - 1) % qualifications.length],
+            qualifications[
+              (i - 1) % qualifications.length
+            ],
 
           currentCompany: isFresher
             ? ""
-            : `Previous Company ${i}`,
+            : "Previous Employer",
 
           noticePeriod:
-            noticePeriods[(i - 1) % noticePeriods.length],
+            noticePeriods[
+              (i - 1) % noticePeriods.length
+            ],
 
           coverMessage:
-            `I am interested in the ${
-              positions[(i - 1) % positions.length]
-            } position at Proliant and would like to be considered for this opportunity.`,
+            `I am interested in the ${position} position at Proliant and would like to be considered for this opportunity.`,
 
           resume: `resume-placeholder-${i}.pdf`,
 
           status:
-            candidateStatuses[(i - 1) % candidateStatuses.length],
+            candidateStatuses[
+              (i - 1) % candidateStatuses.length
+            ],
         });
       }
 
@@ -402,7 +440,9 @@ const seedDatabase = async () => {
 
       console.log("✓ 55 candidates seeded");
     } else {
-      console.log("→ Candidate data already exists. Skipping.");
+      console.log(
+        "→ Candidate data already exists. Skipping."
+      );
     }
 
     // =========================================================
@@ -417,54 +457,54 @@ const seedDatabase = async () => {
           name: "Rajesh Kumar",
           email: "rajesh.kumar@example.com",
           company: "Tech Solutions Pvt Ltd",
-          subject: "Business Partnership",
+          subject: "SAP Implementation Services",
           message:
-            "We would like to discuss a potential business partnership with Proliant.",
+            "We would like to discuss SAP implementation and consulting services with Proliant.",
           status: "Unread",
         },
         {
           name: "Priya Sharma",
           email: "priya.sharma@example.com",
           company: "Global Systems",
-          subject: "Technology Services",
+          subject: "SAP S/4HANA Services",
           message:
-            "We are interested in learning more about your technology services.",
+            "We are interested in learning more about your SAP S/4HANA services.",
           status: "Read",
         },
         {
           name: "Michael Johnson",
           email: "michael.johnson@example.com",
           company: "Innovate Corp",
-          subject: "Enterprise Solutions",
+          subject: "SAP Consulting",
           message:
-            "Please share more information about your enterprise technology solutions.",
+            "Please share more information about your SAP consulting capabilities.",
           status: "Unread",
         },
         {
           name: "Sneha Reddy",
           email: "sneha.reddy@example.com",
           company: "Digital Works",
-          subject: "Project Discussion",
+          subject: "SAP Project Discussion",
           message:
-            "We would like to schedule a discussion regarding an upcoming project.",
+            "We would like to schedule a discussion regarding an upcoming SAP project.",
           status: "Read",
         },
         {
           name: "Arjun Rao",
           email: "arjun.rao@example.com",
           company: "NextGen Technologies",
-          subject: "Service Enquiry",
+          subject: "SAP Support Services",
           message:
-            "Please contact us regarding your software development services.",
+            "Please contact us regarding SAP application support and maintenance services.",
           status: "Unread",
         },
         {
           name: "David Wilson",
           email: "david.wilson@example.com",
           company: "FutureTech Inc",
-          subject: "General Enquiry",
+          subject: "SAP Solutions Enquiry",
           message:
-            "We would like to know more about Proliant and the services you provide.",
+            "We would like to know more about Proliant and the SAP solutions you provide.",
           status: "Read",
         },
       ];
@@ -473,7 +513,9 @@ const seedDatabase = async () => {
 
       console.log("✓ 6 contact enquiries seeded");
     } else {
-      console.log("→ Contact data already exists. Skipping.");
+      console.log(
+        "→ Contact data already exists. Skipping."
+      );
     }
 
     // =========================================================
@@ -489,7 +531,8 @@ const seedDatabase = async () => {
           state: "Massachusetts",
           city: "Boston",
           companyName: "Proliant Data LLC",
-          address: "75 State Street, Boston, MA 01803",
+          address:
+            "75 State Street, Boston, MA 01803",
           latitude: 42.35902288181857,
           longitude: -71.0553326746298,
           phone: "+1-617-955-2070",
@@ -500,7 +543,8 @@ const seedDatabase = async () => {
           state: "Bavaria",
           city: "Erlangen",
           companyName: "Proliant Data GmbH",
-          address: "Würzburger Ring 39, Erlangen, 91056",
+          address:
+            "Würzburger Ring 39, Erlangen, 91056",
           latitude: 49.59963951233804,
           longitude: 10.967766810446841,
           phone: "+49-15158005363",
@@ -536,14 +580,20 @@ const seedDatabase = async () => {
 
       console.log("✓ 4 locations seeded");
     } else {
-      console.log("→ Location data already exists. Skipping.");
+      console.log(
+        "→ Location data already exists. Skipping."
+      );
     }
 
     console.log("========================================");
     console.log("Database seed check completed");
     console.log("========================================");
   } catch (error) {
-    console.error("Database seeding failed:", error.message);
+    console.error(
+      "Database seeding failed:",
+      error.message
+    );
+
     throw error;
   }
 };
