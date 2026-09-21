@@ -1,0 +1,448 @@
+@baseUrl = http://localhost:5000/api
+
+# Update this after successful OTP verification
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbklkIjoiNmFhY2NmYTg1ZjU3NjYxYTc5NGFiZWU0IiwiZW1haWwiOiJib2dhY2hhbmRyYXB1QGdtYWlsLmNvbSIsInRva2VuVmVyc2lvbiI6MCwiaWF0IjoxNzg5NzE1ODE5LCJleHAiOjE3ODk4MDIyMTl9.bvkVKkdCJ2km9SpSGbM9qC83YibFC_GYQS7OVcPMt-0
+
+
+############################################################
+# 1. AUTHENTICATION — LOGIN + OTP
+############################################################
+
+### 1.1 Login - Password Verification + Send Login OTP
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "bogachandrapu@gmail.com",
+  "password": "Admin@123"
+}
+
+###
+
+### 1.2 Verify Login OTP
+# Enter the OTP received in the admin email
+POST {{baseUrl}}/auth/verify-login-otp
+Content-Type: application/json
+
+{
+  "email": "bogachandrapu@gmail.com",
+  "otp": "550577"
+}
+
+###
+
+### 1.3 Logout
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{token}}
+
+###
+
+
+############################################################
+# 2. DASHBOARD
+############################################################
+
+### 2.1 Get Dashboard Stats - ADMIN
+GET {{baseUrl}}/dashboard/stats
+Authorization: Bearer {{token}}
+
+###
+
+### 2.2 Get Dashboard Stats - NO TOKEN
+# Expected: 401 Unauthorized
+GET {{baseUrl}}/dashboard/stats
+
+###
+
+
+############################################################
+# 3. EMPLOYEES
+############################################################
+
+### 3.1 Get All Employees - ADMIN
+GET {{baseUrl}}/employees
+Authorization: Bearer {{token}}
+
+###
+
+### 3.2 Add Employee - ADMIN
+POST {{baseUrl}}/employees
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Rahul Kumar",
+  "email": "rahul.test@proliant.com",
+  "role": "SAP MM Consultant",
+  "department": "SAP",
+  "status": "Active"
+}
+
+###
+
+### 3.3 Update Employee - ADMIN
+# Replace EMPLOYEE_ID with an actual employee _id
+PUT {{baseUrl}}/employees/EMPLOYEE_ID
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Rahul Kumar",
+  "email": "rahul.updated@proliant.com",
+  "role": "SAP MM Consultant",
+  "department": "SAP",
+  "status": "Active"
+}
+
+###
+
+### 3.4 Delete Employee - ADMIN
+# Replace EMPLOYEE_ID with an actual employee _id
+DELETE {{baseUrl}}/employees/EMPLOYEE_ID
+Authorization: Bearer {{token}}
+
+###
+
+
+############################################################
+# 4. LOCATIONS
+############################################################
+
+### 4.1 Get All Locations - PUBLIC
+GET {{baseUrl}}/locations
+
+###
+
+### 4.2 Add Location - ADMIN
+POST {{baseUrl}}/locations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "country": "India",
+  "state": "Andhra Pradesh",
+  "city": "Visakhapatnam",
+  "companyName": "Proliant Data India",
+  "address": "Visakhapatnam, Andhra Pradesh, India",
+  "latitude": 17.6868,
+  "longitude": 83.2185,
+  "phone": "+91 8008199903",
+  "email": "hr@proliantdatallc.com"
+}
+
+###
+
+### 4.3 Update Location - ADMIN
+# Replace LOCATION_ID with actual location _id
+PUT {{baseUrl}}/locations/LOCATION_ID
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "companyName": "Proliant Data India Updated",
+  "phone": "+91 9111111111"
+}
+
+###
+
+### 4.4 Delete Location - ADMIN
+# Replace LOCATION_ID with actual location _id
+DELETE {{baseUrl}}/locations/LOCATION_ID
+Authorization: Bearer {{token}}
+
+###
+
+
+############################################################
+# 5. JOBS
+############################################################
+
+### 5.1 Get Published Jobs - PUBLIC
+GET {{baseUrl}}/jobs
+
+###
+
+### 5.2 Get Single Published Job - PUBLIC
+# Replace JOB_ID with actual published job _id
+GET {{baseUrl}}/jobs/JOB_ID
+
+###
+
+### 5.3 Create Job - ADMIN
+POST {{baseUrl}}/jobs
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "SAP ABAP Developer",
+  "department": "SAP",
+  "employmentType": "Full Time",
+  "experience": "3+ Years",
+  "location": "Hyderabad, India",
+  "status": "Published",
+  "jobDescription": "We are looking for an SAP ABAP Developer to join our team.",
+  "requirements": "Experience with ABAP, SAP development and debugging."
+}
+
+###
+
+### 5.4 Update Job - ADMIN
+# Replace JOB_ID with actual job _id
+PUT {{baseUrl}}/jobs/JOB_ID
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Senior SAP ABAP Developer",
+  "department": "SAP",
+  "employmentType": "Full Time",
+  "experience": "5+ Years",
+  "location": "Hyderabad, India",
+  "status": "Published",
+  "jobDescription": "We are looking for a Senior SAP ABAP Developer to join our team.",
+  "requirements": "Experience with ABAP, SAP development, debugging and SAP S/4HANA."
+}
+
+###
+
+### 5.5 Delete Job - ADMIN
+# Replace JOB_ID with actual job _id
+DELETE {{baseUrl}}/jobs/JOB_ID
+Authorization: Bearer {{token}}
+
+###
+
+
+############################################################
+# 6. CONTACT ENQUIRIES
+############################################################
+
+### 6.1 Create Contact Enquiry - PUBLIC
+POST {{baseUrl}}/contacts
+Content-Type: application/json
+
+{
+  "name": "Suresh Kumar",
+  "email": "suresh.kumar@gmail.com",
+  "company": "ABC Technologies",
+  "subject": "SAP Implementation Services",
+  "message": "We are looking for SAP implementation support for our organization."
+}
+
+###
+
+### 6.2 Get All Contact Enquiries - ADMIN
+GET {{baseUrl}}/contacts
+Authorization: Bearer {{token}}
+
+###
+
+### 6.3 Get Single Contact Enquiry - ADMIN
+# Replace CONTACT_ID with actual contact _id
+GET {{baseUrl}}/contacts/CONTACT_ID
+Authorization: Bearer {{token}}
+
+###
+
+### 6.4 Update Contact Status - ADMIN
+# Replace CONTACT_ID with actual contact _id
+PATCH {{baseUrl}}/contacts/CONTACT_ID/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "Read"
+}
+
+###
+
+### 6.5 Delete Contact Enquiry - ADMIN
+# Replace CONTACT_ID with actual contact _id
+DELETE {{baseUrl}}/contacts/CONTACT_ID
+Authorization: Bearer {{token}}
+
+###
+
+
+############################################################
+# 7. CANDIDATES
+############################################################
+
+### 7.1 Create Candidate Application - PUBLIC
+POST {{baseUrl}}/candidates
+Content-Type: application/json
+
+{
+  "position": "SAP ABAP Developer",
+  "areaOfInterest": "SAP ABAP",
+  "name": "Ravi Kumar",
+  "email": "ravi.kumar.test@gmail.com",
+  "phone": "9876543210",
+  "isFresher": true,
+  "location": "Hyderabad, India",
+  "yearsOfExperience": null,
+  "highestQualification": "B.Tech",
+  "currentCompany": null,
+  "noticePeriod": "Immediately",
+  "coverMessage": "I am interested in this position.",
+  "resume": null
+}
+
+###
+
+### 7.2 Get All Candidates - ADMIN
+GET {{baseUrl}}/candidates
+Authorization: Bearer {{token}}
+
+###
+
+### 7.3 Get Single Candidate - ADMIN
+# Replace CANDIDATE_ID with actual candidate _id
+GET {{baseUrl}}/candidates/CANDIDATE_ID
+Authorization: Bearer {{token}}
+
+###
+
+### 7.4 Update Candidate - ADMIN
+# Replace CANDIDATE_ID with actual candidate _id
+PUT {{baseUrl}}/candidates/CANDIDATE_ID
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "Shortlisted"
+}
+
+###
+
+### 7.5 Delete Candidate - ADMIN
+# Replace CANDIDATE_ID with actual candidate _id
+DELETE {{baseUrl}}/candidates/CANDIDATE_ID
+Authorization: Bearer {{token}}
+
+###
+
+
+############################################################
+# 8. PASSWORD RESET
+############################################################
+
+### 8.1 Forgot Password
+POST {{baseUrl}}/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "bogachandrapu@gmail.com"
+}
+
+###
+
+### 8.2 Verify Reset OTP
+# Enter the OTP received in the password-reset email
+POST {{baseUrl}}/auth/verify-reset-otp
+Content-Type: application/json
+
+{
+  "email": "bogachandrapu@gmail.com",
+  "otp": "ENTER_RESET_OTP_HERE"
+}
+
+###
+
+### 8.3 Reset Password
+# Replace RESET_TOKEN with the token returned by 8.2
+POST {{baseUrl}}/auth/reset-password
+Content-Type: application/json
+
+{
+  "email": "bogachandrapu@gmail.com",
+  "resetToken": "RESET_TOKEN_HERE",
+  "newPassword": "NewAdmin@123"
+}
+
+###
+
+### 8.4 Change Password
+# Use a valid JWT obtained after login + OTP verification
+PATCH {{baseUrl}}/auth/change-password
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "currentPassword": "NewAdmin@123",
+  "newPassword": "Admin@123"
+}
+
+###
+
+
+############################################################
+# 9. EXCEL EXPORT
+############################################################
+
+### 9.1 Export Candidates to Excel - ADMIN
+GET {{baseUrl}}/candidates/export/excel
+Authorization: Bearer {{token}}
+
+###
+
+
+############################################################
+# TEAM MEMBER APIs
+############################################################
+
+### 1. GET ALL TEAM MEMBERS
+# Expected:
+# 200 OK
+# Should return the existing 2 admins also.
+
+GET {{baseUrl}}/auth/team-members
+Authorization: Bearer {{token}}
+
+###
+
+### 2. GET ONE TEAM MEMBER
+# First run GET ALL above and copy one _id.
+# Replace the ID below.
+
+GET {{baseUrl}}/auth/team-members/6aaccfa85f57661a794abee3
+Authorization: Bearer {{token}}
+
+###
+
+### 3. CREATE TEAM MEMBER
+# Temporary password will be generated automatically
+# and sent to the provided email.
+
+POST {{baseUrl}}/auth/team-members
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "email": "team.member@proliant.com"
+}
+
+###
+
+### 4. UPDATE TEAM MEMBER
+# Replace the ID with the ID returned by CREATE.
+
+PUT {{baseUrl}}/auth/team-members/6aace760283029dff29a88ec
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "email": "updated.member@proliant.com"
+}
+
+###
+
+### 5. DELETE TEAM MEMBER
+# Replace the ID with the team member ID.
+# Do NOT use the ID of the currently logged-in admin.
+# Our API prevents deleting your own account.
+
+DELETE {{baseUrl}}/auth/team-members/6aace760283029dff29a88ec
+Authorization: Bearer {{token}}
+
+###

@@ -1,4 +1,9 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import {
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -6,78 +11,9 @@ import JobApplicationForm from "../../../components/common/JobApplicationForm";
 
 gsap.registerPlugin(ScrollTrigger);
 
-/* =====================================================
-   DUMMY SAP JOB DATA
-===================================================== */
-
-const jobs = [
-  {
-    id: 1,
-    number: "01",
-    title: "SAP S/4HANA Consultant",
-    department: "SAP Solutions",
-    location: "Hyderabad / Remote",
-    type: "Full Time",
-    experience: "3+ Years",
-    description:
-      "Work with enterprise clients to implement, configure and optimize SAP S/4HANA solutions across key business processes.",
-  },
-  {
-    id: 2,
-    number: "02",
-    title: "SAP MM Consultant",
-    department: "SAP Materials Management",
-    location: "Hyderabad / Remote",
-    type: "Full Time",
-    experience: "2+ Years",
-    description:
-      "Support procurement and inventory processes by designing and implementing SAP MM solutions aligned with business requirements.",
-  },
-  {
-    id: 3,
-    number: "03",
-    title: "SAP SD Consultant",
-    department: "SAP Sales & Distribution",
-    location: "Hyderabad / Remote",
-    type: "Full Time",
-    experience: "2+ Years",
-    description:
-      "Configure and support SAP SD processes including sales orders, deliveries, billing, pricing and end-to-end order management.",
-  },
-  {
-    id: 4,
-    number: "04",
-    title: "SAP FICO Consultant",
-    department: "SAP Finance",
-    location: "Hyderabad / Remote",
-    type: "Full Time",
-    experience: "3+ Years",
-    description:
-      "Deliver SAP finance solutions across financial accounting and controlling while helping organizations improve financial processes.",
-  },
-  {
-    id: 5,
-    number: "05",
-    title: "SAP Data Migration Consultant",
-    department: "SAP Data & Migration",
-    location: "Hyderabad / Remote",
-    type: "Full Time",
-    experience: "3+ Years",
-    description:
-      "Plan and execute enterprise SAP data migration activities while ensuring data quality, validation and successful system transition.",
-  },
-  {
-    id: 6,
-    number: "06",
-    title: "SAP ABAP Developer",
-    department: "SAP Technology",
-    location: "Hyderabad / Remote",
-    type: "Full Time",
-    experience: "2+ Years",
-    description:
-      "Develop, enhance and maintain SAP applications using ABAP while collaborating with functional teams to deliver reliable enterprise solutions.",
-  },
-];
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "http://localhost:5000/api";
 
 /* =====================================================
    JOBS COMPONENT
@@ -86,19 +22,105 @@ const jobs = [
 const Jobs = () => {
   const sectionRef = useRef(null);
 
-  const [selectedJob, setSelectedJob] = useState(null);
-  const [isApplicationFormOpen, setIsApplicationFormOpen] = useState(false);
+  const [jobs, setJobs] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const [selectedJob, setSelectedJob] =
+    useState(null);
+
+  const [isApplicationFormOpen, setIsApplicationFormOpen] =
+    useState(false);
+
+  /* =====================================================
+     FETCH PUBLISHED JOBS
+  ===================================================== */
+
+  useLayoutEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        setIsLoading(true);
+        setError("");
+
+        const response = await fetch(
+          `${API_BASE_URL}/jobs`
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Jobs API failed with status ${response.status}`
+          );
+        }
+
+        const result = await response.json();
+
+        if (
+          result?.success !== true ||
+          !Array.isArray(result?.jobs)
+        ) {
+          throw new Error(
+            "Invalid jobs response from backend"
+          );
+        }
+
+        /*
+         * Backend public GET should return
+         * Published jobs only.
+         *
+         * Extra frontend filtering is also kept
+         * as a safety check.
+         */
+        const publishedJobs = result.jobs.filter(
+          (job) => job.status === "Published"
+        );
+
+        /*
+         * Latest published jobs first.
+         */
+        publishedJobs.sort(
+          (a, b) =>
+            new Date(b.createdAt) -
+            new Date(a.createdAt)
+        );
+
+        setJobs(publishedJobs);
+      } catch (error) {
+        console.error(
+          "Failed to load careers jobs:",
+          error
+        );
+
+        setError(
+          "Unable to load current job openings."
+        );
+
+        setJobs([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchJobs();
+  }, []);
 
   /* =====================================================
      GSAP ANIMATIONS
   ===================================================== */
 
   useLayoutEffect(() => {
+    /*
+     * Wait until jobs have finished loading before
+     * creating card animations.
+     */
+    if (isLoading) {
+      return;
+    }
+
     const ctx = gsap.context(() => {
       /*
-        Keep animations lighter on smaller screens
-        to avoid unnecessary scroll load/stutter.
-      */
+       * Keep animations lighter on smaller screens
+       * to avoid unnecessary scroll load/stutter.
+       */
       const isMobile = window.matchMedia(
         "(max-width: 767px)"
       ).matches;
@@ -121,7 +143,8 @@ const Jobs = () => {
           scrollTrigger: {
             trigger: sectionRef.current,
             start: "top 85%",
-            toggleActions: "play none none reverse",
+            toggleActions:
+              "play none none reverse",
           },
         }
       );
@@ -135,7 +158,9 @@ const Jobs = () => {
         {
           opacity: 0,
           y: isMobile ? 25 : 40,
-          filter: isMobile ? "blur(4px)" : "blur(7px)",
+          filter: isMobile
+            ? "blur(4px)"
+            : "blur(7px)",
         },
         {
           opacity: 1,
@@ -147,7 +172,8 @@ const Jobs = () => {
           scrollTrigger: {
             trigger: sectionRef.current,
             start: "top 80%",
-            toggleActions: "play none none reverse",
+            toggleActions:
+              "play none none reverse",
           },
         }
       );
@@ -170,7 +196,8 @@ const Jobs = () => {
           scrollTrigger: {
             trigger: sectionRef.current,
             start: "top 75%",
-            toggleActions: "play none none reverse",
+            toggleActions:
+              "play none none reverse",
           },
         }
       );
@@ -179,10 +206,10 @@ const Jobs = () => {
          INDIVIDUAL JOB CARDS
 
          Every card gets its own ScrollTrigger.
-         So 5, 10 or 20 cards will work correctly.
       ================================================= */
 
-      const jobCards = gsap.utils.toArray(".job-card");
+      const jobCards =
+        gsap.utils.toArray(".job-card");
 
       jobCards.forEach((card) => {
         gsap.fromTo(
@@ -199,7 +226,8 @@ const Jobs = () => {
             scrollTrigger: {
               trigger: card,
               start: "top 90%",
-              toggleActions: "play none none reverse",
+              toggleActions:
+                "play none none reverse",
             },
           }
         );
@@ -211,7 +239,7 @@ const Jobs = () => {
     }, sectionRef);
 
     return () => ctx.revert();
-  }, []);
+  }, [isLoading, jobs]);
 
   /* =====================================================
      OPEN APPLICATION FORM
@@ -254,7 +282,6 @@ const Jobs = () => {
         "
       >
         <div className="mx-auto max-w-7xl">
-
           {/* =================================================
               SECTION HEADER
           ================================================= */}
@@ -321,260 +348,297 @@ const Jobs = () => {
                   md:text-base
                 "
               >
-                Explore opportunities to work with SAP, enterprise data and
-                technology while helping organizations transform the way they
-                work.
+                Explore opportunities to work with
+                SAP, enterprise data and technology
+                while helping organizations transform
+                the way they work.
               </p>
             </div>
           </div>
 
           {/* =================================================
               JOB CARDS
-
-              Mobile       → 1 column
-              Large mobile → 2 columns
-              Tablet       → 2 columns
-              Desktop      → 3 columns
-
-              No unnecessary fixed height on mobile.
           ================================================= */}
 
-          <div
-            className="
-              mt-6
-              grid
-              grid-cols-1
-              gap-4
-              sm:mt-8
-              sm:grid-cols-2
-              sm:gap-5
-              md:mt-9
-              lg:grid-cols-3
-            "
-          >
-            {jobs.map((job) => (
-              <article
-                key={job.id}
-                className="
-                  job-card
-                  group
-                  relative
-                  flex
-                  flex-col
-                  overflow-hidden
-                  rounded-2xl
-                  bg-white
-                  text-black
-                  transition-all
-                  duration-500
-                  hover:-translate-y-1
-                "
-              >
-                {/* TOP RED ACCENT */}
-
-                <div
+          {isLoading ? (
+            <div className="py-16 text-center">
+              <p className="text-sm text-white/50">
+                Loading current opportunities...
+              </p>
+            </div>
+          ) : error ? (
+            <div className="py-16 text-center">
+              <p className="text-sm text-white/50">
+                {error}
+              </p>
+            </div>
+          ) : jobs.length === 0 ? (
+            <div className="py-16 text-center">
+              <p className="text-sm text-white/50">
+                No open positions are available
+                right now.
+              </p>
+            </div>
+          ) : (
+            <div
+              className="
+                mt-6
+                grid
+                grid-cols-1
+                gap-4
+                sm:mt-8
+                sm:grid-cols-2
+                sm:gap-5
+                md:mt-9
+                lg:grid-cols-3
+              "
+            >
+              {jobs.map((job, index) => (
+                <article
+                  key={job._id}
                   className="
-                    absolute
-                    left-0
-                    top-0
-                    h-1
-                    w-full
-                    origin-left
-                    scale-x-0
-                    bg-[#EF3B3A]
-                    transition-transform
-                    duration-500
-                    group-hover:scale-x-100
-                  "
-                />
-
-                {/* CARD CONTENT */}
-
-                <div
-                  className="
+                    job-card
+                    group
+                    relative
                     flex
-                    flex-1
                     flex-col
-                    p-5
-                    sm:p-6
-                    md:p-6
+                    overflow-hidden
+                    rounded-2xl
+                    bg-white
+                    text-black
+                    transition-all
+                    duration-500
+                    hover:-translate-y-1
                   "
                 >
-                  {/* NUMBER + DEPARTMENT */}
-
-                  <div className="flex items-start justify-between">
-                    <span
-                      className="
-                        max-w-40
-                        text-[10px]
-                        font-medium
-                        uppercase
-                        tracking-[0.12em]
-                        text-black/45
-                      "
-                    >
-                      {job.department}
-                    </span>
-                  </div>
-
-                  {/* JOB TITLE */}
-
-                  <h3
-                    className="
-                      mt-4
-                      max-w-sm
-                      text-xl
-                      font-semibold
-                      leading-tight
-                      tracking-tight
-                      transition-colors
-                      duration-300
-                      group-hover:text-[#EF3B3A]
-                      sm:mt-5
-                      sm:text-2xl
-                    "
-                  >
-                    {job.title}
-                  </h3>
-
-                  {/* DESCRIPTION */}
-
-                  <p
-                    className="
-                      mt-2.5
-                      text-sm
-                      leading-6
-                      text-black/55
-                      sm:mt-3
-                    "
-                  >
-                    {job.description}
-                  </p>
-
-                  {/* META */}
+                  {/* TOP RED ACCENT */}
 
                   <div
                     className="
-                      mt-5
-                      flex
-                      flex-col
-                      gap-2
-                      border-t
-                      border-black/10
-                      pt-4
-                    "
-                  >
-                    <div
-                      className="
-                        flex
-                        items-center
-                        justify-between
-                        gap-3
-                      "
-                    >
-                      <span
-                        className="
-                          shrink-0
-                          text-[10px]
-                          uppercase
-                          tracking-[0.12em]
-                          text-black/40
-                        "
-                      >
-                        Location
-                      </span>
-
-                      <span
-                        className="
-                          text-right
-                          text-xs
-                          font-medium
-                          text-black/70
-                        "
-                      >
-                        {job.location}
-                      </span>
-                    </div>
-
-                    <div
-                      className="
-                        flex
-                        items-center
-                        justify-between
-                        gap-3
-                      "
-                    >
-                      <span
-                        className="
-                          shrink-0
-                          text-[10px]
-                          uppercase
-                          tracking-[0.12em]
-                          text-black/40
-                        "
-                      >
-                        Experience
-                      </span>
-
-                      <span
-                        className="
-                          text-right
-                          text-xs
-                          font-medium
-                          text-black/70
-                        "
-                      >
-                        {job.experience}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* APPLY BUTTON */}
-
-                  <button
-                    type="button"
-                    onClick={() => openApplicationForm(job)}
-                    className="
-                      mt-4
-                      flex
+                      absolute
+                      left-0
+                      top-0
+                      h-1
                       w-full
-                      items-center
-                      justify-between
-                      bg-black
-                      px-4
-                      py-3
-                      text-xs
-                      font-medium
-                      uppercase
-                      tracking-[0.15em]
-                      text-white
-                      transition-all
-                      duration-300
-                      hover:bg-[#EF3B3A]
-                      sm:mt-5
-                      sm:px-5
-                      sm:py-3.5
+                      origin-left
+                      scale-x-0
+                      bg-[#EF3B3A]
+                      transition-transform
+                      duration-500
+                      group-hover:scale-x-100
+                    "
+                  />
+
+                  {/* CARD CONTENT */}
+
+                  <div
+                    className="
+                      flex
+                      flex-1
+                      flex-col
+                      p-5
+                      sm:p-6
+                      md:p-6
                     "
                   >
-                    <span>Apply Now</span>
+                    {/* NUMBER + DEPARTMENT */}
 
-                    <span
+                    <div className="flex items-start justify-between">
+                      <span
+                        className="
+                          text-[10px]
+                          font-medium
+                          uppercase
+                          tracking-[0.12em]
+                          text-black/45
+                        "
+                      >
+                        {job.department}
+                      </span>
+
+                      <span
+                        className="
+                          text-xs
+                          font-semibold
+                          text-black/25
+                        "
+                      >
+                        {String(index + 1).padStart(
+                          2,
+                          "0"
+                        )}
+                      </span>
+                    </div>
+
+                    {/* JOB TITLE */}
+
+                    <h3
                       className="
-                        text-base
-                        transition-transform
+                        mt-4
+                        max-w-sm
+                        text-xl
+                        font-semibold
+                        leading-tight
+                        tracking-tight
+                        transition-colors
                         duration-300
-                        group-hover:translate-x-1
+                        group-hover:text-[#EF3B3A]
+                        sm:mt-5
+                        sm:text-2xl
                       "
                     >
-                      →
-                    </span>
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
+                      {job.title}
+                    </h3>
+
+                    {/* DESCRIPTION */}
+
+                    <p
+                      className="
+                        mt-2.5
+                        text-sm
+                        leading-6
+                        text-black/55
+                        sm:mt-3
+                      "
+                    >
+                      {job.jobDescription}
+                    </p>
+
+                    {/* META */}
+
+                    <div
+                      className="
+                        mt-5
+                        flex
+                        flex-col
+                        gap-2
+                        border-t
+                        border-black/10
+                        pt-4
+                      "
+                    >
+                      {/* Location */}
+
+                      <div
+                        className="
+                          flex
+                          items-center
+                          justify-between
+                          gap-3
+                        "
+                      >
+                        <span
+                          className="
+                            shrink-0
+                            text-[10px]
+                            uppercase
+                            tracking-[0.12em]
+                            text-black/40
+                          "
+                        >
+                          Location
+                        </span>
+
+                        <span
+                          className="
+                            text-right
+                            text-xs
+                            font-medium
+                            text-black/70
+                          "
+                        >
+                          {job.location}
+                        </span>
+                      </div>
+
+                      {/* Employment Type */}
+
+                      <div
+                        className="
+                          flex
+                          items-center
+                          justify-between
+                          gap-3
+                        "
+                      >
+                        <span
+                          className="
+                            shrink-0
+                            text-[10px]
+                            uppercase
+                            tracking-[0.12em]
+                            text-black/40
+                          "
+                        >
+                          Type
+                        </span>
+
+                        <span
+                          className="
+                            text-right
+                            text-xs
+                            font-medium
+                            text-black/70
+                          "
+                        >
+                          {job.employmentType}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* APPLY BUTTON */}
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        openApplicationForm(job)
+                      }
+                      className="
+                        mt-4
+                        flex
+                        w-full
+                        items-center
+                        justify-between
+                        bg-black
+                        px-4
+                        py-3
+                        text-xs
+                        font-medium
+                        uppercase
+                        tracking-[0.15em]
+                        text-white
+                        transition-all
+                        duration-300
+                        hover:bg-[#EF3B3A]
+                        sm:mt-5
+                        sm:px-5
+                        sm:py-3.5
+                      "
+                    >
+                      <span>Apply Now</span>
+
+                      <span
+                        className="
+                          text-base
+                          transition-transform
+                          duration-300
+                          group-hover:translate-x-1
+                        "
+                      >
+                        →
+                      </span>
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </div>
       </section>
+
+      {/* =====================================================
+          APPLICATION FORM
+      ===================================================== */}
 
       {isApplicationFormOpen && (
         <JobApplicationForm

@@ -2,17 +2,17 @@ function DataTable({ columns, data, emptyMessage = "No data available." }) {
   return (
     <div className="overflow-x-auto">
       {data.length === 0 ? (
-        <div className="px-6 py-10 text-center text-sm text-gray-500">
+        <div className="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
           {emptyMessage}
         </div>
       ) : (
         <table className="w-full min-w-max text-left">
           <thead>
-            <tr className="border-b border-gray-100 bg-gray-50">
+            <tr className="border-b border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
               {columns.map((column) => (
                 <th
                   key={column.key}
-                  className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500"
+                  className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300"
                 >
                   {column.label}
                 </th>
@@ -24,12 +24,12 @@ function DataTable({ columns, data, emptyMessage = "No data available." }) {
             {data.map((row, rowIndex) => (
               <tr
                 key={row.id || rowIndex}
-                className="border-b border-gray-100 last:border-b-0"
+                className="border-b border-gray-100 last:border-b-0 dark:border-gray-700"
               >
                 {columns.map((column) => (
                   <td
                     key={column.key}
-                    className="px-5 py-4 text-sm text-gray-700"
+                    className="px-5 py-4 text-sm text-gray-700 dark:text-gray-200"
                   >
                     {column.render
                       ? column.render(row)

@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
 import {
   Search,
   MoreVertical,
@@ -14,71 +15,26 @@ import {
 
 import DataTable from "../components/DataTable";
 
-const initialEnquiries = [
-  {
-    id: 1,
-    name: "Suresh Kumar",
-    email: "suresh.kumar@gmail.com",
-    phone: "+91 98765 43210",
-    company: "ABC Technologies",
-    subject: "SAP Implementation Services",
-    message:
-      "We are looking for SAP implementation support for our organization. Please contact us to discuss our requirements.",
-    status: "Unread",
-    submittedDate: "2026-09-05",
-  },
-  {
-    id: 2,
-    name: "Anita Sharma",
-    email: "anita.sharma@xyz.com",
-    phone: "+91 91234 56789",
-    company: "XYZ Solutions",
-    subject: "Business Enquiry",
-    message:
-      "I would like to know more about the services offered by Proliant and discuss a potential business partnership.",
-    status: "Read",
-    submittedDate: "2026-09-04",
-  },
-  {
-    id: 3,
-    name: "Rajesh Reddy",
-    email: "rajesh.reddy@techcorp.com",
-    phone: "+91 99887 66554",
-    company: "TechCorp India",
-    subject: "Recruitment Services",
-    message:
-      "We have several open positions and would like to understand how Proliant can support our recruitment requirements.",
-    status: "Unread",
-    submittedDate: "2026-09-03",
-  },
-  {
-    id: 4,
-    name: "Meghana Rao",
-    email: "meghana.rao@gmail.com",
-    phone: "+91 90000 11223",
-    company: "",
-    subject: "General Enquiry",
-    message:
-      "I would like to get more information about your consulting services.",
-    status: "Read",
-    submittedDate: "2026-09-01",
-  },
-  {
-    id: 5,
-    name: "Vikram Singh",
-    email: "vikram.singh@global.com",
-    phone: "+91 98765 12345",
-    company: "Global Industries",
-    subject: "IT Consulting",
-    message:
-      "Please share more information about your IT consulting capabilities and available engagement models.",
-    status: "Read",
-    submittedDate: "2026-08-29",
-  },
-];
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "http://localhost:5000/api";
+
+const normalizeEnquiry = (enquiry) => {
+  return {
+    ...enquiry,
+    id: enquiry._id,
+    submittedDate: enquiry.createdAt,
+    company: enquiry.company || "",
+  };
+};
 
 function Enquiries() {
-  const [enquiries, setEnquiries] = useState(initialEnquiries);
+  const [enquiries, setEnquiries] = useState([]);
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [pageError, setPageError] = useState("");
+  const [actionError, setActionError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -86,17 +42,103 @@ function Enquiries() {
   const [openMenuId, setOpenMenuId] = useState(null);
 
   const [viewEnquiry, setViewEnquiry] = useState(null);
+
   const [deleteEnquiry, setDeleteEnquiry] = useState(null);
+
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("adminToken");
+
+    return {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    };
+  };
+
+  const handleUnauthorized = () => {
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("adminUser");
+
+    window.location.href = "/login";
+  };
+
+  const fetchEnquiries = async () => {
+    try {
+      setIsLoading(true);
+      setPageError("");
+
+      const response = await fetch(`${API_BASE_URL}/contacts`, {
+        headers: getAuthHeaders(),
+      });
+
+      if (response.status === 401) {
+        handleUnauthorized();
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          `Enquiries API failed with status ${response.status}`
+        );
+      }
+
+      const result = await response.json();
+
+      if (
+        result?.success !== true ||
+        !Array.isArray(result?.contacts)
+      ) {
+        throw new Error(
+          "Invalid enquiries response from backend"
+        );
+      }
+
+      const normalizedEnquiries = result.contacts
+        .map(normalizeEnquiry)
+        .sort(
+          (a, b) =>
+            new Date(b.submittedDate) -
+            new Date(a.submittedDate)
+        );
+
+      setEnquiries(normalizedEnquiries);
+    } catch (error) {
+      console.error("Failed to load enquiries:", error);
+
+      setPageError("Unable to load website enquiries.");
+
+      setEnquiries([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEnquiries();
+  }, []);
 
   const filteredEnquiries = useMemo(() => {
     return enquiries.filter((enquiry) => {
-      const searchValue = search.toLowerCase();
+      const searchValue = search.toLowerCase().trim();
 
       const matchesSearch =
-        enquiry.name.toLowerCase().includes(searchValue) ||
-        enquiry.email.toLowerCase().includes(searchValue) ||
-        enquiry.subject.toLowerCase().includes(searchValue) ||
-        enquiry.company.toLowerCase().includes(searchValue);
+        (enquiry.name || "")
+          .toLowerCase()
+          .includes(searchValue) ||
+        (enquiry.email || "")
+          .toLowerCase()
+          .includes(searchValue) ||
+        (enquiry.subject || "")
+          .toLowerCase()
+          .includes(searchValue) ||
+        (enquiry.company || "")
+          .toLowerCase()
+          .includes(searchValue) ||
+        (enquiry.phone || "")
+          .toLowerCase()
+          .includes(searchValue) ||
+        (enquiry.message || "")
+          .toLowerCase()
+          .includes(searchValue);
 
       const matchesStatus =
         statusFilter === "All" ||
@@ -113,60 +155,232 @@ function Enquiries() {
   }, [enquiries]);
 
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString("en-IN", {
+    if (!date) {
+      return "N/A";
+    }
+
+    const parsedDate = new Date(date);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return "N/A";
+    }
+
+    return parsedDate.toLocaleDateString("en-IN", {
       day: "2-digit",
       month: "short",
       year: "numeric",
     });
   };
 
-  const handleToggleStatus = (enquiry) => {
-    setEnquiries((previous) =>
-      previous.map((item) =>
-        item.id === enquiry.id
-          ? {
-              ...item,
-              status:
-                item.status === "Unread" ? "Read" : "Unread",
-            }
-          : item
-      )
-    );
+  const handleToggleStatus = async (enquiry) => {
+    const newStatus =
+      enquiry.status === "Unread"
+        ? "Read"
+        : "Unread";
 
-    setOpenMenuId(null);
-  };
+    try {
+      setIsSubmitting(true);
+      setActionError("");
 
-  const handleViewEnquiry = (enquiry) => {
-    setViewEnquiry(enquiry);
-    setOpenMenuId(null);
+      const response = await fetch(
+        `${API_BASE_URL}/contacts/${enquiry.id}/status`,
+        {
+          method: "PATCH",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            status: newStatus,
+          }),
+        }
+      );
 
-    // Automatically mark enquiry as read when opened.
-    if (enquiry.status === "Unread") {
+      if (response.status === 401) {
+        handleUnauthorized();
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          `Enquiry status update failed with status ${response.status}`
+        );
+      }
+
+      const result = await response.json();
+
+      if (result?.success !== true) {
+        throw new Error(
+          result?.message ||
+            "Failed to update enquiry status"
+        );
+      }
+
+      const updatedEnquiry = result.contact
+        ? normalizeEnquiry(result.contact)
+        : null;
+
       setEnquiries((previous) =>
         previous.map((item) =>
           item.id === enquiry.id
-            ? {
+            ? updatedEnquiry || {
                 ...item,
-                status: "Read",
+                status: newStatus,
               }
             : item
         )
       );
+
+      if (viewEnquiry?.id === enquiry.id) {
+        setViewEnquiry(
+          updatedEnquiry || {
+            ...enquiry,
+            status: newStatus,
+          }
+        );
+      }
+
+      setOpenMenuId(null);
+    } catch (error) {
+      console.error(
+        "Failed to update enquiry status:",
+        error
+      );
+
+      setActionError(
+        error.message ||
+          "Unable to update enquiry status."
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleDelete = () => {
+  const handleViewEnquiry = async (enquiry) => {
+    setViewEnquiry(enquiry);
+    setOpenMenuId(null);
+
+    if (enquiry.status !== "Unread") {
+      return;
+    }
+
+    try {
+      setActionError("");
+
+      const response = await fetch(
+        `${API_BASE_URL}/contacts/${enquiry.id}/status`,
+        {
+          method: "PATCH",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            status: "Read",
+          }),
+        }
+      );
+
+      if (response.status === 401) {
+        handleUnauthorized();
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to mark enquiry as read (${response.status})`
+        );
+      }
+
+      const result = await response.json();
+
+      if (result?.success !== true) {
+        throw new Error(
+          result?.message ||
+            "Failed to mark enquiry as read"
+        );
+      }
+
+      const updatedEnquiry = result.contact
+        ? normalizeEnquiry(result.contact)
+        : {
+            ...enquiry,
+            status: "Read",
+          };
+
+      setEnquiries((previous) =>
+        previous.map((item) =>
+          item.id === enquiry.id
+            ? updatedEnquiry
+            : item
+        )
+      );
+
+      setViewEnquiry(updatedEnquiry);
+    } catch (error) {
+      console.error(
+        "Failed to mark enquiry as read:",
+        error
+      );
+
+      setActionError(
+        "Unable to update enquiry status."
+      );
+    }
+  };
+
+  const handleDelete = async () => {
     if (!deleteEnquiry) {
       return;
     }
 
-    setEnquiries((previous) =>
-      previous.filter(
-        (enquiry) => enquiry.id !== deleteEnquiry.id
-      )
-    );
+    try {
+      setIsSubmitting(true);
+      setActionError("");
 
-    setDeleteEnquiry(null);
+      const response = await fetch(
+        `${API_BASE_URL}/contacts/${deleteEnquiry.id}`,
+        {
+          method: "DELETE",
+          headers: getAuthHeaders(),
+        }
+      );
+
+      if (response.status === 401) {
+        handleUnauthorized();
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          `Enquiry delete failed with status ${response.status}`
+        );
+      }
+
+      const result = await response.json();
+
+      if (result?.success !== true) {
+        throw new Error(
+          result?.message ||
+            "Failed to delete enquiry"
+        );
+      }
+
+      setEnquiries((previous) =>
+        previous.filter(
+          (enquiry) =>
+            enquiry.id !== deleteEnquiry.id
+        )
+      );
+
+      setDeleteEnquiry(null);
+    } catch (error) {
+      console.error(
+        "Failed to delete enquiry:",
+        error
+      );
+
+      setActionError(
+        error.message ||
+          "Unable to delete enquiry."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const enquiryColumns = [
@@ -182,7 +396,9 @@ function Enquiries() {
                 : "bg-gray-100 text-gray-600"
             }`}
           >
-            {enquiry.name.charAt(0).toUpperCase()}
+            {(enquiry.name || "?")
+              .charAt(0)
+              .toUpperCase()}
           </div>
 
           <div>
@@ -203,6 +419,7 @@ function Enquiries() {
         </div>
       ),
     },
+
     {
       key: "subject",
       label: "Subject",
@@ -218,6 +435,7 @@ function Enquiries() {
         </div>
       ),
     },
+
     {
       key: "company",
       label: "Company",
@@ -227,6 +445,7 @@ function Enquiries() {
         </span>
       ),
     },
+
     {
       key: "status",
       label: "Status",
@@ -242,6 +461,7 @@ function Enquiries() {
         </span>
       ),
     },
+
     {
       key: "submittedDate",
       label: "Received",
@@ -251,6 +471,7 @@ function Enquiries() {
         </span>
       ),
     },
+
     {
       key: "actions",
       label: "Actions",
@@ -277,17 +498,24 @@ function Enquiries() {
             <div className="absolute right-0 top-10 z-30 w-48 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
               <button
                 type="button"
-                onClick={() => handleViewEnquiry(enquiry)}
-                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                onClick={() =>
+                  handleViewEnquiry(enquiry)
+                }
+                disabled={isSubmitting}
+                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
               >
                 <Eye size={16} />
+
                 <span>View Enquiry</span>
               </button>
 
               <button
                 type="button"
-                onClick={() => handleToggleStatus(enquiry)}
-                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                onClick={() =>
+                  handleToggleStatus(enquiry)
+                }
+                disabled={isSubmitting}
+                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
               >
                 {enquiry.status === "Unread" ? (
                   <MailOpen size={16} />
@@ -308,11 +536,14 @@ function Enquiries() {
                 type="button"
                 onClick={() => {
                   setDeleteEnquiry(enquiry);
+                  setActionError("");
                   setOpenMenuId(null);
                 }}
-                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
+                disabled={isSubmitting}
+                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
               >
                 <Trash2 size={16} />
+
                 <span>Delete Enquiry</span>
               </button>
             </div>
@@ -333,18 +564,27 @@ function Enquiries() {
             </h1>
 
             <p className="mt-1 text-sm text-gray-500">
-              Manage enquiries and messages received from your website.
+              Manage enquiries and messages received from
+              your website.
             </p>
           </div>
 
           {unreadCount > 0 && (
             <div className="inline-flex w-fit items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-[#EF3B3A]">
               <MessageSquareText size={17} />
+
               {unreadCount} unread
             </div>
           )}
         </div>
       </div>
+
+      {/* Action Error */}
+      {actionError && (
+        <div className="mb-5 rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
+          {actionError}
+        </div>
+      )}
 
       {/* Search & Filter */}
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between max-[767px]:flex-row max-[767px]:items-center">
@@ -357,7 +597,9 @@ function Enquiries() {
           <input
             type="search"
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) =>
+              setSearch(event.target.value)
+            }
             placeholder="Search enquiries..."
             className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50"
           />
@@ -371,7 +613,9 @@ function Enquiries() {
           className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 sm:w-40 max-[767px]:min-w-0 max-[767px]:flex-1"
         >
           <option value="All">All Status</option>
+
           <option value="Unread">Unread</option>
+
           <option value="Read">Read</option>
         </select>
       </div>
@@ -384,16 +628,35 @@ function Enquiries() {
           </h2>
 
           <p className="mt-1 text-xs text-gray-500">
-            {filteredEnquiries.length} enquir
-            {filteredEnquiries.length !== 1 ? "ies" : "y"} found
+            {isLoading
+              ? "Loading enquiries..."
+              : `${filteredEnquiries.length} enquir${
+                  filteredEnquiries.length !== 1
+                    ? "ies"
+                    : "y"
+                } found`}
           </p>
         </div>
 
-        <DataTable
-          columns={enquiryColumns}
-          data={filteredEnquiries}
-          emptyMessage="No enquiries found."
-        />
+        {isLoading ? (
+          <div className="px-5 py-12 text-center">
+            <p className="text-sm text-gray-500">
+              Loading website enquiries...
+            </p>
+          </div>
+        ) : pageError ? (
+          <div className="px-5 py-12 text-center">
+            <p className="text-sm text-red-500">
+              {pageError}
+            </p>
+          </div>
+        ) : (
+          <DataTable
+            columns={enquiryColumns}
+            data={filteredEnquiries}
+            emptyMessage="No enquiries found."
+          />
+        )}
       </section>
 
       {/* View Enquiry Modal */}
@@ -404,7 +667,9 @@ function Enquiries() {
         >
           <div
             className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white shadow-xl"
-            onClick={(event) => event.stopPropagation()}
+            onClick={(event) =>
+              event.stopPropagation()
+            }
           >
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
@@ -420,7 +685,9 @@ function Enquiries() {
 
               <button
                 type="button"
-                onClick={() => setViewEnquiry(null)}
+                onClick={() =>
+                  setViewEnquiry(null)
+                }
                 className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700"
                 aria-label="Close modal"
               >
@@ -433,7 +700,9 @@ function Enquiries() {
               {/* Contact */}
               <div className="flex items-start gap-4">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-50 text-lg font-bold text-[#EF3B3A]">
-                  {viewEnquiry.name.charAt(0).toUpperCase()}
+                  {(viewEnquiry.name || "?")
+                    .charAt(0)
+                    .toUpperCase()}
                 </div>
 
                 <div className="min-w-0">
@@ -478,7 +747,8 @@ function Enquiries() {
                     </p>
 
                     <p className="mt-1 text-sm text-gray-700">
-                      {viewEnquiry.phone}
+                      {viewEnquiry.phone ||
+                        "Not provided"}
                     </p>
                   </div>
                 </div>
@@ -495,7 +765,8 @@ function Enquiries() {
                     </p>
 
                     <p className="mt-1 text-sm text-gray-700">
-                      {viewEnquiry.company || "Not provided"}
+                      {viewEnquiry.company ||
+                        "Not provided"}
                     </p>
                   </div>
                 </div>
@@ -512,7 +783,9 @@ function Enquiries() {
                     </p>
 
                     <p className="mt-1 text-sm text-gray-700">
-                      {formatDate(viewEnquiry.submittedDate)}
+                      {formatDate(
+                        viewEnquiry.submittedDate
+                      )}
                     </p>
                   </div>
                 </div>
@@ -548,6 +821,7 @@ function Enquiries() {
                 className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#EF3B3A] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-600"
               >
                 <Mail size={17} />
+
                 Reply via Email
               </a>
             </div>
@@ -558,12 +832,18 @@ function Enquiries() {
       {/* Delete Confirmation Modal */}
       {deleteEnquiry && (
         <div
-          className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 px-4"
-          onClick={() => setDeleteEnquiry(null)}
+          className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
+          onClick={() => {
+            if (!isSubmitting) {
+              setDeleteEnquiry(null);
+            }
+          }}
         >
           <div
             className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
-            onClick={(event) => event.stopPropagation()}
+            onClick={(event) =>
+              event.stopPropagation()
+            }
           >
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-50 text-[#EF3B3A]">
               <Trash2 size={20} />
@@ -574,7 +854,8 @@ function Enquiries() {
             </h2>
 
             <p className="mt-2 text-sm leading-6 text-gray-500">
-              Are you sure you want to delete the enquiry from{" "}
+              Are you sure you want to delete the
+              enquiry from{" "}
               <span className="font-semibold text-gray-700">
                 {deleteEnquiry.name}
               </span>
@@ -584,8 +865,11 @@ function Enquiries() {
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <button
                 type="button"
-                onClick={() => setDeleteEnquiry(null)}
-                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 sm:w-auto"
+                onClick={() =>
+                  setDeleteEnquiry(null)
+                }
+                disabled={isSubmitting}
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 sm:w-auto"
               >
                 Cancel
               </button>
@@ -593,9 +877,12 @@ function Enquiries() {
               <button
                 type="button"
                 onClick={handleDelete}
-                className="w-full rounded-lg bg-[#EF3B3A] px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-600 sm:w-auto"
+                disabled={isSubmitting}
+                className="w-full rounded-lg bg-[#EF3B3A] px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
               >
-                Delete Enquiry
+                {isSubmitting
+                  ? "Deleting..."
+                  : "Delete Enquiry"}
               </button>
             </div>
           </div>
