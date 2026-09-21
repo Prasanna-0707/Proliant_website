@@ -84,6 +84,7 @@ const candidateStatuses = [
   "Interview",
   "Selected",
   "Rejected",
+  "On hold",
 ];
 
 function Candidates() {
@@ -456,13 +457,7 @@ function Candidates() {
             }
             className="w-full rounded-lg border border-gray-300 bg-white px-2 py-2.5 text-[11px] text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 sm:w-40 max-[767px]:h-8 max-[767px]:min-w-0 max-[767px]:flex-1 max-[767px]:px-1 max-[767px]:py-1 max-[767px]:text-[9px]"
           >
-            <option
-              value="All"
-              style={{
-                fontSize: "9px",
-                padding: "2px 4px",
-              }}
-            >
+            <option value="All">
               All Status
             </option>
 
@@ -470,10 +465,6 @@ function Candidates() {
               <option
                 key={status}
                 value={status}
-                style={{
-                  fontSize: "9px",
-                  padding: "2px 4px",
-                }}
               >
                 {status}
               </option>
@@ -488,13 +479,7 @@ function Candidates() {
             }
             className="w-full rounded-lg border border-gray-300 bg-white px-2 py-2.5 text-[11px] text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 sm:w-52 max-[767px]:h-8 max-[767px]:min-w-0 max-[767px]:flex-1 max-[767px]:px-1 max-[767px]:py-1 max-[767px]:text-[9px]"
           >
-            <option
-              value="All"
-              style={{
-                fontSize: "9px",
-                padding: "2px 4px",
-              }}
-            >
+            <option value="All">
               All Jobs
             </option>
 
@@ -502,10 +487,6 @@ function Candidates() {
               <option
                 key={job}
                 value={job}
-                style={{
-                  fontSize: "9px",
-                  padding: "2px 4px",
-                }}
               >
                 {job}
               </option>

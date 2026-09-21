@@ -57,7 +57,7 @@ function Login() {
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Left Branding Section */}
-      <section className="relative hidden min-h-screen w-5/12 overflow-hidden bg-[#EF3B3A] lg:flex lg:flex-col lg:justify-between">
+      <section className="relative hidden min-h-screen w-5/12 overflow-hidden bg-[#DA3838] lg:flex lg:flex-col lg:justify-between">
         {/* Decorative Circles */}
         <div className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full border-80 border-white/10" />
 
