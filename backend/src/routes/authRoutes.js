@@ -7,7 +7,6 @@ import {
   verifyResetOTP,
   resetPassword,
   changePassword,
-  createTeamMember,
   logout,
 } from "../controllers/authController.js";
 
@@ -50,13 +49,6 @@ router.patch(
   "/change-password",
   authMiddleware,
   changePassword
-);
-
-// Create Team Member
-router.post(
-  "/team-members",
-  authMiddleware,
-  createTeamMember
 );
 
 // Logout

@@ -454,70 +454,7 @@ export const changePassword = async (req, res) => {
   }
 };
 
-// =====================================================
-// CREATE TEAM MEMBER
-// =====================================================
 
-export const createTeamMember = async (req, res) => {
-  try {
-    const email = normalizeEmail(req.body.email);
-
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: "Email is required",
-      });
-    }
-
-    const existingAdmin = await Admin.findOne({ email });
-
-    if (existingAdmin) {
-      return res.status(409).json({
-        success: false,
-        message:
-          "An account with this email already exists",
-      });
-    }
-
-    const temporaryPassword =
-      crypto.randomBytes(6).toString("base64url") + "@1";
-
-    const hashedPassword = await bcrypt.hash(
-      temporaryPassword,
-      10
-    );
-
-    const teamMember = await Admin.create({
-      email,
-      password: hashedPassword,
-      tokenVersion: 0,
-      resetTokenVersion: 0,
-      mustChangePassword: true,
-    });
-
-    await sendTemporaryPasswordEmail(
-      teamMember.email,
-      temporaryPassword
-    );
-
-    return res.status(201).json({
-      success: true,
-      message:
-        "Team member created successfully. Temporary password sent to email",
-      teamMember: {
-        id: teamMember._id,
-        email: teamMember.email,
-      },
-    });
-
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Team member creation failed",
-      error: error.message,
-    });
-  }
-};
 
 // =====================================================
 // LOGOUT

@@ -27,7 +27,7 @@ const ProliantInNumbers = () => {
               />
 
               <StatsCounter
-                value={150}
+                value={130}
                 suffix="+"
                 duration={2}
                 className="text-3xl font-bold sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl"

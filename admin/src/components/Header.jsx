@@ -149,17 +149,7 @@ function Header() {
   return (
     <>
       <header className="relative flex h-20 items-center justify-between border-b border-gray-200 bg-white px-6 max-[767px]:h-17 max-[767px]:px-4 dark:border-gray-700 dark:bg-gray-900">
-        
-        <div className="flex h-11 items-center rounded-lg bg-white px-3">
-          <img
-            src={proliantLogo}
-            alt="Proliant"
-            className="h-auto w-28 object-contain"
-          />
-        </div>
-         
-         <div className="h-10 w-px bg-gray-200 dark:bg-gray-700" />
-       
+    
         {/* Page Title */}
         <div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
