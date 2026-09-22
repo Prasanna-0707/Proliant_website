@@ -32,11 +32,11 @@ const managementLinks = [
     path: "/jobs",
     icon: BriefcaseBusiness,
   },
-  // {
-  //   name: "Countries",
-  //   path: "/countries",
-  //   icon: Globe2,
-  // },
+  {
+    name: "Countries",
+    path: "/countries",
+    icon: Globe2,
+  },
 ];
 
 const recruitmentLinks = [
@@ -76,11 +76,11 @@ const mobileLinks = [
     path: "/jobs",
     icon: BriefcaseBusiness,
   },
-  // {
-  //   name: "Countries",
-  //   path: "/countries",
-  //   icon: Globe2,
-  // },
+  {
+    name: "Countries",
+    path: "/countries",
+    icon: Globe2,
+  },
   {
     name: "Candidates",
     path: "/candidates",
@@ -190,7 +190,6 @@ function Sidebar() {
         >
           <div className="flex flex-col">
             {/* LIGHT MODE */}
-
             <img
               src={proliantBlackLogo}
               alt="Proliant Data"
@@ -205,7 +204,6 @@ function Sidebar() {
             />
 
             {/* DARK MODE */}
-
             <img
               src={proliantWhiteLogo}
               alt="Proliant Data"
@@ -224,7 +222,6 @@ function Sidebar() {
                 mt-1
                 text-xs
                 font-medium
-
                 text-gray-500
                 dark:text-white!
               "
@@ -305,7 +302,6 @@ function Sidebar() {
               className="
                 mb-2 px-3
                 text-xs font-semibold uppercase tracking-wider
-
                 text-gray-400
                 dark:text-white!
               "
@@ -358,7 +354,6 @@ function Sidebar() {
               className="
                 mb-2 px-3
                 text-xs font-semibold uppercase tracking-wider
-
                 text-gray-400
                 dark:text-white!
               "
@@ -411,7 +406,6 @@ function Sidebar() {
               className="
                 mb-2 px-3
                 text-xs font-semibold uppercase tracking-wider
-
                 text-gray-400
                 dark:text-white!
               "

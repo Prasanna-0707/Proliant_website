@@ -149,7 +149,6 @@ function Header() {
   return (
     <>
       <header className="relative flex h-20 items-center justify-between border-b border-gray-200 bg-white px-6 max-[767px]:h-17 max-[767px]:px-4 dark:border-gray-700 dark:bg-gray-900">
-    
         {/* Page Title */}
         <div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -404,9 +403,7 @@ function Header() {
                 disabled={isChangingPassword}
                 className="rounded-lg bg-[#EF3B3A] px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {isChangingPassword
-                  ? "Updating..."
-                  : "Update Password"}
+                {isChangingPassword ? "Updating..." : "Update Password"}
               </button>
             </div>
           </div>

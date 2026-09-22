@@ -77,6 +77,7 @@ const seedDatabase = async () => {
         "SAP Security Consultant",
         "SAP Business Analyst",
         "SAP Project Coordinator",
+        "Administration",
       ];
 
       const firstNames = [
@@ -116,8 +117,7 @@ const seedDatabase = async () => {
 
       // 101 employees
       for (let i = 1; i <= 101; i++) {
-        const firstName =
-          firstNames[(i - 1) % firstNames.length];
+        const firstName = firstNames[(i - 1) % firstNames.length];
 
         const name = firstName;
 
@@ -125,8 +125,7 @@ const seedDatabase = async () => {
           name,
           email: `employee${i}@proliant.com`,
           role: roles[(i - 1) % roles.length],
-          department:
-            departments[(i - 1) % departments.length],
+          department: departments[(i - 1) % departments.length],
           status: i % 12 === 0 ? "Inactive" : "Active",
         });
       }
@@ -531,8 +530,7 @@ const seedDatabase = async () => {
           state: "Massachusetts",
           city: "Boston",
           companyName: "Proliant Data LLC",
-          address:
-            "75 State Street, Boston, MA 01803",
+          address: "75 State Street, Boston, MA 01803",
           latitude: 42.35902288181857,
           longitude: -71.0553326746298,
           phone: "+1-617-955-2070",
@@ -543,8 +541,7 @@ const seedDatabase = async () => {
           state: "Bavaria",
           city: "Erlangen",
           companyName: "Proliant Data GmbH",
-          address:
-            "Würzburger Ring 39, Erlangen, 91056",
+          address: "Würzburger Ring 39, Erlangen, 91056",
           latitude: 49.59963951233804,
           longitude: 10.967766810446841,
           phone: "+49-15158005363",

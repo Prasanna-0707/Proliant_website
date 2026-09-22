@@ -1,7 +1,7 @@
 @baseUrl = http://localhost:5000/api
 
 # Update this after successful OTP verification
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbklkIjoiNmFhY2NmYTg1ZjU3NjYxYTc5NGFiZWU0IiwiZW1haWwiOiJib2dhY2hhbmRyYXB1QGdtYWlsLmNvbSIsInRva2VuVmVyc2lvbiI6MCwiaWF0IjoxNzg5NzE1ODE5LCJleHAiOjE3ODk4MDIyMTl9.bvkVKkdCJ2km9SpSGbM9qC83YibFC_GYQS7OVcPMt-0
+@token = YOUR_JWT_TOKEN_HERE
 
 
 ############################################################
@@ -26,7 +26,7 @@ Content-Type: application/json
 
 {
   "email": "bogachandrapu@gmail.com",
-  "otp": "550577"
+  "otp": "ENTER_LOGIN_OTP_HERE"
 }
 
 ###
@@ -388,32 +388,29 @@ Authorization: Bearer {{token}}
 
 
 ############################################################
-# TEAM MEMBER APIs
+# 10. TEAM MEMBER APIs
 ############################################################
 
-### 1. GET ALL TEAM MEMBERS
+### 10.1 GET ALL TEAM MEMBERS
 # Expected:
 # 200 OK
-# Should return the existing 2 admins also.
-
+# Should return the existing admins also.
 GET {{baseUrl}}/auth/team-members
 Authorization: Bearer {{token}}
 
 ###
 
-### 2. GET ONE TEAM MEMBER
+### 10.2 GET ONE TEAM MEMBER
 # First run GET ALL above and copy one _id.
-# Replace the ID below.
-
-GET {{baseUrl}}/auth/team-members/6aaccfa85f57661a794abee3
+# Replace TEAM_MEMBER_ID below.
+GET {{baseUrl}}/auth/team-members/TEAM_MEMBER_ID
 Authorization: Bearer {{token}}
 
 ###
 
-### 3. CREATE TEAM MEMBER
+### 10.3 CREATE TEAM MEMBER
 # Temporary password will be generated automatically
 # and sent to the provided email.
-
 POST {{baseUrl}}/auth/team-members
 Authorization: Bearer {{token}}
 Content-Type: application/json
@@ -424,10 +421,9 @@ Content-Type: application/json
 
 ###
 
-### 4. UPDATE TEAM MEMBER
-# Replace the ID with the ID returned by CREATE.
-
-PUT {{baseUrl}}/auth/team-members/6aace760283029dff29a88ec
+### 10.4 UPDATE TEAM MEMBER
+# Replace TEAM_MEMBER_ID with the ID returned by GET/CREATE.
+PUT {{baseUrl}}/auth/team-members/TEAM_MEMBER_ID
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -437,12 +433,11 @@ Content-Type: application/json
 
 ###
 
-### 5. DELETE TEAM MEMBER
-# Replace the ID with the team member ID.
+### 10.5 DELETE TEAM MEMBER
+# Replace TEAM_MEMBER_ID with the team member ID.
 # Do NOT use the ID of the currently logged-in admin.
 # Our API prevents deleting your own account.
-
-DELETE {{baseUrl}}/auth/team-members/6aace760283029dff29a88ec
+DELETE {{baseUrl}}/auth/team-members/TEAM_MEMBER_ID
 Authorization: Bearer {{token}}
 
 ###

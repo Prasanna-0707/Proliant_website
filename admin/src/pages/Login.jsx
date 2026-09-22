@@ -498,6 +498,7 @@ function Login() {
 
       <section className="flex min-h-screen w-full items-center justify-center bg-white px-6 py-10 sm:px-10 lg:w-7/12 lg:px-16 xl:px-24">
         <div className="w-full max-w-lg">
+
           {/* Mobile Branding */}
 
           <div className="mb-12 flex flex-col items-center lg:hidden">
