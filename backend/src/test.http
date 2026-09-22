@@ -1,7 +1,7 @@
 @baseUrl = http://localhost:5000/api
 
 # Update this after successful OTP verification
-@token = YOUR_JWT_TOKEN_HERE
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbklkIjoiNmFhY2NmYTg1ZjU3NjYxYTc5NGFiZWU0IiwiZW1haWwiOiJib2dhY2hhbmRyYXB1QGdtYWlsLmNvbSIsInRva2VuVmVyc2lvbiI6OCwiaWF0IjoxNzkwMDgzNjI1LCJleHAiOjE3OTAxNzAwMjV9.z_SDM5G7ft2-2UBgvY-eM5hxaBZXK8DaZyVM2Dlsxtg
 
 
 ############################################################
@@ -13,7 +13,7 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "admin@proliant.com",
+  "email": "bogachandrapu@gmail.com",
   "password": "Admin@123"
 }
 
@@ -25,8 +25,8 @@ POST {{baseUrl}}/auth/verify-login-otp
 Content-Type: application/json
 
 {
-  "email": "admin@proliant.com",
-  "otp": "ENTER_LOGIN_OTP_HERE"
+  "email": "bogachandrapu@gmail.com",
+  "otp": "142584"
 }
 
 ###
@@ -383,5 +383,118 @@ Content-Type: application/json
 ### 9.1 Export Candidates to Excel - ADMIN
 GET {{baseUrl}}/candidates/export/excel
 Authorization: Bearer {{token}}
+
+
+############################################################
+# 10. CANDIDATE EMAIL NOTIFICATIONS
+############################################################
+
+### 10.1 Candidate Application - Thank You Email
+# Candidate submits an application
+# Thank-you email should be sent to the candidate
+
+POST {{baseUrl}}/candidates
+Content-Type: application/json
+
+{
+  "position": "SAP Consultant",
+  "areaOfInterest": "SAP",
+  "name": "Test Candidate",
+  "email": "aswinijarugula@gmail.com",
+  "phone": "9876543210",
+  "isFresher": false,
+  "location": "Hyderabad",
+  "yearsOfExperience": 3,
+  "highestQualification": "B.Tech",
+  "currentCompany": "ABC Technologies",
+  "noticePeriod": "30 Days",
+  "coverMessage": "Interested in the SAP Consultant position."
+}
+
+###
+
+### 10.2 Candidate Shortlisted - HR Email
+# Replace CANDIDATE_ID with an existing candidate _id
+
+PUT {{baseUrl}}/candidates/6ab2827d7cfed0a1ba7d20f2
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "Shortlisted"
+}
+
+###
+
+### 10.3 Candidate Rejected - Candidate Email
+# Replace CANDIDATE_ID with an existing candidate _id
+
+PUT {{baseUrl}}/candidates/CANDIDATE_ID
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "Rejected"
+}
+
+###
+
+############################################################
+# 11. ADMIN PROFILE APIs
+############################################################
+
+### 11.1 Get My Admin Profile
+# Requires a valid JWT obtained after login + OTP verification
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{token}}
+
+###
+
+### 11.2 Update My Admin Profile
+# Only name, phone and designation can be updated
+
+PATCH {{baseUrl}}/auth/profile
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Prasanna Kumar",
+  "phone": "9876543210",
+  "designation": "Administrator"
+}
+
+###
+
+### 11.3 Get My Profile After Update
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{token}}
+
+###
+
+### 11.4 Try Updating Email
+# This should fail because email changes are not allowed
+# through the profile API
+
+PATCH {{baseUrl}}/auth/profile
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "email": "newemail@example.com"
+}
+
+###
+
+### 11.5 Try Updating Password
+# This should fail because password changes must use
+# the existing /auth/change-password API
+
+PATCH {{baseUrl}}/auth/profile
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "password": "NewPassword@123"
+}
 
 ###

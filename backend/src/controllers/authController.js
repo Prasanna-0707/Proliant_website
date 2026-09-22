@@ -34,6 +34,24 @@ const normalizeEmail = (email) => {
 };
 
 // =====================================================
+// ADMIN PROFILE RESPONSE
+// =====================================================
+
+const getAdminProfileData = (admin) => {
+  return {
+    id: admin._id,
+    name: admin.name || "",
+    email: admin.email,
+    role: admin.role || "Administrator",
+    designation:
+      admin.designation || "Administrator",
+    phone: admin.phone || "",
+    createdAt: admin.createdAt,
+    updatedAt: admin.updatedAt,
+  };
+};
+
+// =====================================================
 // LOGIN
 // =====================================================
 
@@ -51,10 +69,6 @@ export const login = async (req, res) => {
 
     const admin = await Admin.findOne({ email });
 
-    // TEMPORARY DEBUG LOGS
-    console.log("LOGIN EMAIL:", email);
-    console.log("ADMIN FOUND:", !!admin);
-
     if (!admin) {
       return res.status(401).json({
         success: false,
@@ -66,9 +80,6 @@ export const login = async (req, res) => {
       password,
       admin.password
     );
-
-    // TEMPORARY DEBUG LOG
-    console.log("PASSWORD VALID:", isPasswordValid);
 
     if (!isPasswordValid) {
       return res.status(401).json({
@@ -89,10 +100,10 @@ export const login = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Password verified. OTP sent to your email",
+      message:
+        "Password verified. OTP sent to your email",
       email: admin.email,
     });
-
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -119,6 +130,7 @@ export const forgotPassword = async (req, res) => {
 
     const admin = await Admin.findOne({ email });
 
+    // Do not reveal whether account exists
     if (!admin) {
       return res.status(200).json({
         success: true,
@@ -142,11 +154,11 @@ export const forgotPassword = async (req, res) => {
       message:
         "If an account exists with this email, a password reset OTP has been sent",
     });
-
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: "Failed to send password reset OTP",
+      message:
+        "Failed to send password reset OTP",
       error: error.message,
     });
   }
@@ -187,7 +199,8 @@ export const verifyLoginOTP = async (req, res) => {
       {
         adminId: admin._id,
         email: admin.email,
-        tokenVersion: admin.tokenVersion || 0,
+        tokenVersion:
+          admin.tokenVersion || 0,
       },
       process.env.JWT_SECRET,
       {
@@ -199,13 +212,23 @@ export const verifyLoginOTP = async (req, res) => {
       success: true,
       message: "Login successful",
       token,
+
+      // Existing fields preserved
+      // New profile fields added
       admin: {
         id: admin._id,
+        name: admin.name || "",
         email: admin.email,
-        mustChangePassword: admin.mustChangePassword,
+        role:
+          admin.role || "Administrator",
+        designation:
+          admin.designation ||
+          "Administrator",
+        phone: admin.phone || "",
+        mustChangePassword:
+          admin.mustChangePassword,
       },
     });
-
   } catch (error) {
     return res.status(401).json({
       success: false,
@@ -261,10 +284,10 @@ export const verifyResetOTP = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "OTP verified successfully",
+      message:
+        "OTP verified successfully",
       resetToken,
     });
-
   } catch (error) {
     return res.status(401).json({
       success: false,
@@ -283,7 +306,11 @@ export const resetPassword = async (req, res) => {
     const resetToken = req.body.resetToken;
     const newPassword = req.body.newPassword;
 
-    if (!email || !resetToken || !newPassword) {
+    if (
+      !email ||
+      !resetToken ||
+      !newPassword
+    ) {
       return res.status(400).json({
         success: false,
         message:
@@ -311,14 +338,19 @@ export const resetPassword = async (req, res) => {
       });
     }
 
-    if (decoded.purpose !== "password-reset") {
+    if (
+      decoded.purpose !==
+      "password-reset"
+    ) {
       return res.status(401).json({
         success: false,
         message: "Invalid reset token",
       });
     }
 
-    const admin = await Admin.findOne({ email });
+    const admin = await Admin.findOne({
+      email,
+    });
 
     if (!admin) {
       return res.status(404).json({
@@ -333,21 +365,28 @@ export const resetPassword = async (req, res) => {
     ) {
       return res.status(401).json({
         success: false,
-        message: "Reset token is no longer valid",
+        message:
+          "Reset token is no longer valid",
       });
     }
 
-    const hashedPassword = await bcrypt.hash(
-      newPassword,
-      10
-    );
+    const hashedPassword =
+      await bcrypt.hash(
+        newPassword,
+        10
+      );
 
-    admin.password = hashedPassword;
-    admin.mustChangePassword = false;
+    admin.password =
+      hashedPassword;
 
+    admin.mustChangePassword =
+      false;
+
+    // Existing token invalidation logic
     admin.tokenVersion =
       (admin.tokenVersion || 0) + 1;
 
+    // Existing reset-token invalidation logic
     admin.resetTokenVersion =
       (admin.resetTokenVersion || 0) + 1;
 
@@ -358,11 +397,11 @@ export const resetPassword = async (req, res) => {
       message:
         "Password reset successfully. Please login again",
     });
-
   } catch (error) {
     return res.status(401).json({
       success: false,
-      message: "Invalid or expired reset token",
+      message:
+        "Invalid or expired reset token",
     });
   }
 };
@@ -371,14 +410,20 @@ export const resetPassword = async (req, res) => {
 // CHANGE PASSWORD
 // =====================================================
 
-export const changePassword = async (req, res) => {
+export const changePassword = async (
+  req,
+  res
+) => {
   try {
     const {
       currentPassword,
       newPassword,
     } = req.body;
 
-    if (!currentPassword || !newPassword) {
+    if (
+      !currentPassword ||
+      !newPassword
+    ) {
       return res.status(400).json({
         success: false,
         message:
@@ -394,7 +439,9 @@ export const changePassword = async (req, res) => {
       });
     }
 
-    if (currentPassword === newPassword) {
+    if (
+      currentPassword === newPassword
+    ) {
       return res.status(400).json({
         success: false,
         message:
@@ -422,18 +469,24 @@ export const changePassword = async (req, res) => {
     if (!isCurrentPasswordValid) {
       return res.status(401).json({
         success: false,
-        message: "Current password is incorrect",
+        message:
+          "Current password is incorrect",
       });
     }
 
-    const hashedPassword = await bcrypt.hash(
-      newPassword,
-      10
-    );
+    const hashedPassword =
+      await bcrypt.hash(
+        newPassword,
+        10
+      );
 
-    admin.password = hashedPassword;
-    admin.mustChangePassword = false;
+    admin.password =
+      hashedPassword;
 
+    admin.mustChangePassword =
+      false;
+
+    // Existing token invalidation logic
     admin.tokenVersion =
       (admin.tokenVersion || 0) + 1;
 
@@ -444,11 +497,11 @@ export const changePassword = async (req, res) => {
       message:
         "Password changed successfully. Please login again",
     });
-
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: "Password change failed",
+      message:
+        "Password change failed",
       error: error.message,
     });
   }
@@ -458,9 +511,14 @@ export const changePassword = async (req, res) => {
 // CREATE TEAM MEMBER
 // =====================================================
 
-export const createTeamMember = async (req, res) => {
+export const createTeamMember = async (
+  req,
+  res
+) => {
   try {
-    const email = normalizeEmail(req.body.email);
+    const email = normalizeEmail(
+      req.body.email
+    );
 
     if (!email) {
       return res.status(400).json({
@@ -469,7 +527,8 @@ export const createTeamMember = async (req, res) => {
       });
     }
 
-    const existingAdmin = await Admin.findOne({ email });
+    const existingAdmin =
+      await Admin.findOne({ email });
 
     if (existingAdmin) {
       return res.status(409).json({
@@ -480,20 +539,31 @@ export const createTeamMember = async (req, res) => {
     }
 
     const temporaryPassword =
-      crypto.randomBytes(6).toString("base64url") + "@1";
+      crypto.randomBytes(6)
+        .toString("base64url") +
+      "@1";
 
-    const hashedPassword = await bcrypt.hash(
-      temporaryPassword,
-      10
-    );
+    const hashedPassword =
+      await bcrypt.hash(
+        temporaryPassword,
+        10
+      );
 
-    const teamMember = await Admin.create({
-      email,
-      password: hashedPassword,
-      tokenVersion: 0,
-      resetTokenVersion: 0,
-      mustChangePassword: true,
-    });
+    const teamMember =
+      await Admin.create({
+        email,
+        password: hashedPassword,
+
+        // Profile defaults for new team member
+        name: "",
+        role: "Administrator",
+        designation: "Administrator",
+        phone: "",
+
+        tokenVersion: 0,
+        resetTokenVersion: 0,
+        mustChangePassword: true,
+      });
 
     await sendTemporaryPasswordEmail(
       teamMember.email,
@@ -504,16 +574,213 @@ export const createTeamMember = async (req, res) => {
       success: true,
       message:
         "Team member created successfully. Temporary password sent to email",
+
       teamMember: {
         id: teamMember._id,
         email: teamMember.email,
       },
     });
-
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: "Team member creation failed",
+      message:
+        "Team member creation failed",
+      error: error.message,
+    });
+  }
+};
+
+// =====================================================
+// GET ALL TEAM MEMBERS
+// =====================================================
+
+export const getTeamMembers = async (
+  req,
+  res
+) => {
+  try {
+    const teamMembers =
+      await Admin.find()
+        .select(
+          "-password -tokenVersion -resetTokenVersion"
+        )
+        .sort({
+          createdAt: -1,
+        });
+
+    return res.status(200).json({
+      success: true,
+      teamMembers,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message:
+        "Failed to fetch team members",
+      error: error.message,
+    });
+  }
+};
+
+// =====================================================
+// GET MY ADMIN PROFILE
+// =====================================================
+
+export const getMyProfile = async (
+  req,
+  res
+) => {
+  try {
+    const admin = await Admin.findById(
+      req.admin._id
+    ).select(
+      "-password -tokenVersion -resetTokenVersion"
+    );
+
+    if (!admin) {
+      return res.status(404).json({
+        success: false,
+        message: "Admin profile not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      admin: getAdminProfileData(admin),
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message:
+        "Failed to fetch admin profile",
+      error: error.message,
+    });
+  }
+};
+
+// =====================================================
+// UPDATE MY ADMIN PROFILE
+// =====================================================
+
+export const updateMyProfile = async (
+  req,
+  res
+) => {
+  try {
+    const allowedFields = [
+      "name",
+      "phone",
+      "designation",
+    ];
+
+    const invalidFields =
+      Object.keys(req.body).filter(
+        (field) =>
+          !allowedFields.includes(field)
+      );
+
+    // Email, password, role and security
+    // fields are not allowed here.
+    if (invalidFields.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Only name, phone and designation can be updated",
+      });
+    }
+
+    const admin = await Admin.findById(
+      req.admin._id
+    );
+
+    if (!admin) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Admin profile not found",
+      });
+    }
+
+    // =================================================
+    // NAME
+    // =================================================
+
+    if (
+      req.body.name !== undefined
+    ) {
+      if (
+        typeof req.body.name !==
+        "string"
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Name must be a string",
+        });
+      }
+
+      admin.name =
+        req.body.name.trim();
+    }
+
+    // =================================================
+    // PHONE
+    // =================================================
+
+    if (
+      req.body.phone !== undefined
+    ) {
+      if (
+        typeof req.body.phone !==
+        "string"
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Phone must be a string",
+        });
+      }
+
+      admin.phone =
+        req.body.phone.trim();
+    }
+
+    // =================================================
+    // DESIGNATION
+    // =================================================
+
+    if (
+      req.body.designation !==
+      undefined
+    ) {
+      if (
+        typeof req.body.designation !==
+        "string"
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Designation must be a string",
+        });
+      }
+
+      admin.designation =
+        req.body.designation.trim();
+    }
+
+    await admin.save();
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Profile updated successfully",
+      admin: getAdminProfileData(admin),
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message:
+        "Profile update failed",
       error: error.message,
     });
   }
@@ -523,7 +790,10 @@ export const createTeamMember = async (req, res) => {
 // LOGOUT
 // =====================================================
 
-export const logout = async (req, res) => {
+export const logout = async (
+  req,
+  res
+) => {
   try {
     await Admin.findByIdAndUpdate(
       req.admin._id,
@@ -538,7 +808,6 @@ export const logout = async (req, res) => {
       success: true,
       message: "Logout successful",
     });
-
   } catch (error) {
     return res.status(500).json({
       success: false,
