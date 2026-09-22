@@ -183,7 +183,7 @@ const WhoWeAre = () => {
             className="max-w-lg"
           >
             <p className="mb-6 text-sm leading-6 text-gray-300 sm:mb-7 sm:leading-7 md:mb-8 md:text-base">
-              Founded in 2021, Proliant Data LLC has rapidly grown from a
+              Founded in 2022, Proliant Data LLC has rapidly grown from a
               niche in data migration and governance into a trusted partner
               delivering end-to-end Enterprise Data Management, SAP solutions,
               advanced analytics, and AI innovation.
