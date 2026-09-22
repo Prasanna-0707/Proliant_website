@@ -83,7 +83,7 @@ function Login() {
 
   /* -----------------------------------------
      LOGIN
-     
+
      POST /api/auth/login
 
      Backend:
@@ -121,8 +121,7 @@ function Login() {
 
       if (!response.ok || !result.success) {
         setErrors({
-          submit:
-            result.message || "Invalid email or password.",
+          submit: result.message || "Invalid email or password.",
         });
 
         return;
@@ -150,8 +149,7 @@ function Login() {
       console.error("Login error:", error);
 
       setErrors({
-        submit:
-          "Unable to connect to the server. Please try again.",
+        submit: "Unable to connect to the server. Please try again.",
       });
     } finally {
       setIsLoading(false);
@@ -262,14 +260,10 @@ function Login() {
 
       navigate("/dashboard");
     } catch (error) {
-      console.error(
-        "Login OTP verification error:",
-        error
-      );
+      console.error("Login OTP verification error:", error);
 
       setErrors({
-        submit:
-          "Unable to verify OTP. Please try again.",
+        submit: "Unable to verify OTP. Please try again.",
       });
     } finally {
       setIsLoading(false);
@@ -291,8 +285,7 @@ function Login() {
     const newErrors = {};
 
     if (!formData.newPassword) {
-      newErrors.newPassword =
-        "New password is required.";
+      newErrors.newPassword = "New password is required.";
     } else if (formData.newPassword.length < 8) {
       newErrors.newPassword =
         "Password must be at least 8 characters.";
@@ -304,8 +297,7 @@ function Login() {
     } else if (
       formData.newPassword !== formData.confirmPassword
     ) {
-      newErrors.confirmPassword =
-        "Passwords do not match.";
+      newErrors.confirmPassword = "Passwords do not match.";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -366,8 +358,7 @@ function Login() {
           JSON.stringify(result.admin)
         );
       } else {
-        const storedAdmin =
-          localStorage.getItem("adminUser");
+        const storedAdmin = localStorage.getItem("adminUser");
 
         if (storedAdmin) {
           try {
@@ -390,10 +381,7 @@ function Login() {
 
       setStep("password-success");
     } catch (error) {
-      console.error(
-        "Change password error:",
-        error
-      );
+      console.error("Change password error:", error);
 
       setErrors({
         submit:
@@ -447,11 +435,15 @@ function Login() {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
+
       {/* -----------------------------------------
-          LEFT BRANDING
+          LEFT BRANDING SECTION
       ----------------------------------------- */}
 
-      <section className="relative hidden min-h-screen w-5/12 overflow-hidden bg-[#EF3B3A] lg:flex lg:flex-col lg:justify-between">
+      <section className="relative hidden min-h-screen w-5/12 overflow-hidden bg-[#DA3838] lg:flex lg:flex-col lg:justify-between">
+
+        {/* Decorative Circles */}
+
         <div className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full border-80 border-white/10" />
 
         <div className="pointer-events-none absolute -bottom-40 -left-40 h-128 w-lg rounded-full border-90 border-white/10" />
@@ -550,6 +542,7 @@ function Login() {
                   {renderError()}
 
                   <form onSubmit={handleLogin} noValidate>
+
                     {/* Email */}
 
                     <div className="mb-6">
