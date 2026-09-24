@@ -16,6 +16,7 @@ import Jobs from "./pages/Jobs";
 import Countries from "./pages/countries";
 import Candidates from "./pages/Candidates";
 import Enquiries from "./pages/Enquiries";
+import Profile from "./pages/Profile";
 
 function App() {
   const token = localStorage.getItem("adminToken");
@@ -44,6 +45,8 @@ function App() {
             />
 
             <Route path="/jobs" element={<Jobs />} />
+            
+            <Route path="/countries" element={<Countries />} />
 
             <Route path="/countries" element={<Countries />} />
 
@@ -57,6 +60,7 @@ function App() {
               element={<Enquiries />}
             />
           </Route>
+          <Route path="/profile" element={<Profile />} />
         </Route>
 
         {/* Unknown Routes */}
