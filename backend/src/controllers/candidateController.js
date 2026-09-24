@@ -4,6 +4,12 @@ import {
   generateCandidatesExcel,
 } from "../services/excelService.js";
 
+import {
+  sendCandidateApplicationThankYouEmail,
+  sendCandidateShortlistedEmailToHR,
+  sendCandidateRejectedEmail,
+} from "../services/emailService.js";
+
 // =====================================================
 // CREATE CANDIDATE
 // =====================================================
@@ -57,6 +63,23 @@ export const createCandidate = async (req, res) => {
       coverMessage,
       resume,
     });
+
+    // =====================================================
+    // SEND APPLICATION THANK-YOU EMAIL
+    // =====================================================
+
+    try {
+      await sendCandidateApplicationThankYouEmail(
+        candidate.email,
+        candidate.name,
+        candidate.position
+      );
+    } catch (emailError) {
+      console.error(
+        "Candidate thank-you email failed:",
+        emailError.message
+      );
+    }
 
     return res.status(201).json({
       success: true,
@@ -146,6 +169,10 @@ export const updateCandidate = async (req, res) => {
       });
     }
 
+    // Keep the previous status so we can detect
+    // an actual status change.
+    const oldStatus = candidate.status;
+
     const {
       position,
       areaOfInterest,
@@ -163,7 +190,9 @@ export const updateCandidate = async (req, res) => {
       status,
     } = req.body;
 
-    // Update only fields that were provided
+    // =====================================================
+    // UPDATE ONLY PROVIDED FIELDS
+    // =====================================================
 
     if (position !== undefined) {
       candidate.position = position;
@@ -204,15 +233,18 @@ export const updateCandidate = async (req, res) => {
     }
 
     if (currentCompany !== undefined) {
-      candidate.currentCompany = currentCompany;
+      candidate.currentCompany =
+        currentCompany;
     }
 
     if (noticePeriod !== undefined) {
-      candidate.noticePeriod = noticePeriod;
+      candidate.noticePeriod =
+        noticePeriod;
     }
 
     if (coverMessage !== undefined) {
-      candidate.coverMessage = coverMessage;
+      candidate.coverMessage =
+        coverMessage;
     }
 
     if (resume !== undefined) {
@@ -223,7 +255,51 @@ export const updateCandidate = async (req, res) => {
       candidate.status = status;
     }
 
+    // =====================================================
+    // SAVE UPDATED CANDIDATE
+    // =====================================================
+
     await candidate.save();
+
+    // =====================================================
+    // STATUS EMAIL NOTIFICATIONS
+    // =====================================================
+
+    // Candidate has been newly shortlisted
+    if (
+      oldStatus !== candidate.status &&
+      candidate.status === "Shortlisted"
+    ) {
+      try {
+        await sendCandidateShortlistedEmailToHR(
+          candidate
+        );
+      } catch (emailError) {
+        console.error(
+          "Shortlisted notification email failed:",
+          emailError.message
+        );
+      }
+    }
+
+    // Candidate has been newly rejected
+    if (
+      oldStatus !== candidate.status &&
+      candidate.status === "Rejected"
+    ) {
+      try {
+        await sendCandidateRejectedEmail(
+          candidate.email,
+          candidate.name,
+          candidate.position
+        );
+      } catch (emailError) {
+        console.error(
+          "Rejection email failed:",
+          emailError.message
+        );
+      }
+    }
 
     return res.status(200).json({
       success: true,
@@ -284,7 +360,7 @@ export const exportCandidatesExcel = async (
   res
 ) => {
   try {
-    // Get all candidates from MongoDB
+    // Get candidates from MongoDB
     const candidates = await Candidate.find()
       .sort({
         createdAt: -1,
@@ -294,11 +370,10 @@ export const exportCandidatesExcel = async (
     /*
       Resume Storage is not implemented yet.
 
-      Later, when we build the SharePoint Resume API,
-      this property will contain the actual resume URL.
+      Later, when SharePoint Resume Storage is completed,
+      resumeUrl will come from the resume storage logic.
 
-      For now:
-      resumeUrl = null
+      For now it is null.
     */
 
     const candidatesForExcel = candidates.map(
@@ -308,25 +383,27 @@ export const exportCandidatesExcel = async (
       })
     );
 
-    // Generate Excel file
+    // Generate Excel workbook
     const excelBuffer =
       await generateCandidatesExcel(
         candidatesForExcel
       );
 
-    // Tell browser that response is an Excel file
+    // Tell browser this is an Excel file
     res.setHeader(
       "Content-Type",
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     );
 
-    // File name when downloaded
+    // Excel file name
     res.setHeader(
       "Content-Disposition",
       'attachment; filename="candidates.xlsx"'
     );
 
-    return res.status(200).send(excelBuffer);
+    return res.status(200).send(
+      excelBuffer
+    );
 
   } catch (error) {
     return res.status(500).json({

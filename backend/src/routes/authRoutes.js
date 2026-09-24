@@ -1,3 +1,4 @@
+
 import express from "express";
 
 import {
@@ -7,6 +8,10 @@ import {
   verifyResetOTP,
   resetPassword,
   changePassword,
+  createTeamMember,
+  getTeamMembers,
+  getMyProfile,
+  updateMyProfile,
   logout,
 } from "../controllers/authController.js";
 
@@ -14,49 +19,93 @@ import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-
 // =====================================================
 // LOGIN
 // =====================================================
 
-// Step 1: Email + Password
-router.post("/login", login);
+router.post(
+  "/login",
+  login
+);
 
-// Step 2: Verify Login OTP
-router.post("/verify-login-otp", verifyLoginOTP);
-
-
-// =====================================================
-// FORGOT PASSWORD
-// =====================================================
-
-// Step 1: Request Reset OTP
-router.post("/forgot-password", forgotPassword);
-
-// Step 2: Verify Reset OTP
-router.post("/verify-reset-otp", verifyResetOTP);
-
-// Step 3: Reset Password
-router.post("/reset-password", resetPassword);
-
+router.post(
+  "/verify-login-otp",
+  verifyLoginOTP
+);
 
 // =====================================================
-// PROTECTED AUTH ROUTES
+// FORGOT PASSWORD / RESET PASSWORD
 // =====================================================
 
-// Change Password
+router.post(
+  "/forgot-password",
+  forgotPassword
+);
+
+router.post(
+  "/verify-reset-otp",
+  verifyResetOTP
+);
+
+router.post(
+  "/reset-password",
+  resetPassword
+);
+
+// =====================================================
+// CHANGE PASSWORD
+// =====================================================
+
 router.patch(
   "/change-password",
   authMiddleware,
   changePassword
 );
 
-// Logout
+// =====================================================
+// ADMIN PROFILE
+// =====================================================
+
+// Get currently logged-in admin profile
+router.get(
+  "/me",
+  authMiddleware,
+  getMyProfile
+);
+
+// Update currently logged-in admin profile
+router.patch(
+  "/profile",
+  authMiddleware,
+  updateMyProfile
+);
+
+// =====================================================
+// TEAM MEMBERS
+// =====================================================
+
+// Create team member
+router.post(
+  "/team-members",
+  authMiddleware,
+  createTeamMember
+);
+
+// Get all team members
+router.get(
+  "/team-members",
+  authMiddleware,
+  getTeamMembers
+);
+
+// =====================================================
+// LOGOUT
+// =====================================================
+
 router.post(
   "/logout",
   authMiddleware,
   logout
 );
-
 
 export default router;

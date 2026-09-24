@@ -1,7 +1,6 @@
 import "dotenv/config";
 import nodemailer from "nodemailer";
-console.log("SMTP HOST:", process.env.SMTP_HOST);
-console.log("SMTP PORT:", process.env.SMTP_PORT);
+
 // =====================================================
 // EMAIL TRANSPORTER
 // =====================================================
@@ -16,7 +15,6 @@ const transporter = nodemailer.createTransport({
     pass: process.env.SMTP_PASSWORD,
   },
 });
-
 
 // =====================================================
 // SEND LOGIN OTP
@@ -59,13 +57,20 @@ export const sendLoginOTPEmail = async (email, otp) => {
   });
 };
 
-
 // =====================================================
 // SEND FORGOT PASSWORD OTP
 // =====================================================
 
-export const sendForgotPasswordOTPEmail = async (email, otp) => {
-  await transporter.sendMail({
+export const sendForgotPasswordOTPEmail = async (
+  email,
+  otp
+) => {
+  console.log(
+    "FORGOT PASSWORD EMAIL TO:",
+    email
+  );
+
+  const info = await transporter.sendMail({
     from: process.env.SMTP_FROM,
     to: email,
     subject: "Proliant Password Reset OTP",
@@ -99,8 +104,12 @@ export const sendForgotPasswordOTPEmail = async (email, otp) => {
       </div>
     `,
   });
-};
 
+  console.log(
+    "PASSWORD RESET EMAIL SENT:",
+    info.messageId
+  );
+};
 
 // =====================================================
 // SEND TEMPORARY PASSWORD
@@ -150,6 +159,146 @@ export const sendTemporaryPasswordEmail = async (
   });
 };
 
+// =====================================================
+// SEND APPLICATION THANK-YOU EMAIL TO CANDIDATE
+// =====================================================
+
+export const sendCandidateApplicationThankYouEmail = async (
+  email,
+  candidateName,
+  position
+) => {
+  await transporter.sendMail({
+    from: process.env.SMTP_FROM,
+    to: email,
+    subject: "Thank You for Applying to Proliant Data LLC",
+
+    html: `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+
+        <h2>Thank You for Applying</h2>
+
+        <p>
+          Dear ${candidateName},
+        </p>
+
+        <p>
+          Thank you for applying for the
+          <strong>${position}</strong>
+          position at Proliant Data LLC.
+        </p>
+
+        <p>
+          We have successfully received your application.
+          Our team will review your profile and contact you
+          if your application is shortlisted.
+        </p>
+
+        <p>
+          Regards,<br>
+          <strong>Proliant Data LLC</strong>
+        </p>
+
+      </div>
+    `,
+  });
+};
+
+// =====================================================
+// SEND SHORTLISTED EMAIL TO HR
+// =====================================================
+
+export const sendCandidateShortlistedEmailToHR = async (
+  candidate
+) => {
+  await transporter.sendMail({
+    from: process.env.SMTP_FROM,
+    to: process.env.HR_NOTIFICATION_EMAIL,
+
+    subject: `Candidate Shortlisted - ${candidate.name}`,
+
+    html: `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+
+        <h2>Candidate Shortlisted</h2>
+
+        <p>
+          A candidate has been shortlisted.
+        </p>
+
+        <p>
+          <strong>Name:</strong> ${candidate.name}<br>
+          <strong>Email:</strong> ${candidate.email}<br>
+          <strong>Phone:</strong> ${candidate.phone}<br>
+          <strong>Position:</strong> ${candidate.position}<br>
+          <strong>Location:</strong>
+          ${candidate.location || "N/A"}<br>
+          <strong>Experience:</strong>
+          ${candidate.yearsOfExperience ?? "N/A"} years
+        </p>
+
+        <p>
+          Please review the candidate in the HR/Admin portal.
+        </p>
+
+        <p>
+          Regards,<br>
+          <strong>Proliant Data LLC</strong>
+        </p>
+
+      </div>
+    `,
+  });
+};
+
+// =====================================================
+// SEND REJECTION EMAIL TO CANDIDATE
+// =====================================================
+
+export const sendCandidateRejectedEmail = async (
+  email,
+  candidateName,
+  position
+) => {
+  await transporter.sendMail({
+    from: process.env.SMTP_FROM,
+    to: email,
+    subject: "Application Update - Proliant Data LLC",
+
+    html: `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+
+        <h2>Application Update</h2>
+
+        <p>
+          Dear ${candidateName},
+        </p>
+
+        <p>
+          Thank you for taking the time to apply for the
+          <strong>${position}</strong>
+          position at Proliant Data LLC.
+        </p>
+
+        <p>
+          After reviewing your application, we will not be
+          proceeding with your application at this time.
+        </p>
+
+        <p>
+          We appreciate your interest in Proliant Data LLC
+          and wish you success in your future opportunities.
+        </p>
+
+        <p>
+          Regards,<br>
+          <strong>Proliant Data LLC</strong>
+        </p>
+
+      </div>
+    `,
+  });
+};
 
 // =====================================================
 // EXPORT TRANSPORTER
