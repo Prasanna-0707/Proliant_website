@@ -13,6 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import Employees from "./pages/Employees";
 import TeamMembers from "./pages/TeamMembers";
 import Jobs from "./pages/Jobs";
+import Countries from "./pages/countries";
 import Candidates from "./pages/Candidates";
 import Enquiries from "./pages/Enquiries";
 
@@ -43,6 +44,8 @@ function App() {
             />
 
             <Route path="/jobs" element={<Jobs />} />
+
+            <Route path="/countries" element={<Countries />} />
 
             <Route
               path="/candidates"
