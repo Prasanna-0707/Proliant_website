@@ -1,5 +1,7 @@
 import { useState } from "react";
+
 import { useNavigate } from "react-router-dom";
+
 import {
   ArrowLeft,
   CheckCircle2,
@@ -11,6 +13,7 @@ import {
 } from "lucide-react";
 
 import proliantLogo from "../assets/logo/proliant black/proliant_black.png";
+
 import ForgotPassword from "./ForgotPassword";
 
 const API_BASE_URL =
@@ -30,10 +33,13 @@ function Login() {
   });
 
   const [showPassword, setShowPassword] = useState(false);
+
   const [showNewPassword, setShowNewPassword] = useState(false);
+
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [errors, setErrors] = useState({});
+
   const [isLoading, setIsLoading] = useState(false);
 
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -80,7 +86,6 @@ function Login() {
   /* -----------------------------------------
      LOGIN
      POST /api/auth/login
-
      Backend verifies password and sends OTP.
   ----------------------------------------- */
 
@@ -92,14 +97,17 @@ function Login() {
     }
 
     setIsLoading(true);
+
     setErrors({});
 
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
+
         headers: {
           "Content-Type": "application/json",
         },
+
         body: JSON.stringify({
           email: formData.email.trim(),
           password: formData.password,
@@ -118,22 +126,12 @@ function Login() {
       }
 
       /*
-       * TEMPORARY LOGIN FLOW:
-       * The login API already returns a valid JWT.
-       * Store that JWT so the Dashboard APIs can authenticate
-       * while we use the temporary frontend OTP (123456).
+       * Backend /auth/login verifies the password
+       * and sends the OTP.
+       *
+       * The JWT is returned only after the OTP is
+       * verified through /auth/verify-login-otp.
        */
-
-      if (result.token) {
-        localStorage.setItem("adminToken", result.token);
-      } else {
-        setErrors({
-          submit:
-            "Login succeeded, but no authentication token was returned.",
-        });
-
-        return;
-      }
 
       setStep("login-otp");
     } catch (error) {
@@ -186,10 +184,12 @@ function Login() {
       );
 
       navigate("/dashboard");
+
       return;
     }
 
     setIsLoading(true);
+
     setErrors({});
 
     try {
@@ -197,9 +197,11 @@ function Login() {
         `${API_BASE_URL}/auth/verify-login-otp`,
         {
           method: "POST",
+
           headers: {
             "Content-Type": "application/json",
           },
+
           body: JSON.stringify({
             email: formData.email.trim(),
             otp,
@@ -220,8 +222,8 @@ function Login() {
       }
 
       /*
-       * The temporary OTP flow above is used for frontend testing.
-       * If the real verify-login-otp API is used, store its JWT here.
+       * The real verify-login-otp API returns
+       * the JWT after successful OTP verification.
        */
 
       if (result.token) {
@@ -237,22 +239,20 @@ function Login() {
 
       /*
        * mustChangePassword flow
-       *
-       * Backend should return:
-       *
-       * admin.mustChangePassword === true
-       *
-       * for users who need to replace their temporary password.
        */
 
       if (result.admin?.mustChangePassword) {
         setStep("change-password");
+
         return;
       }
 
       navigate("/dashboard");
     } catch (error) {
-      console.error("Login OTP verification error:", error);
+      console.error(
+        "Login OTP verification error:",
+        error
+      );
 
       setErrors({
         submit:
@@ -266,7 +266,6 @@ function Login() {
   /* -----------------------------------------
      CHANGE PASSWORD
      PATCH /api/auth/change-password
-
      JWT received after login OTP is used here.
   ----------------------------------------- */
 
@@ -287,7 +286,8 @@ function Login() {
       newErrors.confirmPassword =
         "Please confirm your new password.";
     } else if (
-      formData.newPassword !== formData.confirmPassword
+      formData.newPassword !==
+      formData.confirmPassword
     ) {
       newErrors.confirmPassword =
         "Passwords do not match.";
@@ -295,10 +295,12 @@ function Login() {
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+
       return;
     }
 
     setIsLoading(true);
+
     setErrors({});
 
     try {
@@ -308,10 +310,12 @@ function Login() {
         `${API_BASE_URL}/auth/change-password`,
         {
           method: "PATCH",
+
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
+
           body: JSON.stringify({
             newPassword: formData.newPassword,
           }),
@@ -341,7 +345,8 @@ function Login() {
           JSON.stringify(result.admin)
         );
       } else {
-        const storedAdmin = localStorage.getItem("adminUser");
+        const storedAdmin =
+          localStorage.getItem("adminUser");
 
         if (storedAdmin) {
           try {
@@ -384,6 +389,7 @@ function Login() {
 
     if (step === "login-otp") {
       setStep("login");
+
       setFormData((previous) => ({
         ...previous,
         otp: "",
@@ -519,7 +525,10 @@ function Login() {
 
                   {renderError()}
 
-                  <form onSubmit={handleLogin} noValidate>
+                  <form
+                    onSubmit={handleLogin}
+                    noValidate
+                  >
                     {/* Email */}
 
                     <div className="mb-6">

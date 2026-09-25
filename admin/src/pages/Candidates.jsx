@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   Search,
@@ -12,6 +12,7 @@ import {
   Phone,
   MapPin,
   Download,
+  Filter,
 } from "lucide-react";
 
 import DataTable from "../components/DataTable";
@@ -69,7 +70,24 @@ function Candidates() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
-  const [jobFilter, setJobFilter] = useState("All");
+
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  const filterRef = useRef(null);
+
+  const [isRoleFilterEnabled, setIsRoleFilterEnabled] = useState(false);
+  const [isDateFilterEnabled, setIsDateFilterEnabled] = useState(false);
+
+  const [selectedRoles, setSelectedRoles] = useState([]);
+  const [selectedDateFilter, setSelectedDateFilter] = useState("");
+
+  const [customFromDate, setCustomFromDate] = useState("");
+  const [customToDate, setCustomToDate] = useState("");
+
+  const [appliedRoles, setAppliedRoles] = useState([]);
+  const [appliedDateFilter, setAppliedDateFilter] = useState("");
+  const [appliedCustomFromDate, setAppliedCustomFromDate] = useState("");
+  const [appliedCustomToDate, setAppliedCustomToDate] = useState("");
 
   const [openMenuId, setOpenMenuId] = useState(null);
   const [viewCandidate, setViewCandidate] = useState(null);
@@ -99,12 +117,9 @@ function Candidates() {
       setIsLoading(true);
       setPageError("");
 
-      const response = await fetch(
-        `${API_BASE_URL}/candidates`,
-        {
-          headers: getAuthHeaders(),
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/candidates`, {
+        headers: getAuthHeaders(),
+      });
 
       if (response.status === 401) {
         handleUnauthorized();
@@ -123,9 +138,7 @@ function Candidates() {
         result?.success !== true ||
         !Array.isArray(result?.candidates)
       ) {
-        throw new Error(
-          "Invalid candidates response from backend"
-        );
+        throw new Error("Invalid candidates response from backend");
       }
 
       const normalizedCandidates = result.candidates
@@ -140,9 +153,7 @@ function Candidates() {
     } catch (error) {
       console.error("Failed to load candidates:", error);
 
-      setPageError(
-        "Unable to load candidate applications."
-      );
+      setPageError("Unable to load candidate applications.");
 
       setCandidates([]);
     } finally {
@@ -154,17 +165,243 @@ function Candidates() {
     fetchCandidates();
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        isFilterOpen &&
+        filterRef.current &&
+        !filterRef.current.contains(event.target)
+      ) {
+        setIsFilterOpen(false);
+      }
+    };
+
+    document.addEventListener(
+      "mousedown",
+      handleClickOutside
+    );
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      );
+    };
+  }, [isFilterOpen]);
+
   const jobs = useMemo(() => {
     return [
       ...new Set(
-        candidates.map((candidate) => candidate.job)
+        candidates
+          .map((candidate) => candidate.job)
+          .filter(
+            (job) =>
+              job &&
+              job !== "N/A"
+          )
       ),
-    ].filter(Boolean);
+    ].sort((a, b) => a.localeCompare(b));
   }, [candidates]);
+
+  const toggleRole = (role) => {
+    setSelectedRoles((previous) => {
+      if (previous.includes(role)) {
+        return previous.filter(
+          (selectedRole) => selectedRole !== role
+        );
+      }
+
+      return [...previous, role];
+    });
+  };
+
+  const getStartOfDay = (date) => {
+    const result = new Date(date);
+
+    result.setHours(0, 0, 0, 0);
+
+    return result;
+  };
+
+  const getCandidateDate = (dateValue) => {
+    if (!dateValue) {
+      return null;
+    }
+
+    const parsedDate = new Date(dateValue);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return null;
+    }
+
+    return getStartOfDay(parsedDate);
+  };
+
+  const parseInputDate = (dateValue) => {
+    if (!dateValue) {
+      return null;
+    }
+
+    const [year, month, day] = dateValue
+      .split("-")
+      .map(Number);
+
+    if (!year || !month || !day) {
+      return null;
+    }
+
+    const date = new Date(
+      year,
+      month - 1,
+      day
+    );
+
+    date.setHours(0, 0, 0, 0);
+
+    return date;
+  };
+
+  const isCandidateWithinDateFilter = (
+    candidateDateValue,
+    dateFilter,
+    fromDateValue,
+    toDateValue
+  ) => {
+    const candidateDate = getCandidateDate(
+      candidateDateValue
+    );
+
+    if (!candidateDate || !dateFilter) {
+      return true;
+    }
+
+    const today = getStartOfDay(new Date());
+
+    if (dateFilter === "today") {
+      return candidateDate.getTime() === today.getTime();
+    }
+
+    if (dateFilter === "yesterday") {
+      const yesterday = new Date(today);
+
+      yesterday.setDate(
+        yesterday.getDate() - 1
+      );
+
+      return (
+        candidateDate.getTime() ===
+        yesterday.getTime()
+      );
+    }
+
+    if (dateFilter === "last7") {
+      const startDate = new Date(today);
+
+      startDate.setDate(
+        startDate.getDate() - 6
+      );
+
+      return (
+        candidateDate >= startDate &&
+        candidateDate <= today
+      );
+    }
+
+    if (dateFilter === "last30") {
+      const startDate = new Date(today);
+
+      startDate.setDate(
+        startDate.getDate() - 29
+      );
+
+      return (
+        candidateDate >= startDate &&
+        candidateDate <= today
+      );
+    }
+
+    if (dateFilter === "custom") {
+      const fromDate =
+        parseInputDate(fromDateValue);
+
+      const toDate =
+        parseInputDate(toDateValue);
+
+      if (!fromDate && !toDate) {
+        return true;
+      }
+
+      if (fromDate && !toDate) {
+        return candidateDate >= fromDate;
+      }
+
+      if (!fromDate && toDate) {
+        return candidateDate <= toDate;
+      }
+
+      return (
+        candidateDate >= fromDate &&
+        candidateDate <= toDate
+      );
+    }
+
+    return true;
+  };
+
+  const clearFilters = () => {
+    setIsRoleFilterEnabled(false);
+    setIsDateFilterEnabled(false);
+
+    setSelectedRoles([]);
+    setSelectedDateFilter("");
+
+    setCustomFromDate("");
+    setCustomToDate("");
+
+    setAppliedRoles([]);
+    setAppliedDateFilter("");
+    setAppliedCustomFromDate("");
+    setAppliedCustomToDate("");
+  };
+
+  const applyFilters = () => {
+    const validRoles = selectedRoles.filter((role) =>
+      jobs.includes(role)
+    );
+
+    const dateIsCustom =
+      selectedDateFilter === "custom";
+
+    setAppliedRoles(
+      isRoleFilterEnabled ? validRoles : []
+    );
+
+    setAppliedDateFilter(
+      isDateFilterEnabled
+        ? selectedDateFilter
+        : ""
+    );
+
+    setAppliedCustomFromDate(
+      isDateFilterEnabled && dateIsCustom
+        ? customFromDate
+        : ""
+    );
+
+    setAppliedCustomToDate(
+      isDateFilterEnabled && dateIsCustom
+        ? customToDate
+        : ""
+    );
+
+    setIsFilterOpen(false);
+  };
 
   const filteredCandidates = useMemo(() => {
     return candidates.filter((candidate) => {
-      const searchValue = search.toLowerCase().trim();
+      const searchValue = search
+        .toLowerCase()
+        .trim();
 
       const matchesSearch =
         (candidate.name || "")
@@ -199,21 +436,34 @@ function Candidates() {
         statusFilter === "All" ||
         candidate.status === statusFilter;
 
-      const matchesJob =
-        jobFilter === "All" ||
-        candidate.job === jobFilter;
+      const matchesRole =
+        appliedRoles.length === 0 ||
+        appliedRoles.includes(candidate.job);
+
+      const matchesAppliedDate =
+        !appliedDateFilter ||
+        isCandidateWithinDateFilter(
+          candidate.appliedDate,
+          appliedDateFilter,
+          appliedCustomFromDate,
+          appliedCustomToDate
+        );
 
       return (
         matchesSearch &&
         matchesStatus &&
-        matchesJob
+        matchesRole &&
+        matchesAppliedDate
       );
     });
   }, [
     candidates,
     search,
     statusFilter,
-    jobFilter,
+    appliedRoles,
+    appliedDateFilter,
+    appliedCustomFromDate,
+    appliedCustomToDate,
   ]);
 
   const formatDate = (date) => {
@@ -776,29 +1026,289 @@ function Candidates() {
             </option>
 
             {candidateStatuses.map((status) => (
-              <option key={status} value={status}>
+              <option
+                key={status}
+                value={status}
+              >
                 {status}
               </option>
             ))}
           </select>
 
-          <select
-            value={jobFilter}
-            onChange={(event) =>
-              setJobFilter(event.target.value)
-            }
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:focus:ring-red-950/40 sm:w-52"
+          <div
+            ref={filterRef}
+            className="relative w-full sm:w-auto"
           >
-            <option value="All">
-              All Jobs
-            </option>
+            <button
+              type="button"
+              onClick={() =>
+                setIsFilterOpen((previous) =>
+                  !previous
+                )
+              }
+              className={`inline-flex w-full items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold transition-colors sm:w-auto ${
+                isFilterOpen ||
+                appliedRoles.length > 0 ||
+                Boolean(appliedDateFilter)
+                  ? "border-[#EF3B3A] bg-red-50 text-[#EF3B3A] dark:border-[#EF3B3A] dark:bg-red-950/20 dark:text-red-300"
+                  : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
+              }`}
+              aria-expanded={isFilterOpen}
+              aria-label="Open candidate filters"
+            >
+              <Filter size={17} />
+              Filter
+            </button>
 
-            {jobs.map((job) => (
-              <option key={job} value={job}>
-                {job}
-              </option>
-            ))}
-          </select>
+            {isFilterOpen && (
+              <div className="absolute right-0 top-12 z-40 w-[min(92vw,380px)] rounded-xl border border-gray-200 bg-white p-4 shadow-xl dark:border-gray-700 dark:bg-gray-900">
+                <div className="space-y-4">
+                  {/* Role Filter */}
+                  <div>
+                    <label className="flex cursor-pointer items-center gap-3 text-sm font-medium text-gray-800 dark:text-gray-200">
+                      <input
+                        type="checkbox"
+                        checked={isRoleFilterEnabled}
+                        onChange={(event) => {
+                          const checked =
+                            event.target.checked;
+
+                          setIsRoleFilterEnabled(
+                            checked
+                          );
+
+                          if (!checked) {
+                            setSelectedRoles([]);
+                          }
+                        }}
+                        className="h-4 w-4 rounded border-gray-300 text-[#EF3B3A] accent-[#EF3B3A] focus:ring-[#EF3B3A]"
+                      />
+
+                      <span>Role</span>
+                    </label>
+
+                    {isRoleFilterEnabled && (
+                      <div className="mt-3 space-y-2 border-l border-gray-200 pl-7 dark:border-gray-700">
+                        {jobs.length === 0 ? (
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            No roles available.
+                          </p>
+                        ) : (
+                          jobs.map((job) => (
+                            <label
+                              key={job}
+                              className="flex cursor-pointer items-center gap-3 text-sm text-gray-700 dark:text-gray-300"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedRoles.includes(
+                                  job
+                                )}
+                                onChange={() =>
+                                  toggleRole(job)
+                                }
+                                className="h-4 w-4 rounded border-gray-300 text-[#EF3B3A] accent-[#EF3B3A] focus:ring-[#EF3B3A]"
+                              />
+
+                              <span>{job}</span>
+                            </label>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Applied Date Filter */}
+                  <div>
+                    <label className="flex cursor-pointer items-center gap-3 text-sm font-medium text-gray-800 dark:text-gray-200">
+                      <input
+                        type="checkbox"
+                        checked={isDateFilterEnabled}
+                        onChange={(event) => {
+                          const checked =
+                            event.target.checked;
+
+                          setIsDateFilterEnabled(
+                            checked
+                          );
+
+                          if (!checked) {
+                            setSelectedDateFilter("");
+                            setCustomFromDate("");
+                            setCustomToDate("");
+                          }
+                        }}
+                        className="h-4 w-4 rounded border-gray-300 text-[#EF3B3A] accent-[#EF3B3A] focus:ring-[#EF3B3A]"
+                      />
+
+                      <span>Applied Date</span>
+                    </label>
+
+                    {isDateFilterEnabled && (
+                      <div className="mt-3 space-y-3 border-l border-gray-200 pl-7 dark:border-gray-700">
+                        <label className="flex cursor-pointer items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
+                          <input
+                            type="radio"
+                            name="applied-date-filter"
+                            value="today"
+                            checked={
+                              selectedDateFilter ===
+                              "today"
+                            }
+                            onChange={(event) =>
+                              setSelectedDateFilter(
+                                event.target.value
+                              )
+                            }
+                            className="h-4 w-4 border-gray-300 text-[#EF3B3A] accent-[#EF3B3A] focus:ring-[#EF3B3A]"
+                          />
+
+                          <span>Today</span>
+                        </label>
+
+                        <label className="flex cursor-pointer items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
+                          <input
+                            type="radio"
+                            name="applied-date-filter"
+                            value="yesterday"
+                            checked={
+                              selectedDateFilter ===
+                              "yesterday"
+                            }
+                            onChange={(event) =>
+                              setSelectedDateFilter(
+                                event.target.value
+                              )
+                            }
+                            className="h-4 w-4 border-gray-300 text-[#EF3B3A] accent-[#EF3B3A] focus:ring-[#EF3B3A]"
+                          />
+
+                          <span>Yesterday</span>
+                        </label>
+
+                        <label className="flex cursor-pointer items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
+                          <input
+                            type="radio"
+                            name="applied-date-filter"
+                            value="last7"
+                            checked={
+                              selectedDateFilter ===
+                              "last7"
+                            }
+                            onChange={(event) =>
+                              setSelectedDateFilter(
+                                event.target.value
+                              )
+                            }
+                            className="h-4 w-4 border-gray-300 text-[#EF3B3A] accent-[#EF3B3A] focus:ring-[#EF3B3A]"
+                          />
+
+                          <span>Last 7 Days</span>
+                        </label>
+
+                        <label className="flex cursor-pointer items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
+                          <input
+                            type="radio"
+                            name="applied-date-filter"
+                            value="last30"
+                            checked={
+                              selectedDateFilter ===
+                              "last30"
+                            }
+                            onChange={(event) =>
+                              setSelectedDateFilter(
+                                event.target.value
+                              )
+                            }
+                            className="h-4 w-4 border-gray-300 text-[#EF3B3A] accent-[#EF3B3A] focus:ring-[#EF3B3A]"
+                          />
+
+                          <span>Last 30 Days</span>
+                        </label>
+
+                        <label className="flex cursor-pointer items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
+                          <input
+                            type="radio"
+                            name="applied-date-filter"
+                            value="custom"
+                            checked={
+                              selectedDateFilter ===
+                              "custom"
+                            }
+                            onChange={(event) =>
+                              setSelectedDateFilter(
+                                event.target.value
+                              )
+                            }
+                            className="h-4 w-4 border-gray-300 text-[#EF3B3A] accent-[#EF3B3A] focus:ring-[#EF3B3A]"
+                          />
+
+                          <span>Custom Date Range</span>
+                        </label>
+
+                        {selectedDateFilter ===
+                          "custom" && (
+                          <div className="space-y-3 pt-1">
+                            <div>
+                              <label className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">
+                                From
+                              </label>
+
+                              <input
+                                type="date"
+                                value={customFromDate}
+                                onChange={(event) =>
+                                  setCustomFromDate(
+                                    event.target.value
+                                  )
+                                }
+                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:ring-red-950/40"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">
+                                To
+                              </label>
+
+                              <input
+                                type="date"
+                                value={customToDate}
+                                onChange={(event) =>
+                                  setCustomToDate(
+                                    event.target.value
+                                  )
+                                }
+                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:ring-red-950/40"
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-5 flex items-center justify-end gap-3 border-t border-gray-100 pt-4 dark:border-gray-800">
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                  >
+                    Clear
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={applyFilters}
+                    className="rounded-lg bg-[#EF3B3A] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-600"
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -1050,7 +1560,9 @@ function Candidates() {
                 </p>
 
                 <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
-                  {formatDate(viewCandidate.appliedDate)}
+                  {formatDate(
+                    viewCandidate.appliedDate
+                  )}
                 </p>
               </div>
 
@@ -1089,7 +1601,9 @@ function Candidates() {
       {editingCandidate && (
         <div
           className="fixed inset-0 z-55 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
-          onClick={() => setEditingCandidate(null)}
+          onClick={() =>
+            setEditingCandidate(null)
+          }
         >
           <div
             className="w-full max-w-md rounded-xl bg-white shadow-xl dark:border dark:border-gray-800 dark:bg-gray-900"
@@ -1110,7 +1624,9 @@ function Candidates() {
 
               <button
                 type="button"
-                onClick={() => setEditingCandidate(null)}
+                onClick={() =>
+                  setEditingCandidate(null)
+                }
                 className="rounded-lg p-2 text-gray-400 hover:bg-gray-50 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-white"
                 aria-label="Close modal"
               >
@@ -1172,7 +1688,9 @@ function Candidates() {
       {deleteCandidate && (
         <div
           className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
-          onClick={() => setDeleteCandidate(null)}
+          onClick={() =>
+            setDeleteCandidate(null)
+          }
         >
           <div
             className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:border dark:border-gray-800 dark:bg-gray-900"
