@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+
+import { useEffect, useRef, useState } from "react";
 
 const JobApplicationForm = ({ selectedJob, onClose }) => {
   const [submitStatus, setSubmitStatus] = useState("idle");
@@ -7,6 +8,22 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
   const [otherAreaOfInterest, setOtherAreaOfInterest] = useState("");
   const [isFresher, setIsFresher] = useState("");
   const [noticePeriod, setNoticePeriod] = useState("");
+
+  // Resume upload states
+  const [resumeFile, setResumeFile] = useState(null);
+  const [resumeError, setResumeError] = useState("");
+
+  const resumeInputRef = useRef(null);
+
+  // Maximum resume file size: 2 MB
+  const MAX_FILE_SIZE = 2 * 1024 * 1024;
+
+  // Allowed resume formats
+  const ALLOWED_FILE_TYPES = [
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ];
 
   /* =====================================================
      FRESHER → NOTICE PERIOD
@@ -59,12 +76,106 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
   }, []);
 
   /* =====================================================
+     HANDLE RESUME UPLOAD
+  ===================================================== */
+
+  const handleResumeChange = (event) => {
+    const file = event.target.files?.[0];
+
+    setResumeError("");
+    setResumeFile(null);
+
+    if (!file) {
+      return;
+    }
+
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
+      setResumeError(
+        "Resume size must be 2 MB or smaller."
+      );
+
+      event.target.value = "";
+      return;
+    }
+
+    // Validate file format
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+      setResumeError(
+        "Only PDF, DOC, and DOCX files are allowed."
+      );
+
+      event.target.value = "";
+      return;
+    }
+
+    // Store valid resume
+    setResumeFile(file);
+  };
+
+  /* =====================================================
+     REMOVE SELECTED RESUME
+  ===================================================== */
+
+  const handleRemoveResume = () => {
+    setResumeFile(null);
+    setResumeError("");
+
+    if (resumeInputRef.current) {
+      resumeInputRef.current.value = "";
+    }
+  };
+
+  /* =====================================================
      HANDLE SUBMIT
   ===================================================== */
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
+    // Prevent duplicate submission while loading
+    if (submitStatus === "loading") {
+      return;
+    }
+
+    // Resume is mandatory
+    if (!resumeFile) {
+      setResumeError("Please upload your resume.");
+
+      return;
+    }
+
+    // Validate file size again before submission
+    if (resumeFile.size > MAX_FILE_SIZE) {
+      setResumeError(
+        "Resume size must be 2 MB or smaller."
+      );
+
+      setResumeFile(null);
+
+      if (resumeInputRef.current) {
+        resumeInputRef.current.value = "";
+      }
+
+      return;
+    }
+
+    // Validate file format again before submission
+    if (!ALLOWED_FILE_TYPES.includes(resumeFile.type)) {
+      setResumeError(
+        "Only PDF, DOC, and DOCX files are allowed."
+      );
+
+      setResumeFile(null);
+
+      if (resumeInputRef.current) {
+        resumeInputRef.current.value = "";
+      }
+
+      return;
+    }
+
+    setResumeError("");
     setSubmitStatus("loading");
 
     // Temporary frontend-only submission.
@@ -752,9 +863,12 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
                 </label>
 
                 <input
+                  ref={resumeInputRef}
                   type="file"
                   required
                   accept=".pdf,.doc,.docx"
+                  onChange={handleResumeChange}
+                  aria-describedby="resume-requirements resume-error"
                   className="
                     block
                     w-full
@@ -780,9 +894,74 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
                   "
                 />
 
-                <p className="mt-2 text-xs text-black/35">
-                  PDF, DOC or DOCX
+                {/* FILE REQUIREMENTS */}
+
+                <p
+                  id="resume-requirements"
+                  className="mt-2 text-xs text-black/40"
+                >
+                  PDF, DOC or DOCX · Max 2 MB
                 </p>
+
+                {/* SELECTED FILE */}
+
+                {resumeFile && (
+                  <div
+                    className="
+                      mt-3
+                      flex
+                      items-start
+                      justify-between
+                      gap-3
+                      rounded-lg
+                      bg-green-50
+                      p-3
+                    "
+                  >
+                    <div className="min-w-0">
+                      <p className="break-all text-xs font-medium text-green-800">
+                        {resumeFile.name}
+                      </p>
+
+                      <p className="mt-1 text-xs text-green-700">
+                        {(resumeFile.size / (1024 * 1024)).toFixed(2)} MB
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleRemoveResume}
+                      aria-label="Remove selected resume"
+                      className="
+                        shrink-0
+                        text-xs
+                        font-medium
+                        text-[#EF3B3A]
+                        transition-colors
+                        hover:text-black
+                      "
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+
+                {/* RESUME ERROR */}
+
+                {resumeError && (
+                  <p
+                    id="resume-error"
+                    role="alert"
+                    className="
+                      mt-2
+                      text-xs
+                      font-medium
+                      text-[#EF3B3A]
+                    "
+                  >
+                    {resumeError}
+                  </p>
+                )}
               </div>
 
               {/* NOTICE PERIOD */}
