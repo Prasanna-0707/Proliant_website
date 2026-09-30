@@ -247,33 +247,6 @@ const ProliantAdvantage = () => {
             transparent, outcome-driven partnership model committed to your
             success.
           </p>
-
-          {/* =========================
-              READ MORE
-          ========================== */}
-
-          <div
-            className="
-              mt-6
-              sm:mt-7
-              md:mt-8
-              lg:mt-10
-            "
-          >
-            <a
-              href="/who-we-are"
-              className="proliant-mask3-button"
-            >
-              <span className="proliant-mask3-text">
-                READ MORE
-              </span>
-
-              <span className="proliant-mask3-arrow">
-                →
-              </span>
-            </a>
-          </div>
-
         </motion.div>
       </div>
     </section>

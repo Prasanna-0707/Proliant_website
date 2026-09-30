@@ -297,8 +297,6 @@ function Header() {
 
   return (
     <>
-      {/* ================= HEADER ================= */}
-
       <header
         className="
           relative
@@ -316,8 +314,6 @@ function Header() {
           dark:bg-gray-900
         "
       >
-        {/* Page Title */}
-
         <div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
             Admin Portal
@@ -829,9 +825,7 @@ function Header() {
                   disabled:opacity-70
                 "
               >
-                {isChangingPassword
-                  ? "Updating..."
-                  : "Update Password"}
+                {isChangingPassword ? "Updating..." : "Update Password"}
               </button>
             </div>
           </div>

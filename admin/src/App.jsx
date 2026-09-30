@@ -13,9 +13,9 @@ import Dashboard from "./pages/Dashboard";
 import Employees from "./pages/Employees";
 import TeamMembers from "./pages/TeamMembers";
 import Jobs from "./pages/Jobs";
+import Countries from "./pages/countries";
 import Candidates from "./pages/Candidates";
 import Enquiries from "./pages/Enquiries";
-import Countries from "./pages/Countries";
 import Profile from "./pages/Profile";
 
 function App() {
@@ -46,6 +46,8 @@ function App() {
 
             <Route path="/jobs" element={<Jobs />} />
             
+            <Route path="/countries" element={<Countries />} />
+
             <Route path="/countries" element={<Countries />} />
 
             <Route

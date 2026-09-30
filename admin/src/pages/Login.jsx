@@ -38,6 +38,10 @@ function Login() {
 
   const [showForgotPassword, setShowForgotPassword] = useState(false);
 
+  /* -----------------------------------------
+     HANDLE INPUT CHANGE
+  ----------------------------------------- */
+
   const handleChange = (event) => {
     const { name, value } = event.target;
 
@@ -63,7 +67,7 @@ function Login() {
     if (!formData.email.trim()) {
       newErrors.email = "Email address is required.";
     } else if (
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())
     ) {
       newErrors.email = "Enter a valid email address.";
     }
@@ -79,9 +83,16 @@ function Login() {
 
   /* -----------------------------------------
      LOGIN
+
      POST /api/auth/login
 
-     Backend verifies password and sends OTP.
+     Backend:
+     1. Verifies email/password
+     2. Generates OTP
+     3. Sends OTP email
+     4. Does NOT return JWT yet
+
+     JWT is returned only after OTP verification.
   ----------------------------------------- */
 
   const handleLogin = async (event) => {
@@ -110,38 +121,35 @@ function Login() {
 
       if (!response.ok || !result.success) {
         setErrors({
-          submit:
-            result.message || "Invalid email or password.",
+          submit: result.message || "Invalid email or password.",
         });
 
         return;
       }
 
       /*
-       * TEMPORARY LOGIN FLOW:
-       * The login API already returns a valid JWT.
-       * Store that JWT so the Dashboard APIs can authenticate
-       * while we use the temporary frontend OTP (123456).
+       * IMPORTANT:
+       *
+       * Do NOT expect result.token here.
+       *
+       * The backend sends the login OTP after successful
+       * password verification. JWT is generated only after
+       * /auth/verify-login-otp succeeds.
        */
 
-      if (result.token) {
-        localStorage.setItem("adminToken", result.token);
-      } else {
-        setErrors({
-          submit:
-            "Login succeeded, but no authentication token was returned.",
-        });
+      localStorage.removeItem("adminToken");
 
-        return;
-      }
+      setFormData((previous) => ({
+        ...previous,
+        otp: "",
+      }));
 
       setStep("login-otp");
     } catch (error) {
       console.error("Login error:", error);
 
       setErrors({
-        submit:
-          "Unable to connect to the server. Please try again.",
+        submit: "Unable to connect to the server. Please try again.",
       });
     } finally {
       setIsLoading(false);
@@ -150,7 +158,12 @@ function Login() {
 
   /* -----------------------------------------
      VERIFY LOGIN OTP
+
      POST /api/auth/verify-login-otp
+
+     Backend returns:
+     - token
+     - admin
   ----------------------------------------- */
 
   const handleVerifyLoginOtp = async (event) => {
@@ -158,34 +171,16 @@ function Login() {
 
     const otp = formData.otp.trim();
 
+    const newErrors = {};
+
     if (!otp) {
-      setErrors({
-        otp: "OTP is required.",
-      });
-
-      return;
+      newErrors.otp = "OTP is required.";
+    } else if (!/^\d{6}$/.test(otp)) {
+      newErrors.otp = "Enter the 6-digit OTP.";
     }
 
-    if (!/^\d{6}$/.test(otp)) {
-      setErrors({
-        otp: "Enter the 6-digit OTP.",
-      });
-
-      return;
-    }
-
-    if (import.meta.env.DEV && otp === "123456") {
-      localStorage.setItem(
-        "adminUser",
-        JSON.stringify({
-          name: "Proliant Admin",
-          email: formData.email.trim(),
-          role: "Admin",
-          mustChangePassword: false,
-        })
-      );
-
-      navigate("/dashboard");
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
@@ -220,13 +215,27 @@ function Login() {
       }
 
       /*
-       * The temporary OTP flow above is used for frontend testing.
-       * If the real verify-login-otp API is used, store its JWT here.
+       * JWT MUST come from the real backend response.
        */
 
-      if (result.token) {
-        localStorage.setItem("adminToken", result.token);
+      if (!result.token) {
+        setErrors({
+          submit:
+            "OTP verified, but no authentication token was returned.",
+        });
+
+        return;
       }
+
+      /*
+       * Store JWT for authenticated API requests.
+       */
+
+      localStorage.setItem("adminToken", result.token);
+
+      /*
+       * Store admin information if backend returns it.
+       */
 
       if (result.admin) {
         localStorage.setItem(
@@ -236,13 +245,8 @@ function Login() {
       }
 
       /*
-       * mustChangePassword flow
-       *
-       * Backend should return:
-       *
-       * admin.mustChangePassword === true
-       *
-       * for users who need to replace their temporary password.
+       * If backend says password must be changed,
+       * show change-password screen.
        */
 
       if (result.admin?.mustChangePassword) {
@@ -250,13 +254,16 @@ function Login() {
         return;
       }
 
+      /*
+       * Normal successful login.
+       */
+
       navigate("/dashboard");
     } catch (error) {
       console.error("Login OTP verification error:", error);
 
       setErrors({
-        submit:
-          "Unable to verify OTP. Please try again.",
+        submit: "Unable to verify OTP. Please try again.",
       });
     } finally {
       setIsLoading(false);
@@ -265,9 +272,11 @@ function Login() {
 
   /* -----------------------------------------
      CHANGE PASSWORD
+
      PATCH /api/auth/change-password
 
-     JWT received after login OTP is used here.
+     JWT received after OTP verification
+     is used here.
   ----------------------------------------- */
 
   const handleChangePassword = async (event) => {
@@ -276,8 +285,7 @@ function Login() {
     const newErrors = {};
 
     if (!formData.newPassword) {
-      newErrors.newPassword =
-        "New password is required.";
+      newErrors.newPassword = "New password is required.";
     } else if (formData.newPassword.length < 8) {
       newErrors.newPassword =
         "Password must be at least 8 characters.";
@@ -289,8 +297,7 @@ function Login() {
     } else if (
       formData.newPassword !== formData.confirmPassword
     ) {
-      newErrors.confirmPassword =
-        "Passwords do not match.";
+      newErrors.confirmPassword = "Passwords do not match.";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -304,6 +311,16 @@ function Login() {
     try {
       const token = localStorage.getItem("adminToken");
 
+      if (!token) {
+        setErrors({
+          submit:
+            "Your session has expired. Please login again.",
+        });
+
+        setStep("login");
+        return;
+      }
+
       const response = await fetch(
         `${API_BASE_URL}/auth/change-password`,
         {
@@ -313,6 +330,7 @@ function Login() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
+            currentPassword: formData.password,
             newPassword: formData.newPassword,
           }),
         }
@@ -331,8 +349,7 @@ function Login() {
       }
 
       /*
-       * Update stored admin information if backend
-       * returns the updated admin.
+       * Update stored admin information.
        */
 
       if (result.admin) {
@@ -384,6 +401,7 @@ function Login() {
 
     if (step === "login-otp") {
       setStep("login");
+
       setFormData((previous) => ({
         ...previous,
         otp: "",
@@ -417,11 +435,15 @@ function Login() {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
+
       {/* -----------------------------------------
-          LEFT BRANDING
+          LEFT BRANDING SECTION
       ----------------------------------------- */}
 
-      <section className="relative hidden min-h-screen w-5/12 overflow-hidden bg-[#EF3B3A] lg:flex lg:flex-col lg:justify-between">
+      <section className="relative hidden min-h-screen w-5/12 overflow-hidden bg-[#DA3838] lg:flex lg:flex-col lg:justify-between">
+
+        {/* Decorative Circles */}
+
         <div className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full border-80 border-white/10" />
 
         <div className="pointer-events-none absolute -bottom-40 -left-40 h-128 w-lg rounded-full border-90 border-white/10" />
@@ -520,6 +542,7 @@ function Login() {
                   {renderError()}
 
                   <form onSubmit={handleLogin} noValidate>
+
                     {/* Email */}
 
                     <div className="mb-6">
@@ -645,8 +668,6 @@ function Login() {
                         Forgot password?
                       </button>
                     </div>
-
-                    {renderError()}
 
                     {/* Sign In */}
 

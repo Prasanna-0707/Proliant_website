@@ -177,9 +177,8 @@ const NavLinks = ({ scrolled }) => {
           section: "leaders",
         },
         {
-          name: "Contact Us",
-          path: "/contact",
-          section: "get-in-touch",
+          name: "Global Presence",
+          section: "global-presence",
         },
       ],
     },

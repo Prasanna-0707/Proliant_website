@@ -1,7 +1,8 @@
+
 @baseUrl = http://localhost:5000/api
 
 # Update this after successful OTP verification
-@token = YOUR_JWT_TOKEN_HERE
+@token = YOUR_VALID_JWT_TOKEN
 
 
 ############################################################
@@ -13,7 +14,7 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "admin@proliant.com",
+  "email": "bogachandrapu@gmail.com",
   "password": "Admin@123"
 }
 
@@ -25,7 +26,7 @@ POST {{baseUrl}}/auth/verify-login-otp
 Content-Type: application/json
 
 {
-  "email": "admin@proliant.com",
+  "email": "bogachandrapu@gmail.com",
   "otp": "ENTER_LOGIN_OTP_HERE"
 }
 
@@ -383,5 +384,171 @@ Content-Type: application/json
 ### 9.1 Export Candidates to Excel - ADMIN
 GET {{baseUrl}}/candidates/export/excel
 Authorization: Bearer {{token}}
+
+###
+
+
+############################################################
+# 10. TEAM MEMBER APIs
+############################################################
+
+### 10.1 GET ALL TEAM MEMBERS
+# Expected:
+# 200 OK
+# Should return the existing admins also.
+GET {{baseUrl}}/auth/team-members
+Authorization: Bearer {{token}}
+
+###
+
+### 10.2 GET ONE TEAM MEMBER
+# First run GET ALL above and copy one _id.
+# Replace TEAM_MEMBER_ID below.
+GET {{baseUrl}}/auth/team-members/TEAM_MEMBER_ID
+Authorization: Bearer {{token}}
+
+###
+
+### 10.3 CREATE TEAM MEMBER
+# Temporary password will be generated automatically
+# and sent to the provided email.
+POST {{baseUrl}}/auth/team-members
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "email": "team.member@proliant.com"
+}
+
+###
+
+### 10.4 UPDATE TEAM MEMBER
+# Replace TEAM_MEMBER_ID with the ID returned by GET/CREATE.
+PUT {{baseUrl}}/auth/team-members/TEAM_MEMBER_ID
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "email": "updated.member@proliant.com"
+}
+
+###
+
+### 10.5 DELETE TEAM MEMBER
+# Replace TEAM_MEMBER_ID with the team member ID.
+# Do NOT use the ID of the currently logged-in admin.
+# Our API prevents deleting your own account.
+DELETE {{baseUrl}}/auth/team-members/TEAM_MEMBER_ID
+Authorization: Bearer {{token}}
+
+###
+
+
+############################################################
+# 11. ADMIN PROFILE APIs
+############################################################
+
+### 11.1 Get My Admin Profile
+# Requires a valid JWT obtained after login + OTP verification
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{token}}
+
+###
+
+### 11.2 Update My Admin Profile
+# Only name, phone and designation can be updated
+PATCH {{baseUrl}}/auth/profile
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Prasanna Kumar",
+  "phone": "9876543210",
+  "designation": "Administrator"
+}
+
+###
+
+### 11.3 Get My Profile After Update
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{token}}
+
+###
+
+### 11.4 Try Updating Email
+# This should fail because email changes are not allowed
+# through the profile API
+PATCH {{baseUrl}}/auth/profile
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "email": "newemail@example.com"
+}
+
+###
+
+### 11.5 Try Updating Password
+# This should fail because password changes must use
+# the existing /auth/change-password API
+PATCH {{baseUrl}}/auth/profile
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "password": "NewPassword@123"
+}
+
+###
+
+
+############################################################
+# 12. CANDIDATE EMAIL NOTIFICATIONS
+############################################################
+
+### 12.1 Candidate Application - Thank You Email
+# Candidate submits an application
+# Thank-you email should be sent to the candidate
+POST {{baseUrl}}/candidates
+Content-Type: application/json
+
+{
+  "position": "SAP Consultant",
+  "areaOfInterest": "SAP",
+  "name": "Test Candidate",
+  "email": "YOUR_TEST_EMAIL@gmail.com",
+  "phone": "9876543210",
+  "isFresher": false,
+  "location": "Hyderabad",
+  "yearsOfExperience": 3,
+  "highestQualification": "B.Tech",
+  "currentCompany": "ABC Technologies",
+  "noticePeriod": "30 Days",
+  "coverMessage": "Interested in the SAP Consultant position."
+}
+
+###
+
+### 12.2 Candidate Shortlisted - HR Email
+# Replace CANDIDATE_ID with an existing candidate _id
+PUT {{baseUrl}}/candidates/CANDIDATE_ID
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "Shortlisted"
+}
+
+###
+
+### 12.3 Candidate Rejected - Candidate Email
+# Replace CANDIDATE_ID with an existing candidate _id
+PUT {{baseUrl}}/candidates/CANDIDATE_ID
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "Rejected"
+}
 
 ###

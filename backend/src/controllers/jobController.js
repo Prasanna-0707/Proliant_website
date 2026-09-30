@@ -1,16 +1,19 @@
 import Job from "../models/Job.js";
 
-// GET all jobs
+// =====================================================
+// GET ALL JOBS
+// =====================================================
+
 export const getJobs = async (req, res) => {
   try {
     const jobs = await Job.find().sort({ createdAt: -1 });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       jobs,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Failed to fetch jobs",
       error: error.message,
@@ -18,7 +21,11 @@ export const getJobs = async (req, res) => {
   }
 };
 
-// GET one job
+
+// =====================================================
+// GET SINGLE JOB
+// =====================================================
+
 export const getJob = async (req, res) => {
   try {
     const job = await Job.findById(req.params.id);
@@ -30,12 +37,12 @@ export const getJob = async (req, res) => {
       });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       job,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Failed to fetch job",
       error: error.message,
@@ -43,7 +50,11 @@ export const getJob = async (req, res) => {
   }
 };
 
-// POST - Create a new job
+
+// =====================================================
+// CREATE JOB
+// =====================================================
+
 export const createJob = async (req, res) => {
   try {
     const {
@@ -57,6 +68,20 @@ export const createJob = async (req, res) => {
       requirements,
     } = req.body;
 
+    if (
+      !title ||
+      !department ||
+      !employmentType ||
+      !location ||
+      !jobDescription ||
+      !requirements
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "All required job fields must be provided",
+      });
+    }
+
     const job = await Job.create({
       title,
       department,
@@ -68,13 +93,13 @@ export const createJob = async (req, res) => {
       requirements,
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "Job created successfully",
       job,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Failed to create job",
       error: error.message,
@@ -82,14 +107,18 @@ export const createJob = async (req, res) => {
   }
 };
 
-// PUT - Update a job
+
+// =====================================================
+// UPDATE JOB
+// =====================================================
+
 export const updateJob = async (req, res) => {
   try {
     const job = await Job.findByIdAndUpdate(
       req.params.id,
       req.body,
       {
-        returnDocument: "after",
+        new: true,
         runValidators: true,
       }
     );
@@ -101,13 +130,13 @@ export const updateJob = async (req, res) => {
       });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Job updated successfully",
       job,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Failed to update job",
       error: error.message,
@@ -115,7 +144,11 @@ export const updateJob = async (req, res) => {
   }
 };
 
-// DELETE - Delete a job
+
+// =====================================================
+// DELETE JOB
+// =====================================================
+
 export const deleteJob = async (req, res) => {
   try {
     const job = await Job.findByIdAndDelete(req.params.id);
@@ -127,12 +160,12 @@ export const deleteJob = async (req, res) => {
       });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Job deleted successfully",
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Failed to delete job",
       error: error.message,

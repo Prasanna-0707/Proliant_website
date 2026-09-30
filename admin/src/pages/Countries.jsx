@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo, useState } from "react";
 import {
   Search,
@@ -15,7 +16,12 @@ import {
 } from "lucide-react";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+  import.meta.env.VITE_API_BASE_URL ||
+  "http://localhost:5000/api";
+
+// ---------------------------------------------------------
+// EMPTY FORM
+// ---------------------------------------------------------
 
 const emptyForm = {
   country: "",
@@ -28,6 +34,10 @@ const emptyForm = {
   phone: "",
   email: "",
 };
+
+// ---------------------------------------------------------
+// COUNTRY CODE HELPER
+// ---------------------------------------------------------
 
 const getCountryCode = (country = "") => {
   const countryCodeMap = {
@@ -54,6 +64,17 @@ const getCountryCode = (country = "") => {
     .toUpperCase();
 };
 
+// ---------------------------------------------------------
+// REUSABLE INPUT CLASS
+// ---------------------------------------------------------
+
+const inputClass =
+  "w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-red-500 dark:focus:ring-red-500/20";
+
+// ---------------------------------------------------------
+// COUNTRIES COMPONENT
+// ---------------------------------------------------------
+
 function Countries() {
   const [countries, setCountries] = useState([]);
   const [search, setSearch] = useState("");
@@ -68,15 +89,26 @@ function Countries() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // ---------------------------------------------------------
+  // -------------------------------------------------------
+  // AUTH TOKEN
+  // -------------------------------------------------------
+
+  const getToken = () => {
+    return localStorage.getItem("adminToken");
+  };
+
+  // -------------------------------------------------------
   // GET ALL LOCATIONS
-  // ---------------------------------------------------------
+  // -------------------------------------------------------
+
   const fetchLocations = async () => {
     try {
       setLoading(true);
       setError("");
 
-      const response = await fetch(`${API_BASE_URL}/locations`);
+      const response = await fetch(
+        `${API_BASE_URL}/locations`
+      );
 
       const result = await response.json();
 
@@ -95,19 +127,27 @@ function Countries() {
       setCountries(locations);
     } catch (err) {
       console.error("Fetch locations error:", err);
-      setError(err.message || "Failed to load countries.");
+
+      setError(
+        err.message || "Failed to load countries."
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  // -------------------------------------------------------
+  // INITIAL FETCH
+  // -------------------------------------------------------
+
   useEffect(() => {
     fetchLocations();
   }, []);
 
-  // ---------------------------------------------------------
-  // SEARCH
-  // ---------------------------------------------------------
+  // -------------------------------------------------------
+  // SEARCH AND FILTER
+  // -------------------------------------------------------
+
   const filteredCountries = useMemo(() => {
     const value = search.toLowerCase().trim();
 
@@ -132,9 +172,10 @@ function Countries() {
     });
   }, [countries, search]);
 
-  // ---------------------------------------------------------
+  // -------------------------------------------------------
   // FORM CHANGE
-  // ---------------------------------------------------------
+  // -------------------------------------------------------
+
   const handleChange = (event) => {
     const { name, value } = event.target;
 
@@ -144,20 +185,22 @@ function Countries() {
     }));
   };
 
-  // ---------------------------------------------------------
+  // -------------------------------------------------------
   // OPEN ADD MODAL
-  // ---------------------------------------------------------
+  // -------------------------------------------------------
+
   const handleOpenAdd = () => {
     setEditingCountry(null);
-    setForm(emptyForm);
+    setForm({ ...emptyForm });
     setError("");
     setShowModal(true);
     setOpenMenu(null);
   };
 
-  // ---------------------------------------------------------
+  // -------------------------------------------------------
   // OPEN EDIT MODAL
-  // ---------------------------------------------------------
+  // -------------------------------------------------------
+
   const handleOpenEdit = (item) => {
     setEditingCountry(item);
 
@@ -168,11 +211,13 @@ function Countries() {
       city: item.city || "",
       address: item.address || "",
       latitude:
-        item.latitude !== undefined && item.latitude !== null
+        item.latitude !== undefined &&
+        item.latitude !== null
           ? String(item.latitude)
           : "",
       longitude:
-        item.longitude !== undefined && item.longitude !== null
+        item.longitude !== undefined &&
+        item.longitude !== null
           ? String(item.longitude)
           : "",
       phone: item.phone || "",
@@ -184,28 +229,23 @@ function Countries() {
     setOpenMenu(null);
   };
 
-  // ---------------------------------------------------------
+  // -------------------------------------------------------
   // CLOSE MODAL
-  // ---------------------------------------------------------
+  // -------------------------------------------------------
+
   const handleCloseModal = () => {
     if (saving) return;
 
     setShowModal(false);
     setEditingCountry(null);
-    setForm(emptyForm);
+    setForm({ ...emptyForm });
     setError("");
   };
 
-  // ---------------------------------------------------------
-  // AUTH TOKEN
-  // ---------------------------------------------------------
-  const getToken = () => {
-    return localStorage.getItem("adminToken");
-  };
-
-  // ---------------------------------------------------------
+  // -------------------------------------------------------
   // CREATE / UPDATE LOCATION
-  // ---------------------------------------------------------
+  // -------------------------------------------------------
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -217,7 +257,26 @@ function Countries() {
     const token = getToken();
 
     if (!token) {
-      setError("Your session has expired. Please login again.");
+      setError(
+        "Your session has expired. Please login again."
+      );
+      return;
+    }
+
+    // Validate numeric coordinates if provided
+    if (
+      form.latitude.trim() !== "" &&
+      !Number.isFinite(Number(form.latitude))
+    ) {
+      setError("Please enter a valid latitude.");
+      return;
+    }
+
+    if (
+      form.longitude.trim() !== "" &&
+      !Number.isFinite(Number(form.longitude))
+    ) {
+      setError("Please enter a valid longitude.");
       return;
     }
 
@@ -231,14 +290,17 @@ function Countries() {
         state: form.state.trim(),
         city: form.city.trim(),
         address: form.address.trim(),
+
         latitude:
           form.latitude.trim() === ""
             ? undefined
             : Number(form.latitude),
+
         longitude:
           form.longitude.trim() === ""
             ? undefined
             : Number(form.longitude),
+
         phone: form.phone.trim(),
         email: form.email.trim(),
       };
@@ -298,9 +360,10 @@ function Countries() {
     }
   };
 
-  // ---------------------------------------------------------
+  // -------------------------------------------------------
   // DELETE LOCATION
-  // ---------------------------------------------------------
+  // -------------------------------------------------------
+
   const handleDelete = async (id) => {
     const confirmed = window.confirm(
       "Are you sure you want to delete this location?"
@@ -359,9 +422,10 @@ function Countries() {
     }
   };
 
-  // ---------------------------------------------------------
-  // LOADING
-  // ---------------------------------------------------------
+  // -------------------------------------------------------
+  // LOADING STATE
+  // -------------------------------------------------------
+
   if (loading) {
     return (
       <section className="min-h-screen bg-gray-100 px-4 py-6 text-gray-900 transition-colors dark:bg-gray-950 dark:text-white sm:px-6 lg:px-8">
@@ -378,9 +442,17 @@ function Countries() {
     );
   }
 
+  // -------------------------------------------------------
+  // MAIN UI
+  // -------------------------------------------------------
+
   return (
     <section className="min-h-screen bg-gray-100 px-4 py-6 text-gray-900 transition-colors dark:bg-gray-950 dark:text-white sm:px-6 lg:px-8">
-      {/* Header */}
+
+      {/* ===================================================
+          HEADER
+      ==================================================== */}
+
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -403,14 +475,20 @@ function Countries() {
         </button>
       </div>
 
-      {/* Error */}
+      {/* ===================================================
+          ERROR MESSAGE
+      ==================================================== */}
+
       {error && !showModal && (
         <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400">
           {error}
         </div>
       )}
 
-      {/* Search */}
+      {/* ===================================================
+          SEARCH
+      ==================================================== */}
+
       <div className="mb-5">
         <div className="relative w-full max-w-md">
           <Search
@@ -430,8 +508,14 @@ function Countries() {
         </div>
       </div>
 
-      {/* Country List */}
+      {/* ===================================================
+          COUNTRY LIST
+      ==================================================== */}
+
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+
+        {/* List Header */}
+
         <div className="border-b border-gray-100 px-4 py-4 sm:px-6 dark:border-gray-800">
           <h2 className="text-base font-semibold">
             Country List
@@ -446,13 +530,15 @@ function Countries() {
           </p>
         </div>
 
-        {/* =====================================================
+        {/* =================================================
             DESKTOP TABLE
-        ====================================================== */}
+        ================================================== */}
+
         <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-300 text-left">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/50">
+
                 <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                   Country
                 </th>
@@ -461,7 +547,7 @@ function Countries() {
                   Code
                 </th>
 
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 w-45">
+                <th className="w-45 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                   Company
                 </th>
 
@@ -503,7 +589,7 @@ function Countries() {
               {filteredCountries.length === 0 ? (
                 <tr>
                   <td
-                    colSpan="11"
+                    colSpan={11}
                     className="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400"
                   >
                     No countries found.
@@ -515,29 +601,42 @@ function Countries() {
                     key={item._id}
                     className="border-b border-gray-100 last:border-b-0 dark:border-gray-800"
                   >
+
+                    {/* Country */}
+
                     <td className="px-4 py-4">
                       <div className="font-medium text-gray-900 dark:text-white">
                         {item.country || "—"}
                       </div>
                     </td>
 
+                    {/* Country Code */}
+
                     <td className="px-4 py-4 text-sm text-gray-600 dark:text-gray-300">
                       {getCountryCode(item.country)}
                     </td>
 
+                    {/* Company */}
+
                     <td className="px-4 py-4">
-                      <div className="font-medium text-gray-900 dark:text-white w-45">
+                      <div className="w-45 font-medium text-gray-900 dark:text-white">
                         {item.companyName || "—"}
                       </div>
                     </td>
+
+                    {/* State */}
 
                     <td className="px-4 py-4 text-sm text-gray-600 dark:text-gray-300">
                       {item.state || "—"}
                     </td>
 
+                    {/* City */}
+
                     <td className="px-4 py-4 text-sm text-gray-600 dark:text-gray-300">
                       {item.city || "—"}
                     </td>
+
+                    {/* Address */}
 
                     <td className="px-4 py-4">
                       <div
@@ -548,17 +647,25 @@ function Countries() {
                       </div>
                     </td>
 
+                    {/* Latitude */}
+
                     <td className="px-4 py-4 text-sm text-gray-600 dark:text-gray-300">
                       {item.latitude ?? "—"}
                     </td>
+
+                    {/* Longitude */}
 
                     <td className="px-4 py-4 text-sm text-gray-600 dark:text-gray-300">
                       {item.longitude ?? "—"}
                     </td>
 
+                    {/* Phone */}
+
                     <td className="px-4 py-4 text-sm text-gray-600 dark:text-gray-300">
                       {item.phone || "—"}
                     </td>
+
+                    {/* Email */}
 
                     <td className="px-4 py-4">
                       <div
@@ -568,6 +675,8 @@ function Countries() {
                         {item.email || "—"}
                       </div>
                     </td>
+
+                    {/* Actions */}
 
                     <td className="relative px-4 py-4">
                       <button
@@ -586,6 +695,7 @@ function Countries() {
 
                       {openMenu === item._id && (
                         <div className="absolute right-4 top-12 z-20 w-36 rounded-lg border border-gray-200 bg-white py-1 text-left shadow-lg dark:border-gray-700 dark:bg-gray-800">
+
                           <button
                             type="button"
                             onClick={() =>
@@ -607,6 +717,7 @@ function Countries() {
                             <Trash2 size={15} />
                             Delete
                           </button>
+
                         </div>
                       )}
                     </td>
@@ -617,9 +728,10 @@ function Countries() {
           </table>
         </div>
 
-        {/* =====================================================
+        {/* =================================================
             MOBILE CARDS
-        ====================================================== */}
+        ================================================== */}
+
         <div className="space-y-3 p-3 md:hidden">
           {filteredCountries.length === 0 ? (
             <div className="rounded-lg border border-dashed border-gray-200 px-4 py-10 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
@@ -631,7 +743,9 @@ function Countries() {
                 key={item._id}
                 className="relative overflow-hidden rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900"
               >
+
                 {/* Card Header */}
+
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
@@ -656,7 +770,8 @@ function Countries() {
                     </div>
                   </div>
 
-                  {/* Actions */}
+                  {/* Card Actions */}
+
                   <div className="relative shrink-0">
                     <button
                       type="button"
@@ -674,6 +789,7 @@ function Countries() {
 
                     {openMenu === item._id && (
                       <div className="absolute right-0 top-10 z-30 w-36 rounded-lg border border-gray-200 bg-white py-1 shadow-xl dark:border-gray-700 dark:bg-gray-800">
+
                         <button
                           type="button"
                           onClick={() =>
@@ -695,12 +811,14 @@ function Countries() {
                           <Trash2 size={15} />
                           Delete
                         </button>
+
                       </div>
                     )}
                   </div>
                 </div>
 
                 {/* Location */}
+
                 <div className="mt-4 rounded-lg bg-gray-50 p-3 dark:bg-gray-800/60">
                   <div className="flex items-start gap-3">
                     <MapPin
@@ -726,7 +844,9 @@ function Countries() {
                 </div>
 
                 {/* Contact Information */}
+
                 <div className="mt-4 grid grid-cols-1 gap-2.5">
+
                   {item.phone && (
                     <div className="flex min-w-0 items-center gap-3">
                       <Phone
@@ -752,9 +872,11 @@ function Countries() {
                       </span>
                     </div>
                   )}
+
                 </div>
 
                 {/* Coordinates */}
+
                 {(item.latitude !== undefined &&
                   item.latitude !== null) ||
                 (item.longitude !== undefined &&
@@ -777,19 +899,24 @@ function Countries() {
                     </div>
                   </div>
                 ) : null}
+
               </div>
             ))
           )}
         </div>
       </div>
 
-      {/* =====================================================
+      {/* ===================================================
           ADD / EDIT MODAL
-      ====================================================== */}
+      ==================================================== */}
+
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+
           <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900">
+
             {/* Modal Header */}
+
             <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-800">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -816,6 +943,7 @@ function Countries() {
             </div>
 
             {/* Modal Error */}
+
             {error && (
               <div className="mx-6 mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400">
                 {error}
@@ -823,12 +951,15 @@ function Countries() {
             )}
 
             {/* Modal Body */}
+
             <form
               onSubmit={handleSubmit}
               className="overflow-y-auto px-6 py-5"
             >
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+
                 {/* Country */}
+
                 <div className="md:col-span-2">
                   <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Country *
@@ -841,11 +972,12 @@ function Countries() {
                     onChange={handleChange}
                     placeholder="Enter country name"
                     required
-                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-red-500 dark:focus:ring-red-500/20"
+                    className={inputClass}
                   />
                 </div>
 
-                {/* Company */}
+                {/* Company Name */}
+
                 <div className="md:col-span-2">
                   <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Company Name
@@ -857,11 +989,12 @@ function Countries() {
                     value={form.companyName}
                     onChange={handleChange}
                     placeholder="Enter company name"
-                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-red-500 dark:focus:ring-red-500/20"
+                    className={inputClass}
                   />
                 </div>
 
                 {/* State */}
+
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
                     State
@@ -873,11 +1006,12 @@ function Countries() {
                     value={form.state}
                     onChange={handleChange}
                     placeholder="Enter state"
-                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-red-500 dark:focus:ring-red-500/20"
+                    className={inputClass}
                   />
                 </div>
 
                 {/* City */}
+
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
                     City
@@ -889,11 +1023,12 @@ function Countries() {
                     value={form.city}
                     onChange={handleChange}
                     placeholder="Enter city"
-                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-red-500 dark:focus:ring-red-500/20"
+                    className={inputClass}
                   />
                 </div>
 
                 {/* Address */}
+
                 <div className="md:col-span-2">
                   <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Address
@@ -903,13 +1038,14 @@ function Countries() {
                     name="address"
                     value={form.address}
                     onChange={handleChange}
-                    rows="3"
+                    rows={3}
                     placeholder="Enter complete address"
-                    className="w-full resize-none rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-red-500 dark:focus:ring-red-500/20"
+                    className={`${inputClass} resize-none`}
                   />
                 </div>
 
                 {/* Latitude */}
+
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Latitude
@@ -922,11 +1058,12 @@ function Countries() {
                     value={form.latitude}
                     onChange={handleChange}
                     placeholder="Enter latitude"
-                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-red-500 dark:focus:ring-red-500/20"
+                    className={inputClass}
                   />
                 </div>
 
                 {/* Longitude */}
+
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Longitude
@@ -939,11 +1076,12 @@ function Countries() {
                     value={form.longitude}
                     onChange={handleChange}
                     placeholder="Enter longitude"
-                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-red-500 dark:focus:ring-red-500/20"
+                    className={inputClass}
                   />
                 </div>
 
                 {/* Phone */}
+
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Phone
@@ -955,11 +1093,12 @@ function Countries() {
                     value={form.phone}
                     onChange={handleChange}
                     placeholder="Enter phone number"
-                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-red-500 dark:focus:ring-red-500/20"
+                    className={inputClass}
                   />
                 </div>
 
                 {/* Email */}
+
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Email
@@ -971,13 +1110,16 @@ function Countries() {
                     value={form.email}
                     onChange={handleChange}
                     placeholder="Enter email address"
-                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-red-500 dark:focus:ring-red-500/20"
+                    className={inputClass}
                   />
                 </div>
+
               </div>
 
-              {/* Footer */}
+              {/* Modal Footer */}
+
               <div className="mt-6 flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-800">
+
                 <button
                   type="button"
                   onClick={handleCloseModal}
@@ -1007,11 +1149,13 @@ function Countries() {
                     ? "Update Country"
                     : "Add Country"}
                 </button>
+
               </div>
             </form>
           </div>
         </div>
       )}
+
     </section>
   );
 }

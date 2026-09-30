@@ -18,6 +18,7 @@ const GlobalPresence = () => {
           md:px-8
           md:pt-14
         "
+        id="global-presence"
       >
         <div
           className="

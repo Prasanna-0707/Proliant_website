@@ -4,9 +4,11 @@ import {
   Search,
   MoreVertical,
   X,
+  Pencil,
+  Trash2,
+  ShieldCheck,
   UserCheck,
   UserX,
-  Trash2,
 } from "lucide-react";
 
 import DataTable from "../components/DataTable";
@@ -22,11 +24,12 @@ const emptyForm = {
 
 function TeamMembers() {
   const [teamMembers, setTeamMembers] = useState([]);
-
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingMember, setEditingMember] = useState(null);
 
   const [formData, setFormData] = useState(emptyForm);
   const [errors, setErrors] = useState({});
@@ -37,14 +40,7 @@ function TeamMembers() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-
   const [pageError, setPageError] = useState("");
-
-  /*
-   * ---------------------------------------------------------
-   * AUTH HELPERS
-   * ---------------------------------------------------------
-   */
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem("adminToken");
@@ -58,15 +54,8 @@ function TeamMembers() {
   const handleUnauthorized = () => {
     localStorage.removeItem("adminToken");
     localStorage.removeItem("adminUser");
-
     window.location.href = "/login";
   };
-
-  /*
-   * ---------------------------------------------------------
-   * FETCH TEAM MEMBERS
-   * ---------------------------------------------------------
-   */
 
   const fetchTeamMembers = async () => {
     const token = localStorage.getItem("adminToken");
@@ -80,16 +69,10 @@ function TeamMembers() {
     setPageError("");
 
     try {
-      /*
-       * This endpoint will be added with the Team Members backend.
-       */
-      const response = await fetch(
-        `${API_BASE_URL}/auth/team-members`,
-        {
-          method: "GET",
-          headers: getAuthHeaders(),
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/auth/team-members`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
 
       if (response.status === 401) {
         handleUnauthorized();
@@ -104,21 +87,12 @@ function TeamMembers() {
         );
       }
 
-      const memberData =
-        result.teamMembers ||
-        result.data ||
-        [];
-
-      setTeamMembers(memberData);
+      setTeamMembers(result.teamMembers || result.data || []);
     } catch (error) {
-      console.error(
-        "Failed to fetch team members:",
-        error
-      );
+      console.error("Failed to fetch team members:", error);
 
       setPageError(
-        error.message ||
-          "Unable to load team members. Please try again."
+        error.message || "Unable to load team members. Please try again."
       );
     } finally {
       setIsLoading(false);
@@ -129,40 +103,22 @@ function TeamMembers() {
     fetchTeamMembers();
   }, []);
 
-  /*
-   * ---------------------------------------------------------
-   * SEARCH + STATUS FILTER
-   * ---------------------------------------------------------
-   */
-
   const filteredTeamMembers = useMemo(() => {
-    return teamMembers.filter((member) => {
-      const searchValue = search.toLowerCase().trim();
+    const searchValue = search.toLowerCase().trim();
 
+    return teamMembers.filter((member) => {
       const matchesSearch =
-        member.name
-          ?.toLowerCase()
-          .includes(searchValue) ||
-        member.email
-          ?.toLowerCase()
-          .includes(searchValue) ||
-        member.role
-          ?.toLowerCase()
-          .includes(searchValue);
+        !searchValue ||
+        member.name?.toLowerCase().includes(searchValue) ||
+        member.email?.toLowerCase().includes(searchValue) ||
+        member.role?.toLowerCase().includes(searchValue);
 
       const matchesStatus =
-        statusFilter === "All" ||
-        member.status === statusFilter;
+        statusFilter === "All" || member.status === statusFilter;
 
       return matchesSearch && matchesStatus;
     });
   }, [teamMembers, search, statusFilter]);
-
-  /*
-   * ---------------------------------------------------------
-   * FORM HANDLING
-   * ---------------------------------------------------------
-   */
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -189,12 +145,9 @@ function TeamMembers() {
     if (!formData.email.trim()) {
       newErrors.email = "Email address is required.";
     } else if (
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-        formData.email
-      )
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())
     ) {
-      newErrors.email =
-        "Enter a valid email address.";
+      newErrors.email = "Enter a valid email address.";
     }
 
     if (!formData.role) {
@@ -202,27 +155,32 @@ function TeamMembers() {
     }
 
     setErrors(newErrors);
-
     return Object.keys(newErrors).length === 0;
   };
 
-  /*
-   * ---------------------------------------------------------
-   * OPEN ADD MODAL
-   * ---------------------------------------------------------
-   */
-
   const openAddModal = () => {
+    setIsEditMode(false);
+    setEditingMember(null);
     setFormData(emptyForm);
     setErrors({});
+    setOpenMenuId(null);
     setIsModalOpen(true);
   };
 
-  /*
-   * ---------------------------------------------------------
-   * ADD TEAM MEMBER
-   * ---------------------------------------------------------
-   */
+  const openEditModal = (member) => {
+    setIsEditMode(true);
+    setEditingMember(member);
+
+    setFormData({
+      name: member.name || "",
+      email: member.email || "",
+      role: member.role || "HR",
+    });
+
+    setErrors({});
+    setOpenMenuId(null);
+    setIsModalOpen(true);
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -239,12 +197,17 @@ function TeamMembers() {
     }
 
     setIsSubmitting(true);
+    setErrors({});
 
     try {
+      const memberId = editingMember?._id || editingMember?.id;
+
       const response = await fetch(
-        `${API_BASE_URL}/auth/team-members`,
+        isEditMode
+          ? `${API_BASE_URL}/auth/team-members/${memberId}`
+          : `${API_BASE_URL}/auth/team-members`,
         {
-          method: "POST",
+          method: isEditMode ? "PUT" : "POST",
           headers: getAuthHeaders(),
           body: JSON.stringify({
             name: formData.name.trim(),
@@ -264,39 +227,38 @@ function TeamMembers() {
       if (!response.ok || !result.success) {
         throw new Error(
           result.message ||
-            "Failed to add team member."
+            (isEditMode
+              ? "Failed to update team member."
+              : "Failed to create team member.")
         );
       }
 
-      /*
-       * Refresh from backend after successful creation.
-       */
       await fetchTeamMembers();
 
       setFormData(emptyForm);
       setErrors({});
+      setEditingMember(null);
+      setIsEditMode(false);
       setIsModalOpen(false);
     } catch (error) {
       console.error(
-        "Team member creation failed:",
+        isEditMode
+          ? "Team member update failed:"
+          : "Team member creation failed:",
         error
       );
 
       setErrors({
         submit:
           error.message ||
-          "Unable to add team member. Please try again.",
+          (isEditMode
+            ? "Unable to update team member."
+            : "Unable to create team member."),
       });
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  /*
-   * ---------------------------------------------------------
-   * CLOSE MODAL
-   * ---------------------------------------------------------
-   */
 
   const handleCloseModal = () => {
     if (isSubmitting) {
@@ -306,13 +268,9 @@ function TeamMembers() {
     setIsModalOpen(false);
     setFormData(emptyForm);
     setErrors({});
+    setEditingMember(null);
+    setIsEditMode(false);
   };
-
-  /*
-   * ---------------------------------------------------------
-   * TOGGLE STATUS
-   * ---------------------------------------------------------
-   */
 
   const handleToggleStatus = async (member) => {
     const token = localStorage.getItem("adminToken");
@@ -322,21 +280,14 @@ function TeamMembers() {
       return;
     }
 
-    const memberId =
-      member._id || member.id;
-
+    const memberId = member._id || member.id;
     const newStatus =
-      member.status === "Active"
-        ? "Inactive"
-        : "Active";
+      member.status === "Active" ? "Inactive" : "Active";
 
     setOpenMenuId(null);
+    setPageError("");
 
     try {
-      /*
-       * Backend status endpoint will be finalized
-       * when the Team Members API is implemented.
-       */
       const response = await fetch(
         `${API_BASE_URL}/auth/team-members/${memberId}`,
         {
@@ -357,30 +308,19 @@ function TeamMembers() {
 
       if (!response.ok || !result.success) {
         throw new Error(
-          result.message ||
-            "Failed to update team member status."
+          result.message || "Failed to update team member status."
         );
       }
 
       await fetchTeamMembers();
     } catch (error) {
-      console.error(
-        "Team member status update failed:",
-        error
-      );
+      console.error("Team member status update failed:", error);
 
       setPageError(
-        error.message ||
-          "Unable to update team member status."
+        error.message || "Unable to update team member status."
       );
     }
   };
-
-  /*
-   * ---------------------------------------------------------
-   * DELETE TEAM MEMBER
-   * ---------------------------------------------------------
-   */
 
   const handleDelete = async () => {
     if (!deleteMember) {
@@ -394,10 +334,10 @@ function TeamMembers() {
       return;
     }
 
-    const memberId =
-      deleteMember._id || deleteMember.id;
+    const memberId = deleteMember._id || deleteMember.id;
 
     setIsDeleting(true);
+    setPageError("");
 
     try {
       const response = await fetch(
@@ -417,67 +357,59 @@ function TeamMembers() {
 
       if (!response.ok || !result.success) {
         throw new Error(
-          result.message ||
-            "Failed to delete team member."
+          result.message || "Failed to delete team member."
         );
       }
 
       setTeamMembers((previous) =>
         previous.filter(
-          (member) =>
-            (member._id || member.id) !== memberId
+          (member) => (member._id || member.id) !== memberId
         )
       );
 
       setDeleteMember(null);
     } catch (error) {
-      console.error(
-        "Team member deletion failed:",
-        error
-      );
+      console.error("Team member deletion failed:", error);
 
       setPageError(
-        error.message ||
-          "Unable to delete team member. Please try again."
+        error.message || "Unable to delete team member. Please try again."
       );
     } finally {
       setIsDeleting(false);
     }
   };
 
-  /*
-   * ---------------------------------------------------------
-   * TABLE COLUMNS
-   * ---------------------------------------------------------
-   */
-
   const teamMemberColumns = [
     {
       key: "name",
       label: "Team Member",
       render: (member) => (
-        <div>
-          <p className="font-semibold text-gray-900">
-            {member.name}
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50 text-[#EF3B3A]">
+            <ShieldCheck size={18} />
+          </div>
 
-          <p className="mt-0.5 text-xs text-gray-500">
-            {member.email}
-          </p>
+          <div>
+            <p className="font-semibold text-gray-900">
+              {member.name || member.email}
+            </p>
+
+            <p className="mt-0.5 text-xs text-gray-500">
+              {member.email}
+            </p>
+          </div>
         </div>
       ),
     },
-
     {
       key: "role",
       label: "Role",
       render: (member) => (
         <span className="font-medium text-gray-700">
-          {member.role}
+          {member.role || "HR"}
         </span>
       ),
     },
-
     {
       key: "status",
       label: "Status",
@@ -489,17 +421,26 @@ function TeamMembers() {
               : "bg-gray-100 text-gray-500"
           }`}
         >
-          {member.status}
+          {member.status || "Active"}
         </span>
       ),
     },
-
+    {
+      key: "createdAt",
+      label: "Created",
+      render: (member) => (
+        <span className="text-sm text-gray-500">
+          {member.createdAt
+            ? new Date(member.createdAt).toLocaleDateString()
+            : "—"}
+        </span>
+      ),
+    },
     {
       key: "actions",
       label: "Actions",
       render: (member) => {
-        const memberId =
-          member._id || member.id;
+        const memberId = member._id || member.id;
 
         return (
           <div className="relative">
@@ -509,9 +450,7 @@ function TeamMembers() {
                 event.stopPropagation();
 
                 setOpenMenuId((previous) =>
-                  previous === memberId
-                    ? null
-                    : memberId
+                  previous === memberId ? null : memberId
                 );
               }}
               className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700"
@@ -524,9 +463,16 @@ function TeamMembers() {
               <div className="absolute right-0 top-10 z-30 w-48 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
                 <button
                   type="button"
-                  onClick={() =>
-                    handleToggleStatus(member)
-                  }
+                  onClick={() => openEditModal(member)}
+                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                >
+                  <Pencil size={16} />
+                  <span>Edit Team Member</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleToggleStatus(member)}
                   className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
                 >
                   {member.status === "Active" ? (
@@ -553,10 +499,7 @@ function TeamMembers() {
                   className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
                 >
                   <Trash2 size={16} />
-
-                  <span>
-                    Delete Team Member
-                  </span>
+                  <span>Delete Team Member</span>
                 </button>
               </div>
             )}
@@ -566,16 +509,8 @@ function TeamMembers() {
     },
   ];
 
-  /*
-   * ---------------------------------------------------------
-   * RENDER
-   * ---------------------------------------------------------
-   */
-
   return (
     <div className="relative p-5 sm:p-6">
-      {/* Page Header */}
-
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-gray-900">
@@ -597,8 +532,6 @@ function TeamMembers() {
         </button>
       </div>
 
-      {/* Page Error */}
-
       {pageError && (
         <div className="mb-5 flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3">
           <p className="text-sm font-medium text-red-600">
@@ -616,8 +549,6 @@ function TeamMembers() {
         </div>
       )}
 
-      {/* Search & Filter */}
-
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative w-full sm:max-w-sm">
           <Search
@@ -628,9 +559,7 @@ function TeamMembers() {
           <input
             type="search"
             value={search}
-            onChange={(event) =>
-              setSearch(event.target.value)
-            }
+            onChange={(event) => setSearch(event.target.value)}
             placeholder="Search team members..."
             className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50"
           />
@@ -638,9 +567,7 @@ function TeamMembers() {
 
         <select
           value={statusFilter}
-          onChange={(event) =>
-            setStatusFilter(event.target.value)
-          }
+          onChange={(event) => setStatusFilter(event.target.value)}
           className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 sm:w-40"
         >
           <option value="All">All Status</option>
@@ -648,8 +575,6 @@ function TeamMembers() {
           <option value="Inactive">Inactive</option>
         </select>
       </div>
-
-      {/* Team Members Table */}
 
       <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
         <div className="border-b border-gray-100 px-5 py-4">
@@ -661,9 +586,7 @@ function TeamMembers() {
             {isLoading
               ? "Loading team members..."
               : `${filteredTeamMembers.length} team member${
-                  filteredTeamMembers.length !== 1
-                    ? "s"
-                    : ""
+                  filteredTeamMembers.length !== 1 ? "s" : ""
                 } found`}
           </p>
         </div>
@@ -683,8 +606,6 @@ function TeamMembers() {
         )}
       </section>
 
-      {/* Add Team Member Modal */}
-
       {isModalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6"
@@ -692,20 +613,18 @@ function TeamMembers() {
         >
           <div
             className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white shadow-xl"
-            onClick={(event) =>
-              event.stopPropagation()
-            }
+            onClick={(event) => event.stopPropagation()}
           >
-            {/* Modal Header */}
-
             <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">
-                  Add Team Member
+                  {isEditMode ? "Edit Team Member" : "Add Team Member"}
                 </h2>
 
                 <p className="mt-1 text-xs text-gray-500">
-                  Add a new admin or HR team member.
+                  {isEditMode
+                    ? "Update the team member details."
+                    : "Add a new admin or HR team member."}
                 </p>
               </div>
 
@@ -720,12 +639,8 @@ function TeamMembers() {
               </button>
             </div>
 
-            {/* Form */}
-
             <form onSubmit={handleSubmit}>
               <div className="space-y-5 px-6 py-6">
-                {/* Full Name */}
-
                 <div>
                   <label
                     htmlFor="name"
@@ -754,8 +669,6 @@ function TeamMembers() {
                     </p>
                   )}
                 </div>
-
-                {/* Email */}
 
                 <div>
                   <label
@@ -786,8 +699,6 @@ function TeamMembers() {
                   )}
                 </div>
 
-                {/* Role */}
-
                 <div>
                   <label
                     htmlFor="role"
@@ -801,15 +712,14 @@ function TeamMembers() {
                     name="role"
                     value={formData.role}
                     onChange={handleChange}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50"
+                    className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-700 outline-none transition focus:ring-4 ${
+                      errors.role
+                        ? "border-red-300 focus:border-red-400 focus:ring-red-50"
+                        : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50"
+                    }`}
                   >
-                    <option value="Admin">
-                      Admin
-                    </option>
-
-                    <option value="HR">
-                      HR
-                    </option>
+                    <option value="Admin">Admin</option>
+                    <option value="HR">HR</option>
                   </select>
 
                   {errors.role && (
@@ -819,18 +729,13 @@ function TeamMembers() {
                   )}
                 </div>
 
-                {/* Information */}
-
                 <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
                   <p className="text-xs leading-5 text-gray-500">
-                    A temporary password will be generated
-                    and provided by the backend. The team
-                    member will be required to change it
-                    after their first login.
+                    {isEditMode
+                      ? "Updating the team member details will not change the existing password."
+                      : "A temporary password will be generated automatically and sent to this email address. The team member will be required to change it after their first login."}
                   </p>
                 </div>
-
-                {/* Submit Error */}
 
                 {errors.submit && (
                   <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3">
@@ -840,8 +745,6 @@ function TeamMembers() {
                   </div>
                 )}
               </div>
-
-              {/* Modal Footer */}
 
               <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-6 py-4 sm:flex-row sm:justify-end">
                 <button
@@ -859,7 +762,11 @@ function TeamMembers() {
                   className="w-full rounded-lg bg-[#EF3B3A] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
                 >
                   {isSubmitting
-                    ? "Adding..."
+                    ? isEditMode
+                      ? "Saving..."
+                      : "Creating..."
+                    : isEditMode
+                    ? "Save Changes"
                     : "Add Team Member"}
                 </button>
               </div>
@@ -868,21 +775,14 @@ function TeamMembers() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-
       {deleteMember && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
-          onClick={() =>
-            !isDeleting &&
-            setDeleteMember(null)
-          }
+          onClick={() => !isDeleting && setDeleteMember(null)}
         >
           <div
             className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
-            onClick={(event) =>
-              event.stopPropagation()
-            }
+            onClick={(event) => event.stopPropagation()}
           >
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-50 text-[#EF3B3A]">
               <Trash2 size={20} />
@@ -895,7 +795,7 @@ function TeamMembers() {
             <p className="mt-2 text-sm leading-6 text-gray-500">
               Are you sure you want to delete{" "}
               <span className="font-semibold text-gray-700">
-                {deleteMember.name}
+                {deleteMember.name || deleteMember.email}
               </span>
               ? This action cannot be undone.
             </p>
@@ -903,9 +803,7 @@ function TeamMembers() {
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <button
                 type="button"
-                onClick={() =>
-                  setDeleteMember(null)
-                }
+                onClick={() => setDeleteMember(null)}
                 disabled={isDeleting}
                 className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
               >
@@ -918,9 +816,7 @@ function TeamMembers() {
                 disabled={isDeleting}
                 className="w-full rounded-lg bg-[#EF3B3A] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
               >
-                {isDeleting
-                  ? "Deleting..."
-                  : "Delete Team Member"}
+                {isDeleting ? "Deleting..." : "Delete Team Member"}
               </button>
             </div>
           </div>
