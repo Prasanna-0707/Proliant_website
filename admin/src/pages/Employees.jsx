@@ -517,11 +517,11 @@ function Employees() {
       label: "Employee",
       render: (employee) => (
         <div>
-          <p className="font-semibold text-gray-900 dark:text-white">
+          <p className="font-semibold text-gray-900">
             {employee.name}
           </p>
 
-          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+          <p className="mt-0.5 text-xs text-gray-500">
             {employee.email}
           </p>
         </div>
@@ -555,8 +555,8 @@ function Employees() {
         <span
           className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
             employee.status === "Active"
-              ? "bg-green-50 text-green-600 dark:bg-green-950/50 dark:text-green-400"
-              : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
+              ? "bg-green-50 text-green-600"
+              : "bg-gray-100 text-gray-500"
           }`}
         >
           {employee.status}
@@ -653,15 +653,15 @@ function Employees() {
   ];
 
   return (
-    <div className="relative min-h-screen bg-gray-200 p-5 transition-colors dark:bg-gray-950 sm:p-6">
+    <div className="relative p-5 sm:p-6">
       {/* Page Header */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
             Employees
           </h1>
 
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-sm text-gray-500">
             Manage your Proliant employees and their status.
           </p>
         </div>
@@ -701,7 +701,7 @@ function Employees() {
         <div className="relative w-full sm:max-w-sm">
           <Search
             size={18}
-            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
           />
 
           <input
@@ -711,7 +711,7 @@ function Employees() {
               setSearch(event.target.value)
             }
             placeholder="Search employees..."
-            className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-red-950/40"
+            className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50"
           />
         </div>
 
@@ -739,9 +739,9 @@ function Employees() {
       </div>
 
       {/* Employee Table */}
-      <section className="overflow-hidden rounded-xl border border-gray-200 bg-white transition-colors dark:border-gray-800 dark:bg-gray-900">
-        <div className="border-b border-gray-100 px-5 py-4 dark:border-gray-800">
-          <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+      <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+        <div className="border-b border-gray-100 px-5 py-4">
+          <h2 className="text-base font-semibold text-gray-900">
             Employee List
           </h2>
 
@@ -775,7 +775,7 @@ function Employees() {
       {/* Add / Edit Employee Modal */}
       {isModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6"
           onClick={handleCloseModal}
         >
           <div
@@ -784,15 +784,15 @@ function Employees() {
               event.stopPropagation()
             }
           >
-            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-gray-800">
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h2 className="text-lg font-semibold text-gray-900">
                   {editingEmployee
                     ? "Edit Employee"
                     : "Add Employee"}
                 </h2>
 
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                <p className="mt-1 text-xs text-gray-500">
                   {editingEmployee
                     ? "Update employee information."
                     : "Add a new employee to your organization."}
@@ -816,7 +816,7 @@ function Employees() {
                 <div>
                   <label
                     htmlFor="name"
-                    className="mb-2 block text-sm font-semibold text-gray-800 dark:text-gray-200"
+                    className="mb-2 block text-sm font-semibold text-gray-800"
                   >
                     Full Name
                   </label>
@@ -828,10 +828,10 @@ function Employees() {
                     value={formData.name}
                     onChange={handleChange}
                     placeholder="Enter employee name"
-                    className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:ring-4 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 ${
+                    className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:ring-4 ${
                       errors.name
-                        ? "border-red-300 focus:border-red-400 focus:ring-red-50 dark:border-red-700 dark:focus:ring-red-950/40"
-                        : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50 dark:border-gray-700 dark:focus:ring-red-950/40"
+                        ? "border-red-300 focus:border-red-400 focus:ring-red-50"
+                        : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50"
                     }`}
                   />
 
@@ -846,7 +846,7 @@ function Employees() {
                 <div>
                   <label
                     htmlFor="email"
-                    className="mb-2 block text-sm font-semibold text-gray-800 dark:text-gray-200"
+                    className="mb-2 block text-sm font-semibold text-gray-800"
                   >
                     Email Address
                   </label>
@@ -858,10 +858,10 @@ function Employees() {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="employee@proliant.com"
-                    className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:ring-4 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 ${
+                    className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:ring-4 ${
                       errors.email
-                        ? "border-red-300 focus:border-red-400 focus:ring-red-50 dark:border-red-700 dark:focus:ring-red-950/40"
-                        : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50 dark:border-gray-700 dark:focus:ring-red-950/40"
+                        ? "border-red-300 focus:border-red-400 focus:ring-red-50"
+                        : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50"
                     }`}
                   />
 
@@ -877,7 +877,7 @@ function Employees() {
                   <div>
                     <label
                       htmlFor="role"
-                      className="mb-2 block text-sm font-semibold text-gray-800 dark:text-gray-200"
+                      className="mb-2 block text-sm font-semibold text-gray-800"
                     >
                       Role
                     </label>
@@ -889,10 +889,10 @@ function Employees() {
                       value={formData.role}
                       onChange={handleChange}
                       placeholder="e.g. Developer"
-                      className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:ring-4 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 ${
+                      className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:ring-4 ${
                         errors.role
-                          ? "border-red-300 focus:border-red-400 focus:ring-red-50 dark:border-red-700 dark:focus:ring-red-950/40"
-                          : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50 dark:border-gray-700 dark:focus:ring-red-950/40"
+                          ? "border-red-300 focus:border-red-400 focus:ring-red-50"
+                          : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50"
                       }`}
                     />
 
@@ -906,7 +906,7 @@ function Employees() {
                   <div>
                     <label
                       htmlFor="department"
-                      className="mb-2 block text-sm font-semibold text-gray-800 dark:text-gray-200"
+                      className="mb-2 block text-sm font-semibold text-gray-800"
                     >
                       Department
                     </label>
@@ -918,10 +918,10 @@ function Employees() {
                       value={formData.department}
                       onChange={handleChange}
                       placeholder="e.g. Engineering"
-                      className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:ring-4 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 ${
+                      className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:ring-4 ${
                         errors.department
-                          ? "border-red-300 focus:border-red-400 focus:ring-red-50 dark:border-red-700 dark:focus:ring-red-950/40"
-                          : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50 dark:border-gray-700 dark:focus:ring-red-950/40"
+                          ? "border-red-300 focus:border-red-400 focus:ring-red-50"
+                          : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50"
                       }`}
                     />
 
@@ -937,7 +937,7 @@ function Employees() {
                 <div>
                   <label
                     htmlFor="status"
-                    className="mb-2 block text-sm font-semibold text-gray-800 dark:text-gray-200"
+                    className="mb-2 block text-sm font-semibold text-gray-800"
                   >
                     Status
                   </label>
@@ -947,7 +947,7 @@ function Employees() {
                     name="status"
                     value={formData.status}
                     onChange={handleChange}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:ring-red-950/40"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50"
                   >
                     <option value="Active">
                       Active
@@ -970,7 +970,7 @@ function Employees() {
               </div>
 
               {/* Modal Footer */}
-              <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-6 py-4 dark:border-gray-800 sm:flex-row sm:justify-end">
+              <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-6 py-4 sm:flex-row sm:justify-end">
                 <button
                   type="button"
                   onClick={handleCloseModal}
@@ -1015,17 +1015,17 @@ function Employees() {
               event.stopPropagation()
             }
           >
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-50 text-[#EF3B3A] dark:bg-red-950/50">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-50 text-[#EF3B3A]">
               <Trash2 size={20} />
             </div>
 
-            <h2 className="mt-4 text-lg font-semibold text-gray-900 dark:text-white">
+            <h2 className="mt-4 text-lg font-semibold text-gray-900">
               Delete Employee?
             </h2>
 
-            <p className="mt-2 text-sm leading-6 text-gray-500 dark:text-gray-400">
+            <p className="mt-2 text-sm leading-6 text-gray-500">
               Are you sure you want to delete{" "}
-              <span className="font-semibold text-gray-700 dark:text-gray-200">
+              <span className="font-semibold text-gray-700">
                 {deleteEmployee.name}
               </span>
               ? This action cannot be undone.

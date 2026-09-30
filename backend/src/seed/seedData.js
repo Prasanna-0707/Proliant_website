@@ -130,22 +130,24 @@ const seedDatabase = async () => {
         "Administration",
       ];
 
+      // SAP ROLES ONLY
       const roles = [
-        "Software Engineer",
-        "Senior Software Engineer",
-        "Frontend Developer",
-        "Backend Developer",
-        "Full Stack Developer",
-        "HR Executive",
-        "HR Manager",
-        "Finance Executive",
-        "Business Analyst",
-        "Project Coordinator",
-        "QA Engineer",
-        "DevOps Engineer",
-        "UI/UX Designer",
-        "Sales Executive",
-        "Marketing Executive",
+        "SAP MM Consultant",
+        "SAP SD Consultant",
+        "SAP FICO Consultant",
+        "SAP ABAP Developer",
+        "SAP Basis Administrator",
+        "SAP HCM Consultant",
+        "SAP PP Consultant",
+        "SAP QM Consultant",
+        "SAP SuccessFactors Consultant",
+        "SAP Functional Consultant",
+        "SAP Technical Consultant",
+        "SAP Integration Consultant",
+        "SAP Security Consultant",
+        "SAP Business Analyst",
+        "SAP Project Coordinator",
+        "Administration",
       ];
 
       const firstNames = [
@@ -186,23 +188,16 @@ const seedDatabase = async () => {
       // 101 employees
       for (let i = 1; i <= 101; i++) {
         const firstName =
-          firstNames[
-            (i - 1) % firstNames.length
-          ];
+          firstNames[(i - 1) % firstNames.length];
 
         const name = `${firstName} ${i}`;
 
         employees.push({
           name,
           email: `employee${i}@proliant.com`,
-          role:
-            roles[
-              (i - 1) % roles.length
-            ],
+          role: roles[(i - 1) % roles.length],
           department:
-            departments[
-              (i - 1) % departments.length
-            ],
+            departments[(i - 1) % departments.length],
           status:
             i % 12 === 0
               ? "Inactive"
@@ -656,35 +651,23 @@ const seedDatabase = async () => {
           country: "USA",
           state: "Massachusetts",
           city: "Boston",
-          companyName:
-            "Proliant Data LLC",
-          address:
-            "75 State Street, Boston, MA 01803",
-          latitude:
-            42.35902288181857,
-          longitude:
-            -71.0553326746298,
-          phone:
-            "+1-617-955-2070",
-          email:
-            "hr@proliantdatallc.com",
+          companyName: "Proliant Data LLC",
+          address: "75 State Street, Boston, MA 01803",
+          latitude: 42.35902288181857,
+          longitude: -71.0553326746298,
+          phone: "+1-617-955-2070",
+          email: "hr@proliantdatallc.com",
         },
         {
           country: "Germany",
           state: "Bavaria",
           city: "Erlangen",
-          companyName:
-            "Proliant Data GmbH",
-          address:
-            "Würzburger Ring 39, Erlangen, 91056",
-          latitude:
-            49.59963951233804,
-          longitude:
-            10.967766810446841,
-          phone:
-            "+49-15158005363",
-          email:
-            "hr@proliantdatallc.com",
+          companyName: "Proliant Data GmbH",
+          address: "Würzburger Ring 39, Erlangen, 91056",
+          latitude: 49.59963951233804,
+          longitude: 10.967766810446841,
+          phone: "+49-15158005363",
+          email: "hr@proliantdatallc.com",
         },
         {
           country: "India",

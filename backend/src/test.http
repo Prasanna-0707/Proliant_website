@@ -1,7 +1,8 @@
+
 @baseUrl = http://localhost:5000/api
 
 # Update this after successful OTP verification
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbklkIjoiNmFhY2NmYTg1ZjU3NjYxYTc5NGFiZWU0IiwiZW1haWwiOiJib2dhY2hhbmRyYXB1QGdtYWlsLmNvbSIsInRva2VuVmVyc2lvbiI6OCwiaWF0IjoxNzkwMDgzNjI1LCJleHAiOjE3OTAxNzAwMjV9.z_SDM5G7ft2-2UBgvY-eM5hxaBZXK8DaZyVM2Dlsxtg
+@token = YOUR_VALID_JWT_TOKEN
 
 
 ############################################################
@@ -26,7 +27,7 @@ Content-Type: application/json
 
 {
   "email": "bogachandrapu@gmail.com",
-  "otp": "142584"
+  "otp": "ENTER_LOGIN_OTP_HERE"
 }
 
 ###
@@ -384,60 +385,64 @@ Content-Type: application/json
 GET {{baseUrl}}/candidates/export/excel
 Authorization: Bearer {{token}}
 
+###
+
 
 ############################################################
-# 10. CANDIDATE EMAIL NOTIFICATIONS
+# 10. TEAM MEMBER APIs
 ############################################################
 
-### 10.1 Candidate Application - Thank You Email
-# Candidate submits an application
-# Thank-you email should be sent to the candidate
-
-POST {{baseUrl}}/candidates
-Content-Type: application/json
-
-{
-  "position": "SAP Consultant",
-  "areaOfInterest": "SAP",
-  "name": "Test Candidate",
-  "email": "aswinijarugula@gmail.com",
-  "phone": "9876543210",
-  "isFresher": false,
-  "location": "Hyderabad",
-  "yearsOfExperience": 3,
-  "highestQualification": "B.Tech",
-  "currentCompany": "ABC Technologies",
-  "noticePeriod": "30 Days",
-  "coverMessage": "Interested in the SAP Consultant position."
-}
+### 10.1 GET ALL TEAM MEMBERS
+# Expected:
+# 200 OK
+# Should return the existing admins also.
+GET {{baseUrl}}/auth/team-members
+Authorization: Bearer {{token}}
 
 ###
 
-### 10.2 Candidate Shortlisted - HR Email
-# Replace CANDIDATE_ID with an existing candidate _id
+### 10.2 GET ONE TEAM MEMBER
+# First run GET ALL above and copy one _id.
+# Replace TEAM_MEMBER_ID below.
+GET {{baseUrl}}/auth/team-members/TEAM_MEMBER_ID
+Authorization: Bearer {{token}}
 
-PUT {{baseUrl}}/candidates/6ab2827d7cfed0a1ba7d20f2
+###
+
+### 10.3 CREATE TEAM MEMBER
+# Temporary password will be generated automatically
+# and sent to the provided email.
+POST {{baseUrl}}/auth/team-members
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "status": "Shortlisted"
+  "email": "team.member@proliant.com"
 }
 
 ###
 
-### 10.3 Candidate Rejected - Candidate Email
-# Replace CANDIDATE_ID with an existing candidate _id
-
-PUT {{baseUrl}}/candidates/CANDIDATE_ID
+### 10.4 UPDATE TEAM MEMBER
+# Replace TEAM_MEMBER_ID with the ID returned by GET/CREATE.
+PUT {{baseUrl}}/auth/team-members/TEAM_MEMBER_ID
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "status": "Rejected"
+  "email": "updated.member@proliant.com"
 }
 
 ###
+
+### 10.5 DELETE TEAM MEMBER
+# Replace TEAM_MEMBER_ID with the team member ID.
+# Do NOT use the ID of the currently logged-in admin.
+# Our API prevents deleting your own account.
+DELETE {{baseUrl}}/auth/team-members/TEAM_MEMBER_ID
+Authorization: Bearer {{token}}
+
+###
+
 
 ############################################################
 # 11. ADMIN PROFILE APIs
@@ -452,7 +457,6 @@ Authorization: Bearer {{token}}
 
 ### 11.2 Update My Admin Profile
 # Only name, phone and designation can be updated
-
 PATCH {{baseUrl}}/auth/profile
 Authorization: Bearer {{token}}
 Content-Type: application/json
@@ -474,7 +478,6 @@ Authorization: Bearer {{token}}
 ### 11.4 Try Updating Email
 # This should fail because email changes are not allowed
 # through the profile API
-
 PATCH {{baseUrl}}/auth/profile
 Authorization: Bearer {{token}}
 Content-Type: application/json
@@ -488,13 +491,64 @@ Content-Type: application/json
 ### 11.5 Try Updating Password
 # This should fail because password changes must use
 # the existing /auth/change-password API
-
 PATCH {{baseUrl}}/auth/profile
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
   "password": "NewPassword@123"
+}
+
+###
+
+
+############################################################
+# 12. CANDIDATE EMAIL NOTIFICATIONS
+############################################################
+
+### 12.1 Candidate Application - Thank You Email
+# Candidate submits an application
+# Thank-you email should be sent to the candidate
+POST {{baseUrl}}/candidates
+Content-Type: application/json
+
+{
+  "position": "SAP Consultant",
+  "areaOfInterest": "SAP",
+  "name": "Test Candidate",
+  "email": "YOUR_TEST_EMAIL@gmail.com",
+  "phone": "9876543210",
+  "isFresher": false,
+  "location": "Hyderabad",
+  "yearsOfExperience": 3,
+  "highestQualification": "B.Tech",
+  "currentCompany": "ABC Technologies",
+  "noticePeriod": "30 Days",
+  "coverMessage": "Interested in the SAP Consultant position."
+}
+
+###
+
+### 12.2 Candidate Shortlisted - HR Email
+# Replace CANDIDATE_ID with an existing candidate _id
+PUT {{baseUrl}}/candidates/CANDIDATE_ID
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "Shortlisted"
+}
+
+###
+
+### 12.3 Candidate Rejected - Candidate Email
+# Replace CANDIDATE_ID with an existing candidate _id
+PUT {{baseUrl}}/candidates/CANDIDATE_ID
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "Rejected"
 }
 
 ###

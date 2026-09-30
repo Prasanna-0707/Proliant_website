@@ -1,3 +1,4 @@
+
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
@@ -213,8 +214,6 @@ export const verifyLoginOTP = async (req, res) => {
       message: "Login successful",
       token,
 
-      // Existing fields preserved
-      // New profile fields added
       admin: {
         id: admin._id,
         name: admin.name || "",
@@ -331,16 +330,9 @@ export const resetPassword = async (req, res) => {
       process.env.JWT_SECRET
     );
 
-    if (decoded.email !== email) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid reset token",
-      });
-    }
-
     if (
-      decoded.purpose !==
-      "password-reset"
+      decoded.email !== email ||
+      decoded.purpose !== "password-reset"
     ) {
       return res.status(401).json({
         success: false,
@@ -376,17 +368,14 @@ export const resetPassword = async (req, res) => {
         10
       );
 
-    admin.password =
-      hashedPassword;
+    admin.password = hashedPassword;
+    admin.mustChangePassword = false;
 
-    admin.mustChangePassword =
-      false;
-
-    // Existing token invalidation logic
+    // Invalidate existing login tokens
     admin.tokenVersion =
       (admin.tokenVersion || 0) + 1;
 
-    // Existing reset-token invalidation logic
+    // Invalidate reset tokens
     admin.resetTokenVersion =
       (admin.resetTokenVersion || 0) + 1;
 
@@ -439,9 +428,7 @@ export const changePassword = async (
       });
     }
 
-    if (
-      currentPassword === newPassword
-    ) {
+    if (currentPassword === newPassword) {
       return res.status(400).json({
         success: false,
         message:
@@ -480,13 +467,10 @@ export const changePassword = async (
         10
       );
 
-    admin.password =
-      hashedPassword;
+    admin.password = hashedPassword;
+    admin.mustChangePassword = false;
 
-    admin.mustChangePassword =
-      false;
-
-    // Existing token invalidation logic
+    // Invalidate existing login tokens
     admin.tokenVersion =
       (admin.tokenVersion || 0) + 1;
 
@@ -553,13 +537,10 @@ export const createTeamMember = async (
       await Admin.create({
         email,
         password: hashedPassword,
-
-        // Profile defaults for new team member
         name: "",
         role: "Administrator",
         designation: "Administrator",
         phone: "",
-
         tokenVersion: 0,
         resetTokenVersion: 0,
         mustChangePassword: true,
@@ -574,7 +555,6 @@ export const createTeamMember = async (
       success: true,
       message:
         "Team member created successfully. Temporary password sent to email",
-
       teamMember: {
         id: teamMember._id,
         email: teamMember.email,
@@ -680,7 +660,7 @@ export const updateMyProfile = async (
       );
 
     // Email, password, role and security
-    // fields are not allowed here.
+    // fields cannot be updated here.
     if (invalidFields.length > 0) {
       return res.status(400).json({
         success: false,
@@ -701,61 +681,38 @@ export const updateMyProfile = async (
       });
     }
 
-    // =================================================
     // NAME
-    // =================================================
-
-    if (
-      req.body.name !== undefined
-    ) {
+    if (req.body.name !== undefined) {
       if (
-        typeof req.body.name !==
-        "string"
+        typeof req.body.name !== "string"
       ) {
         return res.status(400).json({
           success: false,
-          message:
-            "Name must be a string",
+          message: "Name must be a string",
         });
       }
 
-      admin.name =
-        req.body.name.trim();
+      admin.name = req.body.name.trim();
     }
 
-    // =================================================
     // PHONE
-    // =================================================
-
-    if (
-      req.body.phone !== undefined
-    ) {
+    if (req.body.phone !== undefined) {
       if (
-        typeof req.body.phone !==
-        "string"
+        typeof req.body.phone !== "string"
       ) {
         return res.status(400).json({
           success: false,
-          message:
-            "Phone must be a string",
+          message: "Phone must be a string",
         });
       }
 
-      admin.phone =
-        req.body.phone.trim();
+      admin.phone = req.body.phone.trim();
     }
 
-    // =================================================
     // DESIGNATION
-    // =================================================
-
-    if (
-      req.body.designation !==
-      undefined
-    ) {
+    if (req.body.designation !== undefined) {
       if (
-        typeof req.body.designation !==
-        "string"
+        typeof req.body.designation !== "string"
       ) {
         return res.status(400).json({
           success: false,

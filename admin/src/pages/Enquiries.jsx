@@ -37,9 +37,11 @@ function Enquiries() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
+  const [statusFilter, setStatusFilter] =
+    useState("All");
 
-  const [openMenuId, setOpenMenuId] = useState(null);
+  const [openMenuId, setOpenMenuId] =
+    useState(null);
 
   const [viewEnquiry, setViewEnquiry] = useState(null);
 
@@ -150,7 +152,8 @@ function Enquiries() {
 
   const unreadCount = useMemo(() => {
     return enquiries.filter(
-      (enquiry) => enquiry.status === "Unread"
+      (enquiry) =>
+        enquiry.status === "Unread"
     ).length;
   }, [enquiries]);
 
@@ -403,7 +406,8 @@ function Enquiries() {
 
           <div>
             <div className="flex items-center gap-2">
-              {enquiry.status === "Unread" && (
+              {enquiry.status ===
+                "Unread" && (
                 <span className="h-1.5 w-1.5 rounded-full bg-[#EF3B3A]" />
               )}
 
@@ -482,10 +486,11 @@ function Enquiries() {
             onClick={(event) => {
               event.stopPropagation();
 
-              setOpenMenuId((previous) =>
-                previous === enquiry.id
-                  ? null
-                  : enquiry.id
+              setOpenMenuId(
+                (previous) =>
+                  previous === enquiry.id
+                    ? null
+                    : enquiry.id
               );
             }}
             className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700"
@@ -517,14 +522,16 @@ function Enquiries() {
                 disabled={isSubmitting}
                 className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
               >
-                {enquiry.status === "Unread" ? (
+                {enquiry.status ===
+                "Unread" ? (
                   <MailOpen size={16} />
                 ) : (
                   <Mail size={16} />
                 )}
 
                 <span>
-                  {enquiry.status === "Unread"
+                  {enquiry.status ===
+                  "Unread"
                     ? "Mark as Read"
                     : "Mark as Unread"}
                 </span>
@@ -587,8 +594,8 @@ function Enquiries() {
       )}
 
       {/* Search & Filter */}
-      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between max-[767px]:flex-row max-[767px]:items-center">
-        <div className="relative w-full sm:max-w-sm max-[767px]:min-w-0 max-[767px]:flex-1">
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative w-full sm:max-w-sm">
           <Search
             size={18}
             className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
@@ -608,7 +615,9 @@ function Enquiries() {
         <select
           value={statusFilter}
           onChange={(event) =>
-            setStatusFilter(event.target.value)
+            setStatusFilter(
+              event.target.value
+            )
           }
           className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 sm:w-40 max-[767px]:min-w-0 max-[767px]:flex-1"
         >
@@ -859,7 +868,8 @@ function Enquiries() {
               <span className="font-semibold text-gray-700">
                 {deleteEnquiry.name}
               </span>
-              ? This action cannot be undone.
+              ? This action cannot be
+              undone.
             </p>
 
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">

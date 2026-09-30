@@ -110,9 +110,7 @@ const formatExperience = (candidate) => {
     candidate.yearsOfExperience !== null
   ) {
     return `${candidate.yearsOfExperience} ${
-      candidate.yearsOfExperience === 1
-        ? "Year"
-        : "Years"
+      candidate.yearsOfExperience === 1 ? "Year" : "Years"
     }`;
   }
 
@@ -155,6 +153,38 @@ function Dashboard() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+
+  /*
+   * =========================================================
+   * GET LOGGED-IN USER NAME
+   * =========================================================
+   *
+   * Reads the user information stored during login.
+   */
+  const getUserName = () => {
+    try {
+      const adminUser = localStorage.getItem("adminUser");
+
+      if (!adminUser) {
+        return "Admin";
+      }
+
+      const user = JSON.parse(adminUser);
+
+      return (
+        user.name ||
+        user.fullName ||
+        user.firstName ||
+        user.username ||
+        user.email?.split("@")[0] ||
+        "Admin"
+      );
+    } catch {
+      return "Admin";
+    }
+  };
+
+  const userName = getUserName();
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -369,11 +399,11 @@ function Dashboard() {
       {/* Page Heading */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-          Dashboard
+          Welcome back, {userName}! 👋
         </h1>
 
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Overview of your Proliant administration portal.
+          Here's what's happening across your Proliant administration portal.
         </p>
       </div>
 
@@ -399,51 +429,23 @@ function Dashboard() {
         ))}
       </div>
 
-      {/* Recently Posted Jobs */}
-      <section className="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white transition-colors dark:border-gray-800 dark:bg-gray-900">
-        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-gray-800">
-          <div>
-            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-              Recently Posted Jobs
-            </h2>
-
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Latest job openings created in the portal
-            </p>
-          </div>
-
-          <a
-            href="/jobs"
-            className="flex items-center gap-1 text-sm font-medium text-[#EF3B3A] hover:text-red-600"
-          >
-            View all
-            <ArrowRight size={15} />
-          </a>
-        </div>
-
-        <DataTable
-          columns={jobColumns}
-          data={recentlyPostedJobs}
-        />
-      </section>
-
-      {/* Applications & Quick Actions */}
+      {/* Recently Posted Jobs + Quick Actions */}
       <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
-        {/* Recent Applications */}
+        {/* Recently Posted Jobs */}
         <section className="overflow-hidden rounded-xl border border-gray-200 bg-white transition-colors dark:border-gray-800 dark:bg-gray-900 xl:col-span-2">
           <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-gray-800">
             <div>
               <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-                Recent Applications
+                Recently Posted Jobs
               </h2>
 
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Latest candidate applications
+                Latest job openings created in the portal
               </p>
             </div>
 
             <a
-              href="/candidates"
+              href="/jobs"
               className="flex items-center gap-1 text-sm font-medium text-[#EF3B3A] hover:text-red-600"
             >
               View all
@@ -452,8 +454,8 @@ function Dashboard() {
           </div>
 
           <DataTable
-            columns={applicationColumns}
-            data={recentApplications}
+            columns={jobColumns}
+            data={recentlyPostedJobs}
           />
         </section>
 
@@ -470,6 +472,7 @@ function Dashboard() {
           </div>
 
           <div className="space-y-3">
+            {/* Add Employee */}
             <a
               href="/employees"
               className="group flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 transition-colors hover:border-red-100 hover:bg-red-50 dark:border-gray-700 dark:hover:border-red-900 dark:hover:bg-red-950/30"
@@ -489,6 +492,27 @@ function Dashboard() {
               </span>
             </a>
 
+            {/* Add Team Member */}
+            <a
+              href="/team-members"
+              className="group flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 transition-colors hover:border-red-100 hover:bg-red-50 dark:border-gray-700 dark:hover:border-red-900 dark:hover:bg-red-950/30"
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-50 text-[#EF3B3A] transition-colors group-hover:bg-white dark:bg-red-950/50 dark:group-hover:bg-gray-800">
+                <Plus size={17} />
+              </span>
+
+              <span>
+                <span className="block text-sm font-semibold text-gray-800 dark:text-gray-200">
+                  Add Team Member
+                </span>
+
+                <span className="mt-0.5 block text-xs text-gray-500 dark:text-gray-400">
+                  Add a new team member
+                </span>
+              </span>
+            </a>
+
+            {/* Post Job */}
             <a
               href="/jobs"
               className="group flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 transition-colors hover:border-red-100 hover:bg-red-50 dark:border-gray-700 dark:hover:border-red-900 dark:hover:bg-red-950/30"
@@ -508,6 +532,27 @@ function Dashboard() {
               </span>
             </a>
 
+            {/* Add Country */}
+            <a
+              href="/countries"
+              className="group flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 transition-colors hover:border-red-100 hover:bg-red-50 dark:border-gray-700 dark:hover:border-red-900 dark:hover:bg-red-950/30"
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-50 text-[#EF3B3A] transition-colors group-hover:bg-white dark:bg-red-950/50 dark:group-hover:bg-gray-800">
+                <Plus size={17} />
+              </span>
+
+              <span>
+                <span className="block text-sm font-semibold text-gray-800 dark:text-gray-200">
+                  Add Country
+                </span>
+
+                <span className="mt-0.5 block text-xs text-gray-500 dark:text-gray-400">
+                  Add a new country
+                </span>
+              </span>
+            </a>
+
+            {/* View Candidates */}
             <a
               href="/candidates"
               className="group flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 transition-colors hover:border-red-100 hover:bg-red-50 dark:border-gray-700 dark:hover:border-red-900 dark:hover:bg-red-950/30"
@@ -527,6 +572,7 @@ function Dashboard() {
               </span>
             </a>
 
+            {/* View Enquiries */}
             <a
               href="/enquiries"
               className="group flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 transition-colors hover:border-red-100 hover:bg-red-50 dark:border-gray-700 dark:hover:border-red-900 dark:hover:bg-red-950/30"
@@ -548,6 +594,34 @@ function Dashboard() {
           </div>
         </section>
       </div>
+
+      {/* Recent Applications - KEEPING SAME WIDTH */}
+      <section className="mt-6 w-full overflow-hidden rounded-xl border border-gray-200 bg-white transition-colors dark:border-gray-800 dark:bg-gray-900 xl:w-[66.666667%]">
+        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-gray-800">
+          <div>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              Recent Applications
+            </h2>
+
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Latest candidate applications
+            </p>
+          </div>
+
+          <a
+            href="/candidates"
+            className="flex items-center gap-1 text-sm font-medium text-[#EF3B3A] hover:text-red-600"
+          >
+            View all
+            <ArrowRight size={15} />
+          </a>
+        </div>
+
+        <DataTable
+          columns={applicationColumns}
+          data={recentApplications}
+        />
+      </section>
     </div>
   );
 }

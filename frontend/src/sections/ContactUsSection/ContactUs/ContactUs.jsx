@@ -4,6 +4,9 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+
 const CareersContact = () => {
   const sectionRef = useRef(null);
   const [submitStatus, setSubmitStatus] = useState("idle");
@@ -47,24 +50,72 @@ const CareersContact = () => {
     return () => ctx.revert();
   }, []);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    if (!e.currentTarget.checkValidity()) {
-      e.currentTarget.reportValidity();
-      return;
+  const form = e.currentTarget;
+
+  if (!form.checkValidity()) {
+    form.reportValidity();
+    return;
+  }
+
+  setSubmitStatus("loading");
+
+  try {
+    const formData = new FormData(form);
+
+    const firstName = formData.get("firstName")?.trim() || "";
+    const lastName = formData.get("lastName")?.trim() || "";
+    const email = formData.get("email")?.trim() || "";
+    const organisation = formData.get("organisation")?.trim() || "";
+    const inquiry = formData.get("inquiry") || "";
+    const message = formData.get("message")?.trim() || "";
+
+    const payload = {
+      name: `${firstName} ${lastName}`.trim(),
+      email,
+      company: organisation,
+      subject: inquiry,
+      message,
+    };
+
+    const response = await fetch(`${API_BASE_URL}/contacts`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result?.message ||
+        result?.error ||
+        "Failed to submit your enquiry."
+      );
     }
 
-    setSubmitStatus("loading");
+    setSubmitStatus("success");
+
+    form.reset();
 
     setTimeout(() => {
-      setSubmitStatus("success");
+      setSubmitStatus("idle");
+    }, 2500);
+  } catch (error) {
+    console.error("Contact enquiry submission error:", error);
 
-      setTimeout(() => {
-        setSubmitStatus("idle");
-      }, 2500);
-    }, 2000);
-  };
+    setSubmitStatus("idle");
+
+    alert(
+      error.message ||
+      "Something went wrong while submitting your enquiry."
+    );
+  }
+};
 
   const inputClass = `
     w-full
