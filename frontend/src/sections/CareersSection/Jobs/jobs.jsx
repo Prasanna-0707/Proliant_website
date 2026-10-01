@@ -26,11 +26,22 @@ const Jobs = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
+  /* =====================================================
+     APPLICATION FORM STATE
+  ===================================================== */
+
   const [selectedJob, setSelectedJob] =
     useState(null);
 
   const [isApplicationFormOpen, setIsApplicationFormOpen] =
     useState(false);
+
+  /* =====================================================
+     JOB DETAILS MODAL STATE
+  ===================================================== */
+
+  const [detailsJob, setDetailsJob] =
+    useState(null);
 
   /* =====================================================
      FETCH PUBLISHED JOBS
@@ -242,10 +253,77 @@ const Jobs = () => {
   }, [isLoading, jobs]);
 
   /* =====================================================
+     LOCK BACKGROUND SCROLL
+
+     This works for both:
+     - Job Details modal
+     - Application modal
+  ===================================================== */
+
+  useLayoutEffect(() => {
+    if (!detailsJob && !isApplicationFormOpen) {
+      return;
+    }
+
+    const previousBodyOverflow =
+      document.body.style.overflow;
+
+    const previousHtmlOverflow =
+      document.documentElement.style.overflow;
+
+    const previousBodyOverscroll =
+      document.body.style.overscrollBehavior;
+
+    const previousHtmlOverscroll =
+      document.documentElement.style.overscrollBehavior;
+
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow =
+      "hidden";
+
+    document.body.style.overscrollBehavior =
+      "none";
+
+    document.documentElement.style.overscrollBehavior =
+      "none";
+
+    return () => {
+      document.body.style.overflow =
+        previousBodyOverflow;
+
+      document.documentElement.style.overflow =
+        previousHtmlOverflow;
+
+      document.body.style.overscrollBehavior =
+        previousBodyOverscroll;
+
+      document.documentElement.style.overscrollBehavior =
+        previousHtmlOverscroll;
+    };
+  }, [detailsJob, isApplicationFormOpen]);
+
+  /* =====================================================
+     OPEN JOB DETAILS
+  ===================================================== */
+
+  const openJobDetails = (job) => {
+    setDetailsJob(job);
+  };
+
+  /* =====================================================
+     CLOSE JOB DETAILS
+  ===================================================== */
+
+  const closeJobDetails = () => {
+    setDetailsJob(null);
+  };
+
+  /* =====================================================
      OPEN APPLICATION FORM
   ===================================================== */
 
   const openApplicationForm = (job) => {
+    setDetailsJob(null);
     setSelectedJob(job);
     setIsApplicationFormOpen(true);
   };
@@ -257,6 +335,33 @@ const Jobs = () => {
   const closeApplicationForm = () => {
     setSelectedJob(null);
     setIsApplicationFormOpen(false);
+  };
+
+  /* =====================================================
+     GET JOB DESCRIPTION
+
+     Backend uses jobDescription.
+     Fallback to description keeps the UI safe
+     if older job records use description.
+  ===================================================== */
+
+  const getJobDescription = (job) => {
+    return (
+      job?.jobDescription ||
+      job?.description ||
+      "No job description available."
+    );
+  };
+
+  /* =====================================================
+     GET JOB REQUIREMENTS
+  ===================================================== */
+
+  const getJobRequirements = (job) => {
+    return (
+      job?.requirements ||
+      "No specific requirements provided."
+    );
   };
 
   return (
@@ -282,6 +387,7 @@ const Jobs = () => {
         "
       >
         <div className="mx-auto max-w-7xl">
+
           {/* =================================================
               SECTION HEADER
           ================================================= */}
@@ -411,6 +517,7 @@ const Jobs = () => {
                     hover:-translate-y-1
                   "
                 >
+
                   {/* TOP RED ACCENT */}
 
                   <div
@@ -441,6 +548,7 @@ const Jobs = () => {
                       md:p-6
                     "
                   >
+
                     {/* NUMBER + DEPARTMENT */}
 
                     <div className="flex items-start justify-between">
@@ -490,18 +598,19 @@ const Jobs = () => {
                       {job.title}
                     </h3>
 
-                    {/* DESCRIPTION */}
+                    {/* SHORT DESCRIPTION */}
 
                     <p
                       className="
                         mt-2.5
+                        line-clamp-3
                         text-sm
                         leading-6
                         text-black/55
                         sm:mt-3
                       "
                     >
-                      {job.jobDescription}
+                      {getJobDescription(job)}
                     </p>
 
                     {/* META */}
@@ -517,6 +626,7 @@ const Jobs = () => {
                         pt-4
                       "
                     >
+
                       {/* Location */}
 
                       <div
@@ -547,7 +657,7 @@ const Jobs = () => {
                             text-black/70
                           "
                         >
-                          {job.location}
+                          {job.location || "-"}
                         </span>
                       </div>
 
@@ -581,53 +691,148 @@ const Jobs = () => {
                             text-black/70
                           "
                         >
-                          {job.employmentType}
+                          {job.employmentType || "-"}
+                        </span>
+                      </div>
+
+                      {/* Experience */}
+
+                      <div
+                        className="
+                          flex
+                          items-center
+                          justify-between
+                          gap-3
+                        "
+                      >
+                        <span
+                          className="
+                            shrink-0
+                            text-[10px]
+                            uppercase
+                            tracking-[0.12em]
+                            text-black/40
+                          "
+                        >
+                          Experience
+                        </span>
+
+                        <span
+                          className="
+                            text-right
+                            text-xs
+                            font-medium
+                            text-black/70
+                          "
+                        >
+                          {job.experience || "-"}
                         </span>
                       </div>
                     </div>
 
-                    {/* APPLY BUTTON */}
+                    {/* =================================================
+                        ACTION BUTTONS
+                    ================================================= */}
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        openApplicationForm(job)
-                      }
+                    <div
                       className="
                         mt-4
                         flex
-                        w-full
-                        items-center
-                        justify-between
-                        bg-black
-                        px-4
-                        py-3
-                        text-xs
-                        font-medium
-                        uppercase
-                        tracking-[0.15em]
-                        text-white
-                        transition-all
-                        duration-300
-                        hover:bg-[#EF3B3A]
+                        flex-col
+                        gap-2
                         sm:mt-5
-                        sm:px-5
-                        sm:py-3.5
                       "
                     >
-                      <span>Apply Now</span>
 
-                      <span
+                      {/* VIEW DETAILS */}
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openJobDetails(job)
+                        }
                         className="
-                          text-base
-                          transition-transform
+                          flex
+                          w-full
+                          items-center
+                          justify-between
+                          border
+                          border-black
+                          bg-white
+                          px-4
+                          py-3
+                          text-xs
+                          font-medium
+                          uppercase
+                          tracking-[0.15em]
+                          text-black
+                          transition-all
                           duration-300
-                          group-hover:translate-x-1
+                          hover:border-[#EF3B3A]
+                          hover:bg-[#EF3B3A]
+                          hover:text-white
+                          sm:px-5
+                          sm:py-3.5
                         "
                       >
-                        →
-                      </span>
-                    </button>
+                        <span>
+                          View Details
+                        </span>
+
+                        <span
+                          className="
+                            text-base
+                            transition-transform
+                            duration-300
+                          "
+                        >
+                          →
+                        </span>
+                      </button>
+
+                      {/* APPLY NOW */}
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openApplicationForm(job)
+                        }
+                        className="
+                          flex
+                          w-full
+                          items-center
+                          justify-between
+                          bg-black
+                          px-4
+                          py-3
+                          text-xs
+                          font-medium
+                          uppercase
+                          tracking-[0.15em]
+                          text-white
+                          transition-all
+                          duration-300
+                          hover:bg-[#EF3B3A]
+                          sm:px-5
+                          sm:py-3.5
+                        "
+                      >
+                        <span>
+                          Apply Now
+                        </span>
+
+                        <span
+                          className="
+                            text-base
+                            transition-transform
+                            duration-300
+                            group-hover:translate-x-1
+                          "
+                        >
+                          →
+                        </span>
+                      </button>
+                    </div>
                   </div>
                 </article>
               ))}
@@ -637,7 +842,350 @@ const Jobs = () => {
       </section>
 
       {/* =====================================================
+          JOB DETAILS MODAL
+      ===================================================== */}
+
+      {detailsJob && (
+        <div
+          className="
+            fixed
+            inset-0
+            z-50
+            flex
+            items-center
+            justify-center
+            overflow-hidden
+            bg-black/80
+            p-4
+            backdrop-blur-md
+            sm:p-5
+          "
+          onClick={closeJobDetails}
+        >
+          {/* MODAL CONTAINER */}
+
+          <div
+            className="
+              relative
+              max-h-[90vh]
+              w-full
+              max-w-3xl
+              overflow-hidden
+              rounded-2xl
+              bg-white
+              text-black
+              shadow-2xl
+            "
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+          >
+            {/* SCROLLABLE CONTENT */}
+
+            <div
+              className="
+                max-h-[90vh]
+                overflow-y-auto
+                p-5
+                sm:p-7
+                md:p-9
+              "
+            >
+              {/* CLOSE BUTTON */}
+
+              <button
+                type="button"
+                onClick={closeJobDetails}
+                className="
+                  absolute
+                  right-4
+                  top-4
+                  z-10
+                  flex
+                  h-9
+                  w-9
+                  items-center
+                  justify-center
+                  rounded-full
+                  border
+                  border-black/10
+                  bg-white
+                  text-lg
+                  text-black/60
+                  transition-all
+                  duration-300
+                  hover:border-[#EF3B3A]
+                  hover:bg-[#EF3B3A]
+                  hover:text-white
+                  sm:right-5
+                  sm:top-5
+                "
+                aria-label="Close job details"
+              >
+                ×
+              </button>
+
+              {/* =================================================
+                  HEADER
+              ================================================= */}
+
+              <div
+                className="
+                  border-b
+                  border-black/10
+                  pb-5
+                  pr-10
+                  sm:pb-6
+                "
+              >
+                <p
+                  className="
+                    text-xs
+                    font-medium
+                    uppercase
+                    tracking-[0.2em]
+                    text-[#EF3B3A]
+                  "
+                >
+                  Job Details
+                </p>
+
+                <h2
+                  className="
+                    mt-2
+                    text-2xl
+                    font-semibold
+                    leading-tight
+                    tracking-tight
+                    sm:text-3xl
+                    md:text-4xl
+                  "
+                >
+                  {detailsJob.title}
+                </h2>
+
+                <p
+                  className="
+                    mt-2
+                    text-sm
+                    text-black/50
+                    sm:text-base
+                  "
+                >
+                  {detailsJob.department || "-"}
+                </p>
+              </div>
+
+              {/* =================================================
+                  JOB META
+              ================================================= */}
+
+              <div
+                className="
+                  grid
+                  gap-5
+                  border-b
+                  border-black/10
+                  py-6
+                  sm:grid-cols-3
+                  sm:gap-6
+                "
+              >
+                {/* LOCATION */}
+
+                <div>
+                  <p
+                    className="
+                      text-[10px]
+                      font-medium
+                      uppercase
+                      tracking-[0.15em]
+                      text-black/40
+                    "
+                  >
+                    Location
+                  </p>
+
+                  <p
+                    className="
+                      mt-1.5
+                      text-sm
+                      font-medium
+                      text-black/80
+                    "
+                  >
+                    {detailsJob.location || "-"}
+                  </p>
+                </div>
+
+                {/* EMPLOYMENT TYPE */}
+
+                <div>
+                  <p
+                    className="
+                      text-[10px]
+                      font-medium
+                      uppercase
+                      tracking-[0.15em]
+                      text-black/40
+                    "
+                  >
+                    Employment Type
+                  </p>
+
+                  <p
+                    className="
+                      mt-1.5
+                      text-sm
+                      font-medium
+                      text-black/80
+                    "
+                  >
+                    {detailsJob.employmentType || "-"}
+                  </p>
+                </div>
+
+                {/* EXPERIENCE */}
+
+                <div>
+                  <p
+                    className="
+                      text-[10px]
+                      font-medium
+                      uppercase
+                      tracking-[0.15em]
+                      text-black/40
+                    "
+                  >
+                    Experience
+                  </p>
+
+                  <p
+                    className="
+                      mt-1.5
+                      text-sm
+                      font-medium
+                      text-black/80
+                    "
+                  >
+                    {detailsJob.experience || "-"}
+                  </p>
+                </div>
+              </div>
+
+              {/* =================================================
+                  JOB DESCRIPTION
+              ================================================= */}
+
+              <div className="border-b border-black/10 py-6">
+                <h3
+                  className="
+                    text-sm
+                    font-semibold
+                    uppercase
+                    tracking-[0.12em]
+                    text-black
+                  "
+                >
+                  Job Description
+                </h3>
+
+                <p
+                  className="
+                    mt-3
+                    whitespace-pre-line
+                    text-sm
+                    leading-7
+                    text-black/65
+                    sm:text-base
+                  "
+                >
+                  {getJobDescription(detailsJob)}
+                </p>
+              </div>
+
+              {/* =================================================
+                  REQUIREMENTS
+              ================================================= */}
+
+              <div className="py-6">
+                <h3
+                  className="
+                    text-sm
+                    font-semibold
+                    uppercase
+                    tracking-[0.12em]
+                    text-black
+                  "
+                >
+                  Requirements
+                </h3>
+
+                <div
+                  className="
+                    mt-3
+                    whitespace-pre-line
+                    text-sm
+                    leading-7
+                    text-black/65
+                    sm:text-base
+                  "
+                >
+                  {getJobRequirements(detailsJob)}
+                </div>
+              </div>
+
+              {/* =================================================
+                  APPLY BUTTON
+              ================================================= */}
+
+              <div
+                className="
+                  border-t
+                  border-black/10
+                  pt-6
+                "
+              >
+                <button
+                  type="button"
+                  onClick={() =>
+                    openApplicationForm(detailsJob)
+                  }
+                  className="
+                    inline-flex
+                    items-center
+                    gap-5
+                    bg-black
+                    px-5
+                    py-3
+                    text-xs
+                    font-medium
+                    uppercase
+                    tracking-[0.15em]
+                    text-white
+                    transition-all
+                    duration-300
+                    hover:bg-[#EF3B3A]
+                  "
+                >
+                  <span>
+                    Apply for this role
+                  </span>
+
+                  <span className="text-base">
+                    →
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================
           APPLICATION FORM
+          NOTE:
+          JobApplicationForm remains a separate component.
       ===================================================== */}
 
       {isApplicationFormOpen && (
