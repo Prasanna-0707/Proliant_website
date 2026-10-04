@@ -22,6 +22,12 @@ const emptyForm = {
   role: "HR",
 };
 
+const inputClass =
+  "w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-red-950/30";
+
+const labelClass =
+  "mb-2 block text-sm font-semibold text-gray-800 dark:text-gray-200";
+
 function TeamMembers() {
   const [teamMembers, setTeamMembers] = useState([]);
   const [search, setSearch] = useState("");
@@ -57,6 +63,7 @@ function TeamMembers() {
     window.location.href = "/login";
   };
 
+  // FETCH TEAM MEMBERS
   const fetchTeamMembers = async () => {
     const token = localStorage.getItem("adminToken");
 
@@ -69,10 +76,13 @@ function TeamMembers() {
     setPageError("");
 
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/team-members`, {
-        method: "GET",
-        headers: getAuthHeaders(),
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/auth/team-members`,
+        {
+          method: "GET",
+          headers: getAuthHeaders(),
+        }
+      );
 
       if (response.status === 401) {
         handleUnauthorized();
@@ -103,6 +113,7 @@ function TeamMembers() {
     fetchTeamMembers();
   }, []);
 
+  // SEARCH AND STATUS FILTER
   const filteredTeamMembers = useMemo(() => {
     const searchValue = search.toLowerCase().trim();
 
@@ -120,6 +131,7 @@ function TeamMembers() {
     });
   }, [teamMembers, search, statusFilter]);
 
+  // FORM HANDLING
   const handleChange = (event) => {
     const { name, value } = event.target;
 
@@ -158,6 +170,7 @@ function TeamMembers() {
     return Object.keys(newErrors).length === 0;
   };
 
+  // ADD TEAM MEMBER
   const openAddModal = () => {
     setIsEditMode(false);
     setEditingMember(null);
@@ -167,6 +180,7 @@ function TeamMembers() {
     setIsModalOpen(true);
   };
 
+  // EDIT TEAM MEMBER
   const openEditModal = (member) => {
     setIsEditMode(true);
     setEditingMember(member);
@@ -182,12 +196,11 @@ function TeamMembers() {
     setIsModalOpen(true);
   };
 
+  // CREATE / UPDATE TEAM MEMBER
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     const token = localStorage.getItem("adminToken");
 
@@ -241,12 +254,7 @@ function TeamMembers() {
       setIsEditMode(false);
       setIsModalOpen(false);
     } catch (error) {
-      console.error(
-        isEditMode
-          ? "Team member update failed:"
-          : "Team member creation failed:",
-        error
-      );
+      console.error("Team member save failed:", error);
 
       setErrors({
         submit:
@@ -260,10 +268,9 @@ function TeamMembers() {
     }
   };
 
+  // CLOSE FORM MODAL
   const handleCloseModal = () => {
-    if (isSubmitting) {
-      return;
-    }
+    if (isSubmitting) return;
 
     setIsModalOpen(false);
     setFormData(emptyForm);
@@ -272,6 +279,7 @@ function TeamMembers() {
     setIsEditMode(false);
   };
 
+  // ACTIVATE / DEACTIVATE TEAM MEMBER
   const handleToggleStatus = async (member) => {
     const token = localStorage.getItem("adminToken");
 
@@ -322,10 +330,9 @@ function TeamMembers() {
     }
   };
 
+  // DELETE TEAM MEMBER
   const handleDelete = async () => {
-    if (!deleteMember) {
-      return;
-    }
+    if (!deleteMember) return;
 
     const token = localStorage.getItem("adminToken");
 
@@ -372,29 +379,31 @@ function TeamMembers() {
       console.error("Team member deletion failed:", error);
 
       setPageError(
-        error.message || "Unable to delete team member. Please try again."
+        error.message ||
+          "Unable to delete team member. Please try again."
       );
     } finally {
       setIsDeleting(false);
     }
   };
 
+  // TABLE COLUMNS
   const teamMemberColumns = [
     {
       key: "name",
       label: "Team Member",
       render: (member) => (
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50 text-[#EF3B3A]">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50 text-[#EF3B3A] dark:bg-red-950/50 dark:text-red-400">
             <ShieldCheck size={18} />
           </div>
 
           <div>
-            <p className="font-semibold text-gray-900">
+            <p className="font-semibold text-gray-900 dark:text-white">
               {member.name || member.email}
             </p>
 
-            <p className="mt-0.5 text-xs text-gray-500">
+            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
               {member.email}
             </p>
           </div>
@@ -405,7 +414,7 @@ function TeamMembers() {
       key: "role",
       label: "Role",
       render: (member) => (
-        <span className="font-medium text-gray-700">
+        <span className="font-medium text-gray-700 dark:text-gray-200">
           {member.role || "HR"}
         </span>
       ),
@@ -417,8 +426,8 @@ function TeamMembers() {
         <span
           className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
             member.status === "Active"
-              ? "bg-green-50 text-green-600"
-              : "bg-gray-100 text-gray-500"
+              ? "bg-green-50 text-green-600 dark:bg-green-950/50 dark:text-green-400"
+              : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
           }`}
         >
           {member.status || "Active"}
@@ -429,7 +438,7 @@ function TeamMembers() {
       key: "createdAt",
       label: "Created",
       render: (member) => (
-        <span className="text-sm text-gray-500">
+        <span className="text-sm text-gray-500 dark:text-gray-400">
           {member.createdAt
             ? new Date(member.createdAt).toLocaleDateString()
             : "—"}
@@ -453,18 +462,18 @@ function TeamMembers() {
                   previous === memberId ? null : memberId
                 );
               }}
-              className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700"
+              className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
               aria-label="Team member actions"
             >
               <MoreVertical size={18} />
             </button>
 
             {openMenuId === memberId && (
-              <div className="absolute right-0 top-10 z-30 w-48 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+              <div className="absolute right-0 top-10 z-30 w-48 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900">
                 <button
                   type="button"
                   onClick={() => openEditModal(member)}
-                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800"
                 >
                   <Pencil size={16} />
                   <span>Edit Team Member</span>
@@ -473,7 +482,7 @@ function TeamMembers() {
                 <button
                   type="button"
                   onClick={() => handleToggleStatus(member)}
-                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800"
                 >
                   {member.status === "Active" ? (
                     <UserX size={16} />
@@ -488,7 +497,7 @@ function TeamMembers() {
                   </span>
                 </button>
 
-                <div className="my-1 border-t border-gray-100" />
+                <div className="my-1 border-t border-gray-100 dark:border-gray-700" />
 
                 <button
                   type="button"
@@ -496,7 +505,7 @@ function TeamMembers() {
                     setDeleteMember(member);
                     setOpenMenuId(null);
                   }}
-                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
+                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:hover:bg-red-950/30"
                 >
                   <Trash2 size={16} />
                   <span>Delete Team Member</span>
@@ -510,14 +519,15 @@ function TeamMembers() {
   ];
 
   return (
-    <div className="relative p-5 sm:p-6">
+    <div className="relative min-h-screen bg-gray-100 p-5 transition-colors dark:bg-gray-950 sm:p-6">
+      {/* Page Header */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
             Team Members
           </h1>
 
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Manage your internal admin and HR team members.
           </p>
         </div>
@@ -532,16 +542,17 @@ function TeamMembers() {
         </button>
       </div>
 
+      {/* Error Message */}
       {pageError && (
-        <div className="mb-5 flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3">
-          <p className="text-sm font-medium text-red-600">
+        <div className="mb-5 flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3 dark:border-red-900/50 dark:bg-red-950/30">
+          <p className="text-sm font-medium text-red-600 dark:text-red-400">
             {pageError}
           </p>
 
           <button
             type="button"
             onClick={() => setPageError("")}
-            className="text-red-500 hover:text-red-700"
+            className="text-red-500 transition-colors hover:text-red-700 dark:hover:text-red-300"
             aria-label="Close error"
           >
             <X size={17} />
@@ -549,6 +560,7 @@ function TeamMembers() {
         </div>
       )}
 
+      {/* Search and Filter */}
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative w-full sm:max-w-sm">
           <Search
@@ -561,14 +573,14 @@ function TeamMembers() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search team members..."
-            className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50"
+            className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-red-950/30"
           />
         </div>
 
         <select
           value={statusFilter}
           onChange={(event) => setStatusFilter(event.target.value)}
-          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 sm:w-40"
+          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:focus:ring-red-950/30 sm:w-40"
         >
           <option value="All">All Status</option>
           <option value="Active">Active</option>
@@ -576,13 +588,27 @@ function TeamMembers() {
         </select>
       </div>
 
-      <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-        <div className="border-b border-gray-100 px-5 py-4">
-          <h2 className="text-base font-semibold text-gray-900">
+      {/* Team Members Table */}
+      <section
+        className="
+          overflow-hidden rounded-xl border border-gray-200 bg-white
+          transition-colors
+          dark:border-gray-800 dark:bg-gray-900
+          dark:[&_thead_tr]:border-gray-700
+          dark:[&_thead_tr]:bg-gray-800
+          dark:[&_thead_tr_th]:text-gray-300
+          dark:[&_tbody_tr]:border-gray-700
+          dark:[&_tbody_tr]:bg-gray-900
+          dark:[&_tbody_tr:hover]:bg-gray-800
+          dark:[&_tbody_tr_td]:text-gray-200
+        "
+      >
+        <div className="border-b border-gray-100 px-5 py-4 dark:border-gray-800">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-white">
             Team Member List
           </h2>
 
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             {isLoading
               ? "Loading team members..."
               : `${filteredTeamMembers.length} team member${
@@ -593,7 +619,7 @@ function TeamMembers() {
 
         {isLoading ? (
           <div className="px-5 py-12 text-center">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               Loading team members...
             </p>
           </div>
@@ -606,22 +632,23 @@ function TeamMembers() {
         )}
       </section>
 
+      {/* Add / Edit Team Member Modal */}
       {isModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-sm"
           onClick={handleCloseModal}
         >
           <div
-            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white shadow-xl"
+            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white shadow-xl dark:border dark:border-gray-800 dark:bg-gray-900"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-gray-800">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                   {isEditMode ? "Edit Team Member" : "Add Team Member"}
                 </h2>
 
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   {isEditMode
                     ? "Update the team member details."
                     : "Add a new admin or HR team member."}
@@ -632,7 +659,7 @@ function TeamMembers() {
                 type="button"
                 onClick={handleCloseModal}
                 disabled={isSubmitting}
-                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-800 dark:hover:text-white"
                 aria-label="Close modal"
               >
                 <X size={20} />
@@ -641,11 +668,9 @@ function TeamMembers() {
 
             <form onSubmit={handleSubmit}>
               <div className="space-y-5 px-6 py-6">
+                {/* Full Name */}
                 <div>
-                  <label
-                    htmlFor="name"
-                    className="mb-2 block text-sm font-semibold text-gray-800"
-                  >
+                  <label htmlFor="name" className={labelClass}>
                     Full Name
                   </label>
 
@@ -656,10 +681,10 @@ function TeamMembers() {
                     value={formData.name}
                     onChange={handleChange}
                     placeholder="Enter team member name"
-                    className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:ring-4 ${
+                    className={`${inputClass} ${
                       errors.name
-                        ? "border-red-300 focus:border-red-400 focus:ring-red-50"
-                        : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50"
+                        ? "border-red-300 focus:border-red-400 dark:border-red-700"
+                        : "border-gray-300 dark:border-gray-700"
                     }`}
                   />
 
@@ -670,11 +695,9 @@ function TeamMembers() {
                   )}
                 </div>
 
+                {/* Email */}
                 <div>
-                  <label
-                    htmlFor="email"
-                    className="mb-2 block text-sm font-semibold text-gray-800"
-                  >
+                  <label htmlFor="email" className={labelClass}>
                     Email Address
                   </label>
 
@@ -685,10 +708,10 @@ function TeamMembers() {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="member@proliant.com"
-                    className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:ring-4 ${
+                    className={`${inputClass} ${
                       errors.email
-                        ? "border-red-300 focus:border-red-400 focus:ring-red-50"
-                        : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50"
+                        ? "border-red-300 focus:border-red-400 dark:border-red-700"
+                        : "border-gray-300 dark:border-gray-700"
                     }`}
                   />
 
@@ -699,11 +722,9 @@ function TeamMembers() {
                   )}
                 </div>
 
+                {/* Role */}
                 <div>
-                  <label
-                    htmlFor="role"
-                    className="mb-2 block text-sm font-semibold text-gray-800"
-                  >
+                  <label htmlFor="role" className={labelClass}>
                     Role
                   </label>
 
@@ -712,10 +733,10 @@ function TeamMembers() {
                     name="role"
                     value={formData.role}
                     onChange={handleChange}
-                    className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-700 outline-none transition focus:ring-4 ${
+                    className={`${inputClass} ${
                       errors.role
-                        ? "border-red-300 focus:border-red-400 focus:ring-red-50"
-                        : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50"
+                        ? "border-red-300 focus:border-red-400 dark:border-red-700"
+                        : "border-gray-300 dark:border-gray-700"
                     }`}
                   >
                     <option value="Admin">Admin</option>
@@ -729,29 +750,32 @@ function TeamMembers() {
                   )}
                 </div>
 
-                <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-                  <p className="text-xs leading-5 text-gray-500">
+                {/* Information */}
+                <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
+                  <p className="text-xs leading-5 text-gray-500 dark:text-gray-400">
                     {isEditMode
                       ? "Updating the team member details will not change the existing password."
                       : "A temporary password will be generated automatically and sent to this email address. The team member will be required to change it after their first login."}
                   </p>
                 </div>
 
+                {/* Form Error */}
                 {errors.submit && (
-                  <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3">
-                    <p className="text-sm font-medium text-red-600">
+                  <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 dark:border-red-900/50 dark:bg-red-950/30">
+                    <p className="text-sm font-medium text-red-600 dark:text-red-400">
                       {errors.submit}
                     </p>
                   </div>
                 )}
               </div>
 
-              <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-6 py-4 sm:flex-row sm:justify-end">
+              {/* Modal Footer */}
+              <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-6 py-4 dark:border-gray-800 sm:flex-row sm:justify-end">
                 <button
                   type="button"
                   onClick={handleCloseModal}
                   disabled={isSubmitting}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800 sm:w-auto"
                 >
                   Cancel
                 </button>
@@ -766,8 +790,8 @@ function TeamMembers() {
                       ? "Saving..."
                       : "Creating..."
                     : isEditMode
-                    ? "Save Changes"
-                    : "Add Team Member"}
+                      ? "Save Changes"
+                      : "Add Team Member"}
                 </button>
               </div>
             </form>
@@ -775,26 +799,27 @@ function TeamMembers() {
         </div>
       )}
 
+      {/* Delete Confirmation Modal */}
       {deleteMember && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
           onClick={() => !isDeleting && setDeleteMember(null)}
         >
           <div
-            className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
+            className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:border dark:border-gray-800 dark:bg-gray-900"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-50 text-[#EF3B3A]">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-50 text-[#EF3B3A] dark:bg-red-950/50 dark:text-red-400">
               <Trash2 size={20} />
             </div>
 
-            <h2 className="mt-4 text-lg font-semibold text-gray-900">
+            <h2 className="mt-4 text-lg font-semibold text-gray-900 dark:text-white">
               Delete Team Member?
             </h2>
 
-            <p className="mt-2 text-sm leading-6 text-gray-500">
+            <p className="mt-2 text-sm leading-6 text-gray-500 dark:text-gray-400">
               Are you sure you want to delete{" "}
-              <span className="font-semibold text-gray-700">
+              <span className="font-semibold text-gray-700 dark:text-gray-200">
                 {deleteMember.name || deleteMember.email}
               </span>
               ? This action cannot be undone.
@@ -805,7 +830,7 @@ function TeamMembers() {
                 type="button"
                 onClick={() => setDeleteMember(null)}
                 disabled={isDeleting}
-                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800 sm:w-auto"
               >
                 Cancel
               </button>
