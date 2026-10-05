@@ -1366,7 +1366,7 @@ function Candidates() {
         <div className="relative w-full lg:max-w-sm max-[767px]:min-w-0 max-[767px]:flex-[1.45]">
           <Search
             size={18}
-            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 max-[767px]:left-2 max-[767px]:size-[13px]"
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 max-[767px]:left-2 max-[767px]:size-3.25"
           />
 
           <input
@@ -1789,7 +1789,7 @@ function Candidates() {
                           Applied For
                         </p>
 
-                        <p className="break-words text-sm font-medium text-gray-800">
+                        <p className="wrap-break-word text-sm font-medium text-gray-800">
                           {
                             candidate.job
                           }
@@ -1814,7 +1814,7 @@ function Candidates() {
                           Location
                         </p>
 
-                        <p className="break-words text-sm text-gray-700">
+                        <p className="wrap-break-word text-sm text-gray-700">
                           {
                             candidate.location
                           }
@@ -2181,7 +2181,7 @@ function Candidates() {
 
       {editingCandidate && (
         <div
-          className="fixed inset-0 z-[55] flex items-center justify-center bg-black/40 px-4"
+          className="fixed inset-0 z-55 flex items-center justify-center bg-black/40 px-4"
           onClick={() =>
             setEditingCandidate(
               null
@@ -2296,7 +2296,7 @@ function Candidates() {
 
       {deleteCandidate && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4"
+          className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 px-4"
           onClick={() =>
             setDeleteCandidate(
               null
