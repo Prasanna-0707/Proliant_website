@@ -23,6 +23,11 @@ const managementLinks = [
     icon: Users,
   },
   {
+  name: "EmployeesTemp",
+  path: "/employees-temp",
+  icon: Users,
+},
+  {
     name: "Team Members",
     path: "/team-members",
     icon: UserCog,
