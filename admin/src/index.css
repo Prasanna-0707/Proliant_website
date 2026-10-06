@@ -45,3 +45,8 @@ a {
 #root {
   min-height: 100vh;
 }
+
+/* Hide Microsoft Edge's native password reveal button */
+input::-ms-reveal {
+  display: none;
+}

@@ -49,7 +49,9 @@ const normalizeCandidate = (candidate) => {
     candidate.yearsOfExperience !== ""
   ) {
     experience = `${candidate.yearsOfExperience} ${
-      Number(candidate.yearsOfExperience) === 1 ? "Year" : "Years"
+      Number(candidate.yearsOfExperience) === 1
+        ? "Year"
+        : "Years"
     }`;
   } else if (candidate.experience) {
     experience = candidate.experience;
@@ -61,26 +63,34 @@ const normalizeCandidate = (candidate) => {
     job: candidate.position || candidate.job || "N/A",
     experience,
     appliedDate: candidate.createdAt || candidate.appliedDate,
-    resumeUrl: candidate.resume || candidate.resumeUrl || "#",
+    resumeUrl:
+      candidate.resume || candidate.resumeUrl || "#",
     currentCompany: candidate.currentCompany || "N/A",
     location: candidate.location || "N/A",
     noticePeriod: candidate.noticePeriod || "N/A",
-    areaOfInterest: candidate.areaOfInterest || "N/A",
-    highestQualification: candidate.highestQualification || "N/A",
+    areaOfInterest:
+      candidate.areaOfInterest || "N/A",
+    highestQualification:
+      candidate.highestQualification || "N/A",
     coverMessage: candidate.coverMessage || "",
   };
 };
 
 const statusClasses = {
   New: "bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-300",
+
   Shortlisted:
     "bg-green-50 text-green-600 dark:bg-green-950 dark:text-green-300",
+
   Interview:
     "bg-yellow-50 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300",
+
   Selected:
     "bg-purple-50 text-purple-600 dark:bg-purple-950 dark:text-purple-300",
+
   Rejected:
     "bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-300",
+
   "On hold":
     "bg-orange-50 text-orange-600 dark:bg-orange-950 dark:text-orange-300",
 };
@@ -106,32 +116,67 @@ function Candidates() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
+  const [statusFilter, setStatusFilter] =
+    useState("All");
 
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] =
+    useState(false);
+
   const filterRef = useRef(null);
 
-  const [isRoleFilterEnabled, setIsRoleFilterEnabled] = useState(false);
-  const [isDateFilterEnabled, setIsDateFilterEnabled] = useState(false);
+  const [isRoleFilterEnabled, setIsRoleFilterEnabled] =
+    useState(false);
 
-  const [selectedRoles, setSelectedRoles] = useState([]);
-  const [selectedDateFilter, setSelectedDateFilter] = useState("");
-  const [customFromDate, setCustomFromDate] = useState("");
-  const [customToDate, setCustomToDate] = useState("");
+  const [isDateFilterEnabled, setIsDateFilterEnabled] =
+    useState(false);
 
-  const [appliedRoles, setAppliedRoles] = useState([]);
-  const [appliedDateFilter, setAppliedDateFilter] = useState("");
-  const [appliedCustomFromDate, setAppliedCustomFromDate] = useState("");
-  const [appliedCustomToDate, setAppliedCustomToDate] = useState("");
+  const [selectedRoles, setSelectedRoles] = useState(
+    []
+  );
+
+  const [selectedDateFilter, setSelectedDateFilter] =
+    useState("");
+
+  const [customFromDate, setCustomFromDate] =
+    useState("");
+
+  const [customToDate, setCustomToDate] =
+    useState("");
+
+  const [appliedRoles, setAppliedRoles] = useState(
+    []
+  );
+
+  const [appliedDateFilter, setAppliedDateFilter] =
+    useState("");
+
+  const [
+    appliedCustomFromDate,
+    setAppliedCustomFromDate,
+  ] = useState("");
+
+  const [
+    appliedCustomToDate,
+    setAppliedCustomToDate,
+  ] = useState("");
 
   const [openMenuId, setOpenMenuId] = useState(null);
-  const [viewCandidate, setViewCandidate] = useState(null);
-  const [editingCandidate, setEditingCandidate] = useState(null);
-  const [deleteCandidate, setDeleteCandidate] = useState(null);
+
+  const [viewCandidate, setViewCandidate] =
+    useState(null);
+
+  const [editingCandidate, setEditingCandidate] =
+    useState(null);
+
+  const [deleteCandidate, setDeleteCandidate] =
+    useState(null);
+
   const [editStatus, setEditStatus] = useState("");
 
   const getAuthHeaders = () => ({
-    Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+    Authorization: `Bearer ${localStorage.getItem(
+      "adminToken"
+    )}`,
     "Content-Type": "application/json",
   });
 
@@ -146,9 +191,12 @@ function Candidates() {
       setIsLoading(true);
       setPageError("");
 
-      const response = await fetch(`${API_BASE_URL}/candidates`, {
-        headers: getAuthHeaders(),
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/candidates`,
+        {
+          headers: getAuthHeaders(),
+        }
+      );
 
       if (response.status === 401) {
         handleUnauthorized();
@@ -167,7 +215,9 @@ function Candidates() {
         result?.success !== true ||
         !Array.isArray(result?.candidates)
       ) {
-        throw new Error("Invalid candidates response from backend");
+        throw new Error(
+          "Invalid candidates response from backend"
+        );
       }
 
       const normalized = result.candidates
@@ -180,8 +230,15 @@ function Candidates() {
 
       setCandidates(normalized);
     } catch (error) {
-      console.error("Failed to load candidates:", error);
-      setPageError("Unable to load candidate applications.");
+      console.error(
+        "Failed to load candidates:",
+        error
+      );
+
+      setPageError(
+        "Unable to load candidate applications."
+      );
+
       setCandidates([]);
     } finally {
       setIsLoading(false);
@@ -202,10 +259,16 @@ function Candidates() {
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener(
+      "mousedown",
+      handleClickOutside
+    );
 
     return () =>
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      );
   }, []);
 
   const jobs = useMemo(
@@ -214,23 +277,31 @@ function Candidates() {
         ...new Set(
           candidates
             .map((candidate) => candidate.job)
-            .filter((job) => job && job !== "N/A")
+            .filter(
+              (job) => job && job !== "N/A"
+            )
         ),
-      ].sort((a, b) => a.localeCompare(b)),
+      ].sort((a, b) =>
+        a.localeCompare(b)
+      ),
     [candidates]
   );
 
   const toggleRole = (role) => {
     setSelectedRoles((previous) =>
       previous.includes(role)
-        ? previous.filter((item) => item !== role)
+        ? previous.filter(
+            (item) => item !== role
+          )
         : [...previous, role]
     );
   };
 
   const getStartOfDay = (date) => {
     const result = new Date(date);
+
     result.setHours(0, 0, 0, 0);
+
     return result;
   };
 
@@ -239,7 +310,9 @@ function Candidates() {
 
     const date = new Date(value);
 
-    if (Number.isNaN(date.getTime())) return null;
+    if (Number.isNaN(date.getTime())) {
+      return null;
+    }
 
     return getStartOfDay(date);
   };
@@ -247,11 +320,18 @@ function Candidates() {
   const parseInputDate = (value) => {
     if (!value) return null;
 
-    const [year, month, day] = value.split("-").map(Number);
+    const [year, month, day] =
+      value.split("-").map(Number);
 
-    if (!year || !month || !day) return null;
+    if (!year || !month || !day) {
+      return null;
+    }
 
-    const date = new Date(year, month - 1, day);
+    const date = new Date(
+      year,
+      month - 1,
+      day
+    );
 
     date.setHours(0, 0, 0, 0);
 
@@ -264,31 +344,54 @@ function Candidates() {
     fromValue,
     toValue
   ) => {
-    const candidateDate = getCandidateDate(value);
+    const candidateDate =
+      getCandidateDate(value);
 
-    if (!candidateDate || !filter) return true;
+    if (!candidateDate || !filter) {
+      return true;
+    }
 
-    const today = getStartOfDay(new Date());
+    const today = getStartOfDay(
+      new Date()
+    );
 
     if (filter === "today") {
-      return candidateDate.getTime() === today.getTime();
+      return (
+        candidateDate.getTime() ===
+        today.getTime()
+      );
     }
 
     if (filter === "yesterday") {
       const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
 
-      return candidateDate.getTime() === yesterday.getTime();
+      yesterday.setDate(
+        yesterday.getDate() - 1
+      );
+
+      return (
+        candidateDate.getTime() ===
+        yesterday.getTime()
+      );
     }
 
     if (filter === "twoDaysAgo") {
       const date = new Date(today);
-      date.setDate(date.getDate() - 2);
 
-      return candidateDate.getTime() === date.getTime();
+      date.setDate(
+        date.getDate() - 2
+      );
+
+      return (
+        candidateDate.getTime() ===
+        date.getTime()
+      );
     }
 
-    if (filter === "last7" || filter === "last30") {
+    if (
+      filter === "last7" ||
+      filter === "last30"
+    ) {
       const startDate = new Date(today);
 
       startDate.setDate(
@@ -296,14 +399,22 @@ function Candidates() {
           (filter === "last7" ? 6 : 29)
       );
 
-      return candidateDate >= startDate && candidateDate <= today;
+      return (
+        candidateDate >= startDate &&
+        candidateDate <= today
+      );
     }
 
     if (filter === "custom") {
-      const fromDate = parseInputDate(fromValue);
-      const toDate = parseInputDate(toValue);
+      const fromDate =
+        parseInputDate(fromValue);
 
-      if (!fromDate && !toDate) return true;
+      const toDate =
+        parseInputDate(toValue);
+
+      if (!fromDate && !toDate) {
+        return true;
+      }
 
       if (fromDate && !toDate) {
         return candidateDate >= fromDate;
@@ -313,7 +424,10 @@ function Candidates() {
         return candidateDate <= toDate;
       }
 
-      return candidateDate >= fromDate && candidateDate <= toDate;
+      return (
+        candidateDate >= fromDate &&
+        candidateDate <= toDate
+      );
     }
 
     return true;
@@ -337,12 +451,16 @@ function Candidates() {
   const applyFilters = () => {
     setAppliedRoles(
       isRoleFilterEnabled
-        ? selectedRoles.filter((role) => jobs.includes(role))
+        ? selectedRoles.filter((role) =>
+            jobs.includes(role)
+          )
         : []
     );
 
     setAppliedDateFilter(
-      isDateFilterEnabled ? selectedDateFilter : ""
+      isDateFilterEnabled
+        ? selectedDateFilter
+        : ""
     );
 
     setAppliedCustomFromDate(
@@ -363,7 +481,8 @@ function Candidates() {
   };
 
   const filteredCandidates = useMemo(() => {
-    const searchValue = search.toLowerCase().trim();
+    const searchValue =
+      search.toLowerCase().trim();
 
     return candidates.filter((candidate) => {
       const searchableValues = [
@@ -378,19 +497,23 @@ function Candidates() {
         candidate.areaOfInterest,
       ];
 
-      const matchesSearch = searchableValues.some((value) =>
-        String(value || "")
-          .toLowerCase()
-          .includes(searchValue)
-      );
+      const matchesSearch =
+        searchableValues.some((value) =>
+          String(value || "")
+            .toLowerCase()
+            .includes(searchValue)
+        );
 
       const matchesStatus =
         statusFilter === "All" ||
-        candidate.status === statusFilter;
+        candidate.status ===
+          statusFilter;
 
       const matchesRole =
         appliedRoles.length === 0 ||
-        appliedRoles.includes(candidate.job);
+        appliedRoles.includes(
+          candidate.job
+        );
 
       const matchesDate =
         !appliedDateFilter ||
@@ -423,13 +546,18 @@ function Candidates() {
 
     const date = new Date(value);
 
-    if (Number.isNaN(date.getTime())) return "N/A";
+    if (Number.isNaN(date.getTime())) {
+      return "N/A";
+    }
 
-    return date.toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+    return date.toLocaleDateString(
+      "en-IN",
+      {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }
+    );
   };
 
   const handleStatusUpdate = async () => {
@@ -444,33 +572,50 @@ function Candidates() {
         {
           method: "PUT",
           headers: getAuthHeaders(),
+
           body: JSON.stringify({
             position:
               editingCandidate.position ||
               editingCandidate.job,
+
             areaOfInterest:
-              editingCandidate.areaOfInterest || "",
+              editingCandidate.areaOfInterest ||
+              "",
+
             name: editingCandidate.name,
             email: editingCandidate.email,
             phone: editingCandidate.phone,
+
             isFresher:
-              editingCandidate.isFresher || false,
+              editingCandidate.isFresher ||
+              false,
+
             location:
-              editingCandidate.location || "",
+              editingCandidate.location ||
+              "",
+
             yearsOfExperience:
               editingCandidate.yearsOfExperience,
+
             highestQualification:
               editingCandidate.highestQualification,
+
             currentCompany:
-              editingCandidate.currentCompany || "",
+              editingCandidate.currentCompany ||
+              "",
+
             noticePeriod:
               editingCandidate.noticePeriod,
+
             coverMessage:
-              editingCandidate.coverMessage || "",
+              editingCandidate.coverMessage ||
+              "",
+
             resume:
               editingCandidate.resume ||
               editingCandidate.resumeUrl ||
               "",
+
             status: editStatus,
           }),
         }
@@ -487,7 +632,8 @@ function Candidates() {
         );
       }
 
-      const result = await response.json();
+      const result =
+        await response.json();
 
       if (result?.success !== true) {
         throw new Error(
@@ -496,13 +642,17 @@ function Candidates() {
         );
       }
 
-      const updatedCandidate = result.candidate
-        ? normalizeCandidate(result.candidate)
-        : null;
+      const updatedCandidate =
+        result.candidate
+          ? normalizeCandidate(
+              result.candidate
+            )
+          : null;
 
       setCandidates((previous) =>
         previous.map((candidate) =>
-          candidate.id === editingCandidate.id
+          candidate.id ===
+          editingCandidate.id
             ? updatedCandidate || {
                 ...candidate,
                 status: editStatus,
@@ -554,7 +704,8 @@ function Candidates() {
         );
       }
 
-      const result = await response.json();
+      const result =
+        await response.json();
 
       if (result?.success !== true) {
         throw new Error(
@@ -566,7 +717,8 @@ function Candidates() {
       setCandidates((previous) =>
         previous.filter(
           (candidate) =>
-            candidate.id !== deleteCandidate.id
+            candidate.id !==
+            deleteCandidate.id
         )
       );
 
@@ -588,37 +740,47 @@ function Candidates() {
 
   const handleDownloadExcel = () => {
     const headers = [
-      "Candidate",
-      "Email",
-      "Phone",
-      "Applied For",
+      "Candidate Name",
+      "Email Address",
+      "Phone Number",
+      "Applied Position",
       "Experience",
       "Location",
-      "Status",
-      "Applied Date",
+      "Application Status",
+      "Applied On",
       "Resume",
     ];
 
-    const rows = filteredCandidates.map((candidate) => [
-      candidate.name,
-      candidate.email,
-      candidate.phone,
-      candidate.job,
-      candidate.experience,
-      candidate.location,
-      candidate.status,
-      formatDate(candidate.appliedDate),
-      candidate.resumeUrl === "#"
-        ? ""
-        : candidate.resumeUrl,
-    ]);
+    const rows =
+      filteredCandidates.map(
+        (candidate) => [
+          candidate.name,
+          candidate.email,
+          candidate.phone,
+          candidate.job,
+          candidate.experience,
+          candidate.location,
+          candidate.status,
+          formatDate(
+            candidate.appliedDate
+          ),
+          candidate.resumeUrl === "#"
+            ? ""
+            : candidate.resumeUrl,
+        ]
+      );
 
-    const csvContent = [headers, ...rows]
+    const csvContent = [
+      headers,
+      ...rows,
+    ]
       .map((row) =>
         row
           .map(
             (value) =>
-              `"${String(value ?? "").replace(
+              `"${String(
+                value ?? ""
+              ).replace(
                 /"/g,
                 '""'
               )}"`
@@ -627,42 +789,61 @@ function Candidates() {
       )
       .join("\n");
 
-    const blob = new Blob([csvContent], {
-      type: "text/csv;charset=utf-8;",
-    });
+    const blob = new Blob(
+      [csvContent],
+      {
+        type: "text/csv;charset=utf-8;",
+      }
+    );
 
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
+    const url =
+      URL.createObjectURL(blob);
+
+    const link =
+      document.createElement("a");
 
     link.href = url;
-    link.download = "proliant-candidates.csv";
+    link.download =
+      "proliant-candidates.csv";
 
     document.body.appendChild(link);
+
     link.click();
+
     document.body.removeChild(link);
 
     URL.revokeObjectURL(url);
   };
 
-  const openViewCandidate = (candidate) => {
+  const openViewCandidate = (
+    candidate
+  ) => {
     setViewCandidate(candidate);
     setOpenMenuId(null);
   };
 
-  const openEditCandidate = (candidate) => {
+  const openEditCandidate = (
+    candidate
+  ) => {
     setEditingCandidate(candidate);
-    setEditStatus(candidate.status || "New");
+    setEditStatus(
+      candidate.status || "New"
+    );
     setActionError("");
     setOpenMenuId(null);
   };
 
-  const openDeleteCandidate = (candidate) => {
+  const openDeleteCandidate = (
+    candidate
+  ) => {
     setDeleteCandidate(candidate);
     setActionError("");
     setOpenMenuId(null);
   };
 
-  const renderActions = (candidate) => (
+  const renderActions = (
+    candidate
+  ) => (
     <div className="relative">
       <button
         type="button"
@@ -723,7 +904,8 @@ function Candidates() {
   const columns = [
     {
       key: "name",
-      header: "Candidate",
+      label: "Candidate Name",
+
       render: (candidate) => (
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
@@ -739,7 +921,8 @@ function Candidates() {
 
     {
       key: "phone",
-      header: "Phone",
+      label: "Phone Number",
+
       render: (candidate) => (
         <span className="text-sm text-gray-600 dark:text-gray-300">
           {candidate.phone || "N/A"}
@@ -749,7 +932,8 @@ function Candidates() {
 
     {
       key: "job",
-      header: "Applied For",
+      label: "Applied Position",
+
       render: (candidate) => (
         <span className="text-sm text-gray-700 dark:text-gray-300">
           {candidate.job}
@@ -759,7 +943,8 @@ function Candidates() {
 
     {
       key: "experience",
-      header: "Experience",
+      label: "Experience",
+
       render: (candidate) => (
         <span className="text-sm text-gray-600 dark:text-gray-300">
           {candidate.experience}
@@ -769,51 +954,66 @@ function Candidates() {
 
     {
       key: "location",
-      header: "Location",
+      label: "Location",
+
       render: (candidate) => (
         <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300">
-          <MapPin size={14} className="shrink-0 text-gray-400" />
-          <span>{candidate.location}</span>
+          <MapPin
+            size={14}
+            className="shrink-0 text-gray-400"
+          />
+
+          <span>
+            {candidate.location}
+          </span>
         </div>
       ),
     },
 
     {
       key: "status",
-      header: "Status",
+      label: "Application Status",
+
       render: (candidate) => (
         <span
           className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${statusClass(
             candidate.status
           )}`}
         >
-          {candidate.status || "New"}
+          {candidate.status ||
+            "New"}
         </span>
       ),
     },
 
     {
       key: "appliedDate",
-      header: "Applied Date",
+      label: "Applied On",
+
       render: (candidate) => (
         <span className="text-sm text-gray-600 dark:text-gray-300">
-          {formatDate(candidate.appliedDate)}
+          {formatDate(
+            candidate.appliedDate
+          )}
         </span>
       ),
     },
 
     {
       key: "actions",
-      header: "",
-      render: (candidate) => renderActions(candidate),
+      label: "",
+
+      render: (candidate) =>
+        renderActions(candidate),
     },
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <div className="relative min-h-screen bg-gray-100 p-5 text-gray-900 transition-colors dark:bg-gray-950 dark:text-gray-100 sm:p-6">
+      {/* Page Header */}
+      <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
             Candidates
           </h1>
 
@@ -824,7 +1024,9 @@ function Candidates() {
 
         <button
           type="button"
-          onClick={handleDownloadExcel}
+          onClick={
+            handleDownloadExcel
+          }
           className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#EF3B3A] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-600"
         >
           <Download size={17} />
@@ -832,7 +1034,8 @@ function Candidates() {
         </button>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      {/* Search + Status + Filters */}
+      <div className="mb-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <div className="relative flex-1">
             <Search
@@ -844,7 +1047,9 @@ function Candidates() {
               type="text"
               value={search}
               onChange={(event) =>
-                setSearch(event.target.value)
+                setSearch(
+                  event.target.value
+                )
               }
               placeholder="Search candidates..."
               className={`${inputClass} pl-10`}
@@ -854,24 +1059,39 @@ function Candidates() {
           <select
             value={statusFilter}
             onChange={(event) =>
-              setStatusFilter(event.target.value)
+              setStatusFilter(
+                event.target.value
+              )
             }
             className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none focus:border-[#EF3B3A] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
           >
-            <option value="All">All Status</option>
+            <option value="All">
+              All Status
+            </option>
 
-            {candidateStatuses.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
-            ))}
+            {candidateStatuses.map(
+              (status) => (
+                <option
+                  key={status}
+                  value={status}
+                >
+                  {status}
+                </option>
+              )
+            )}
           </select>
 
-          <div className="relative" ref={filterRef}>
+          <div
+            className="relative"
+            ref={filterRef}
+          >
             <button
               type="button"
               onClick={() =>
-                setIsFilterOpen((previous) => !previous)
+                setIsFilterOpen(
+                  (previous) =>
+                    !previous
+                )
               }
               className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800 lg:w-auto"
             >
@@ -888,7 +1108,9 @@ function Candidates() {
 
                   <button
                     type="button"
-                    onClick={clearFilters}
+                    onClick={
+                      clearFilters
+                    }
                     className="text-xs font-medium text-[#EF3B3A] hover:underline"
                   >
                     Clear
@@ -896,6 +1118,7 @@ function Candidates() {
                 </div>
 
                 <div className="mt-4 space-y-4">
+                  {/* Role Filter */}
                   <label className="flex items-center justify-between gap-3">
                     <span className="text-sm text-gray-700 dark:text-gray-300">
                       Filter by role
@@ -903,10 +1126,15 @@ function Candidates() {
 
                     <input
                       type="checkbox"
-                      checked={isRoleFilterEnabled}
-                      onChange={(event) =>
+                      checked={
+                        isRoleFilterEnabled
+                      }
+                      onChange={(
+                        event
+                      ) =>
                         setIsRoleFilterEnabled(
-                          event.target.checked
+                          event.target
+                            .checked
                         )
                       }
                       className="h-4 w-4 accent-[#EF3B3A]"
@@ -915,36 +1143,42 @@ function Candidates() {
 
                   {isRoleFilterEnabled && (
                     <div className="max-h-36 space-y-2 overflow-y-auto rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-                      {jobs.length === 0 ? (
+                      {jobs.length ===
+                      0 ? (
                         <p className="text-xs text-gray-500">
                           No roles available.
                         </p>
                       ) : (
-                        jobs.map((role) => (
-                          <label
-                            key={role}
-                            className="flex items-center gap-2"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={selectedRoles.includes(
-                                role
-                              )}
-                              onChange={() =>
-                                toggleRole(role)
-                              }
-                              className="h-4 w-4 accent-[#EF3B3A]"
-                            />
+                        jobs.map(
+                          (role) => (
+                            <label
+                              key={role}
+                              className="flex items-center gap-2"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedRoles.includes(
+                                  role
+                                )}
+                                onChange={() =>
+                                  toggleRole(
+                                    role
+                                  )
+                                }
+                                className="h-4 w-4 accent-[#EF3B3A]"
+                              />
 
-                            <span className="text-sm text-gray-700 dark:text-gray-300">
-                              {role}
-                            </span>
-                          </label>
-                        ))
+                              <span className="text-sm text-gray-700 dark:text-gray-300">
+                                {role}
+                              </span>
+                            </label>
+                          )
+                        )
                       )}
                     </div>
                   )}
 
+                  {/* Date Filter */}
                   <label className="flex items-center justify-between gap-3">
                     <span className="text-sm text-gray-700 dark:text-gray-300">
                       Filter by date
@@ -952,10 +1186,15 @@ function Candidates() {
 
                     <input
                       type="checkbox"
-                      checked={isDateFilterEnabled}
-                      onChange={(event) =>
+                      checked={
+                        isDateFilterEnabled
+                      }
+                      onChange={(
+                        event
+                      ) =>
                         setIsDateFilterEnabled(
-                          event.target.checked
+                          event.target
+                            .checked
                         )
                       }
                       className="h-4 w-4 accent-[#EF3B3A]"
@@ -965,23 +1204,35 @@ function Candidates() {
                   {isDateFilterEnabled && (
                     <div className="space-y-3">
                       <select
-                        value={selectedDateFilter}
+                        value={
+                          selectedDateFilter
+                        }
                         onChange={(event) =>
                           setSelectedDateFilter(
-                            event.target.value
+                            event.target
+                              .value
                           )
                         }
-                        className={inputClass}
+                        className={
+                          inputClass
+                        }
                       >
                         <option value="">
                           Select date range
                         </option>
 
                         {dateFilterOptions.map(
-                          ([value, label]) => (
+                          ([
+                            value,
+                            label,
+                          ]) => (
                             <option
-                              key={value}
-                              value={value}
+                              key={
+                                value
+                              }
+                              value={
+                                value
+                              }
                             >
                               {label}
                             </option>
@@ -989,28 +1240,45 @@ function Candidates() {
                         )}
                       </select>
 
-                      {selectedDateFilter === "custom" && (
+                      {selectedDateFilter ===
+                        "custom" && (
                         <div className="grid grid-cols-2 gap-2">
                           <input
                             type="date"
-                            value={customFromDate}
-                            onChange={(event) =>
+                            value={
+                              customFromDate
+                            }
+                            onChange={(
+                              event
+                            ) =>
                               setCustomFromDate(
-                                event.target.value
+                                event
+                                  .target
+                                  .value
                               )
                             }
-                            className={inputClass}
+                            className={
+                              inputClass
+                            }
                           />
 
                           <input
                             type="date"
-                            value={customToDate}
-                            onChange={(event) =>
+                            value={
+                              customToDate
+                            }
+                            onChange={(
+                              event
+                            ) =>
                               setCustomToDate(
-                                event.target.value
+                                event
+                                  .target
+                                  .value
                               )
                             }
-                            className={inputClass}
+                            className={
+                              inputClass
+                            }
                           />
                         </div>
                       )}
@@ -1021,7 +1289,9 @@ function Candidates() {
                 <div className="mt-5 flex justify-end">
                   <button
                     type="button"
-                    onClick={applyFilters}
+                    onClick={
+                      applyFilters
+                    }
                     className="rounded-lg bg-[#EF3B3A] px-4 py-2 text-sm font-semibold text-white hover:bg-red-600"
                   >
                     Apply Filters
@@ -1033,139 +1303,198 @@ function Candidates() {
         </div>
       </div>
 
+      {/* Page Error */}
       {pageError && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900/50 dark:bg-red-950/20 dark:text-red-400">
           {pageError}
         </div>
       )}
 
-      <div className="hidden md:block">
-        <DataTable
-          columns={columns}
-          data={filteredCandidates}
-          loading={isLoading}
-          emptyMessage="No candidates found."
-        />
-      </div>
+      {/* Candidate Applications */}
+      <section className="overflow-hidden rounded-xl border border-gray-200 bg-white transition-colors dark:border-gray-800 dark:bg-gray-900">
+        <div className="border-b border-gray-100 px-5 py-4 dark:border-gray-800">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+                Candidate Applications
+              </h2>
 
-      <div className="space-y-3 md:hidden">
-        {isLoading ? (
-          <div className="rounded-xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-            Loading candidates...
-          </div>
-        ) : filteredCandidates.length === 0 ? (
-          <div className="rounded-xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-            No candidates found.
-          </div>
-        ) : (
-          filteredCandidates.map((candidate) => (
-            <div
-              key={candidate.id}
-              className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h3 className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
-                    {candidate.name}
-                  </h3>
-
-                  <p className="mt-1 truncate text-xs text-gray-500 dark:text-gray-400">
-                    {candidate.email}
-                  </p>
-                </div>
-
-                {renderActions(candidate)}
-              </div>
-
-              <div className="mt-4 rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
-                <p className="text-xs font-medium text-gray-400">
-                  Applied For
-                </p>
-
-                <p className="mt-1 text-sm font-semibold text-gray-800 dark:text-gray-200">
-                  {candidate.job}
-                </p>
-              </div>
-
-              <div className="mt-4 grid grid-cols-2 gap-4">
-                <div className="flex items-start gap-3">
-                  <MapPin
-                    size={18}
-                    className="mt-0.5 shrink-0 text-gray-400"
-                  />
-
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-gray-400">
-                      Location
-                    </p>
-
-                    <p className="mt-1 wrap-break-word text-sm text-gray-700 dark:text-gray-300">
-                      {candidate.location || "N/A"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <Phone
-                    size={18}
-                    className="mt-0.5 shrink-0 text-gray-400"
-                  />
-
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-gray-400">
-                      Phone
-                    </p>
-
-                    <p className="mt-1 wrap-break-word text-sm text-gray-700 dark:text-gray-300">
-                      {candidate.phone || "N/A"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-gray-400" />
-
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-gray-400">
-                      Status
-                    </p>
-
-                    <span
-                      className={`mt-1 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${statusClass(
-                        candidate.status
-                      )}`}
-                    >
-                      {candidate.status || "New"}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-gray-400" />
-
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-gray-400">
-                      Applied Date
-                    </p>
-
-                    <p className="mt-1 wrap-break-word text-sm text-gray-700 dark:text-gray-300">
-                      {formatDate(candidate.appliedDate)}
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Manage and review candidate applications.
+              </p>
             </div>
-          ))
-        )}
-      </div>
-            {viewCandidate && (
+
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+              {
+                filteredCandidates.length
+              }{" "}
+              {
+                filteredCandidates.length ===
+                1
+                  ? "candidate"
+                  : "candidates"
+              }{" "}
+              found
+            </p>
+          </div>
+        </div>
+
+        {/* Desktop Table */}
+        <div className="hidden md:block">
+          <DataTable
+            columns={columns}
+            data={filteredCandidates}
+            loading={isLoading}
+            emptyMessage="No candidates found."
+          />
+        </div>
+
+        {/* Mobile Cards */}
+        <div className="space-y-3 p-4 md:hidden">
+          {isLoading ? (
+            <div className="rounded-xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+              Loading candidates...
+            </div>
+          ) : filteredCandidates.length ===
+            0 ? (
+            <div className="rounded-xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+              No candidates found.
+            </div>
+          ) : (
+            filteredCandidates.map(
+              (candidate) => (
+                <div
+                  key={candidate.id}
+                  className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        {candidate.name}
+                      </h3>
+
+                      <p className="mt-1 truncate text-xs text-gray-500 dark:text-gray-400">
+                        {
+                          candidate.email
+                        }
+                      </p>
+                    </div>
+
+                    {renderActions(
+                      candidate
+                    )}
+                  </div>
+
+                  <div className="mt-4 rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+                    <p className="text-xs font-medium text-gray-400">
+                      Applied Position
+                    </p>
+
+                    <p className="mt-1 text-sm font-semibold text-gray-800 dark:text-gray-200">
+                      {
+                        candidate.job
+                      }
+                    </p>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-2 gap-4">
+                    <div className="flex items-start gap-3">
+                      <MapPin
+                        size={18}
+                        className="mt-0.5 shrink-0 text-gray-400"
+                      />
+
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-gray-400">
+                          Location
+                        </p>
+
+                        <p className="mt-1 wrap-break-word text-sm text-gray-700 dark:text-gray-300">
+                          {
+                            candidate.location ||
+                            "N/A"
+                          }
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <Phone
+                        size={18}
+                        className="mt-0.5 shrink-0 text-gray-400"
+                      />
+
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-gray-400">
+                          Phone Number
+                        </p>
+
+                        <p className="mt-1 wrap-break-word text-sm text-gray-700 dark:text-gray-300">
+                          {
+                            candidate.phone ||
+                            "N/A"
+                          }
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <div className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-gray-400" />
+
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-gray-400">
+                          Application Status
+                        </p>
+
+                        <span
+                          className={`mt-1 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${statusClass(
+                            candidate.status
+                          )}`}
+                        >
+                          {
+                            candidate.status ||
+                            "New"
+                          }
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <div className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-gray-400" />
+
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-gray-400">
+                          Applied On
+                        </p>
+
+                        <p className="mt-1 wrap-break-word text-sm text-gray-700 dark:text-gray-300">
+                          {formatDate(
+                            candidate.appliedDate
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            )
+          )}
+        </div>
+      </section>
+
+      {/* View Candidate Modal */}
+      {viewCandidate && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-6 backdrop-blur-sm"
-          onClick={() => setViewCandidate(null)}
+          onClick={() =>
+            setViewCandidate(null)
+          }
         >
           <div
             className={`${modalCardClass} max-h-[90vh] max-w-2xl overflow-y-auto`}
-            onClick={(event) => event.stopPropagation()}
+            onClick={(event) =>
+              event.stopPropagation()
+            }
           >
             <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-gray-800">
               <div>
@@ -1180,7 +1509,9 @@ function Candidates() {
 
               <button
                 type="button"
-                onClick={() => setViewCandidate(null)}
+                onClick={() =>
+                  setViewCandidate(null)
+                }
                 className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200"
                 aria-label="Close modal"
               >
@@ -1191,88 +1522,122 @@ function Candidates() {
             <div className="space-y-5 px-6 py-6">
               <div>
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                  {viewCandidate.name}
+                  {
+                    viewCandidate.name
+                  }
                 </h3>
 
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  {viewCandidate.email}
+                  {
+                    viewCandidate.email
+                  }
                 </p>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 {[
-                  ["Email", viewCandidate.email, Mail],
-                  ["Phone", viewCandidate.phone, Phone],
-                  ["Location", viewCandidate.location, MapPin],
+                  [
+                    "Email Address",
+                    viewCandidate.email,
+                    Mail,
+                  ],
+
+                  [
+                    "Phone Number",
+                    viewCandidate.phone,
+                    Phone,
+                  ],
+
+                  [
+                    "Location",
+                    viewCandidate.location,
+                    MapPin,
+                  ],
+
                   [
                     "Experience",
                     viewCandidate.experience,
                     FileText,
                   ],
+
                   [
                     "Highest Qualification",
                     viewCandidate.highestQualification,
                     FileText,
                   ],
+
                   [
                     "Current Company",
                     viewCandidate.currentCompany,
                     FileText,
                   ],
+
                   [
                     "Notice Period",
                     viewCandidate.noticePeriod,
                     FileText,
                   ],
+
                   [
                     "Area of Interest",
                     viewCandidate.areaOfInterest,
                     FileText,
                   ],
-                ].map(([label, value, Icon]) => (
-                  <div
-                    key={label}
-                    className="flex items-start gap-3"
-                  >
-                    <Icon
-                      size={18}
-                      className="mt-0.5 shrink-0 text-gray-400"
-                    />
+                ].map(
+                  ([
+                    label,
+                    value,
+                    Icon,
+                  ]) => (
+                    <div
+                      key={label}
+                      className="flex items-start gap-3"
+                    >
+                      <Icon
+                        size={18}
+                        className="mt-0.5 shrink-0 text-gray-400"
+                      />
 
-                    <div className="min-w-0">
-                      <p className="text-xs font-medium text-gray-400">
-                        {label}
-                      </p>
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-gray-400">
+                          {label}
+                        </p>
 
-                      <p className="mt-1 wrap-break-word text-sm text-gray-700 dark:text-gray-300">
-                        {value || "N/A"}
-                      </p>
+                        <p className="mt-1 wrap-break-word text-sm text-gray-700 dark:text-gray-300">
+                          {value ||
+                            "N/A"}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                )}
               </div>
 
               <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
                 <p className="text-xs font-medium text-gray-400">
-                  Applied For
+                  Applied Position
                 </p>
 
                 <p className="mt-1 text-sm font-semibold text-gray-800 dark:text-gray-200">
-                  {viewCandidate.job}
+                  {
+                    viewCandidate.job
+                  }
                 </p>
 
                 <p className="mt-3 text-xs font-medium text-gray-400">
-                  Applied Date
+                  Applied On
                 </p>
 
                 <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
-                  {formatDate(viewCandidate.appliedDate)}
+                  {formatDate(
+                    viewCandidate.appliedDate
+                  )}
                 </p>
               </div>
 
               <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
                 <p className="text-xs font-medium text-gray-400">
-                  Status
+                  Application Status
                 </p>
 
                 <span
@@ -1280,7 +1645,10 @@ function Candidates() {
                     viewCandidate.status
                   )}`}
                 >
-                  {viewCandidate.status || "New"}
+                  {
+                    viewCandidate.status ||
+                    "New"
+                  }
                 </span>
               </div>
 
@@ -1291,15 +1659,22 @@ function Candidates() {
                   </p>
 
                   <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-700 dark:text-gray-300">
-                    {viewCandidate.coverMessage}
+                    {
+                      viewCandidate.coverMessage
+                    }
                   </p>
                 </div>
               )}
 
               <a
-                href={viewCandidate.resumeUrl}
+                href={
+                  viewCandidate.resumeUrl
+                }
                 onClick={(event) => {
-                  if (viewCandidate.resumeUrl === "#") {
+                  if (
+                    viewCandidate.resumeUrl ===
+                    "#"
+                  ) {
                     event.preventDefault();
                   }
                 }}
@@ -1318,16 +1693,20 @@ function Candidates() {
         </div>
       )}
 
+      {/* Edit Status Modal */}
       {editingCandidate && (
         <div
           className="fixed inset-0 z-55 flex items-center justify-center bg-black/50 px-4 py-6 backdrop-blur-sm"
           onClick={() =>
-            !isSubmitting && setEditingCandidate(null)
+            !isSubmitting &&
+            setEditingCandidate(null)
           }
         >
           <div
             className={`${modalCardClass} max-w-md`}
-            onClick={(event) => event.stopPropagation()}
+            onClick={(event) =>
+              event.stopPropagation()
+            }
           >
             <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-gray-800">
               <div>
@@ -1342,7 +1721,11 @@ function Candidates() {
 
               <button
                 type="button"
-                onClick={() => setEditingCandidate(null)}
+                onClick={() =>
+                  setEditingCandidate(
+                    null
+                  )
+                }
                 disabled={isSubmitting}
                 className="rounded-lg p-2 text-gray-400 hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 dark:hover:bg-gray-800 dark:hover:text-gray-200"
                 aria-label="Close modal"
@@ -1353,22 +1736,31 @@ function Candidates() {
 
             <div className="px-6 py-6">
               <p className="mb-3 text-sm font-semibold text-gray-800 dark:text-gray-200">
-                {editingCandidate.name}
+                {
+                  editingCandidate.name
+                }
               </p>
 
               <select
                 value={editStatus}
                 onChange={(event) =>
-                  setEditStatus(event.target.value)
+                  setEditStatus(
+                    event.target.value
+                  )
                 }
                 disabled={isSubmitting}
                 className={inputClass}
               >
-                {candidateStatuses.map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
+                {candidateStatuses.map(
+                  (status) => (
+                    <option
+                      key={status}
+                      value={status}
+                    >
+                      {status}
+                    </option>
+                  )
+                )}
               </select>
 
               {actionError && (
@@ -1381,16 +1773,24 @@ function Candidates() {
             <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-6 py-4 sm:flex-row sm:justify-end dark:border-gray-800">
               <button
                 type="button"
-                onClick={() => setEditingCandidate(null)}
+                onClick={() =>
+                  setEditingCandidate(
+                    null
+                  )
+                }
                 disabled={isSubmitting}
-                className={secondaryButtonClass}
+                className={
+                  secondaryButtonClass
+                }
               >
                 Cancel
               </button>
 
               <button
                 type="button"
-                onClick={handleStatusUpdate}
+                onClick={
+                  handleStatusUpdate
+                }
                 disabled={isSubmitting}
                 className="rounded-lg bg-[#EF3B3A] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
               >
@@ -1403,16 +1803,20 @@ function Candidates() {
         </div>
       )}
 
+      {/* Delete Candidate Modal */}
       {deleteCandidate && (
         <div
           className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 px-4 py-6 backdrop-blur-sm"
           onClick={() =>
-            !isSubmitting && setDeleteCandidate(null)
+            !isSubmitting &&
+            setDeleteCandidate(null)
           }
         >
           <div
             className={`${modalCardClass} max-w-md p-6`}
-            onClick={(event) => event.stopPropagation()}
+            onClick={(event) =>
+              event.stopPropagation()
+            }
           >
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-50 text-[#EF3B3A] dark:bg-red-950/50">
               <Trash2 size={20} />
@@ -1423,11 +1827,15 @@ function Candidates() {
             </h2>
 
             <p className="mt-2 text-sm leading-6 text-gray-500 dark:text-gray-400">
-              Are you sure you want to delete{" "}
+              Are you sure you want to
+              delete{" "}
               <span className="font-semibold text-gray-700 dark:text-gray-200">
-                {deleteCandidate.name}
+                {
+                  deleteCandidate.name
+                }
               </span>
-              ? This action cannot be undone.
+              ? This action cannot be
+              undone.
             </p>
 
             {actionError && (
@@ -1439,9 +1847,13 @@ function Candidates() {
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <button
                 type="button"
-                onClick={() => setDeleteCandidate(null)}
+                onClick={() =>
+                  setDeleteCandidate(null)
+                }
                 disabled={isSubmitting}
-                className={secondaryButtonClass}
+                className={
+                  secondaryButtonClass
+                }
               >
                 Cancel
               </button>
