@@ -1,4 +1,4 @@
-import LocationsMap from "../../../components/maps/LocationsMap";
+import LocationsMap from "../../../components/Maps/LocationsMap";
 
 const GlobalPresence = () => {
   return (
