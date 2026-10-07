@@ -31,7 +31,18 @@ const emptyForm = {
 };
 
 function Employees() {
+  // =========================================================
+  // State
+  // =========================================================
+
   const [employees, setEmployees] = useState([]);
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const [apiError, setApiError] = useState("");
+  const [importMessage, setImportMessage] = useState("");
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -45,35 +56,36 @@ function Employees() {
   const [openMenuId, setOpenMenuId] = useState(null);
   const [deleteEmployee, setDeleteEmployee] = useState(null);
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [pageError, setPageError] = useState("");
-
   const [isImporting, setIsImporting] = useState(false);
   const [uploadSummary, setUploadSummary] = useState(null);
 
   const fileInputRef = useRef(null);
 
-  /*
-   * ---------------------------------------------------------
-   * AUTH HEADERS
-   * ---------------------------------------------------------
-   */
-  const getAuthHeaders = () => {
+  // =========================================================
+  // Backend API Helpers
+  // =========================================================
+
+  const getEmployeesUrl = () => {
+    return `${API_BASE_URL.replace(/\/$/, "")}/employees`;
+  };
+
+  const getAuthHeaders = (includeJson = false) => {
     const token = localStorage.getItem("adminToken");
 
     return {
       Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
+      ...(includeJson
+        ? {
+            "Content-Type": "application/json",
+          }
+        : {}),
     };
   };
 
-  /*
-   * ---------------------------------------------------------
-   * HANDLE UNAUTHORIZED
-   * ---------------------------------------------------------
-   */
+  // =========================================================
+  // Handle Unauthorized
+  // =========================================================
+
   const handleUnauthorized = () => {
     localStorage.removeItem("adminToken");
     localStorage.removeItem("adminUser");
@@ -81,11 +93,11 @@ function Employees() {
     window.location.href = "/login";
   };
 
-  /*
-   * ---------------------------------------------------------
-   * FETCH EMPLOYEES
-   * ---------------------------------------------------------
-   */
+  // =========================================================
+  // GET ALL EMPLOYEES
+  // GET /employees
+  // =========================================================
+
   const fetchEmployees = async () => {
     const token = localStorage.getItem("adminToken");
 
@@ -95,65 +107,57 @@ function Employees() {
     }
 
     setIsLoading(true);
-    setPageError("");
+    setApiError("");
 
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/employees`,
-        {
-          method: "GET",
-          headers: getAuthHeaders(),
-        }
-      );
+      const response = await fetch(getEmployeesUrl(), {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
 
       if (response.status === 401) {
         handleUnauthorized();
         return;
       }
 
-      const result = await response.json();
+      const data = await response.json().catch(() => ({}));
 
-      if (!response.ok || !result.success) {
+      if (!response.ok) {
         throw new Error(
-          result.message || "Failed to load employees."
+          data.message || "Failed to fetch employees."
         );
       }
 
-      const employeeData =
-        result.employees ||
-        result.data ||
-        [];
+      const employeeList = Array.isArray(data)
+        ? data
+        : data.employees || data.data || [];
 
-      setEmployees(employeeData);
+      setEmployees(employeeList);
     } catch (error) {
-      console.error(
-        "Failed to fetch employees:",
-        error
-      );
+      console.error("Fetch employees error:", error);
 
-      setPageError(
-        error.message ||
-          "Unable to load employees. Please try again."
+      setEmployees([]);
+
+      setApiError(
+        error.message || "Unable to load employees."
       );
     } finally {
       setIsLoading(false);
     }
   };
 
-  /*
-   * ---------------------------------------------------------
-   * LOAD EMPLOYEES
-   * ---------------------------------------------------------
-   */
+  // =========================================================
+  // Load employees when page opens
+  // =========================================================
+
   useEffect(() => {
     fetchEmployees();
   }, []);
 
-  /*
-   * ---------------------------------------------------------
-   * SEARCH + STATUS FILTER
-   * ---------------------------------------------------------
-   */
+  // =========================================================
+  // Search + Filter
+  // =========================================================
+
   const filteredEmployees = useMemo(() => {
     return employees.filter((employee) => {
       const searchValue = search
@@ -161,35 +165,31 @@ function Employees() {
         .trim();
 
       const matchesSearch =
-        employee.name
-          ?.toLowerCase()
+        String(employee.name || "")
+          .toLowerCase()
           .includes(searchValue) ||
-        employee.email
-          ?.toLowerCase()
+        String(employee.email || "")
+          .toLowerCase()
           .includes(searchValue) ||
-        employee.role
-          ?.toLowerCase()
+        String(employee.role || "")
+          .toLowerCase()
           .includes(searchValue) ||
-        employee.department
-          ?.toLowerCase()
+        String(employee.department || "")
+          .toLowerCase()
           .includes(searchValue);
 
       const matchesStatus =
         statusFilter === "All" ||
         employee.status === statusFilter;
 
-      return (
-        matchesSearch &&
-        matchesStatus
-      );
+      return matchesSearch && matchesStatus;
     });
   }, [employees, search, statusFilter]);
 
-  /*
-   * ---------------------------------------------------------
-   * FORM HANDLING
-   * ---------------------------------------------------------
-   */
+  // =========================================================
+  // Form Change
+  // =========================================================
+
   const handleChange = (event) => {
     const { name, value } = event.target;
 
@@ -203,62 +203,60 @@ function Employees() {
       [name]: "",
       submit: "",
     }));
+
+    setApiError("");
   };
+
+  // =========================================================
+  // Form Validation
+  // =========================================================
 
   const validateForm = () => {
     const newErrors = {};
 
     if (!formData.name.trim()) {
-      newErrors.name =
-        "Full name is required.";
+      newErrors.name = "Full name is required.";
     }
 
     if (!formData.email.trim()) {
-      newErrors.email =
-        "Email address is required.";
+      newErrors.email = "Email address is required.";
     } else if (
       !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
         formData.email.trim()
       )
     ) {
-      newErrors.email =
-        "Enter a valid email address.";
+      newErrors.email = "Enter a valid email address.";
     }
 
     if (!formData.role.trim()) {
-      newErrors.role =
-        "Role is required.";
+      newErrors.role = "Role is required.";
     }
 
     if (!formData.department.trim()) {
-      newErrors.department =
-        "Department is required.";
+      newErrors.department = "Department is required.";
     }
 
     setErrors(newErrors);
 
-    return (
-      Object.keys(newErrors).length === 0
-    );
+    return Object.keys(newErrors).length === 0;
   };
 
-  /*
-   * ---------------------------------------------------------
-   * OPEN ADD MODAL
-   * ---------------------------------------------------------
-   */
+  // =========================================================
+  // Open Add Modal
+  // =========================================================
+
   const openAddModal = () => {
     setEditingEmployee(null);
     setFormData(emptyForm);
     setErrors({});
+    setApiError("");
     setIsModalOpen(true);
   };
 
-  /*
-   * ---------------------------------------------------------
-   * OPEN EDIT MODAL
-   * ---------------------------------------------------------
-   */
+  // =========================================================
+  // Open Edit Modal
+  // =========================================================
+
   const openEditModal = (employee) => {
     setEditingEmployee(employee);
 
@@ -271,15 +269,21 @@ function Employees() {
     });
 
     setErrors({});
+    setApiError("");
     setOpenMenuId(null);
     setIsModalOpen(true);
   };
 
-  /*
-   * ---------------------------------------------------------
-   * ADD / UPDATE EMPLOYEE
-   * ---------------------------------------------------------
-   */
+  // =========================================================
+  // ADD / UPDATE EMPLOYEE
+  //
+  // ADD:
+  // POST /employees
+  //
+  // UPDATE:
+  // PUT /employees/:id
+  // =========================================================
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -287,8 +291,7 @@ function Employees() {
       return;
     }
 
-    const token =
-      localStorage.getItem("adminToken");
+    const token = localStorage.getItem("adminToken");
 
     if (!token) {
       handleUnauthorized();
@@ -296,34 +299,24 @@ function Employees() {
     }
 
     setIsSubmitting(true);
+    setApiError("");
 
     try {
-      const isEditing = Boolean(
-        editingEmployee
-      );
+      const employeeId =
+        editingEmployee?._id || editingEmployee?.id;
 
-      const employeeId = editingEmployee
-        ? editingEmployee._id ||
-          editingEmployee.id
-        : null;
-
-      const url = isEditing
-        ? `${API_BASE_URL}/employees/${employeeId}`
-        : `${API_BASE_URL}/employees`;
-
-      const method = isEditing
-        ? "PUT"
-        : "POST";
+      const url = editingEmployee
+        ? `${getEmployeesUrl()}/${employeeId}`
+        : getEmployeesUrl();
 
       const response = await fetch(url, {
-        method,
-        headers: getAuthHeaders(),
+        method: editingEmployee ? "PUT" : "POST",
+        headers: getAuthHeaders(true),
         body: JSON.stringify({
           name: formData.name.trim(),
           email: formData.email.trim(),
           role: formData.role.trim(),
-          department:
-            formData.department.trim(),
+          department: formData.department.trim(),
           status: formData.status,
         }),
       });
@@ -333,17 +326,14 @@ function Employees() {
         return;
       }
 
-      const result =
-        await response.json();
+      const data = await response.json().catch(() => ({}));
 
-      if (!response.ok || !result.success) {
+      if (!response.ok) {
         throw new Error(
-          result.message ||
-            `Failed to ${
-              isEditing
-                ? "update"
-                : "add"
-            } employee.`
+          data.message ||
+            (editingEmployee
+              ? "Failed to update employee."
+              : "Failed to add employee.")
         );
       }
 
@@ -354,26 +344,20 @@ function Employees() {
       setEditingEmployee(null);
       setIsModalOpen(false);
     } catch (error) {
-      console.error(
-        "Employee save failed:",
-        error
-      );
+      console.error("Save employee error:", error);
 
-      setErrors({
-        submit:
-          error.message ||
-          "Unable to save employee. Please try again.",
-      });
+      setApiError(
+        error.message || "Unable to save employee."
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  /*
-   * ---------------------------------------------------------
-   * CLOSE MODAL
-   * ---------------------------------------------------------
-   */
+  // =========================================================
+  // Close Add / Edit Modal
+  // =========================================================
+
   const handleCloseModal = () => {
     if (isSubmitting) {
       return;
@@ -383,20 +367,20 @@ function Employees() {
     setEditingEmployee(null);
     setFormData(emptyForm);
     setErrors({});
+    setApiError("");
   };
 
-  /*
-   * ---------------------------------------------------------
-   * TOGGLE EMPLOYEE STATUS
-   * ---------------------------------------------------------
-   */
-  const handleToggleStatus = async (
-    employee
-  ) => {
-    const token =
-      localStorage.getItem(
-        "adminToken"
-      );
+  // =========================================================
+  // UPDATE EMPLOYEE STATUS
+  //
+  // PUT /employees/:id
+  // =========================================================
+
+  const handleToggleStatus = async (employee) => {
+    setOpenMenuId(null);
+    setApiError("");
+
+    const token = localStorage.getItem("adminToken");
 
     if (!token) {
       handleUnauthorized();
@@ -406,27 +390,23 @@ function Employees() {
     const employeeId =
       employee._id || employee.id;
 
-    const newStatus =
+    const nextStatus =
       employee.status === "Active"
         ? "Inactive"
         : "Active";
 
-    setOpenMenuId(null);
-    setPageError("");
-
     try {
       const response = await fetch(
-        `${API_BASE_URL}/employees/${employeeId}`,
+        `${getEmployeesUrl()}/${employeeId}`,
         {
           method: "PUT",
-          headers: getAuthHeaders(),
+          headers: getAuthHeaders(true),
           body: JSON.stringify({
             name: employee.name,
             email: employee.email,
             role: employee.role,
-            department:
-              employee.department,
-            status: newStatus,
+            department: employee.department,
+            status: nextStatus,
           }),
         }
       );
@@ -436,12 +416,11 @@ function Employees() {
         return;
       }
 
-      const result =
-        await response.json();
+      const data = await response.json().catch(() => ({}));
 
-      if (!response.ok || !result.success) {
+      if (!response.ok) {
         throw new Error(
-          result.message ||
+          data.message ||
             "Failed to update employee status."
         );
       }
@@ -449,47 +428,44 @@ function Employees() {
       await fetchEmployees();
     } catch (error) {
       console.error(
-        "Employee status update failed:",
+        "Update employee status error:",
         error
       );
 
-      setPageError(
+      setApiError(
         error.message ||
           "Unable to update employee status."
       );
     }
   };
 
-  /*
-   * ---------------------------------------------------------
-   * DELETE EMPLOYEE
-   * ---------------------------------------------------------
-   */
+  // =========================================================
+  // DELETE EMPLOYEE
+  //
+  // DELETE /employees/:id
+  // =========================================================
+
   const handleDelete = async () => {
     if (!deleteEmployee) {
       return;
     }
 
-    const token =
-      localStorage.getItem(
-        "adminToken"
-      );
+    const token = localStorage.getItem("adminToken");
 
     if (!token) {
       handleUnauthorized();
       return;
     }
 
-    const employeeId =
-      deleteEmployee._id ||
-      deleteEmployee.id;
-
     setIsDeleting(true);
-    setPageError("");
+    setApiError("");
+
+    const employeeId =
+      deleteEmployee._id || deleteEmployee.id;
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/employees/${employeeId}`,
+        `${getEmployeesUrl()}/${employeeId}`,
         {
           method: "DELETE",
           headers: getAuthHeaders(),
@@ -501,95 +477,78 @@ function Employees() {
         return;
       }
 
-      const result =
-        await response.json();
+      const data = await response.json().catch(() => ({}));
 
-      if (!response.ok || !result.success) {
+      if (!response.ok) {
         throw new Error(
-          result.message ||
+          data.message ||
             "Failed to delete employee."
         );
       }
 
-      setEmployees((previous) =>
-        previous.filter(
-          (employee) =>
-            (employee._id ||
-              employee.id) !==
-            employeeId
-        )
-      );
-
       setDeleteEmployee(null);
-    } catch (error) {
-      console.error(
-        "Employee deletion failed:",
-        error
-      );
 
-      setPageError(
+      await fetchEmployees();
+    } catch (error) {
+      console.error("Delete employee error:", error);
+
+      setApiError(
         error.message ||
-          "Unable to delete employee. Please try again."
+          "Unable to delete employee."
       );
     } finally {
       setIsDeleting(false);
     }
   };
 
-  /*
-   * ---------------------------------------------------------
-   * ADD MULTIPLE
-   * ---------------------------------------------------------
-   */
+  // =========================================================
+  // ADD MULTIPLE
+  // =========================================================
+
   const handleAddMultipleClick = () => {
     if (isImporting) {
       return;
     }
 
-    setPageError("");
+    setApiError("");
+    setImportMessage("");
     setUploadSummary(null);
 
     fileInputRef.current?.click();
   };
 
-  /*
-   * ---------------------------------------------------------
-   * BULK EMPLOYEE UPLOAD
-   * ---------------------------------------------------------
-   */
-  const handleFileUpload = async (
-    event
-  ) => {
-    const file =
-      event.target.files?.[0];
+  // =========================================================
+  // BULK EMPLOYEE UPLOAD
+  //
+  // XLS / XLSX:
+  // POST /employees/bulk
+  //
+  // CSV:
+  // Local CSV import
+  // =========================================================
+
+  const handleFileUpload = async (event) => {
+    const file = event.target.files?.[0];
 
     if (!file) {
       return;
     }
 
-    const extension =
-      file.name
-        .split(".")
-        .pop()
-        ?.toLowerCase();
+    const extension = file.name
+      .split(".")
+      .pop()
+      ?.toLowerCase();
 
-    if (
-      !["xls", "xlsx"].includes(
-        extension
-      )
-    ) {
-      setPageError(
-        "Please select an XLS or XLSX file."
+    if (!["csv", "xls", "xlsx"].includes(extension)) {
+      setImportMessage(
+        "Please select a CSV, XLS, or XLSX file."
       );
 
       event.target.value = "";
       return;
     }
 
-    const token =
-      localStorage.getItem(
-        "adminToken"
-      );
+    const token = localStorage.getItem("adminToken");
 
     if (!token) {
       handleUnauthorized();
@@ -598,80 +557,247 @@ function Employees() {
     }
 
     setIsImporting(true);
-    setPageError("");
+    setApiError("");
+    setImportMessage("");
     setUploadSummary(null);
 
     try {
-      const formDataToUpload =
-        new FormData();
+      // =====================================================
+      // XLS / XLSX -> Backend Bulk API
+      // =====================================================
 
-      formDataToUpload.append(
-        "file",
-        file
-      );
+      if (extension === "xls" || extension === "xlsx") {
+        const formDataToUpload = new FormData();
 
-      const response = await fetch(
-        `${API_BASE_URL}/employees/bulk`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formDataToUpload,
+        formDataToUpload.append("file", file);
+
+        const response = await fetch(
+          `${getEmployeesUrl()}/bulk`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: formDataToUpload,
+          }
+        );
+
+        if (response.status === 401) {
+          handleUnauthorized();
+          return;
         }
-      );
 
-      if (response.status === 401) {
-        handleUnauthorized();
+        const result = await response
+          .json()
+          .catch(() => ({}));
+
+        if (!response.ok || !result.success) {
+          throw new Error(
+            result.message ||
+              "Failed to upload employee file."
+          );
+        }
+
+        setUploadSummary({
+          totalRecords: Number(
+            result.totalRecords ?? 0
+          ),
+          successfullyAdded: Number(
+            result.successfullyAdded ?? 0
+          ),
+          alreadyExisting: Number(
+            result.alreadyExisting ?? 0
+          ),
+          invalidRecords: Number(
+            result.invalidRecords ?? 0
+          ),
+          failedRecords: Number(
+            result.failedRecords ?? 0
+          ),
+        });
+
+        await fetchEmployees();
+
         return;
       }
 
-      const result =
-        await response.json();
+      // =====================================================
+      // CSV -> Local CSV Import
+      // =====================================================
 
-      if (
-        !response.ok ||
-        !result.success
-      ) {
-        throw new Error(
-          result.message ||
-            "Failed to upload employee file."
+      const text = await file.text();
+
+      const rows = parseCSV(text);
+
+      if (rows.length < 2) {
+        setImportMessage(
+          "The CSV file has no employee records. Please add data below the header row."
         );
+
+        return;
       }
 
-      setUploadSummary({
-        totalRecords:
-          Number(
-            result.totalRecords ?? 0
-          ),
-        successfullyAdded:
-          Number(
-            result.successfullyAdded ?? 0
-          ),
-        alreadyExisting:
-          Number(
-            result.alreadyExisting ?? 0
-          ),
-        invalidRecords:
-          Number(
-            result.invalidRecords ?? 0
-          ),
-        failedRecords:
-          Number(
-            result.failedRecords ?? 0
-          ),
+      const headers = rows[0].map((header) =>
+        header
+          .trim()
+          .toLowerCase()
+          .replace(/[\s_-]+/g, "")
+      );
+
+      const getIndex = (...names) =>
+        headers.findIndex((header) =>
+          names.includes(header)
+        );
+
+      const nameIndex = getIndex(
+        "name",
+        "fullname",
+        "employeename"
+      );
+
+      const emailIndex = getIndex(
+        "email",
+        "emailaddress"
+      );
+
+      const roleIndex = getIndex(
+        "role",
+        "jobrole",
+        "designation"
+      );
+
+      const departmentIndex = getIndex(
+        "department",
+        "dept"
+      );
+
+      const statusIndex = getIndex(
+        "status",
+        "employeestatus"
+      );
+
+      if (
+        nameIndex === -1 ||
+        emailIndex === -1 ||
+        roleIndex === -1 ||
+        departmentIndex === -1
+      ) {
+        setImportMessage(
+          "CSV must contain Name, Email, Role, and Department columns."
+        );
+
+        return;
+      }
+
+      const importedEmployees = [];
+
+      const existingEmails = new Set(
+        employees.map((employee) =>
+          String(employee.email || "").toLowerCase()
+        )
+      );
+
+      let skipped = 0;
+
+      rows.slice(1).forEach((row, index) => {
+        const name = (
+          row[nameIndex] || ""
+        ).trim();
+
+        const email = (
+          row[emailIndex] || ""
+        ).trim();
+
+        const role = (
+          row[roleIndex] || ""
+        ).trim();
+
+        const department = (
+          row[departmentIndex] || ""
+        ).trim();
+
+        if (
+          !name &&
+          !email &&
+          !role &&
+          !department
+        ) {
+          return;
+        }
+
+        if (
+          !name ||
+          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+            email
+          ) ||
+          !role ||
+          !department ||
+          existingEmails.has(
+            email.toLowerCase()
+          )
+        ) {
+          skipped++;
+          return;
+        }
+
+        const rawStatus =
+          statusIndex === -1
+            ? "Active"
+            : (
+                row[statusIndex] || ""
+              ).trim();
+
+        const status =
+          rawStatus.toLowerCase() === "inactive"
+            ? "Inactive"
+            : "Active";
+
+        importedEmployees.push({
+          id:
+            Date.now() +
+            index +
+            Math.random(),
+          name,
+          email,
+          role,
+          department,
+          status,
+        });
+
+        existingEmails.add(
+          email.toLowerCase()
+        );
       });
 
-      await fetchEmployees();
+      if (importedEmployees.length > 0) {
+        setEmployees((previous) => [
+          ...previous,
+          ...importedEmployees,
+        ]);
+      }
+
+      if (importedEmployees.length === 0) {
+        setImportMessage(
+          `No new valid employees imported. ${skipped} row(s) skipped.`
+        );
+      } else {
+        setImportMessage(
+          `${importedEmployees.length} employee(s) imported successfully.${
+            skipped
+              ? ` ${skipped} invalid or duplicate row(s) skipped.`
+              : ""
+          }`
+        );
+      }
     } catch (error) {
       console.error(
-        "Employee bulk upload failed:",
+        "File import/upload error:",
         error
       );
 
-      setPageError(
+      setApiError(
         error.message ||
-          "Unable to upload the employee file. Please try again."
+          "Unable to process the employee file."
       );
     } finally {
       setIsImporting(false);
@@ -679,28 +805,91 @@ function Employees() {
     }
   };
 
-  /*
-   * ---------------------------------------------------------
-   * AUTO DISMISS UPLOAD NOTIFICATION
-   * ---------------------------------------------------------
-   */
-  useEffect(() => {
-    if (!uploadSummary) {
-      return;
+  // =========================================================
+  // CSV Parser
+  // =========================================================
+
+  const parseCSV = (text) => {
+    const rows = [];
+
+    let row = [];
+    let field = "";
+    let insideQuotes = false;
+
+    const content = text.replace(
+      /^\uFEFF/,
+      ""
+    );
+
+    for (
+      let i = 0;
+      i < content.length;
+      i++
+    ) {
+      const char = content[i];
+      const nextChar = content[i + 1];
+
+      if (
+        char === '"' &&
+        insideQuotes &&
+        nextChar === '"'
+      ) {
+        field += '"';
+        i++;
+      } else if (char === '"') {
+        insideQuotes = !insideQuotes;
+      } else if (
+        char === "," &&
+        !insideQuotes
+      ) {
+        row.push(field);
+        field = "";
+      } else if (
+        (char === "\n" ||
+          char === "\r") &&
+        !insideQuotes
+      ) {
+        if (
+          char === "\r" &&
+          nextChar === "\n"
+        ) {
+          i++;
+        }
+
+        row.push(field);
+
+        if (
+          row.some(
+            (value) =>
+              value.trim() !== ""
+          )
+        ) {
+          rows.push(row);
+        }
+
+        row = [];
+        field = "";
+      } else {
+        field += char;
+      }
     }
 
-    const timer = setTimeout(() => {
-      setUploadSummary(null);
-    }, 5000);
+    if (
+      row.some(
+        (value) =>
+          value.trim() !== ""
+      )
+    ) {
+      rows.push(row);
+    }
 
-    return () => clearTimeout(timer);
-  }, [uploadSummary]);
+    return rows;
+  };
 
-  /*
-   * ---------------------------------------------------------
-   * TABLE COLUMNS
-   * ---------------------------------------------------------
-   */
+  // =========================================================
+  // Employee Table Columns
+  // =========================================================
+
   const employeeColumns = [
     {
       key: "name",
@@ -764,8 +953,7 @@ function Employees() {
 
       render: (employee) => {
         const employeeId =
-          employee._id ||
-          employee.id;
+          employee._id || employee.id;
 
         return (
           <div className="relative">
@@ -774,58 +962,46 @@ function Employees() {
               onClick={(event) => {
                 event.stopPropagation();
 
-                setOpenMenuId(
-                  (previous) =>
-                    previous === employeeId
-                      ? null
-                      : employeeId
+                setOpenMenuId((previous) =>
+                  previous === employeeId
+                    ? null
+                    : employeeId
                 );
               }}
-              className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
+              className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-white"
               aria-label="Employee actions"
             >
               <MoreVertical size={18} />
             </button>
 
-            {openMenuId ===
-              employeeId && (
+            {openMenuId === employeeId && (
               <div className="absolute right-0 top-10 z-30 w-48 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900">
                 <button
                   type="button"
                   onClick={() =>
-                    openEditModal(
-                      employee
-                    )
+                    openEditModal(employee)
                   }
                   className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800"
                 >
                   <Pencil size={16} />
-                  <span>
-                    Edit Employee
-                  </span>
+                  <span>Edit Employee</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() =>
-                    handleToggleStatus(
-                      employee
-                    )
+                    handleToggleStatus(employee)
                   }
                   className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800"
                 >
-                  {employee.status ===
-                  "Active" ? (
+                  {employee.status === "Active" ? (
                     <UserX size={16} />
                   ) : (
-                    <UserCheck
-                      size={16}
-                    />
+                    <UserCheck size={16} />
                   )}
 
                   <span>
-                    {employee.status ===
-                    "Active"
+                    {employee.status === "Active"
                       ? "Set Inactive"
                       : "Set Active"}
                   </span>
@@ -836,19 +1012,13 @@ function Employees() {
                 <button
                   type="button"
                   onClick={() => {
-                    setDeleteEmployee(
-                      employee
-                    );
-                    setOpenMenuId(
-                      null
-                    );
+                    setDeleteEmployee(employee);
+                    setOpenMenuId(null);
                   }}
-                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:hover:bg-red-950/30"
+                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:hover:bg-red-950/40"
                 >
                   <Trash2 size={16} />
-                  <span>
-                    Delete Employee
-                  </span>
+                  <span>Delete Employee</span>
                 </button>
               </div>
             )}
@@ -858,22 +1028,34 @@ function Employees() {
     },
   ];
 
+  // =========================================================
+  // Input Class
+  // =========================================================
+
+  const inputClass = (field) =>
+    `w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:ring-4 dark:bg-gray-950 dark:text-white dark:placeholder:text-gray-500 ${
+      errors[field]
+        ? "border-red-300 focus:border-red-400 focus:ring-red-50 dark:border-red-800 dark:focus:ring-red-950/30"
+        : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50 dark:border-gray-700 dark:focus:ring-red-950/30"
+    }`;
+
+  // =========================================================
+  // JSX
+  // =========================================================
+
   return (
-    /*
-     * ONLY CHANGE FOR LIGHT MODE:
-     * Added bg-gray-100 and dark:bg-gray-950
-     * to match TeamMembers.jsx.
-     */
     <div className="relative min-h-screen bg-gray-100 p-5 text-gray-900 transition-colors dark:bg-gray-950 dark:text-gray-100 sm:p-6">
+
       {/* =====================================================
           UPLOAD SUCCESS NOTIFICATION
       ====================================================== */}
+
       {uploadSummary && (
         <div
           role="status"
           className="
             fixed right-6 top-24 z-50
-            w-[420px]
+            w-105
             max-w-[calc(100vw-2rem)]
             rounded-2xl
             border border-emerald-200
@@ -888,22 +1070,16 @@ function Employees() {
         >
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
-              <CheckCircle2
-                size={22}
-              />
+              <CheckCircle2 size={22} />
             </div>
 
             <div className="min-w-0 flex-1">
               <h3 className="text-base font-bold text-emerald-700 dark:text-emerald-400">
-                Employee Upload
-                Completed
+                Employee Upload Completed
               </h3>
 
               <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-                {
-                  uploadSummary.totalRecords
-                }{" "}
-                records processed
+                {uploadSummary.totalRecords} records processed
               </p>
             </div>
 
@@ -922,18 +1098,14 @@ function Employees() {
           <div className="mt-4 grid grid-cols-4 gap-2">
             <div className="rounded-xl bg-emerald-50 p-3 dark:bg-emerald-950/30">
               <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                <CheckCircle2
-                  size={15}
-                />
+                <CheckCircle2 size={15} />
                 <span className="text-xs font-semibold">
                   Added
                 </span>
               </div>
 
               <p className="mt-1 text-lg font-bold text-gray-900 dark:text-white">
-                {
-                  uploadSummary.successfullyAdded
-                }
+                {uploadSummary.successfullyAdded}
               </p>
             </div>
 
@@ -946,26 +1118,20 @@ function Employees() {
               </div>
 
               <p className="mt-1 text-lg font-bold text-gray-900 dark:text-white">
-                {
-                  uploadSummary.alreadyExisting
-                }
+                {uploadSummary.alreadyExisting}
               </p>
             </div>
 
             <div className="rounded-xl bg-orange-50 p-3 dark:bg-orange-950/30">
               <div className="flex items-center gap-1.5 text-orange-600 dark:text-orange-400">
-                <AlertCircle
-                  size={15}
-                />
+                <AlertCircle size={15} />
                 <span className="text-xs font-semibold">
                   Invalid
                 </span>
               </div>
 
               <p className="mt-1 text-lg font-bold text-gray-900 dark:text-white">
-                {
-                  uploadSummary.invalidRecords
-                }
+                {uploadSummary.invalidRecords}
               </p>
             </div>
 
@@ -978,9 +1144,7 @@ function Employees() {
               </div>
 
               <p className="mt-1 text-lg font-bold text-gray-900 dark:text-white">
-                {
-                  uploadSummary.failedRecords
-                }
+                {uploadSummary.failedRecords}
               </p>
             </div>
           </div>
@@ -990,6 +1154,7 @@ function Employees() {
       {/* =====================================================
           PAGE HEADER
       ====================================================== */}
+
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
@@ -997,17 +1162,14 @@ function Employees() {
           </h1>
 
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Manage your Proliant employees
-            and their status.
+            Manage your Proliant employees and their status.
           </p>
         </div>
 
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+        <div className="flex w-full items-center gap-3 sm:w-auto">
           <button
             type="button"
-            onClick={
-              handleAddMultipleClick
-            }
+            onClick={handleAddMultipleClick}
             disabled={isImporting}
             className="
               inline-flex w-full items-center
@@ -1028,10 +1190,10 @@ function Employees() {
               sm:w-auto
             "
           >
-            <Upload size={17} />
+            <Upload size={18} />
 
             {isImporting
-              ? "Uploading..."
+              ? "Importing..."
               : "Add Multiple"}
           </button>
 
@@ -1059,30 +1221,26 @@ function Employees() {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".xls,.xlsx"
-            onChange={
-              handleFileUpload
-            }
+            accept=".csv,.xls,.xlsx"
+            onChange={handleFileUpload}
             className="hidden"
           />
         </div>
       </div>
 
-      {/* =====================================================
-          PAGE ERROR
-      ====================================================== */}
-      {pageError && (
-        <div className="mb-5 flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3 dark:border-red-900/50 dark:bg-red-950/30">
-          <p className="text-sm font-medium text-red-600 dark:text-red-400">
-            {pageError}
-          </p>
+      {/* API Error */}
+
+      {apiError && (
+        <div
+          role="alert"
+          className="mb-5 flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300"
+        >
+          <span>{apiError}</span>
 
           <button
             type="button"
-            onClick={() =>
-              setPageError("")
-            }
-            className="text-red-500 transition-colors hover:text-red-700 dark:hover:text-red-300"
+            onClick={() => setApiError("")}
+            className="ml-3 rounded p-1 text-red-500 hover:bg-red-100 dark:hover:bg-red-950/50"
             aria-label="Close error"
           >
             <X size={17} />
@@ -1090,11 +1248,38 @@ function Employees() {
         </div>
       )}
 
-      {/* =====================================================
-          SEARCH + FILTER
-      ====================================================== */}
-      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative w-full sm:max-w-sm">
+      {/* Loading */}
+
+      {isLoading && (
+        <div className="mb-5 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+          Loading employees...
+        </div>
+      )}
+
+      {/* Import Message */}
+
+      {importMessage && (
+        <div
+          role="status"
+          className="mb-5 flex items-start justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+        >
+          <span>{importMessage}</span>
+
+          <button
+            type="button"
+            onClick={() => setImportMessage("")}
+            className="rounded p-1 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800"
+            aria-label="Dismiss import message"
+          >
+            <X size={17} />
+          </button>
+        </div>
+      )}
+
+      {/* Search & Filter */}
+
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between max-[767px]:flex-row max-[767px]:items-center">
+        <div className="relative w-full sm:max-w-sm max-[767px]:min-w-0 max-[767px]:flex-1">
           <Search
             size={18}
             className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
@@ -1104,9 +1289,7 @@ function Employees() {
             type="search"
             value={search}
             onChange={(event) =>
-              setSearch(
-                event.target.value
-              )
+              setSearch(event.target.value)
             }
             placeholder="Search employees..."
             className="
@@ -1133,27 +1316,9 @@ function Employees() {
         <select
           value={statusFilter}
           onChange={(event) =>
-            setStatusFilter(
-              event.target.value
-            )
+            setStatusFilter(event.target.value)
           }
-          className="
-            w-full rounded-lg
-            border border-gray-300
-            bg-white
-            px-3 py-2.5
-            text-sm text-gray-700
-            outline-none
-            transition
-            focus:border-[#EF3B3A]
-            focus:ring-4
-            focus:ring-red-50
-            dark:border-gray-700
-            dark:bg-gray-900
-            dark:text-white
-            dark:focus:ring-red-950/30
-            sm:w-40
-          "
+          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:focus:ring-red-950/30 sm:w-40 max-[767px]:min-w-0 max-[767px]:flex-1"
         >
           <option value="All">
             All Status
@@ -1169,20 +1334,9 @@ function Employees() {
         </select>
       </div>
 
-      {/* =====================================================
-          EMPLOYEE TABLE
-      ====================================================== */}
-      <section
-        className="
-          overflow-hidden
-          rounded-xl
-          border border-gray-200
-          bg-white
-          transition-colors
-          dark:border-gray-800
-          dark:bg-gray-900
-        "
-      >
+      {/* Employee Table */}
+
+      <section className="overflow-hidden rounded-xl border border-gray-200 bg-white transition-colors dark:border-gray-800 dark:bg-gray-900 [&_tbody_tr]:dark:bg-gray-900 [&_tbody_tr]:dark:text-gray-200 [&_tbody_tr:hover]:dark:bg-gray-800 [&_td]:dark:border-gray-700 [&_th]:dark:border-gray-700">
         <div className="border-b border-gray-100 px-5 py-4 dark:border-gray-800">
           <h2 className="text-base font-semibold text-gray-900 dark:text-white">
             Employee List
@@ -1191,11 +1345,8 @@ function Employees() {
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             {isLoading
               ? "Loading employees..."
-              : `${
-                  filteredEmployees.length
-                } employee${
-                  filteredEmployees.length !==
-                  1
+              : `${filteredEmployees.length} employee${
+                  filteredEmployees.length !== 1
                     ? "s"
                     : ""
                 } found`}
@@ -1210,12 +1361,8 @@ function Employees() {
           </div>
         ) : (
           <DataTable
-            columns={
-              employeeColumns
-            }
-            data={
-              filteredEmployees
-            }
+            columns={employeeColumns}
+            data={filteredEmployees}
             emptyMessage="No employees found."
           />
         )}
@@ -1224,6 +1371,7 @@ function Employees() {
       {/* =====================================================
           ADD / EDIT EMPLOYEE MODAL
       ====================================================== */}
+
       {isModalOpen && (
         <div
           className="
@@ -1268,9 +1416,7 @@ function Employees() {
 
               <button
                 type="button"
-                onClick={
-                  handleCloseModal
-                }
+                onClick={handleCloseModal}
                 disabled={isSubmitting}
                 className="
                   rounded-lg p-2
@@ -1289,11 +1435,11 @@ function Employees() {
               </button>
             </div>
 
-            <form
-              onSubmit={handleSubmit}
-            >
+            <form onSubmit={handleSubmit}>
               <div className="space-y-5 px-6 py-6">
+
                 {/* Full Name */}
+
                 <div>
                   <label
                     htmlFor="name"
@@ -1306,30 +1452,10 @@ function Employees() {
                     id="name"
                     name="name"
                     type="text"
-                    value={
-                      formData.name
-                    }
-                    onChange={
-                      handleChange
-                    }
+                    value={formData.name}
+                    onChange={handleChange}
                     placeholder="Enter employee name"
-                    className={`
-                      w-full rounded-lg
-                      border
-                      bg-white
-                      px-4 py-3
-                      text-sm text-gray-900
-                      outline-none
-                      transition
-                      focus:ring-4
-                      dark:bg-gray-800
-                      dark:text-white
-                      ${
-                        errors.name
-                          ? "border-red-300 focus:border-red-400 focus:ring-red-50 dark:border-red-700 dark:focus:ring-red-950/30"
-                          : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50 dark:border-gray-700 dark:focus:ring-red-950/30"
-                      }
-                    `}
+                    className={inputClass("name")}
                   />
 
                   {errors.name && (
@@ -1340,6 +1466,7 @@ function Employees() {
                 </div>
 
                 {/* Email */}
+
                 <div>
                   <label
                     htmlFor="email"
@@ -1352,30 +1479,10 @@ function Employees() {
                     id="email"
                     name="email"
                     type="email"
-                    value={
-                      formData.email
-                    }
-                    onChange={
-                      handleChange
-                    }
+                    value={formData.email}
+                    onChange={handleChange}
                     placeholder="employee@proliant.com"
-                    className={`
-                      w-full rounded-lg
-                      border
-                      bg-white
-                      px-4 py-3
-                      text-sm text-gray-900
-                      outline-none
-                      transition
-                      focus:ring-4
-                      dark:bg-gray-800
-                      dark:text-white
-                      ${
-                        errors.email
-                          ? "border-red-300 focus:border-red-400 focus:ring-red-50 dark:border-red-700 dark:focus:ring-red-950/30"
-                          : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50 dark:border-gray-700 dark:focus:ring-red-950/30"
-                      }
-                    `}
+                    className={inputClass("email")}
                   />
 
                   {errors.email && (
@@ -1386,6 +1493,7 @@ function Employees() {
                 </div>
 
                 {/* Role + Department */}
+
                 <div className="grid gap-5 sm:grid-cols-2">
                   <div>
                     <label
@@ -1399,30 +1507,10 @@ function Employees() {
                       id="role"
                       name="role"
                       type="text"
-                      value={
-                        formData.role
-                      }
-                      onChange={
-                        handleChange
-                      }
+                      value={formData.role}
+                      onChange={handleChange}
                       placeholder="e.g. Developer"
-                      className={`
-                        w-full rounded-lg
-                        border
-                        bg-white
-                        px-4 py-3
-                        text-sm text-gray-900
-                        outline-none
-                        transition
-                        focus:ring-4
-                        dark:bg-gray-800
-                        dark:text-white
-                        ${
-                          errors.role
-                            ? "border-red-300 focus:border-red-400 focus:ring-red-50 dark:border-red-700 dark:focus:ring-red-950/30"
-                            : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50 dark:border-gray-700 dark:focus:ring-red-950/30"
-                        }
-                      `}
+                      className={inputClass("role")}
                     />
 
                     {errors.role && (
@@ -1444,44 +1532,22 @@ function Employees() {
                       id="department"
                       name="department"
                       type="text"
-                      value={
-                        formData
-                          .department
-                      }
-                      onChange={
-                        handleChange
-                      }
+                      value={formData.department}
+                      onChange={handleChange}
                       placeholder="e.g. Engineering"
-                      className={`
-                        w-full rounded-lg
-                        border
-                        bg-white
-                        px-4 py-3
-                        text-sm text-gray-900
-                        outline-none
-                        transition
-                        focus:ring-4
-                        dark:bg-gray-800
-                        dark:text-white
-                        ${
-                          errors.department
-                            ? "border-red-300 focus:border-red-400 focus:ring-red-50 dark:border-red-700 dark:focus:ring-red-950/30"
-                            : "border-gray-300 focus:border-[#EF3B3A] focus:ring-red-50 dark:border-gray-700 dark:focus:ring-red-950/30"
-                        }
-                      `}
+                      className={inputClass("department")}
                     />
 
                     {errors.department && (
                       <p className="mt-1.5 text-xs font-medium text-red-500">
-                        {
-                          errors.department
-                        }
+                        {errors.department}
                       </p>
                     )}
                   </div>
                 </div>
 
                 {/* Status */}
+
                 <div>
                   <label
                     htmlFor="status"
@@ -1493,12 +1559,8 @@ function Employees() {
                   <select
                     id="status"
                     name="status"
-                    value={
-                      formData.status
-                    }
-                    onChange={
-                      handleChange
-                    }
+                    value={formData.status}
+                    onChange={handleChange}
                     className="
                       w-full rounded-lg
                       border border-gray-300
@@ -1527,6 +1589,7 @@ function Employees() {
                 </div>
 
                 {/* Submit Error */}
+
                 {errors.submit && (
                   <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 dark:border-red-900/50 dark:bg-red-950/30">
                     <p className="text-sm font-medium text-red-600 dark:text-red-400">
@@ -1537,15 +1600,12 @@ function Employees() {
               </div>
 
               {/* Modal Footer */}
+
               <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-6 py-4 dark:border-gray-800 sm:flex-row sm:justify-end">
                 <button
                   type="button"
-                  onClick={
-                    handleCloseModal
-                  }
-                  disabled={
-                    isSubmitting
-                  }
+                  onClick={handleCloseModal}
+                  disabled={isSubmitting}
                   className="
                     w-full rounded-lg
                     border border-gray-300
@@ -1567,9 +1627,7 @@ function Employees() {
 
                 <button
                   type="submit"
-                  disabled={
-                    isSubmitting
-                  }
+                  disabled={isSubmitting}
                   className="
                     w-full rounded-lg
                     bg-[#EF3B3A]
@@ -1588,8 +1646,8 @@ function Employees() {
                       ? "Saving..."
                       : "Adding..."
                     : editingEmployee
-                    ? "Save Changes"
-                    : "Add Employee"}
+                      ? "Save Changes"
+                      : "Add Employee"}
                 </button>
               </div>
             </form>
@@ -1600,19 +1658,21 @@ function Employees() {
       {/* =====================================================
           DELETE CONFIRMATION MODAL
       ====================================================== */}
+
       {deleteEmployee && (
         <div
           className="
-            fixed inset-0 z-[60]
+            fixed inset-0 z-60
             flex items-center justify-center
             bg-black/40
             px-4
             backdrop-blur-sm
           "
-          onClick={() =>
-            !isDeleting &&
-            setDeleteEmployee(null)
-          }
+          onClick={() => {
+            if (!isDeleting) {
+              setDeleteEmployee(null);
+            }
+          }}
         >
           <div
             className="
@@ -1638,23 +1698,19 @@ function Employees() {
             </h2>
 
             <p className="mt-2 text-sm leading-6 text-gray-500 dark:text-gray-400">
-              Are you sure you want to
-              delete{" "}
+              Are you sure you want to delete{" "}
               <span className="font-semibold text-gray-700 dark:text-gray-200">
                 {deleteEmployee.name ||
                   deleteEmployee.email}
               </span>
-              ? This action cannot be
-              undone.
+              ? This action cannot be undone.
             </p>
 
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={() =>
-                  setDeleteEmployee(
-                    null
-                  )
+                  setDeleteEmployee(null)
                 }
                 disabled={isDeleting}
                 className="
