@@ -12,6 +12,7 @@ import contactRoutes from "./routes/contactRoutes.js";
 import candidateRoutes from "./routes/candidateRoutes.js";
 import jobRoutes from "./routes/jobRoutes.js";
 import teamMemberRoute from "./routes/teamMemberRoute.js";
+import siteSettingRoutes from "./routes/siteSettingRoutes.js";
 
 dotenv.config();
 
@@ -45,6 +46,7 @@ const startServer = async () => {
     app.use("/api/candidates", candidateRoutes);
     app.use("/api/jobs", jobRoutes);
     app.use("/api/auth/team-members", teamMemberRoute);
+    app.use("/api/settings", siteSettingRoutes);
 
     app.get("/", (req, res) => {
       res.json({
