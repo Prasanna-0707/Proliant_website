@@ -10,7 +10,7 @@ import {
   LogOut,
 } from "lucide-react";
 
-import proliantBlackLogo from "../assets/logo/proliant black/proliant_black.png";
+import proliantBlackLogo from "../assets/logo/Proliant Black/proliant_black.png";
 import proliantWhiteLogo from "../assets/logo/ProliantWhite/proliant_white.png";
 
 const API_BASE_URL =

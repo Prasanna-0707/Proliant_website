@@ -11,7 +11,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-import proliantLogo from "../assets/logo/proliant black/proliant_black.png";
+import proliantLogo from "../assets/logo/Proliant Black/proliant_black.png";
 import ForgotPassword from "./ForgotPassword";
 
 const API_BASE_URL =

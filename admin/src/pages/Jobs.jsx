@@ -475,7 +475,7 @@ function Jobs() {
           />
         </div>
 
-        <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto max-[767px]:min-w-0 max-[767px]:flex-[2] max-[767px]:flex-row max-[767px]:gap-2">
+        <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto max-[767px]:min-w-0 max-[767px]:flex-2 max-[767px]:flex-row max-[767px]:gap-2">
           <select
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
@@ -726,7 +726,7 @@ function Jobs() {
       {/* Delete Confirmation Modal */}
       {deleteJob && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
+          className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
           onClick={() => setDeleteJob(null)}
         >
           <div
