@@ -21,9 +21,13 @@ const app = express();
 app.use(
   cors({
     origin: [
-      "http://localhost:5173",
-      "http://localhost:5174",
-      "https://proliant-webpage.onrender.com",
+      // Development
+      "http://localhost:5173", // Public Website
+      "http://localhost:5174", // Admin Portal
+
+      // Production
+      "https://proliant-webpage.onrender.com", // Public Website
+      "https://admin-proliant.onrender.com",   // Admin Portal
     ],
   })
 );
@@ -32,20 +36,40 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
 
+
 const startServer = async () => {
   try {
+    // Connect to MongoDB
     await connectDB();
 
+    // Seed initial database data
     await seedDatabase();
 
+    // Employee routes
     app.use("/api/employees", employeeRoutes);
+
+    // Authentication routes
     app.use("/api/auth", authRoutes);
+
+    // Location routes
     app.use("/api/locations", locationRoutes);
+
+    // Dashboard routes
     app.use("/api/dashboard", dashboardRoutes);
+
+    // Contact routes
     app.use("/api/contacts", contactRoutes);
+
+    // Candidate routes
     app.use("/api/candidates", candidateRoutes);
+
+    // Job routes
     app.use("/api/jobs", jobRoutes);
+
+    // Team Member routes
     app.use("/api/auth/team-members", teamMemberRoute);
+
+    // Site Settings routes
     app.use("/api/settings", siteSettingRoutes);
 
     app.get("/", (req, res) => {
@@ -62,5 +86,6 @@ const startServer = async () => {
     process.exit(1);
   }
 };
+
 
 startServer();
