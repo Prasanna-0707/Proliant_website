@@ -2,7 +2,7 @@
 @baseUrl = http://localhost:5000/api
 
 # Update this after successful OTP verification
-@token = YOUR_VALID_JWT_TOKEN
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbklkIjoiNmFhY2NmYTg1ZjU3NjYxYTc5NGFiZWU0IiwiZW1haWwiOiJib2dhY2hhbmRyYXB1QGdtYWlsLmNvbSIsInRva2VuVmVyc2lvbiI6MTYsImlhdCI6MTc5MTQ2MTgyMiwiZXhwIjoxNzkxNTQ4MjIyfQ.hUlkZQ_Udarwun4YnRQkdTSq5TFzAwlN90eYVt1gVO0
 
 
 ############################################################
@@ -27,7 +27,7 @@ Content-Type: application/json
 
 {
   "email": "bogachandrapu@gmail.com",
-  "otp": "ENTER_LOGIN_OTP_HERE"
+  "otp": "846317"
 }
 
 ###
