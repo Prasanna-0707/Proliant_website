@@ -14,6 +14,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 const WhoWeAre = () => {
   const pageRef = useRef(null);
+
   return (
     <main
       ref={pageRef}
@@ -26,8 +27,10 @@ const WhoWeAre = () => {
       <CorePrinciples />
 
       <Leadership />
+
       <GlobalPresence />
-      <Footer />
+
+      <Footer theme="light" />
     </main>
   );
 };

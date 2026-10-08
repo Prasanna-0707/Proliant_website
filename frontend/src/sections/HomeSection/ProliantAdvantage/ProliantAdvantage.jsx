@@ -4,11 +4,13 @@ const ProliantAdvantage = () => {
   return (
     <section
       className="
+        w-full
+        overflow-hidden
         bg-black
-        py-10
+        py-9
         text-white
-        sm:py-12
-        md:py-16
+        sm:py-10
+        md:py-14
         lg:py-24
       "
     >
@@ -101,7 +103,9 @@ const ProliantAdvantage = () => {
           z-index: 3;
           margin-left: 14px;
           color: white;
-          transition: color 0.3s ease, transform 0.3s ease;
+          transition:
+            color 0.3s ease,
+            transform 0.3s ease;
         }
 
         .proliant-mask3-button:hover .proliant-mask3-arrow {
@@ -119,18 +123,29 @@ const ProliantAdvantage = () => {
             margin-left: 10px;
           }
         }
+
+        @media (min-width: 640px) and (max-width: 767px) {
+          .proliant-mask3-button {
+            width: 180px;
+            height: 45px;
+          }
+
+          .proliant-mask3-arrow {
+            margin-left: 11px;
+          }
+        }
       `}</style>
 
       <div
         className="
           mx-auto
+          w-full
           max-w-7xl
-          px-5
+          px-4
           sm:px-6
           md:px-8
         "
       >
-
         {/* =========================
             HEADING
         ========================== */}
@@ -138,17 +153,21 @@ const ProliantAdvantage = () => {
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.25 }}
+          viewport={{
+            once: true,
+            amount: 0.25,
+          }}
           transition={{
             duration: 0.7,
             ease: "easeOut",
           }}
           className="
-            text-[clamp(2.15rem,7vw,4.5rem)]
+            text-[clamp(1.95rem,7vw,4.5rem)]
             font-bold
             leading-[1.05]
             tracking-tight
-            sm:text-[clamp(2.3rem,7vw,4.5rem)]
+            sm:text-[clamp(2.2rem,6vw,4.5rem)]
+            md:text-[clamp(2.5rem,5vw,4.5rem)]
           "
         >
           The Proliant Advantage
@@ -159,21 +178,30 @@ const ProliantAdvantage = () => {
         ========================== */}
 
         <motion.div
-          initial={{ opacity: 0, scaleX: 0 }}
-          whileInView={{ opacity: 1, scaleX: 1 }}
-          viewport={{ once: true, amount: 0.25 }}
+          initial={{
+            opacity: 0,
+            scaleX: 0,
+          }}
+          whileInView={{
+            opacity: 1,
+            scaleX: 1,
+          }}
+          viewport={{
+            once: true,
+            amount: 0.25,
+          }}
           transition={{
             duration: 0.7,
             ease: "easeOut",
             delay: 0.1,
           }}
           className="
-            mt-5
+            mt-4
             origin-left
             border-t
             border-white/30
-            sm:mt-6
-            md:mt-8
+            sm:mt-5
+            md:mt-6
             lg:mt-9
           "
         />
@@ -183,31 +211,45 @@ const ProliantAdvantage = () => {
         ========================== */}
 
         <motion.div
-          initial={{ opacity: 0, y: 22 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
+          initial={{
+            opacity: 0,
+            y: 22,
+          }}
+          whileInView={{
+            opacity: 1,
+            y: 0,
+          }}
+          viewport={{
+            once: true,
+            amount: 0.2,
+          }}
           transition={{
             duration: 0.7,
             ease: "easeOut",
             delay: 0.15,
           }}
-          className="max-w-6xl"
+          className="
+            w-full
+            max-w-6xl
+          "
         >
-
           {/* =========================
               INTRO
           ========================== */}
 
           <p
             className="
-              mt-5
+              mt-4
               max-w-6xl
-              text-[clamp(1.2rem,3vw,2.15rem)]
+              text-[clamp(1.05rem,3.2vw,2.15rem)]
               font-normal
-              leading-[1.25]
+              leading-[1.3]
               text-white
-              sm:mt-6
-              md:mt-7
+              sm:mt-5
+              sm:text-[clamp(1.2rem,3vw,2.15rem)]
+              sm:leading-[1.28]
+              md:mt-6
+              md:leading-[1.25]
               lg:mt-8
             "
           >
@@ -221,17 +263,18 @@ const ProliantAdvantage = () => {
 
           <p
             className="
-              mt-4
+              mt-3
               max-w-6xl
               text-[14px]
-              leading-[1.55]
+              leading-[1.5]
               text-white/85
-              sm:mt-5
-              sm:text-[15px]
-              sm:leading-6
-              md:mt-6
-              md:text-base
-              md:leading-7
+              sm:mt-4
+              sm:text-[14px]
+              sm:leading-[1.5]
+              md:mt-5
+              md:text-[15px]
+              md:leading-6
+              lg:mt-6
               lg:text-lg
               lg:leading-8
             "
