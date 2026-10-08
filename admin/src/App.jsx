@@ -14,7 +14,7 @@ import Employees from "./pages/Employees";
 import EmployeesTemp from "./pages/EmployeesTemp";
 import TeamMembers from "./pages/TeamMembers";
 import Jobs from "./pages/Jobs";
-import Countries from "./pages/countries";
+import Countries from "./pages/Countries";
 import Candidates from "./pages/Candidates";
 import Enquiries from "./pages/Enquiries";
 import Profile from "./pages/Profile";
