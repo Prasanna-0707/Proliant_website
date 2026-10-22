@@ -10,7 +10,7 @@ import {
   EyeOff,
 } from "lucide-react";
 
-import DataTable from "../components/DataTable";
+import DataTable from "../../components/DataTable";
 
 const initialJobs = [
   {

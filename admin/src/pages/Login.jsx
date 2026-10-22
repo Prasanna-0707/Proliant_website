@@ -11,8 +11,8 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-import proliantLogo from "../assets/logo/Proliant Black/proliant_black.png";
-import ForgotPassword from "./ForgotPassword";
+import proliantLogo from "../assets/logo/proliant black/proliant_black.png";
+import ForgotPassword from "../components/Auth/ForgotPassword";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";

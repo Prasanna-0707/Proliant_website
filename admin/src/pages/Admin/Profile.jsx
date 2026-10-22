@@ -17,8 +17,8 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-import Header from "../components/Header.jsx";
-import Sidebar from "../components/Sidebar.jsx";
+import Header from "../../components/Header.jsx";
+import Sidebar from "../../components/Sidebar.jsx";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";

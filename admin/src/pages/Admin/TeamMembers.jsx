@@ -11,7 +11,7 @@ import {
   UserX,
 } from "lucide-react";
 
-import DataTable from "../components/DataTable";
+import DataTable from "../../components/DataTable";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
@@ -802,7 +802,7 @@ function TeamMembers() {
       {/* Delete Confirmation Modal */}
       {deleteMember && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
+          className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
           onClick={() => !isDeleting && setDeleteMember(null)}
         >
           <div

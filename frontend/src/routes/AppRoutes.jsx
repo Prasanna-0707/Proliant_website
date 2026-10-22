@@ -5,6 +5,8 @@ import WhoWeAre from "@/pages/WhoWeAre";
 import WhatWeDoPage from "@/pages/whatWeDo";
 import Careers from "@/pages/Careers";
 import Contact from "@/pages/Contact";
+import Terms from "@/pages/Terms";
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
 
 const AppRoutes = () => {
   return (
@@ -14,6 +16,8 @@ const AppRoutes = () => {
       <Route path="/what-we-do" element={<WhatWeDoPage />} />
       <Route path="/careers" element={<Careers />} />
       <Route path="/contact" element={<Contact />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
     </Routes>
   );
 };
