@@ -841,7 +841,7 @@ function Enquiries() {
       {/* Delete Confirmation Modal */}
       {deleteEnquiry && (
         <div
-          className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
+          className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm"
           onClick={() => {
             if (!isSubmitting) {
               setDeleteEnquiry(null);

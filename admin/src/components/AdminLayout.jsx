@@ -1,17 +1,17 @@
-import { Outlet } from "react-router-dom";
 
+import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 
 function AdminLayout() {
   return (
-    <div className="min-h-screen bg-gray-100 transition-colors dark:bg-gray-950">
+    <div className="min-h-screen bg-gray-50 transition-colors dark:bg-gray-900">
       <Sidebar />
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="min-w-0 flex-1 md:ml-64">
         <Header />
 
-        <main className="ml-64 min-h-screen bg-gray-100 transition-colors dark:bg-gray-950 max-[767px]:ml-0 max-[767px]:pb-20">
+        <main className="min-h-screen min-w-0 px-4 py-5 pt-16 pb-20 sm:px-6 lg:px-8 lg:py-7 md:pt-5 md:pb-5">
           <Outlet />
         </main>
       </div>

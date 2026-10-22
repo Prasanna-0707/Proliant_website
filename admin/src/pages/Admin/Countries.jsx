@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from "react";
 import {
   Search,
@@ -126,7 +125,10 @@ function Countries() {
 
       setCountries(locations);
     } catch (err) {
-      console.error("Fetch locations error:", err);
+      console.error(
+        "Fetch locations error:",
+        err
+      );
 
       setError(
         err.message || "Failed to load countries."
@@ -309,7 +311,9 @@ function Countries() {
         ? `${API_BASE_URL}/locations/${editingCountry._id}`
         : `${API_BASE_URL}/locations`;
 
-      const method = editingCountry ? "PUT" : "POST";
+      const method = editingCountry
+        ? "PUT"
+        : "POST";
 
       const response = await fetch(url, {
         method,
@@ -414,7 +418,10 @@ function Countries() {
         prev.filter((item) => item._id !== id)
       );
     } catch (err) {
-      console.error("Delete location error:", err);
+      console.error(
+        "Delete location error:",
+        err
+      );
 
       setError(
         err.message || "Failed to delete location."
@@ -428,7 +435,19 @@ function Countries() {
 
   if (loading) {
     return (
-      <section className="min-h-screen bg-gray-100 px-4 py-6 text-gray-900 transition-colors dark:bg-gray-950 dark:text-white sm:px-6 lg:px-8">
+      <div
+        className="
+          relative
+          min-h-screen
+          p-5
+          text-gray-900
+          transition-colors
+          dark:text-gray-100
+          bg-gray-100
+          dark:bg-gray-950
+          sm:p-6
+        "
+      >
         <div className="flex min-h-[60vh] items-center justify-center">
           <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
             <Loader2
@@ -438,7 +457,7 @@ function Countries() {
             Loading locations...
           </div>
         </div>
-      </section>
+      </div>
     );
   }
 
@@ -447,15 +466,34 @@ function Countries() {
   // -------------------------------------------------------
 
   return (
-    <section className="min-h-screen bg-gray-100 px-4 py-6 text-gray-900 transition-colors dark:bg-gray-950 dark:text-white sm:px-6 lg:px-8">
-
+    <div
+      className="
+        relative
+        min-h-screen
+        p-5
+        text-gray-900
+        transition-colors
+        dark:text-gray-100
+        bg-gray-100
+        dark:bg-gray-950
+        sm:p-6
+      "
+    >
       {/* ===================================================
           HEADER
       ==================================================== */}
 
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1
+            className="
+              text-2xl
+              font-bold
+              tracking-tight
+              text-gray-900
+              dark:text-white
+            "
+          >
             Countries
           </h1>
 
@@ -468,7 +506,24 @@ function Countries() {
         <button
           type="button"
           onClick={handleOpenAdd}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-red-700 sm:w-auto"
+          className="
+            inline-flex
+            w-full
+            items-center
+            justify-center
+            gap-2
+            rounded-lg
+            bg-red-600
+            px-4
+            py-2.5
+            text-sm
+            font-medium
+            text-white
+            shadow-sm
+            transition
+            hover:bg-red-700
+            sm:w-auto
+          "
         >
           <Plus size={18} />
           Add Country
@@ -503,7 +558,29 @@ function Countries() {
               setSearch(event.target.value)
             }
             placeholder="Search by country, company, city..."
-            className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-red-500 dark:focus:ring-red-500/20"
+            className="
+              w-full
+              rounded-lg
+              border
+              border-gray-200
+              bg-white
+              py-2.5
+              pl-10
+              pr-4
+              text-sm
+              text-gray-900
+              outline-none
+              transition
+              focus:border-red-500
+              focus:ring-2
+              focus:ring-red-100
+              dark:border-gray-700
+              dark:bg-gray-900
+              dark:text-white
+              dark:placeholder:text-gray-500
+              dark:focus:border-red-500
+              dark:focus:ring-red-500/20
+            "
           />
         </div>
       </div>
@@ -512,12 +589,22 @@ function Countries() {
           COUNTRY LIST
       ==================================================== */}
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-
+      <div
+        className="
+          overflow-hidden
+          rounded-xl
+          border
+          border-gray-200
+          bg-white
+          shadow-sm
+          dark:border-gray-800
+          dark:bg-gray-900
+        "
+      >
         {/* List Header */}
 
         <div className="border-b border-gray-100 px-4 py-4 sm:px-6 dark:border-gray-800">
-          <h2 className="text-base font-semibold">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-white">
             Country List
           </h2>
 
@@ -538,7 +625,6 @@ function Countries() {
           <table className="w-full min-w-300 text-left">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/50">
-
                 <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                   Country
                 </th>
@@ -601,7 +687,6 @@ function Countries() {
                     key={item._id}
                     className="border-b border-gray-100 last:border-b-0 dark:border-gray-800"
                   >
-
                     {/* Country */}
 
                     <td className="px-4 py-4">
@@ -695,7 +780,6 @@ function Countries() {
 
                       {openMenu === item._id && (
                         <div className="absolute right-4 top-12 z-20 w-36 rounded-lg border border-gray-200 bg-white py-1 text-left shadow-lg dark:border-gray-700 dark:bg-gray-800">
-
                           <button
                             type="button"
                             onClick={() =>
@@ -717,7 +801,6 @@ function Countries() {
                             <Trash2 size={15} />
                             Delete
                           </button>
-
                         </div>
                       )}
                     </td>
@@ -743,7 +826,6 @@ function Countries() {
                 key={item._id}
                 className="relative overflow-hidden rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900"
               >
-
                 {/* Card Header */}
 
                 <div className="flex items-start justify-between gap-3">
@@ -789,7 +871,6 @@ function Countries() {
 
                     {openMenu === item._id && (
                       <div className="absolute right-0 top-10 z-30 w-36 rounded-lg border border-gray-200 bg-white py-1 shadow-xl dark:border-gray-700 dark:bg-gray-800">
-
                         <button
                           type="button"
                           onClick={() =>
@@ -811,7 +892,6 @@ function Countries() {
                           <Trash2 size={15} />
                           Delete
                         </button>
-
                       </div>
                     )}
                   </div>
@@ -846,7 +926,6 @@ function Countries() {
                 {/* Contact Information */}
 
                 <div className="mt-4 grid grid-cols-1 gap-2.5">
-
                   {item.phone && (
                     <div className="flex min-w-0 items-center gap-3">
                       <Phone
@@ -872,7 +951,6 @@ function Countries() {
                       </span>
                     </div>
                   )}
-
                 </div>
 
                 {/* Coordinates */}
@@ -899,7 +977,6 @@ function Countries() {
                     </div>
                   </div>
                 ) : null}
-
               </div>
             ))
           )}
@@ -912,9 +989,7 @@ function Countries() {
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-
           <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900">
-
             {/* Modal Header */}
 
             <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-800">
@@ -957,7 +1032,6 @@ function Countries() {
               className="overflow-y-auto px-6 py-5"
             >
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-
                 {/* Country */}
 
                 <div className="md:col-span-2">
@@ -1113,13 +1187,11 @@ function Countries() {
                     className={inputClass}
                   />
                 </div>
-
               </div>
 
               {/* Modal Footer */}
 
               <div className="mt-6 flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-800">
-
                 <button
                   type="button"
                   onClick={handleCloseModal}
@@ -1149,14 +1221,12 @@ function Countries() {
                     ? "Update Country"
                     : "Add Country"}
                 </button>
-
               </div>
             </form>
           </div>
         </div>
       )}
-
-    </section>
+    </div>
   );
 }
 
