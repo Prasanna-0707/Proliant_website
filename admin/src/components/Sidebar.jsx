@@ -48,7 +48,6 @@ const managementLinks = [
     icon: Globe2,
   },
 ];
->>>>>>> origin/lavanya-dev
 
 function Sidebar({ user: userProp, onLogout }) {
   const navigate = useNavigate();

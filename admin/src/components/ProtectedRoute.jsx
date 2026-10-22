@@ -4,7 +4,7 @@ function ProtectedRoute() {
   const token = localStorage.getItem("adminToken");
 
   if (!token) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return <Outlet />;
