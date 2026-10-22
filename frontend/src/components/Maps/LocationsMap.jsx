@@ -457,7 +457,7 @@ const LocationsMap = () => {
               "
             >
 
-              <!-- LOCATE US -->
+              <!-- GET DIRECTIONS -->
 
               <button
                 type="button"
@@ -470,7 +470,7 @@ const LocationsMap = () => {
                   gap-3.5
                   rounded
                   border
-                  border-white/80
+                  border-transparent
                   bg-transparent
                   px-3
                   py-3
@@ -484,8 +484,12 @@ const LocationsMap = () => {
                   duration-300
                   hover:bg-[#EF3B3A]/5
                   hover:text-[#EF3B3A]
+                  focus:bg-transparent
+                  focus:text-white
+                  focus:outline-none
+                  focus:ring-0
                 "
-                data-action="locate"
+                data-action="directions"
               >
 
                 <span
@@ -496,6 +500,7 @@ const LocationsMap = () => {
                     shrink-0
                     items-center
                     justify-center
+                    leading-none
                     text-[#EF3B3A]
                   "
                 >
@@ -507,7 +512,7 @@ const LocationsMap = () => {
                     stroke-width="2"
                     stroke-linecap="round"
                     stroke-linejoin="round"
-                    class="block h-5 w-5"
+                    class="block h-5 w-5 -translate-y-[1px]"
                   >
                     <path
                       d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"
@@ -522,8 +527,8 @@ const LocationsMap = () => {
 
                 </span>
 
-                <span>
-                  LOCATE US
+                <span class="leading-none">
+                  GET DIRECTIONS
                 </span>
 
               </button>
@@ -533,13 +538,15 @@ const LocationsMap = () => {
               <a
                 href="mailto:${escapeHtml(email)}"
                 class="
+                  mt-1
                   flex
                   min-h-14
                   w-full
                   items-center
                   gap-3.5
-                  border-t
-                  border-white/10
+                  rounded
+                  border
+                  border-transparent
                   bg-transparent
                   px-1
                   py-3
@@ -554,7 +561,11 @@ const LocationsMap = () => {
                   duration-300
                   hover:bg-[#EF3B3A]/5
                   hover:text-[#EF3B3A]
+                  focus:border-white
+                  focus:outline-none
+                  focus:ring-0
                 "
+                data-action="email"
               >
 
                 <span
@@ -565,6 +576,7 @@ const LocationsMap = () => {
                     shrink-0
                     items-center
                     justify-center
+                    leading-none
                     text-[#EF3B3A]
                   "
                 >
@@ -591,7 +603,7 @@ const LocationsMap = () => {
 
                 </span>
 
-                <span>
+                <span class="leading-none">
                   EMAIL US
                 </span>
 
@@ -605,13 +617,15 @@ const LocationsMap = () => {
                     <a
                       href="tel:${escapeHtml(phone)}"
                       class="
+                        mt-1
                         flex
                         min-h-14
                         w-full
                         items-center
                         gap-3.5
-                        border-t
-                        border-white/10
+                        rounded
+                        border
+                        border-transparent
                         bg-transparent
                         px-1
                         py-3
@@ -626,7 +640,11 @@ const LocationsMap = () => {
                         duration-300
                         hover:bg-[#EF3B3A]/5
                         hover:text-[#EF3B3A]
+                        focus:border-white
+                        focus:outline-none
+                        focus:ring-0
                       "
+                      data-action="contact"
                     >
 
                       <span
@@ -637,6 +655,7 @@ const LocationsMap = () => {
                           shrink-0
                           items-center
                           justify-center
+                          leading-none
                           text-[#EF3B3A]
                         "
                       >
@@ -648,7 +667,7 @@ const LocationsMap = () => {
                           stroke-width="2"
                           stroke-linecap="round"
                           stroke-linejoin="round"
-                          class="block h-5 w-5"
+                          class="block h-5 w-5 translate-y-[1px]"
                         >
                           <path
                             d="
@@ -672,7 +691,7 @@ const LocationsMap = () => {
 
                       </span>
 
-                      <span>
+                      <span class="leading-none">
                         CONTACT US
                       </span>
 
@@ -787,65 +806,184 @@ const LocationsMap = () => {
       }
 
       /* =======================================================
-         LOCATE BUTTON
+         ACTION BUTTONS
       ======================================================= */
 
-      const locateButton =
-        popup.current
-          .getElement()
-          ?.querySelector(
-            '[data-action="locate"]'
-          );
+      const popupActions =
+        popup.current.getElement();
 
-      if (locateButton) {
-        locateButton.addEventListener(
+      const setActiveAction = (activeElement) => {
+        if (!popupActions) {
+          return;
+        }
+
+        popupActions
+          .querySelectorAll('[data-action]')
+          .forEach((action) => {
+            action.classList.remove(
+              "border-white"
+            );
+            action.classList.add(
+              "border-transparent"
+            );
+          });
+
+        if (activeElement) {
+          activeElement.classList.remove(
+            "border-transparent"
+          );
+          activeElement.classList.add(
+            "border-white"
+          );
+        }
+      };
+
+      const directionsButton =
+        popupActions?.querySelector(
+          '[data-action="directions"]'
+        );
+
+      if (directionsButton) {
+        directionsButton.addEventListener(
           "click",
           (event) => {
             event.preventDefault();
             event.stopPropagation();
 
-            automaticTransition.current =
-              true;
+            const destinationLatitude =
+              Number(location.latitude);
 
-            clearOfficeHighlights();
+            const destinationLongitude =
+              Number(location.longitude);
 
-            const image =
-              marker
-                .getElement()
-                .querySelector("img");
-
-            if (image) {
-              image.classList.add(
-                "scale-[1.2]",
-                "drop-shadow-2xl"
+            if (
+              Number.isNaN(destinationLatitude) ||
+              Number.isNaN(destinationLongitude)
+            ) {
+              alert(
+                "Office location coordinates are not available."
               );
+
+              return;
             }
 
-            closePopup();
+            setActiveAction(
+              directionsButton
+            );
 
-            mapInstance.flyTo({
-              center: marker.getLngLat(),
-              zoom:
-                window.innerWidth < 768
-                  ? 12
-                  : 13,
-              speed: 0.85,
-              curve: 1.35,
-              essential: true,
-            });
+            if (!navigator.geolocation) {
+              setActiveAction(null);
 
-            mapInstance.once(
-              "moveend",
-              () => {
-                automaticTransition.current =
-                  false;
+              alert(
+                "Your browser does not support location services."
+              );
 
-                showOfficeCard(
-                  location,
-                  marker
-                );
+              return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+              (position) => {
+                const userLatitude =
+                  position.coords.latitude;
+
+                const userLongitude =
+                  position.coords.longitude;
+
+                const origin =
+                  `${userLatitude},${userLongitude}`;
+
+                const destination =
+                  `${destinationLatitude},${destinationLongitude}`;
+
+                const googleMapsUrl =
+                  "https://www.google.com/maps/dir/" +
+                  "?api=1" +
+                  `&origin=${encodeURIComponent(origin)}` +
+                  `&destination=${encodeURIComponent(destination)}` +
+                  "&travelmode=driving";
+
+                /* Open Google Maps in the SAME TAB */
+                window.location.href = googleMapsUrl;
+              },
+              (error) => {
+                setActiveAction(null);
+
+                if (error.code === 1) {
+                  alert(
+                    "Location permission was denied. Please allow location access to get directions."
+                  );
+                } else if (error.code === 2) {
+                  alert(
+                    "Your current location could not be determined. Please try again."
+                  );
+                } else if (error.code === 3) {
+                  alert(
+                    "Location request timed out. Please try again."
+                  );
+                } else {
+                  alert(
+                    "Unable to get your current location. Please try again."
+                  );
+                }
+              },
+              {
+                enableHighAccuracy: true,
+                maximumAge: 0,
+                timeout: 15000,
               }
             );
+          }
+        );
+      }
+
+      const emailButton =
+        popupActions?.querySelector(
+          '[data-action="email"]'
+        );
+
+      if (emailButton) {
+        emailButton.addEventListener(
+          "click",
+          (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            setActiveAction(emailButton);
+
+            const emailHref =
+              emailButton.getAttribute("href");
+
+            if (emailHref) {
+              setTimeout(() => {
+                window.location.href = emailHref;
+              }, 80);
+            }
+          }
+        );
+      }
+
+      const contactButton =
+        popupActions?.querySelector(
+          '[data-action="contact"]'
+        );
+
+      if (contactButton) {
+        contactButton.addEventListener(
+          "click",
+          (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            setActiveAction(contactButton);
+
+            const contactHref =
+              contactButton.getAttribute("href");
+
+            if (contactHref) {
+              setTimeout(() => {
+                window.location.href = contactHref;
+              }, 80);
+            }
           }
         );
       }
@@ -863,6 +1001,151 @@ const LocationsMap = () => {
         }
 
         try {
+          /* =====================================================
+             MAP COLOR THEME + ENGLISH LABELS
+
+             Only the basemap styling is changed here.
+             Pins, cards, directions and interactions stay the same.
+          ===================================================== */
+
+          const baseStyleLayers =
+            mapInstance.getStyle()?.layers || [];
+
+          baseStyleLayers.forEach((layer) => {
+            try {
+              /* ---------------------------------------------
+                 MAP BACKGROUND / WATER
+              --------------------------------------------- */
+
+              if (layer.type === "background" &&
+                  layer.layout?.visibility !== "none") {
+                mapInstance.setPaintProperty(
+                  layer.id,
+                  "background-color",
+                  "#2A2B2E"
+                );
+              }
+
+              if (
+                layer.type === "fill" &&
+                layer.sourceLayer === "water"
+              ) {
+                mapInstance.setPaintProperty(
+                  layer.id,
+                  "fill-color",
+                  "#24262A"
+                );
+              }
+
+              if (
+                layer.type === "line" &&
+                layer.sourceLayer === "waterway"
+              ) {
+                mapInstance.setPaintProperty(
+                  layer.id,
+                  "line-color",
+                  "#3A4148"
+                );
+              }
+
+              /* ---------------------------------------------
+                 COUNTRY / ADMINISTRATIVE BORDERS
+              --------------------------------------------- */
+
+              if (
+                layer.type === "line" &&
+                layer.sourceLayer === "boundary"
+              ) {
+                const isCountryBorder =
+                  layer.id.toLowerCase().includes("country") ||
+                  layer.id.toLowerCase().includes("disputed");
+
+                mapInstance.setPaintProperty(
+                  layer.id,
+                  "line-color",
+                  isCountryBorder
+                    ? "#747C84"
+                    : "#5F6870"
+                );
+              }
+
+              /* ---------------------------------------------
+                 ENGLISH-ONLY LABELS
+
+                 No fallback to local-language name.
+                 If an English name is unavailable, the label
+                 is left empty instead of using a local name.
+              --------------------------------------------- */
+
+              if (
+                layer.type === "symbol" &&
+                layer.layout?.["text-field"]
+              ) {
+                mapInstance.setLayoutProperty(
+                  layer.id,
+                  "text-field",
+                  [
+                    "coalesce",
+                    ["get", "name:en"],
+                    "",
+                  ]
+                );
+
+                const layerId =
+                  layer.id.toLowerCase();
+
+                let textColor = "#C6CBD0";
+
+                if (layerId.includes("country")) {
+                  textColor = "#FFFFFF";
+                } else if (layerId.includes("city")) {
+                  textColor = "#F3F4F5";
+                } else if (layerId.includes("place")) {
+                  textColor = "#D9DDE1";
+                }
+
+                if (
+                  layer.paint &&
+                  layer.paint["text-color"] !== undefined
+                ) {
+                  mapInstance.setPaintProperty(
+                    layer.id,
+                    "text-color",
+                    textColor
+                  );
+                }
+
+                if (
+                  layer.paint &&
+                  layer.paint["text-halo-color"] !== undefined
+                ) {
+                  mapInstance.setPaintProperty(
+                    layer.id,
+                    "text-halo-color",
+                    "#17181A"
+                  );
+                }
+
+                if (
+                  layer.paint &&
+                  layer.paint["text-halo-width"] !== undefined
+                ) {
+                  mapInstance.setPaintProperty(
+                    layer.id,
+                    "text-halo-width",
+                    layerId.includes("country") ? 2 : 1.5
+                  );
+                }
+              }
+            } catch (error) {
+              console.warn(
+                "Map theme layer update skipped:",
+                layer.id,
+                error
+              );
+            }
+          });
+
           if (window.innerWidth < 768) {
             mapInstance.fitBounds(
               [
@@ -914,6 +1197,44 @@ const LocationsMap = () => {
                 type: "geojson",
                 data: countryData,
               }
+            );
+          }
+
+          /* =====================================================
+             COUNTRY LAND COLOR
+
+             Countries use a blue-gray tone while the surrounding
+             map background remains dark charcoal. The layer is
+             placed below the basemap line and label layers so
+             borders, roads and labels remain visible.
+          ===================================================== */
+
+          if (
+            !mapInstance.getLayer(
+              "countries-theme-fill"
+            )
+          ) {
+            const firstLineLayerId =
+              mapInstance
+                .getStyle()
+                ?.layers
+                ?.find((layer) =>
+                  layer.type === "line"
+                )
+                ?.id;
+
+            mapInstance.addLayer(
+              {
+                id: "countries-theme-fill",
+                type: "fill",
+                source: "countries",
+                paint: {
+                  "fill-color": "#68737D",
+                  "fill-opacity": 0.90,
+                  "fill-antialias": true,
+                },
+              },
+              firstLineLayerId
             );
           }
 
@@ -970,7 +1291,7 @@ const LocationsMap = () => {
           /* =====================================================
              SELECTED COUNTRY OUTLINE
 
-             Red outline replaced with subtle white.
+             White outline replaced with a minimal soft-gray outline.
           ===================================================== */
 
           if (
@@ -989,9 +1310,9 @@ const LocationsMap = () => {
               ],
               paint: {
                 "line-color":
-                  "#FFFFFF",
-                "line-width": 2,
-                "line-opacity": 0.9,
+                  "#AEB6BE",
+                "line-width": 1,
+                "line-opacity": 0.45,
               },
             });
           }
@@ -1890,6 +2211,41 @@ const LocationsMap = () => {
           );
 
           /* =====================================================
+             MAP BACKGROUND CLICK
+
+             Clicking empty map space closes the office card.
+             Marker clicks stop propagation, so selecting another
+             location still works normally.
+          ===================================================== */
+
+          mapInstance.on(
+            "click",
+            (event) => {
+              if (!map.current || !popup.current) {
+                return;
+              }
+
+              const clickedElement =
+                event.originalEvent?.target;
+
+              if (
+                clickedElement?.closest?.(
+                  ".maplibregl-popup"
+                )
+              ) {
+                return;
+              }
+
+              closePopup();
+              clearOfficeHighlights();
+
+              mapInstance
+                .getCanvas()
+                .style.cursor = "";
+            }
+          );
+
+          /* =====================================================
              INITIAL SAFE RESIZE
           ===================================================== */
 
@@ -2140,40 +2496,6 @@ const LocationsMap = () => {
             "
           />
 
-          {/* ===================================================
-              MAP LABEL
-          =================================================== */}
-
-          <div
-            className="
-              pointer-events-none
-              absolute
-              left-4
-              top-4
-              z-20
-              sm:left-6
-              sm:top-6
-            "
-          >
-            <div
-              className="
-                rounded-full
-                border
-                border-white/10
-                bg-black/55
-                px-4
-                py-2
-                text-xs
-                font-medium
-                uppercase
-                tracking-wide
-                text-white/70
-                backdrop-blur-md
-              "
-            >
-              Global Locations
-            </div>
-          </div>
         </div>
       </div>
     </section>

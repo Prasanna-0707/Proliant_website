@@ -10,7 +10,6 @@ import AdminLayout from "./components/AdminLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import Login from "./pages/Login";
-
 import Dashboard from "./pages/HR/HRDashboard";
 import Employees from "./pages/Admin/Employees";
 import EmployeesTemp from "./pages/Admin/EmployeesTemp";

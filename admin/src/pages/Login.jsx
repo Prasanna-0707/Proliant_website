@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+
 import {
   ArrowLeft,
   CheckCircle2,
@@ -35,7 +36,6 @@ function Login() {
 
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-
   const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   /* -----------------------------------------
@@ -108,9 +108,11 @@ function Login() {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
+
         headers: {
           "Content-Type": "application/json",
         },
+
         body: JSON.stringify({
           email: formData.email.trim(),
           password: formData.password,
@@ -184,6 +186,27 @@ function Login() {
       return;
     }
 
+    /*
+     * Development-only OTP shortcut.
+     * This does not run in production.
+     */
+
+    if (import.meta.env.DEV && otp === "123456") {
+      localStorage.setItem(
+        "adminUser",
+        JSON.stringify({
+          name: "Proliant Admin",
+          email: formData.email.trim(),
+          role: "Admin",
+          mustChangePassword: false,
+        })
+      );
+
+      navigate("/dashboard");
+
+      return;
+    }
+
     setIsLoading(true);
     setErrors({});
 
@@ -192,9 +215,11 @@ function Login() {
         `${API_BASE_URL}/auth/verify-login-otp`,
         {
           method: "POST",
+
           headers: {
             "Content-Type": "application/json",
           },
+
           body: JSON.stringify({
             email: formData.email.trim(),
             otp,
@@ -215,7 +240,8 @@ function Login() {
       }
 
       /*
-       * JWT MUST come from the real backend response.
+       * The real verify-login-otp API returns
+       * the JWT after successful OTP verification.
        */
 
       if (!result.token) {
@@ -325,10 +351,12 @@ function Login() {
         `${API_BASE_URL}/auth/change-password`,
         {
           method: "PATCH",
+
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
+
           body: JSON.stringify({
             currentPassword: formData.password,
             newPassword: formData.newPassword,
@@ -358,7 +386,8 @@ function Login() {
           JSON.stringify(result.admin)
         );
       } else {
-        const storedAdmin = localStorage.getItem("adminUser");
+        const storedAdmin =
+          localStorage.getItem("adminUser");
 
         if (storedAdmin) {
           try {
@@ -435,13 +464,11 @@ function Login() {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-
       {/* -----------------------------------------
           LEFT BRANDING SECTION
       ----------------------------------------- */}
 
       <section className="relative hidden min-h-screen w-5/12 overflow-hidden bg-[#DA3838] lg:flex lg:flex-col lg:justify-between">
-
         {/* Decorative Circles */}
 
         <div className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full border-80 border-white/10" />
@@ -490,7 +517,6 @@ function Login() {
 
       <section className="flex min-h-screen w-full items-center justify-center bg-white px-6 py-10 sm:px-10 lg:w-7/12 lg:px-16 xl:px-24">
         <div className="w-full max-w-lg">
-
           {/* Mobile Branding */}
 
           <div className="mb-12 flex flex-col items-center lg:hidden">
@@ -542,7 +568,6 @@ function Login() {
                   {renderError()}
 
                   <form onSubmit={handleLogin} noValidate>
-
                     {/* Email */}
 
                     <div className="mb-6">

@@ -13,13 +13,42 @@ import {
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
-function getStoredUser() {
+  function getStoredUser() {
   try {
     return JSON.parse(localStorage.getItem("adminUser") || "null");
   } catch {
     return null;
   }
 }
+
+const managementLinks = [
+  {
+    name: "Employees",
+    path: "/employees",
+    icon: Users,
+  },
+  {
+  name: "EmployeesTemp",
+  path: "/employees-temp",
+  icon: Users,
+},
+  {
+    name: "Team Members",
+    path: "/team-members",
+    icon: UserCog,
+  },
+  {
+    name: "Jobs",
+    path: "/jobs",
+    icon: BriefcaseBusiness,
+  },
+  {
+    name: "Countries",
+    path: "/countries",
+    icon: Globe2,
+  },
+];
+>>>>>>> origin/lavanya-dev
 
 function Sidebar({ user: userProp, onLogout }) {
   const navigate = useNavigate();

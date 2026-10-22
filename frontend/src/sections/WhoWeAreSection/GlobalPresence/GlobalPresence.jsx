@@ -1,4 +1,4 @@
-import LocationsMap from "../../../components/maps/LocationsMap";
+import LocationsMap from "../../../components/Maps/LocationsMap";
 
 const GlobalPresence = () => {
   return (
@@ -63,7 +63,7 @@ const GlobalPresence = () => {
           <p
             className="
               mt-3
-              max-w-xl
+              max-w-2xl
               text-sm
               leading-6
               text-neutral-400
@@ -71,9 +71,8 @@ const GlobalPresence = () => {
               md:leading-7
             "
           >
-            Explore our global locations and discover
-            how Proliant Data delivers technology,
-            data and business solutions worldwide.
+            Explore our global locations and discover how Proliant Data
+            delivers technology and business solutions worldwide.
           </p>
         </div>
       </div>

@@ -802,7 +802,11 @@ function TeamMembers() {
       {/* Delete Confirmation Modal */}
       {deleteMember && (
         <div
+<<<<<<< HEAD:admin/src/pages/Admin/TeamMembers.jsx
           className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
+=======
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
+>>>>>>> origin/lavanya-dev:admin/src/pages/TeamMembers.jsx
           onClick={() => !isDeleting && setDeleteMember(null)}
         >
           <div

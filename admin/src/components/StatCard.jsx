@@ -18,25 +18,25 @@ function StatCard({ title, value, type, description }) {
   const Icon = icons[type];
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5">
+    <div className="rounded-xl border border-gray-200 bg-white p-5 transition-colors dark:border-gray-700 dark:bg-gray-900">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-500">
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-300">
             {title}
           </p>
 
-          <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900">
+          <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
             {value}
           </p>
         </div>
 
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-50 text-[#EF3B3A]">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-50 text-[#EF3B3A] transition-colors dark:bg-red-950/50 dark:text-red-400">
           <Icon size={20} strokeWidth={2} />
         </div>
       </div>
 
       {description && (
-        <p className="mt-3 text-xs text-gray-400">
+        <p className="mt-3 text-xs text-gray-400 dark:text-gray-400">
           {description}
         </p>
       )}
