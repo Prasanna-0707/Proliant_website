@@ -8,13 +8,22 @@ import {
 import AdminLayout from "./components/AdminLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 
+// Login
 import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import Employees from "./pages/Employees";
-import TeamMembers from "./pages/TeamMembers";
-import Jobs from "./pages/Jobs";
-import Candidates from "./pages/Candidates";
+
+// Existing Admin / HR pages
+import Dashboard from "./pages/HR/HRDashboard";
+import Employees from "./pages/Admin/Employees";
+import EmployeesTemp from "./pages/Admin/EmployeesTemp";
+import TeamMembers from "./pages/Admin/TeamMembers";
+import Jobs from "./pages/HR/HRJobs";
+import Countries from "./pages/Admin/Countries";
+import Candidates from "./pages/HR/HRCandidates";
 import Enquiries from "./pages/Enquiries";
+
+// Interviewer pages
+import InterviewerLogin from "./pages/Interviewer/InterviewerLogin";
+import InterviewerDashboard from "./pages/Interviewer/Interviewerdashboard";
 
 function App() {
   const token = localStorage.getItem("adminToken");
@@ -22,27 +31,52 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Login Route */}
+        {/* Admin Login */}
         <Route
           path="/login"
           element={
-            token ? <Navigate to="/dashboard" replace /> : <Login />
+            token ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <Login />
+            )
           }
         />
 
-        {/* Protected Admin Routes */}
+        {/* Interviewer Login */}
+        <Route
+          path="/interviewer/login"
+          element={<InterviewerLogin />}
+        />
+
+        {/* Interviewer Dashboard */}
+        <Route
+          path="/interviewer/dashboard"
+          element={<InterviewerDashboard />}
+        />
+
+        {/* Protected Admin / HR Routes */}
         <Route element={<ProtectedRoute />}>
           <Route element={<AdminLayout />}>
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route
+              path="/dashboard"
+              element={<Dashboard />}
+            />
 
-            <Route path="/employees" element={<Employees />} />
+            <Route
+              path="/employees"
+              element={<Employees />}
+            />
 
             <Route
               path="/team-members"
               element={<TeamMembers />}
             />
 
-            <Route path="/jobs" element={<Jobs />} />
+            <Route
+              path="/jobs"
+              element={<Jobs />}
+            />
 
             <Route
               path="/candidates"
@@ -53,10 +87,21 @@ function App() {
               path="/enquiries"
               element={<Enquiries />}
             />
+
+            {/* Keep these routes if they are needed */}
+            <Route
+              path="/employees-temp"
+              element={<EmployeesTemp />}
+            />
+
+            <Route
+              path="/countries"
+              element={<Countries />}
+            />
           </Route>
         </Route>
 
-        {/* Unknown Routes */}
+        {/* Redirect Unknown Routes */}
         <Route
           path="*"
           element={<Navigate to="/login" replace />}

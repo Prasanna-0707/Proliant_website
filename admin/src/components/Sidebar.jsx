@@ -1,3 +1,4 @@
+
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -6,7 +7,6 @@ import {
   BriefcaseBusiness,
   UserRoundSearch,
   MessageSquareText,
-  Globe2,
   LogOut,
 } from "lucide-react";
 
@@ -32,11 +32,6 @@ const managementLinks = [
     path: "/jobs",
     icon: BriefcaseBusiness,
   },
-  // {
-  //   name: "Countries",
-  //   path: "/countries",
-  //   icon: Globe2,
-  // },
 ];
 
 const recruitmentLinks = [
@@ -44,6 +39,11 @@ const recruitmentLinks = [
     name: "Candidates",
     path: "/candidates",
     icon: UserRoundSearch,
+  },
+  {
+    name: "Interviewer Dashboard",
+    path: "/interviewer/dashboard",
+    icon: UserCog,
   },
 ];
 
@@ -76,11 +76,6 @@ const mobileLinks = [
     path: "/jobs",
     icon: BriefcaseBusiness,
   },
-  // {
-  //   name: "Countries",
-  //   path: "/countries",
-  //   icon: Globe2,
-  // },
   {
     name: "Candidates",
     path: "/candidates",
@@ -115,14 +110,9 @@ function Sidebar() {
     } finally {
       localStorage.removeItem("adminToken");
       localStorage.removeItem("adminUser");
-
       window.location.href = "/login";
     }
   };
-
-  /* =========================================================
-     DESKTOP / TABLET NAV LINK
-  ========================================================== */
 
   const navLinkClass = ({ isActive }) =>
     [
@@ -130,38 +120,60 @@ function Sidebar() {
       "text-sm font-medium transition-colors",
       "focus:outline-none",
       "focus-visible:ring-2 focus-visible:ring-[#EF3B3A]/40",
-
       isActive
         ? [
             "bg-red-50",
             "!text-[#EF3B3A]",
             "hover:bg-red-50",
-
-            /* DARK MODE */
             "dark:bg-red-950/60",
             "dark:!text-white",
             "dark:hover:bg-red-950/70",
             "dark:hover:!text-white",
           ].join(" ")
         : [
-            /* LIGHT MODE */
             "!text-gray-600",
             "hover:bg-gray-50",
             "hover:!text-gray-900",
-
-            /* DARK MODE */
             "dark:!text-white",
             "dark:hover:bg-gray-800",
             "dark:hover:!text-white",
           ].join(" "),
     ].join(" ");
 
+  const renderNavLinks = (links) =>
+    links.map((link) => {
+      const Icon = link.icon;
+
+      return (
+        <NavLink
+          key={link.path}
+          to={link.path}
+          className={navLinkClass}
+        >
+          {({ isActive }) => (
+            <>
+              <Icon
+                size={19}
+                strokeWidth={2}
+                className={
+                  isActive
+                    ? "shrink-0 text-[#EF3B3A] dark:!text-white"
+                    : "shrink-0 text-gray-600 dark:!text-white"
+                }
+              />
+
+              <span className="dark:!text-white">
+                {link.name}
+              </span>
+            </>
+          )}
+        </NavLink>
+      );
+    });
+
   return (
     <>
-      {/* =========================================================
-          DESKTOP / TABLET SIDEBAR
-      ========================================================== */}
-
+      {/* DESKTOP / TABLET SIDEBAR */}
       <aside
         className="
           fixed inset-y-0 left-0 z-40
@@ -169,17 +181,12 @@ function Sidebar() {
           border-r border-gray-200
           bg-white
           transition-colors duration-200
-
           dark:border-gray-800
           dark:bg-gray-900
-
           max-[767px]:hidden
         "
       >
-        {/* =====================================================
-            LOGO
-        ====================================================== */}
-
+        {/* LOGO */}
         <div
           className="
             flex h-20 items-center
@@ -189,44 +196,28 @@ function Sidebar() {
           "
         >
           <div className="flex flex-col">
-            {/* LIGHT MODE */}
-
             <img
               src={proliantBlackLogo}
               alt="Proliant Data"
               className="
-                block
-                h-9
-                w-auto
-                max-w-36
-                object-contain
-                dark:hidden
+                block h-9 w-auto max-w-36
+                object-contain dark:hidden
               "
             />
-
-            {/* DARK MODE */}
 
             <img
               src={proliantWhiteLogo}
               alt="Proliant Data"
               className="
-                hidden
-                h-9
-                w-auto
-                max-w-36
-                object-contain
-                dark:block
+                hidden h-9 w-auto max-w-36
+                object-contain dark:block
               "
             />
 
             <p
               className="
-                mt-1
-                text-xs
-                font-medium
-
-                text-gray-500
-                dark:text-white!
+                mt-1 text-xs font-medium
+                text-gray-500 dark:!text-white
               "
             >
               Admin Portal
@@ -234,15 +225,9 @@ function Sidebar() {
           </div>
         </div>
 
-        {/* =====================================================
-            NAVIGATION
-        ====================================================== */}
-
+        {/* NAVIGATION */}
         <nav className="flex-1 overflow-y-auto px-3 py-5">
-          {/* ===================================================
-              DASHBOARD
-          ==================================================== */}
-
+          {/* DASHBOARD */}
           <NavLink
             to="/dashboard"
             className={({ isActive }) =>
@@ -251,26 +236,17 @@ function Sidebar() {
                 "text-sm font-medium transition-colors",
                 "focus:outline-none",
                 "focus-visible:ring-2 focus-visible:ring-[#EF3B3A]/40",
-
                 isActive
                   ? [
-                      "bg-red-50",
-                      "text-[#EF3B3A]!",
+                      "bg-red-50 !text-[#EF3B3A]",
                       "hover:bg-red-50",
-
-                      "dark:bg-red-950/60",
-                      "dark:text-white!",
+                      "dark:bg-red-950/60 dark:!text-white",
                       "dark:hover:bg-red-950/70",
-                      "dark:hover:text-white!",
                     ].join(" ")
                   : [
-                      "text-gray-600!",
-                      "hover:bg-gray-50",
-                      "hover:text-gray-900!",
-
-                      "dark:text-white!",
-                      "dark:hover:bg-gray-800",
-                      "dark:hover:text-white!",
+                      "!text-gray-600 hover:bg-gray-50",
+                      "hover:!text-gray-900",
+                      "dark:!text-white dark:hover:bg-gray-800",
                     ].join(" "),
               ].join(" ")
             }
@@ -280,190 +256,73 @@ function Sidebar() {
                 <LayoutDashboard
                   size={19}
                   strokeWidth={2}
-                  className="
-                    shrink-0
-                    text-gray-600
-                    group-hover:text-gray-900
-                    dark:text-white!
-                    dark:group-hover:text-white!
-                  "
+                  className={
+                    isActive
+                      ? "shrink-0 text-[#EF3B3A] dark:!text-white"
+                      : "shrink-0 text-gray-600 dark:!text-white"
+                  }
                 />
 
-                <span className="dark:text-white!">
+                <span className="dark:!text-white">
                   Dashboard
                 </span>
               </>
             )}
           </NavLink>
 
-          {/* ===================================================
-              MANAGEMENT
-          ==================================================== */}
-
+          {/* MANAGEMENT */}
           <div className="mb-5">
             <p
               className="
-                mb-2 px-3
-                text-xs font-semibold uppercase tracking-wider
-
-                text-gray-400
-                dark:text-white!
+                mb-2 px-3 text-xs font-semibold uppercase tracking-wider
+                text-gray-400 dark:!text-white
               "
             >
               Management
             </p>
 
             <div className="space-y-1">
-              {managementLinks.map((link) => {
-                const Icon = link.icon;
-
-                return (
-                  <NavLink
-                    key={link.path}
-                    to={link.path}
-                    className={navLinkClass}
-                  >
-                    {({ isActive }) => (
-                      <>
-                        <Icon
-                          size={19}
-                          strokeWidth={2}
-                          className={`
-                            shrink-0
-                            ${
-                              isActive
-                                ? "text-[#EF3B3A] dark:text-white!"
-                                : "text-gray-600 dark:text-white!"
-                            }
-                          `}
-                        />
-
-                        <span className="dark:text-white!">
-                          {link.name}
-                        </span>
-                      </>
-                    )}
-                  </NavLink>
-                );
-              })}
+              {renderNavLinks(managementLinks)}
             </div>
           </div>
 
-          {/* ===================================================
-              RECRUITMENT
-          ==================================================== */}
-
+          {/* RECRUITMENT */}
           <div className="mb-5">
             <p
               className="
-                mb-2 px-3
-                text-xs font-semibold uppercase tracking-wider
-
-                text-gray-400
-                dark:text-white!
+                mb-2 px-3 text-xs font-semibold uppercase tracking-wider
+                text-gray-400 dark:!text-white
               "
             >
               Recruitment
             </p>
 
             <div className="space-y-1">
-              {recruitmentLinks.map((link) => {
-                const Icon = link.icon;
-
-                return (
-                  <NavLink
-                    key={link.path}
-                    to={link.path}
-                    className={navLinkClass}
-                  >
-                    {({ isActive }) => (
-                      <>
-                        <Icon
-                          size={19}
-                          strokeWidth={2}
-                          className={`
-                            shrink-0
-                            ${
-                              isActive
-                                ? "text-[#EF3B3A] dark:text-white!"
-                                : "text-gray-600 dark:text-white!"
-                            }
-                          `}
-                        />
-
-                        <span className="dark:text-white!">
-                          {link.name}
-                        </span>
-                      </>
-                    )}
-                  </NavLink>
-                );
-              })}
+              {renderNavLinks(recruitmentLinks)}
             </div>
           </div>
 
-          {/* ===================================================
-              COMMUNICATION
-          ==================================================== */}
-
+          {/* COMMUNICATION */}
           <div>
             <p
               className="
-                mb-2 px-3
-                text-xs font-semibold uppercase tracking-wider
-
-                text-gray-400
-                dark:text-white!
+                mb-2 px-3 text-xs font-semibold uppercase tracking-wider
+                text-gray-400 dark:!text-white
               "
             >
               Communication
             </p>
 
             <div className="space-y-1">
-              {communicationLinks.map((link) => {
-                const Icon = link.icon;
-
-                return (
-                  <NavLink
-                    key={link.path}
-                    to={link.path}
-                    className={navLinkClass}
-                  >
-                    {({ isActive }) => (
-                      <>
-                        <Icon
-                          size={19}
-                          strokeWidth={2}
-                          className={`
-                            shrink-0
-                            ${
-                              isActive
-                                ? "text-[#EF3B3A] dark:text-white!"
-                                : "text-gray-600 dark:text-white!"
-                            }
-                          `}
-                        />
-
-                        <span className="dark:text-white!">
-                          {link.name}
-                        </span>
-                      </>
-                    )}
-                  </NavLink>
-                );
-              })}
+              {renderNavLinks(communicationLinks)}
             </div>
           </div>
         </nav>
 
-        {/* =====================================================
-            LOGOUT
-        ====================================================== */}
-
+        {/* LOGOUT */}
         <div
           className="
-            border-t border-gray-200
-            p-3
+            border-t border-gray-200 p-3
             dark:border-gray-800
           "
         >
@@ -471,45 +330,31 @@ function Sidebar() {
             type="button"
             onClick={handleLogout}
             className="
-              group
-              flex w-full items-center gap-3
-              rounded-lg
-              px-3 py-2.5
-              text-sm font-medium
-              transition-colors
-
-              text-gray-600
-              hover:bg-gray-50
-              hover:text-gray-900
-
-              dark:text-white!
-              dark:hover:bg-gray-800
-              dark:hover:text-white!
+              group flex w-full items-center gap-3
+              rounded-lg px-3 py-2.5
+              text-sm font-medium transition-colors
+              text-gray-600 hover:bg-gray-50 hover:text-gray-900
+              dark:!text-white dark:hover:bg-gray-800
             "
           >
             <LogOut
               size={19}
               strokeWidth={2}
               className="
-                shrink-0
-                text-gray-600
+                shrink-0 text-gray-600
                 group-hover:text-gray-900
-                dark:text-white!
-                dark:group-hover:text-white!
+                dark:!text-white
               "
             />
 
-            <span className="dark:text-white!">
+            <span className="dark:!text-white">
               Logout
             </span>
           </button>
         </div>
       </aside>
 
-      {/* =========================================================
-          MOBILE BOTTOM NAVIGATION
-      ========================================================== */}
-
+      {/* MOBILE BOTTOM NAVIGATION */}
       <nav
         className="
           fixed bottom-0 left-0 right-0 z-50
@@ -529,18 +374,13 @@ function Sidebar() {
                 key={link.path}
                 to={link.path}
                 className={({ isActive }) =>
-                  `
-                    flex h-full min-w-0 flex-1
-                    flex-col items-center
-                    justify-center gap-1 px-1
-                    transition-colors
-
-                    ${
-                      isActive
-                        ? "text-white"
-                        : "text-gray-400 hover:text-white"
-                    }
-                  `
+                  [
+                    "flex h-full min-w-0 flex-1 flex-col items-center",
+                    "justify-center gap-1 px-1 transition-colors",
+                    isActive
+                      ? "text-white"
+                      : "text-gray-400 hover:text-white",
+                  ].join(" ")
                 }
               >
                 {({ isActive }) => (
@@ -549,24 +389,17 @@ function Sidebar() {
                       size={22}
                       strokeWidth={isActive ? 2.8 : 2.5}
                       className={
-                        isActive
-                          ? "text-white"
-                          : "text-gray-400"
+                        isActive ? "text-white" : "text-gray-400"
                       }
                     />
 
                     <span
-                      className={`
-                        truncate
-                        text-[10px]
-                        leading-3
-
-                        ${
-                          isActive
-                            ? "font-bold text-white"
-                            : "font-semibold text-gray-400"
-                        }
-                      `}
+                      className={[
+                        "truncate text-[10px] leading-3",
+                        isActive
+                          ? "font-bold text-white"
+                          : "font-semibold text-gray-400",
+                      ].join(" ")}
                     >
                       {link.name}
                     </span>
