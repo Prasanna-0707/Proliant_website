@@ -22,11 +22,7 @@
     "mongodb": "^7.6.0",
     "mongoose": "^9.9.4",
     "multer": "^2.3.0",
-<<<<<<< HEAD
-    "nodemailer": "^9.1.1",
-=======
     "nodemailer": "^10.1.7",
->>>>>>> prasanna-dev
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
