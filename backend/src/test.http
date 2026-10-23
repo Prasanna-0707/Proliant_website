@@ -2,7 +2,7 @@
 @baseUrl = http://localhost:5000/api
 
 # Update this after successful OTP verification
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbklkIjoiNmFhY2NmYTg1ZjU3NjYxYTc5NGFiZWU0IiwiZW1haWwiOiJib2dhY2hhbmRyYXB1QGdtYWlsLmNvbSIsInRva2VuVmVyc2lvbiI6MTQsImlhdCI6MTc5MTA0MDYyMiwiZXhwIjoxNzkxMTI3MDIyfQ.G90VwNPIDkGba1g3t6a0f3y0DVixYLETlAl45z6Jhtg
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbklkIjoiNmFhY2NmYTg1ZjU3NjYxYTc5NGFiZWU0IiwiZW1haWwiOiJib2dhY2hhbmRyYXB1QGdtYWlsLmNvbSIsInRva2VuVmVyc2lvbiI6MTcsImlhdCI6MTc5MjY0MDM1OCwiZXhwIjoxNzkyNzI2NzU4fQ.3CmC4trtAvGCxkEAO4Eyng8n_PUypmfMrVr48SXalSM
 
 
 ############################################################
@@ -27,7 +27,7 @@ Content-Type: application/json
 
 {
   "email": "bogachandrapu@gmail.com",
-  "otp": "239749"
+  "otp": "772409"
 }
 
 ###
@@ -165,7 +165,7 @@ GET {{baseUrl}}/jobs
 
 ### 5.2 Get Single Published Job - PUBLIC
 # Replace JOB_ID with actual published job _id
-GET {{baseUrl}}/jobs/JOB_ID
+GET {{baseUrl}}/jobs/6aaccfa85f57661a794abf51
 
 ###
 
@@ -552,3 +552,8 @@ Content-Type: application/json
 }
 
 ###
+GET http://localhost:5000/api/jobs
+
+### Test HR Jobs - All jobs including Draft
+GET http://localhost:5000/api/jobs/manage
+Authorization: Bearer {{token}}

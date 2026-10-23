@@ -2,6 +2,10 @@ import mongoose from "mongoose";
 
 const jobSchema = new mongoose.Schema(
   {
+    // ==========================================
+    // BASIC JOB INFORMATION
+    // ==========================================
+
     title: {
       type: String,
       required: true,
@@ -37,12 +41,6 @@ const jobSchema = new mongoose.Schema(
       trim: true,
     },
 
-    status: {
-      type: String,
-      enum: ["Draft", "Published"],
-      default: "Draft",
-    },
-
     jobDescription: {
       type: String,
       required: true,
@@ -53,6 +51,87 @@ const jobSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+    },
+
+    // ==========================================
+    // NEW: WORK ARRANGEMENT
+    // ==========================================
+
+    workArrangement: {
+      type: String,
+      enum: ["On-site", "Hybrid", "Remote"],
+      default: "On-site",
+    },
+
+    // ==========================================
+    // NEW: NUMBER OF VACANCIES
+    // ==========================================
+
+    vacancies: {
+      type: Number,
+      min: 1,
+      default: 1,
+    },
+
+    // ==========================================
+    // NEW: REQUIRED SKILLS
+    // ==========================================
+
+    requiredSkills: {
+      type: [
+        {
+          type: String,
+          trim: true,
+        },
+      ],
+      default: [],
+    },
+
+    // ==========================================
+    // NEW: APPLICATION DATES
+    // ==========================================
+
+    applicationStartDate: {
+      type: Date,
+      default: null,
+    },
+
+    applicationEndDate: {
+      type: Date,
+      default: null,
+    },
+
+    // ==========================================
+    // NEW: JOB OWNER
+    // Staff member responsible for this vacancy.
+    // ==========================================
+
+    owner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Admin",
+      default: null,
+    },
+
+    // ==========================================
+    // JOB CREATION AUDIT INFORMATION
+    // Staff member who created this job.
+    // ==========================================
+
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Admin",
+      default: null,
+      immutable: true,
+    },
+
+    // ==========================================
+    // JOB STATUS
+    // ==========================================
+
+    status: {
+      type: String,
+      enum: ["Draft", "Published"],
+      default: "Draft",
     },
   },
   {
