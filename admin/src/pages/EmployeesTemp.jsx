@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   UsersRound,
   Minus,
@@ -7,173 +7,764 @@ import {
   Info,
 } from "lucide-react";
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "http://localhost:5000/api";
+
 function EmployeesTemp() {
-  const [employeeCount, setEmployeeCount] = useState(101);
-  const [savedCount, setSavedCount] = useState(101);
-  const [message, setMessage] = useState("");
+  const [employeeCount, setEmployeeCount] =
+    useState(0);
 
-  const decreaseCount = () => {
-    setEmployeeCount((count) => Math.max(0, (Number(count) || 0) - 1));
-    setMessage("");
+  const [savedCount, setSavedCount] =
+    useState(0);
+
+  const [message, setMessage] =
+    useState("");
+
+  const [isLoading, setIsLoading] =
+    useState(true);
+
+  const [isSaving, setIsSaving] =
+    useState(false);
+
+  /*
+   * =========================================================
+   * AUTH HELPERS
+   * =========================================================
+   */
+
+  const getAuthHeaders = () => {
+    const token =
+      localStorage.getItem("adminToken");
+
+    return {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    };
   };
 
-  const increaseCount = () => {
-    setEmployeeCount((count) => (Number(count) || 0) + 1);
-    setMessage("");
+  const handleUnauthorized = () => {
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("adminUser");
+
+    window.location.href = "/login";
   };
 
-  const handleSave = () => {
-    if (
-      employeeCount === "" ||
-      !Number.isInteger(Number(employeeCount)) ||
-      Number(employeeCount) < 0
-    ) {
-      setMessage("Please enter a valid employee count.");
+  /*
+   * =========================================================
+   * FETCH EMPLOYEE COUNT
+   * =========================================================
+   */
+
+  const fetchEmployeeCount = async () => {
+    const token =
+      localStorage.getItem("adminToken");
+
+    if (!token) {
+      handleUnauthorized();
       return;
     }
 
-    const count = Number(employeeCount);
+    setIsLoading(true);
+    setMessage("");
 
-    localStorage.setItem("proliantEmployeeCount", String(count));
-    setEmployeeCount(count);
-    setSavedCount(count);
-    setMessage("Employee count saved successfully.");
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/settings/employee-count`,
+        {
+          method: "GET",
+          headers: getAuthHeaders(),
+        }
+      );
+
+      if (response.status === 401) {
+        handleUnauthorized();
+        return;
+      }
+
+      const result =
+        await response.json();
+
+      if (
+        !response.ok ||
+        !result.success
+      ) {
+        throw new Error(
+          result.message ||
+            "Failed to load employee count."
+        );
+      }
+
+      const count = Number(
+        result.employeeCount
+      );
+
+      setEmployeeCount(count);
+      setSavedCount(count);
+    } catch (error) {
+      console.error(
+        "Failed to fetch employee count:",
+        error
+      );
+
+      setMessage(
+        error.message ||
+          "Unable to load employee count. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
+  /*
+   * =========================================================
+   * LOAD EMPLOYEE COUNT
+   * =========================================================
+   */
+
+  useEffect(() => {
+    fetchEmployeeCount();
+  }, []);
+
+  /*
+   * =========================================================
+   * DECREASE COUNT
+   * =========================================================
+   */
+
+  const decreaseCount = () => {
+    setEmployeeCount((count) =>
+      Math.max(
+        0,
+        (Number(count) || 0) - 1
+      )
+    );
+
+    setMessage("");
+  };
+
+  /*
+   * =========================================================
+   * INCREASE COUNT
+   * =========================================================
+   */
+
+  const increaseCount = () => {
+    setEmployeeCount(
+      (count) =>
+        (Number(count) || 0) + 1
+    );
+
+    setMessage("");
+  };
+
+  /*
+   * =========================================================
+   * SAVE COUNT
+   * =========================================================
+   */
+
+  const handleSave = async () => {
+    if (
+      employeeCount === "" ||
+      !Number.isInteger(
+        Number(employeeCount)
+      ) ||
+      Number(employeeCount) < 0
+    ) {
+      setMessage(
+        "Please enter a valid employee count."
+      );
+
+      return;
+    }
+
+    const token =
+      localStorage.getItem("adminToken");
+
+    if (!token) {
+      handleUnauthorized();
+      return;
+    }
+
+    const count =
+      Number(employeeCount);
+
+    setIsSaving(true);
+    setMessage("");
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/settings/employee-count`,
+        {
+          method: "PUT",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            employeeCount: count,
+          }),
+        }
+      );
+
+      if (response.status === 401) {
+        handleUnauthorized();
+        return;
+      }
+
+      const result =
+        await response.json();
+
+      if (
+        !response.ok ||
+        !result.success
+      ) {
+        throw new Error(
+          result.message ||
+            "Failed to update employee count."
+        );
+      }
+
+      const updatedCount =
+        Number(result.employeeCount);
+
+      setEmployeeCount(updatedCount);
+      setSavedCount(updatedCount);
+
+      setMessage(
+        "Employee count saved successfully."
+      );
+    } catch (error) {
+      console.error(
+        "Failed to update employee count:",
+        error
+      );
+
+      setMessage(
+        error.message ||
+          "Unable to save employee count. Please try again."
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  /*
+   * =========================================================
+   * PAGE
+   * =========================================================
+   */
+
   return (
-    <div className="min-h-screen bg-gray-950 p-4 text-gray-900 sm:p-6 lg:p-8">
-      <div className="relative mx-auto min-h-[650px] max-w-[1500px] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
-        {/* Bottom-right decorative icon */}
-        <div className="pointer-events-none absolute bottom-8 right-10 hidden opacity-30 sm:block">
-          <UsersRound size={150} strokeWidth={1.5} />
+    <div
+      className="
+        relative
+        p-5
+        text-gray-900
+        transition-colors
+        dark:text-gray-100
+
+        bg-gray-100
+        dark:bg-gray-950
+
+        sm:p-6
+      "
+    >
+      {/* =====================================================
+          PAGE HEADER
+          Same structure/size as Employees page.
+      ====================================================== */}
+
+      <div className="mb-6">
+        <h1
+          className="
+            text-2xl
+            font-bold
+            tracking-tight
+            text-gray-900
+
+            dark:text-white
+          "
+        >
+          Employees{" "}
+          <span className="text-[#EF3B3A]">
+            Count
+          </span>
+        </h1>
+
+        <p
+          className="
+            mt-1
+            text-sm
+            text-gray-500
+
+            dark:text-gray-400
+          "
+        >
+          Set the total number of
+          employees for Proliant.
+        </p>
+      </div>
+
+      {/* =====================================================
+          MAIN RECTANGULAR CARD
+
+          Height adjusted because the page heading
+          is now outside the rectangle.
+      ====================================================== */}
+
+      <div
+        className="
+          relative
+          h-[calc(100vh-248px)]
+          w-full
+          overflow-hidden
+          rounded-xl
+          border
+          border-gray-200
+          bg-white
+          shadow-sm
+          transition-colors
+
+          dark:border-gray-800
+          dark:bg-gray-900
+        "
+      >
+        {/* ===================================================
+            DECORATIVE BOTTOM-RIGHT ICON
+        ==================================================== */}
+
+        <div
+          className="
+            pointer-events-none
+            absolute
+            bottom-6
+            right-8
+            hidden
+            text-gray-900
+            opacity-[0.06]
+
+            dark:text-white
+            dark:opacity-[0.05]
+
+            sm:block
+          "
+        >
+          <UsersRound
+            size={95}
+            strokeWidth={1.5}
+          />
         </div>
 
-        {/* Main content */}
-        <div className="relative z-10 p-5 sm:p-8 lg:p-12">
-          {/* Heading */}
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-red-100 bg-red-50 text-red-600 shadow-sm">
-              <UsersRound size={42} strokeWidth={2.5} />
-            </div>
+        {/* ===================================================
+            CARD CONTENT
+        ==================================================== */}
 
-            <div>
-              <h1 className="text-3xl font-extrabold tracking-tight text-gray-950 sm:text-4xl lg:text-5xl">
-                Employees <span className="text-red-600">Count</span>
-              </h1>
+        <div
+          className="
+            relative
+            z-10
+            p-5
+            sm:p-6
+          "
+        >
+          {/* =================================================
+              COUNTER AREA
+          ================================================== */}
 
-              <p className="mt-3 text-base text-gray-500 sm:text-lg">
-                Set the total number of employees for Proliant.
-              </p>
-            </div>
-          </div>
+          <div
+            className="
+              mx-auto
+              mt-10
+              max-w-xl
+            "
+          >
+            {/* Counter Heading */}
 
-          {/* Counter */}
-          <div className="mx-auto mt-12 max-w-2xl">
             <div className="text-center">
-              <h2 className="text-sm font-bold tracking-[0.25em] text-gray-600 sm:text-base">
+              <h2
+                className="
+                  text-xs
+                  font-bold
+                  tracking-[0.2em]
+                  text-gray-500
+
+                  dark:text-gray-400
+
+                  sm:text-sm
+                "
+              >
                 TOTAL EMPLOYEES
               </h2>
 
-              <div className="mx-auto mt-4 h-1 w-12 rounded-full bg-red-600" />
+              <div
+                className="
+                  mx-auto
+                  mt-3
+                  h-0.5
+                  w-10
+                  rounded-full
+                  bg-[#EF3B3A]
+                "
+              />
             </div>
 
-            <div className="mt-6 grid grid-cols-[1fr_1.2fr_1fr] items-stretch overflow-hidden rounded-[28px] border border-red-100 bg-white shadow-[0_12px_35px_rgba(239,59,58,0.18)]">
-              {/* Decrease button */}
+            {/* =================================================
+                COUNTER
+            ================================================== */}
+
+            <div
+              className="
+                mt-5
+                grid
+                grid-cols-[1fr_1.2fr_1fr]
+                items-stretch
+                overflow-hidden
+                rounded-2xl
+                border
+                border-red-100
+                bg-white
+                shadow-[0_8px_25px_rgba(239,59,58,0.12)]
+                transition-colors
+
+                dark:border-red-900/40
+                dark:bg-gray-900
+              "
+            >
+              {/* Decrease */}
+
               <button
                 type="button"
                 onClick={decreaseCount}
-                disabled={Number(employeeCount) === 0}
+                disabled={
+                  isLoading ||
+                  isSaving ||
+                  Number(employeeCount) ===
+                    0
+                }
                 aria-label="Decrease employee count"
-                className="m-2 flex min-h-28 items-center justify-center rounded-2xl bg-red-50 text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-36"
+                className="
+                  m-2
+                  flex
+                  min-h-20
+                  items-center
+                  justify-center
+                  rounded-xl
+                  bg-red-50
+                  text-[#EF3B3A]
+                  transition-colors
+                  hover:bg-red-100
+                  disabled:cursor-not-allowed
+                  disabled:opacity-40
+
+                  dark:bg-red-950/30
+                  dark:hover:bg-red-950/50
+
+                  sm:min-h-24
+                "
               >
-                <Minus size={48} strokeWidth={3} />
+                <Minus
+                  size={30}
+                  strokeWidth={2.5}
+                />
               </button>
 
-              {/* Editable number */}
-              <div className="flex min-w-0 items-center justify-center border-x border-gray-200 px-2">
+              {/* Number */}
+
+              <div
+                className="
+                  flex
+                  min-w-0
+                  items-center
+                  justify-center
+                  border-x
+                  border-gray-200
+                  px-2
+
+                  dark:border-gray-700
+                "
+              >
                 <input
                   type="number"
                   min="0"
                   step="1"
-                  value={employeeCount}
-                  onChange={(e) => {
-                    const value = e.target.value;
+                  value={
+                    isLoading
+                      ? ""
+                      : employeeCount
+                  }
+                  disabled={
+                    isLoading ||
+                    isSaving
+                  }
+                  onChange={(event) => {
+                    const value =
+                      event.target.value;
 
                     if (value === "") {
                       setEmployeeCount("");
                       setMessage("");
-                    } else if (/^\d+$/.test(value)) {
-                      setEmployeeCount(Number(value));
+                    } else if (
+                      /^\d+$/.test(
+                        value
+                      )
+                    ) {
+                      setEmployeeCount(
+                        Number(value)
+                      );
+
                       setMessage("");
                     }
                   }}
                   onBlur={() => {
                     if (
-                      employeeCount === "" ||
-                      !Number.isInteger(Number(employeeCount))
+                      employeeCount ===
+                        "" ||
+                      !Number.isInteger(
+                        Number(
+                          employeeCount
+                        )
+                      )
                     ) {
                       setEmployeeCount(0);
                     } else {
-                      setEmployeeCount(Math.max(0, Number(employeeCount)));
+                      setEmployeeCount(
+                        Math.max(
+                          0,
+                          Number(
+                            employeeCount
+                          )
+                        )
+                      );
                     }
                   }}
                   aria-label="Employee count"
-                  className="employee-count-input w-full min-w-0 appearance-none border-0 bg-transparent p-0 text-center !text-[80px] !font-black !leading-none tracking-tight text-gray-900 outline-none focus:border-0 focus:outline-none focus:ring-0"
+                  className="
+                    employee-count-input
+                    w-full
+                    min-w-0
+                    appearance-none
+                    border-0
+                    bg-transparent
+                    p-0
+                    text-center
+                    !text-[52px]
+                    !font-bold
+                    !leading-none
+                    tracking-tight
+                    text-gray-900
+                    outline-none
+                    focus:border-0
+                    focus:outline-none
+                    focus:ring-0
+                    disabled:cursor-not-allowed
+                    disabled:opacity-60
+
+                    dark:text-white
+
+                    sm:!text-[58px]
+                  "
                 />
               </div>
 
-              {/* Increase button */}
+              {/* Increase */}
+
               <button
                 type="button"
                 onClick={increaseCount}
+                disabled={
+                  isLoading ||
+                  isSaving
+                }
                 aria-label="Increase employee count"
-                className="m-2 flex min-h-28 items-center justify-center rounded-2xl bg-red-50 text-red-600 transition hover:bg-red-100 sm:min-h-36"
+                className="
+                  m-2
+                  flex
+                  min-h-20
+                  items-center
+                  justify-center
+                  rounded-xl
+                  bg-red-50
+                  text-[#EF3B3A]
+                  transition-colors
+                  hover:bg-red-100
+                  disabled:cursor-not-allowed
+                  disabled:opacity-40
+
+                  dark:bg-red-950/30
+                  dark:hover:bg-red-950/50
+
+                  sm:min-h-24
+                "
               >
-                <Plus size={48} strokeWidth={3} />
+                <Plus
+                  size={30}
+                  strokeWidth={2.5}
+                />
               </button>
             </div>
 
-            <p className="mt-5 text-center text-sm text-gray-500 sm:text-base">
-              Use the + and − buttons to adjust the total number of employees.
+            {/* =================================================
+                HELPER TEXT
+            ================================================== */}
+
+            <p
+              className="
+                mt-4
+                text-center
+                text-xs
+                text-gray-500
+
+                dark:text-gray-400
+
+                sm:text-sm
+              "
+            >
+              Use the + and − buttons to
+              adjust the total number of
+              employees.
             </p>
 
-            {/* Information panel */}
-            <div className="mt-7 flex items-center gap-4 rounded-2xl border border-red-100 bg-red-50/90 p-4 sm:p-5">
-              <Info size={34} className="shrink-0 text-red-600" />
+            {/* =================================================
+                INFORMATION PANEL
+            ================================================== */}
 
-              <div className="border-l-2 border-red-200 pl-4">
-                <p className="font-bold text-red-600">
+            <div
+              className="
+                mt-6
+                flex
+                items-center
+                gap-3
+                rounded-xl
+                border
+                border-red-100
+                bg-red-50/80
+                p-3.5
+                transition-colors
+
+                dark:border-red-900/40
+                dark:bg-red-950/20
+
+                sm:p-4
+              "
+            >
+              <div
+                className="
+                  flex
+                  h-9
+                  w-9
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-lg
+                  bg-white
+                  text-[#EF3B3A]
+
+                  dark:bg-gray-800
+                "
+              >
+                <Info size={18} />
+              </div>
+
+              <div
+                className="
+                  border-l
+                  border-red-200
+                  pl-3
+
+                  dark:border-red-900/60
+                "
+              >
+                <p
+                  className="
+                    text-sm
+                    font-semibold
+                    text-red-600
+
+                    dark:text-red-400
+                  "
+                >
                   Minimum: 0 employees
                 </p>
 
-                <p className="mt-1 text-sm text-gray-500 sm:text-base">
-                  Update the count and click save to apply changes.
+                <p
+                  className="
+                    mt-0.5
+                    text-xs
+                    text-gray-500
+
+                    dark:text-gray-400
+
+                    sm:text-sm
+                  "
+                >
+                  Update the count and click
+                  save to apply changes.
                 </p>
               </div>
             </div>
 
-            {/* Save button */}
-            <div className="mt-8 flex flex-col items-center">
+            {/* =================================================
+                SAVE BUTTON
+            ================================================== */}
+
+            <div
+              className="
+                mt-6
+                flex
+                flex-col
+                items-center
+              "
+            >
               <button
                 type="button"
                 onClick={handleSave}
                 disabled={
-                  employeeCount === "" ||
-                  Number(employeeCount) === savedCount
+                  isLoading ||
+                  isSaving ||
+                  employeeCount ===
+                    "" ||
+                  Number(
+                    employeeCount
+                  ) === savedCount
                 }
-                className="flex w-full max-w-sm items-center justify-center gap-3 rounded-xl bg-red-600 px-6 py-4 text-base font-bold text-white shadow-[0_8px_20px_rgba(239,59,58,0.3)] transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:text-lg"
+                className="
+                  flex
+                  w-full
+                  max-w-xs
+                  items-center
+                  justify-center
+                  gap-2.5
+                  rounded-lg
+                  bg-[#EF3B3A]
+                  px-5
+                  py-3
+                  text-sm
+                  font-semibold
+                  text-white
+                  shadow-sm
+                  transition-colors
+                  hover:bg-red-600
+                  disabled:cursor-not-allowed
+                  disabled:opacity-60
+
+                  sm:text-base
+                "
               >
-                <Save size={24} />
-                Save Employee Count
+                <Save size={19} />
+
+                {isSaving
+                  ? "Saving..."
+                  : "Save Employee Count"}
               </button>
 
               {message && (
                 <p
                   role="status"
-                  className={`mt-4 text-center text-sm font-medium ${
-                    message.includes("successfully")
-                      ? "text-green-600"
-                      : "text-red-600"
+                  className={`mt-3 text-center text-sm font-medium ${
+                    message.includes(
+                      "successfully"
+                    )
+                      ? "text-green-600 dark:text-green-400"
+                      : "text-red-600 dark:text-red-400"
                   }`}
                 >
                   {message}
@@ -184,7 +775,10 @@ function EmployeesTemp() {
         </div>
       </div>
 
-      {/* Hide browser number input arrows */}
+      {/* =====================================================
+          HIDE NUMBER INPUT ARROWS
+      ====================================================== */}
+
       <style>{`
         .employee-count-input::-webkit-inner-spin-button,
         .employee-count-input::-webkit-outer-spin-button {

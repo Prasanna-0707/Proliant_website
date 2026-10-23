@@ -1,6 +1,17 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { Menu, X, LogOut, ChevronRight } from "lucide-react";
+
+import {
+  Menu,
+  X,
+  LogOut,
+  ChevronRight,
+  Users,
+  UserCog,
+  BriefcaseBusiness,
+  Globe2,
+} from "lucide-react";
+
 
 import blackLogo from "../assets/logo/Proliant Black/proliant_black.png";
 import whiteLogo from "../assets/logo/ProliantWhite/proliant_white.png";

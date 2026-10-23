@@ -31,6 +31,11 @@ import Jobs from "./pages/HR/HRJobs";
 import Candidates from "./pages/HR/HRCandidates";
 import Enquiries from "./pages/Enquiries";
 
+// Candidate Pages from Lavanya's branch
+import CandidateLogin from "./pages/Candidate/CandidateLogin";
+import CandidateDashboard from "./pages/Candidate/CandidateDashboard";
+import AllJobs from "./pages/Candidate/AllJobs";
+
 function App() {
   const token = localStorage.getItem("adminToken");
 
@@ -50,6 +55,22 @@ function App() {
           }
         />
 
+        {/* Candidate Pages - Outside Admin Protection */}
+        <Route
+          path="/candidate-login"
+          element={<CandidateLogin />}
+        />
+
+        <Route
+          path="/candidate-dashboard"
+          element={<CandidateDashboard />}
+        />
+
+        <Route
+          path="/candidate-all-jobs"
+          element={<AllJobs />}
+        />
+
         {/* Protected Admin Routes */}
         <Route element={<ProtectedRoute />}>
           <Route element={<AdminLayout />}>
@@ -60,7 +81,7 @@ function App() {
               element={<AdminDashboard />}
             />
 
-            {/* Administration */}
+            {/* Administration - Future Pages */}
             {/*
             <Route
               path="/users"
@@ -129,7 +150,7 @@ function App() {
           </Route>
         </Route>
 
-        {/* Default Route */}
+        {/* Redirect Unknown Routes */}
         <Route
           path="*"
           element={<Navigate to="/login" replace />}
