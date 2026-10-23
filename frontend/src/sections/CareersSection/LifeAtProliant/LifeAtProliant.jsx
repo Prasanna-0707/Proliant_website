@@ -1,10 +1,15 @@
 import { useLayoutEffect, useRef } from "react";
+
 import gsap from "gsap";
+
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import benefitsImage from "../../../assets/images/Careers/benifts.png";
+
 import cultureImage from "../../../assets/images/Careers/culture.png";
+
 import technologyImage from "../../../assets/images/Careers/cuttingedgetech.png";
+
 import growthImage from "../../../assets/images/Careers/growth.png";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -84,10 +89,13 @@ const LifeAtProliant = () => {
         px-5
         py-10
         text-black
+
         sm:px-6
         sm:py-12
+
         md:px-12
         md:py-20
+
         lg:px-20
       "
     >
@@ -99,13 +107,14 @@ const LifeAtProliant = () => {
 
         <div
           className="
-            mb-8
+            mb-4
             flex
             items-end
             justify-between
             border-b
             border-black/10
             pb-4
+
             sm:mb-10
             sm:pb-5
           "
@@ -122,6 +131,7 @@ const LifeAtProliant = () => {
                 font-medium
                 leading-none
                 tracking-tight
+
                 md:text-5xl
                 lg:text-6xl
               "
@@ -179,14 +189,18 @@ const LifeAtProliant = () => {
                     justify-center
                     overflow-hidden
                     p-5
+
                     sm:p-6
+
                     md:min-h-80
                     md:p-9
+
                     ${
                       card.dark
                         ? "bg-black text-white"
                         : "bg-white text-black"
                     }
+
                     ${
                       index % 2 === 0
                         ? "md:order-1"
@@ -223,6 +237,7 @@ const LifeAtProliant = () => {
                       top-0
                       h-16
                       w-1
+
                       ${
                         card.dark
                           ? "bg-[#EF3B3A]"
@@ -244,11 +259,14 @@ const LifeAtProliant = () => {
                         text-xl
                         font-semibold
                         tracking-tight
+
                         sm:mt-3
                         sm:pb-4
                         sm:text-2xl
+
                         md:mt-4
                         md:text-3xl
+
                         ${
                           card.dark
                             ? "border-white/15"
@@ -268,9 +286,12 @@ const LifeAtProliant = () => {
                           max-w-xl
                           text-sm
                           leading-relaxed
+
                           sm:mt-5
+
                           md:mt-6
                           md:text-base
+
                           ${
                             card.dark
                               ? "text-white/55"
@@ -291,10 +312,13 @@ const LifeAtProliant = () => {
                           space-y-2.5
                           text-sm
                           leading-relaxed
+
                           sm:mt-5
                           sm:space-y-3
+
                           md:mt-6
                           md:text-base
+
                           ${
                             card.dark
                               ? "text-white/55"
@@ -333,9 +357,12 @@ const LifeAtProliant = () => {
                     min-h-0
                     overflow-hidden
                     bg-white
+
                     sm:h-60
+
                     md:h-auto
                     md:min-h-80
+
                     ${
                       index % 2 === 0
                         ? "md:order-2"

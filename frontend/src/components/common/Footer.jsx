@@ -1,9 +1,13 @@
 import { useLayoutEffect, useRef } from "react";
+
 import { Link } from "react-router-dom";
+
 import gsap from "gsap";
+
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import blackLogo from "../../assets/logos/ProliantBlack/proliant_black.png";
+
 import whiteLogo from "../../assets/logos/ProliantWhite/proliant_white.png";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -30,28 +34,26 @@ const Footer = ({ theme = "dark" }) => {
         y: isMobile ? 20 : 35,
         duration: isMobile ? 0.6 : 0.8,
         ease: "power3.out",
-      })
-        .from(
-          ".footer-column",
-          {
-            opacity: 0,
-            y: isMobile ? 18 : 30,
-            duration: isMobile ? 0.55 : 0.7,
-            stagger: isMobile ? 0.08 : 0.12,
-            ease: "power3.out",
-          },
-          isMobile ? "-=0.3" : "-=0.45"
-        )
-        .from(
-          ".footer-bottom",
-          {
-            opacity: 0,
-            y: isMobile ? 12 : 20,
-            duration: isMobile ? 0.5 : 0.6,
-            ease: "power3.out",
-          },
-          isMobile ? "-=0.25" : "-=0.35"
-        );
+      }).from(
+        ".footer-column",
+        {
+          opacity: 0,
+          y: isMobile ? 18 : 30,
+          duration: isMobile ? 0.55 : 0.7,
+          stagger: isMobile ? 0.08 : 0.12,
+          ease: "power3.out",
+        },
+        isMobile ? "-=0.3" : "-=0.45"
+      ).from(
+        ".footer-bottom",
+        {
+          opacity: 0,
+          y: isMobile ? 12 : 20,
+          duration: isMobile ? 0.5 : 0.6,
+          ease: "power3.out",
+        },
+        isMobile ? "-=0.25" : "-=0.35"
+      );
     }, footerRef);
 
     return () => ctx.revert();
@@ -67,7 +69,7 @@ const Footer = ({ theme = "dark" }) => {
 
         /* =========================================
            480px - 999px
-           
+
            Brand stays on top.
            Company | Legal | Connect stay
            in ONE horizontal row.
@@ -95,7 +97,7 @@ const Footer = ({ theme = "dark" }) => {
 
         /* =========================================
            360px - 479px
-           
+
            Keep Company | Legal | Connect
            in one row with equal visual spacing.
         ========================================== */
@@ -137,7 +139,7 @@ const Footer = ({ theme = "dark" }) => {
 
         /* =========================================
            BELOW 360px
-           
+
            Keep the same three-column layout but
            use smaller spacing so there is no
            horizontal overflow.
@@ -175,7 +177,7 @@ const Footer = ({ theme = "dark" }) => {
 
         /* =========================================
            1000px - 1100px
-           
+
            Nest Hub / larger tablet layouts.
         ========================================== */
 
@@ -442,34 +444,38 @@ const Footer = ({ theme = "dark" }) => {
           <div
             className={
               isLight
-                ? "footer-bottom flex flex-col gap-2 pt-3 text-[10px] font-medium text-black/65 sm:gap-3 sm:pt-4 sm:text-xs md:flex-row md:items-center md:justify-between"
-                : "footer-bottom flex flex-col gap-2 pt-3 text-[10px] text-white/30 sm:gap-3 sm:pt-4 sm:text-xs md:flex-row md:items-center md:justify-between"
+                ? "footer-bottom flex flex-nowrap items-center justify-between gap-2 pt-3 text-[9px] font-medium text-black/65 sm:gap-3 sm:pt-4 sm:text-xs"
+                : "footer-bottom flex flex-nowrap items-center justify-between gap-2 pt-3 text-[9px] text-white/30 sm:gap-3 sm:pt-4 sm:text-xs"
             }
           >
-            <p>
-              © {new Date().getFullYear()} Proliant Data LLC.
-              All Rights Reserved.
+
+            {/* COPYRIGHT */}
+
+            <p className="whitespace-nowrap">
+              © {new Date().getFullYear()} Proliant Data LLC. All Rights Reserved.
             </p>
 
-            <div className="flex items-center gap-3 sm:gap-4">
+
+            {/* PRIVACY + TERMS */}
+
+            <div className="flex shrink-0 items-center gap-2 whitespace-nowrap sm:gap-4">
+
               <Link
                 to="/privacy"
-                className="transition-colors duration-300 hover:text-[#EF3B3A]"
+                className="whitespace-nowrap transition-colors duration-300 hover:text-[#EF3B3A]"
               >
                 Privacy
               </Link>
 
-              <span className="opacity-40">
-                •
-              </span>
-
               <Link
                 to="/terms"
-                className="transition-colors duration-300 hover:text-[#EF3B3A]"
+                className="whitespace-nowrap transition-colors duration-300 hover:text-[#EF3B3A]"
               >
                 Terms
               </Link>
+
             </div>
+
           </div>
 
         </div>

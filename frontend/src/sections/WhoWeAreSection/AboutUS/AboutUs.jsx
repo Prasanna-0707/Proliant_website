@@ -1,5 +1,7 @@
 import { useLayoutEffect, useRef } from "react";
+
 import gsap from "gsap";
+
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -10,17 +12,21 @@ const AboutUs = () => {
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
       // Responsive animation values
+
       const isMobile = window.matchMedia("(max-width: 639px)").matches;
+
       const isTablet = window.matchMedia(
         "(min-width: 640px) and (max-width: 1279px)"
       ).matches;
 
       const headingY = isMobile ? 30 : isTablet ? 40 : 60;
+
       const copyY = isMobile ? 20 : isTablet ? 30 : 40;
+
       const pointY = isMobile ? 20 : isTablet ? 25 : 35;
 
       /* =====================================================
-        ABOUT US LABEL
+         ABOUT US LABEL
       ===================================================== */
 
       gsap.from(".story-label", {
@@ -36,7 +42,7 @@ const AboutUs = () => {
       });
 
       /* =====================================================
-        ABOUT US HEADING
+         ABOUT US HEADING
       ===================================================== */
 
       gsap.from(".story-heading-line", {
@@ -54,7 +60,7 @@ const AboutUs = () => {
       });
 
       /* =====================================================
-        ABOUT US DESCRIPTION
+         ABOUT US DESCRIPTION
       ===================================================== */
 
       gsap.from(".story-copy", {
@@ -72,7 +78,7 @@ const AboutUs = () => {
       });
 
       /* =====================================================
-        TIMELINE LINE
+         TIMELINE LINE
       ===================================================== */
 
       gsap.from(".story-line", {
@@ -88,7 +94,7 @@ const AboutUs = () => {
       });
 
       /* =====================================================
-        TIMELINE POINTS
+         TIMELINE POINTS
       ===================================================== */
 
       gsap.from(".story-point", {
@@ -105,7 +111,7 @@ const AboutUs = () => {
       });
 
       /* =====================================================
-        TIMELINE DOTS
+         TIMELINE DOTS
       ===================================================== */
 
       gsap.from(".story-point-dot", {
@@ -122,7 +128,7 @@ const AboutUs = () => {
       });
 
       /* =====================================================
-        REFRESH SCROLLTRIGGER
+         REFRESH SCROLLTRIGGER
       ===================================================== */
 
       ScrollTrigger.refresh();
@@ -139,7 +145,8 @@ const AboutUs = () => {
         story-section
         bg-white
         px-5
-        py-10
+        pt-10
+        pb-10
         text-black
 
         sm:px-6
@@ -164,7 +171,7 @@ const AboutUs = () => {
         <div
           className="
             grid
-            gap-8
+            gap-3
 
             md:gap-10
 
@@ -217,11 +224,10 @@ const AboutUs = () => {
               </span>
 
               <span className="story-heading-line block">
-                to
-              </span>
-
-              <span className="story-heading-line block text-[#EF3B3A]">
-                transformation.
+                to{" "}
+                <span className="text-[#EF3B3A]">
+                  transformation.
+                </span>
               </span>
             </h2>
           </div>
@@ -232,13 +238,12 @@ const AboutUs = () => {
             className="
               story-copy
               max-w-4xl
-
               lg:pt-1
             "
           >
             <p
               className="
-                mt-3
+                mt-0
                 text-[0.95rem]
                 leading-[1.65]
                 text-black/50
@@ -318,7 +323,7 @@ const AboutUs = () => {
 
               lg:grid-cols-4
               lg:gap-6
-          "
+            "
           >
 
             {/* =================================================
