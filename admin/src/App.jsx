@@ -9,16 +9,27 @@ import {
 import AdminLayout from "./components/AdminLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-import Login from "./pages/Login";
-import Dashboard from "./pages/HR/HRDashboard";
+// Admin Pages
+import AdminLogin from "./pages/Admin/AdminLogin";
+import AdminDashboard from "./pages/Admin/AdminDashboard";
+
 import Employees from "./pages/Admin/Employees";
 import EmployeesTemp from "./pages/Admin/EmployeesTemp";
 import TeamMembers from "./pages/Admin/TeamMembers";
-import Jobs from "./pages/HR/HRJobs";
 import Countries from "./pages/Admin/Countries";
+import Profile from "./pages/Admin/Profile";
+
+// Future Admin Pages
+// These pages are not created yet.
+// import Users from "./pages/Admin/Users";
+// import RolesPermissions from "./pages/Admin/RolesPermissions";
+// import Settings from "./pages/Admin/Settings";
+// import AuditLogs from "./pages/Admin/AuditLogs";
+
+// Recruitment Pages
+import Jobs from "./pages/HR/HRJobs";
 import Candidates from "./pages/HR/HRCandidates";
 import Enquiries from "./pages/Enquiries";
-import Profile from "./pages/Admin/Profile";
 
 function App() {
   const token = localStorage.getItem("adminToken");
@@ -26,47 +37,104 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Login */}
+
+        {/* Admin Login */}
         <Route
           path="/login"
           element={
             token ? (
               <Navigate to="/dashboard" replace />
             ) : (
-              <Login />
+              <AdminLogin />
             )
           }
         />
 
-        {/* Protected routes */}
+        {/* Protected Admin Routes */}
         <Route element={<ProtectedRoute />}>
           <Route element={<AdminLayout />}>
-            <Route path="/dashboard" element={<Dashboard />} />
 
-            {/* Admin management */}
-            <Route path="/employees" element={<Employees />} />
+            {/* Admin Dashboard */}
+            <Route
+              path="/dashboard"
+              element={<AdminDashboard />}
+            />
+
+            {/* Administration */}
+            {/*
+            <Route
+              path="/users"
+              element={<Users />}
+            />
+
+            <Route
+              path="/roles-permissions"
+              element={<RolesPermissions />}
+            />
+
+            <Route
+              path="/settings"
+              element={<Settings />}
+            />
+
+            <Route
+              path="/audit-logs"
+              element={<AuditLogs />}
+            />
+            */}
+
+            {/* Existing Admin Management Pages */}
+            <Route
+              path="/employees"
+              element={<Employees />}
+            />
+
             <Route
               path="/employees-temp"
               element={<EmployeesTemp />}
             />
-            <Route path="/team-members" element={<TeamMembers />} />
-            <Route path="/countries" element={<Countries />} />
 
-            {/* Recruitment */}
-            <Route path="/jobs" element={<Jobs />} />
-            <Route path="/candidates" element={<Candidates />} />
-            <Route path="/enquiries" element={<Enquiries />} />
+            <Route
+              path="/team-members"
+              element={<TeamMembers />}
+            />
 
-            {/* Profile */}
-            <Route path="/profile" element={<Profile />} />
+            <Route
+              path="/countries"
+              element={<Countries />}
+            />
+
+            {/* Recruitment Pages */}
+            <Route
+              path="/jobs"
+              element={<Jobs />}
+            />
+
+            <Route
+              path="/candidates"
+              element={<Candidates />}
+            />
+
+            <Route
+              path="/enquiries"
+              element={<Enquiries />}
+            />
+
+            {/* Admin Profile */}
+            <Route
+              path="/profile"
+              element={<Profile />}
+            />
+
           </Route>
         </Route>
 
-        {/* Unknown routes */}
+        {/* Default Route */}
         <Route
           path="*"
           element={<Navigate to="/login" replace />}
         />
+
       </Routes>
     </BrowserRouter>
   );

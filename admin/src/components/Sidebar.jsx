@@ -21,34 +21,6 @@ const API_BASE_URL =
   }
 }
 
-const managementLinks = [
-  {
-    name: "Employees",
-    path: "/employees",
-    icon: Users,
-  },
-  {
-  name: "EmployeesTemp",
-  path: "/employees-temp",
-  icon: Users,
-},
-  {
-    name: "Team Members",
-    path: "/team-members",
-    icon: UserCog,
-  },
-  {
-    name: "Jobs",
-    path: "/jobs",
-    icon: BriefcaseBusiness,
-  },
-  {
-    name: "Countries",
-    path: "/countries",
-    icon: Globe2,
-  },
-];
-
 function Sidebar({ user: userProp, onLogout }) {
   const navigate = useNavigate();
 

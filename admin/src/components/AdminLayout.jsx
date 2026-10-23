@@ -3,10 +3,29 @@ import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 
+function getAdminUser() {
+  try {
+    const storedUser = JSON.parse(
+      localStorage.getItem("adminUser") || "null"
+    );
+
+    return {
+      ...(storedUser || {}),
+      role: "ADMIN",
+    };
+  } catch {
+    return {
+      role: "ADMIN",
+    };
+  }
+}
+
 function AdminLayout() {
+  const adminUser = getAdminUser();
+
   return (
     <div className="min-h-screen bg-[#fafafa] transition-colors dark:bg-gray-950">
-      <Sidebar />
+      <Sidebar user={adminUser} />
 
       <div className="min-w-0 flex-1 md:ml-64">
         <Header />
