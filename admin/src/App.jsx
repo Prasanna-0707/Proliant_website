@@ -8,17 +8,15 @@ import {
 import AdminLayout from "./components/AdminLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-// Login
+// Admin Login
 import Login from "./pages/Login";
 
-// Existing Admin / HR pages
-import Dashboard from "./pages/HR/HRDashboard";
-import Employees from "./pages/Admin/Employees";
-import EmployeesTemp from "./pages/Admin/EmployeesTemp";
-import TeamMembers from "./pages/Admin/TeamMembers";
-import Jobs from "./pages/HR/HRJobs";
-import Countries from "./pages/Admin/Countries";
-import Candidates from "./pages/HR/HRCandidates";
+// Existing pages
+import Dashboard from "./pages/Dashboard";
+import Employees from "./pages/Employees";
+import TeamMembers from "./pages/TeamMembers";
+import Jobs from "./pages/Jobs";
+import Candidates from "./pages/Candidates";
 import Enquiries from "./pages/Enquiries";
 
 // Interviewer pages
@@ -86,17 +84,6 @@ function App() {
             <Route
               path="/enquiries"
               element={<Enquiries />}
-            />
-
-            {/* Keep these routes if they are needed */}
-            <Route
-              path="/employees-temp"
-              element={<EmployeesTemp />}
-            />
-
-            <Route
-              path="/countries"
-              element={<Countries />}
             />
           </Route>
         </Route>
