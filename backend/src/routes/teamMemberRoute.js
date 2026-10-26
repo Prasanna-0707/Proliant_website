@@ -5,60 +5,32 @@ import {
   getTeamMemberById,
   createTeamMember,
   updateTeamMember,
+  updateTeamMemberStatus,
   deleteTeamMember,
 } from "../controllers/teamMemberController.js";
 
 import authMiddleware from "../middleware/authMiddleware.js";
 
-const normalizeEmail = (email = "") => {
-  return email.trim().toLowerCase();
-};
-
 const router = express.Router();
 
+// Read team directory
+router.get("/", authMiddleware, getTeamMembers);
+router.get("/:id", authMiddleware, getTeamMemberById);
 
-// =====================================================
-// TEAM MEMBERS
-// =====================================================
+// Create account
+router.post("/", authMiddleware, createTeamMember);
 
-// Get all team members
-router.get(
-  "/",
+// Edit permitted account fields
+router.put("/:id", authMiddleware, updateTeamMember);
+
+// Activate / deactivate account
+router.patch(
+  "/:id/status",
   authMiddleware,
-  getTeamMembers
+  updateTeamMemberStatus
 );
 
-
-// Get one team member
-router.get(
-  "/:id",
-  authMiddleware,
-  getTeamMemberById
-);
-
-
-// Create team member
-router.post(
-  "/",
-  authMiddleware,
-  createTeamMember
-);
-
-
-// Update team member
-router.put(
-  "/:id",
-  authMiddleware,
-  updateTeamMember
-);
-
-
-// Delete team member
-router.delete(
-  "/:id",
-  authMiddleware,
-  deleteTeamMember
-);
-
+// Soft-delete account
+router.delete("/:id", authMiddleware, deleteTeamMember);
 
 export default router;

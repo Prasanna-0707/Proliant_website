@@ -1,9 +1,11 @@
+
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./config/db.js";
 import seedDatabase from "./seed/seedData.js";
 
+// Existing routes
 import employeeRoutes from "./routes/employeeRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import locationRoutes from "./routes/locationRoutes.js";
@@ -13,21 +15,23 @@ import candidateRoutes from "./routes/candidateRoutes.js";
 import jobRoutes from "./routes/jobRoutes.js";
 import teamMemberRoute from "./routes/teamMemberRoute.js";
 import siteSettingRoutes from "./routes/siteSettingRoutes.js";
+import applicationRoutes from "./routes/applicationRoutes.js";
 
+// Candidate Portal routes
 import candidateAuthRoutes from "./modules/candidate/routes/candidateAuthRoutes.js";
 import candidateProfileRoutes from "./modules/candidate/routes/candidateProfileRoute.js";
 import candidateJobRoutes from "./modules/candidate/routes/candidateJobRoutes.js";
-
 import candidateApplicationRoutes from "./modules/candidate/routes/candidateApplicationRoute.js";
 import candidateDashboardRoute from "./modules/candidate/routes/candidateDashboardRoute.js";
-
 import candidateNotificationRoutes from "./modules/candidate/routes/candidateNotificationRoute.js";
-
-
 
 dotenv.config();
 
 const app = express();
+
+// =====================================================
+// MIDDLEWARE
+// =====================================================
 
 app.use(
   cors({
@@ -38,7 +42,7 @@ app.use(
 
       // Production
       "https://proliant-webpage.onrender.com", // Public Website
-      "https://admin-proliant.onrender.com",   // Admin Portal
+      "https://admin-proliant.onrender.com", // Admin Portal
     ],
   })
 );
@@ -47,6 +51,9 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
 
+// =====================================================
+// START SERVER
+// =====================================================
 
 const startServer = async () => {
   try {
@@ -56,8 +63,15 @@ const startServer = async () => {
     // Seed initial database data
     await seedDatabase();
 
+    // =================================================
+    // EXISTING API ROUTES
+    // =================================================
+
     // Employee routes
     app.use("/api/employees", employeeRoutes);
+
+    // Team Members APIs
+    app.use("/api/auth/team-members", teamMemberRoute);
 
     // Authentication routes
     app.use("/api/auth", authRoutes);
@@ -71,38 +85,46 @@ const startServer = async () => {
     // Contact routes
     app.use("/api/contacts", contactRoutes);
 
-    // Candidate routes
+    // Existing Candidate routes
     app.use("/api/candidates", candidateRoutes);
 
     // Job routes
     app.use("/api/jobs", jobRoutes);
 
-    // Team Member routes
-    app.use("/api/auth/team-members", teamMemberRoute);
-
     // Site Settings routes
     app.use("/api/settings", siteSettingRoutes);
 
-    // Candidate Authentication Routes
+    // Application routes
+    app.use("/api/applications", applicationRoutes);
+
+    // =================================================
+    // CANDIDATE PORTAL API ROUTES
+    // =================================================
+
+    // Candidate Authentication
     app.use("/api/candidate/auth", candidateAuthRoutes);
-    
-    // Candidate Profile Routes
+
+    // Candidate Profile
     app.use("/api/candidate", candidateProfileRoutes);
 
-    // Candidate Job Routes
+    // Candidate Jobs
     app.use("/api/candidate/jobs", candidateJobRoutes);
 
-    // Candidate Dashboard Routes
+    // Candidate Dashboard
     app.use("/api/candidate/dashboard", candidateDashboardRoute);
 
-    // Candidate Application Routes
+    // Candidate Applications
     app.use("/api/candidate/applications", candidateApplicationRoutes);
 
-    // Candidate Notification Routes
+    // Candidate Notifications
     app.use(
       "/api/candidate/notifications",
       candidateNotificationRoutes
     );
+
+    // =================================================
+    // ROOT ROUTE
+    // =================================================
 
     app.get("/", (req, res) => {
       res.json({
@@ -110,14 +132,18 @@ const startServer = async () => {
       });
     });
 
+    // =================================================
+    // START LISTENING
+    // =================================================
+
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
   } catch (error) {
     console.error("Server startup failed:", error.message);
+
     process.exit(1);
   }
 };
-
 
 startServer();

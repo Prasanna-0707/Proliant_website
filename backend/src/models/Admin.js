@@ -2,10 +2,7 @@ import mongoose from "mongoose";
 
 const adminSchema = new mongoose.Schema(
   {
-    // =====================================================
-    // LOGIN EMAIL
-    // =====================================================
-
+    // Login credentials
     email: {
       type: String,
       required: true,
@@ -14,25 +11,25 @@ const adminSchema = new mongoose.Schema(
       lowercase: true,
     },
 
-    // =====================================================
-    // PASSWORD
-    // =====================================================
-
     password: {
       type: String,
       required: true,
     },
 
-    // =====================================================
-    // ADMIN PROFILE
-    // =====================================================
-
+    // Personal information
     name: {
       type: String,
       trim: true,
       default: "",
     },
 
+    phone: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    // Portal permissions and organizational information
     role: {
       type: String,
       trim: true,
@@ -45,33 +42,41 @@ const adminSchema = new mongoose.Schema(
       default: "Administrator",
     },
 
-    phone: {
+    department: {
       type: String,
       trim: true,
       default: "",
     },
 
-    // =====================================================
-    // TOKEN VERSION
-    // =====================================================
+    adminScope: {
+      type: String,
+      enum: ["GLOBAL", "DEPARTMENT"],
+      default: null,
+    },
 
+    // Account status
+    status: {
+      type: String,
+      enum: ["Active", "Inactive"],
+      default: "Active",
+    },
+
+    // Soft deletion: null means the account has not been deleted.
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
+
+    // Authentication and session management
     tokenVersion: {
       type: Number,
       default: 0,
     },
 
-    // =====================================================
-    // RESET TOKEN VERSION
-    // =====================================================
-
     resetTokenVersion: {
       type: Number,
       default: 0,
     },
-
-    // =====================================================
-    // FIRST LOGIN PASSWORD CHANGE
-    // =====================================================
 
     mustChangePassword: {
       type: Boolean,

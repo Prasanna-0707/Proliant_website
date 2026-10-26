@@ -1,4 +1,3 @@
-
 import express from "express";
 
 import {
@@ -8,8 +7,6 @@ import {
   verifyResetOTP,
   resetPassword,
   changePassword,
-  createTeamMember,
-  getTeamMembers,
   getMyProfile,
   updateMyProfile,
   logout,
@@ -81,22 +78,22 @@ router.patch(
 );
 
 // =====================================================
-// TEAM MEMBERS
+// TEAM MEMBERS - TEMPORARILY DISABLED HERE
+// These routes are handled by teamMemberRoute.js.
+// Kept as comments for future reference.
 // =====================================================
 
-// Create team member
-router.post(
-  "/team-members",
-  authMiddleware,
-  createTeamMember
-);
+// router.post(
+//   "/team-members",
+//   authMiddleware,
+//   createTeamMember
+// );
 
-// Get all team members
-router.get(
-  "/team-members",
-  authMiddleware,
-  getTeamMembers
-);
+// router.get(
+//   "/team-members",
+//   authMiddleware,
+//   getTeamMembers
+// );
 
 // =====================================================
 // LOGOUT
