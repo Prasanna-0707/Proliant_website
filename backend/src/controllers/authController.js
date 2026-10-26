@@ -7,13 +7,13 @@ import Admin from "../models/Admin.js";
 import {
   generateAndStoreOTP,
   verifyOTP,
-} from "../services/otpService.js";
+} from "../shared/services/otpService.js";
 
 import {
   sendLoginOTPEmail,
   sendForgotPasswordOTPEmail,
   sendTemporaryPasswordEmail,
-} from "../services/emailService.js";
+} from "../shared/services/emailService.js";
 
 // =====================================================
 // PASSWORD VALIDATION

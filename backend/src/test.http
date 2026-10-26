@@ -4,7 +4,7 @@
 # Update this after successful OTP verification
 @token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbklkIjoiNmFhY2NmYTg1ZjU3NjYxYTc5NGFiZWU0IiwiZW1haWwiOiJib2dhY2hhbmRyYXB1QGdtYWlsLmNvbSIsInRva2VuVmVyc2lvbiI6MTYsImlhdCI6MTc5MTQ2MTgyMiwiZXhwIjoxNzkxNTQ4MjIyfQ.hUlkZQ_Udarwun4YnRQkdTSq5TFzAwlN90eYVt1gVO0
 
-############################################################
+@CandidateToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YWRjOWZiNzY4M2UwM2JhMDI4YjI3MGEiLCJyb2xlIjoiQ0FORElEQVRFIiwibmFtZSI6IlByYXNhbm5hS3VtYXIiLCJlbWFpbCI6InByYXNhbm5hQGV4YW1wbGUuY29tIiwiaWF0IjoxNzkyODQzNzE4LCJleHAiOjE3OTI5MzAxMTh9.GwgHQoDV54Bhdbe2dbXJ92CkE2kNhdgVj0J8OCfylLQ
 # 1. AUTHENTICATION — LOGIN + OTP
 ############################################################
 
@@ -26,15 +26,7 @@ Content-Type: application/json
 
 {
   "email": "bogachandrapu@gmail.com",
-<<<<<<< HEAD
-  "otp": "239749"
-=======
-<<<<<<< HEAD
   "otp": "846317"
-=======
-  "otp": "239749"
->>>>>>> origin/lavanya-dev
->>>>>>> prasanna-dev
 }
 
 ###
@@ -559,3 +551,145 @@ Content-Type: application/json
 }
 
 ###
+
+
+
+
+
+
+### Candidate Registration
+POST http://localhost:5000/api/candidate/auth/register
+Content-Type: application/json
+
+{
+  "name": "PrasannaKumar",
+  "email": "prasanna@example.com",
+  "phone": "9876543210",
+  "password": "Candidate@123"
+}
+
+
+### Candidate Login
+POST http://localhost:5000/api/candidate/auth/login
+Content-Type: application/json
+
+{
+  "email": "prasanna@example.com",
+  "password": "Candidate@123"
+}
+### Candidate Profile
+GET http://localhost:5000/api/candidate/profile
+Authorization: Bearer {{CandidateToken}}
+
+
+### Update Candidate Profile
+PUT http://localhost:5000/api/candidate/profile
+Content-Type: application/json
+Authorization: Bearer {{CandidateToken}}
+
+{
+  "name": "Prasanna Kumar Reddy",
+  "phone": "9876543210"
+}
+
+### Upload Resume to profile
+PUT http://localhost:5000/api/candidate/profile/resume
+Authorization: Bearer {{CandidateToken}}
+Content-Type: application/json
+
+{
+  "fileName": "Prasanna_Kumar_Reddy_Resume.pdf",
+  "fileUrl": "https://your-sharepoint-resume-url",
+  "fileType": "pdf"
+}
+
+### delete Resume from profile
+DELETE http://localhost:5000/api/candidate/profile/resume
+Authorization: Bearer {{CandidateToken}}
+
+### Candidate - Get Published Jobs
+GET http://localhost:5000/api/candidate/jobs
+
+### Search React Jobs
+GET http://localhost:5000/api/candidate/jobs?search=SAP
+
+### Filter Hyderabad Jobs
+GET http://localhost:5000/api/candidate/jobs?location=Hyderabad
+
+### Page 1
+GET http://localhost:5000/api/candidate/jobs?page=1&limit=10
+
+### Candidate - Get Job Details
+GET http://localhost:5000/api/candidate/jobs/6aaccfa85f57661a794abf4a
+
+#### Candidate - Apply for Job
+POST http://localhost:5000/api/candidate/applications
+Content-Type: application/json
+Authorization: Bearer {{CandidateToken}}
+
+{
+  "jobId": "6aaccfa85f57661a794abf4f",
+  "resume": {
+    "fileName": "Prasanna_PD-APP-2026-000001_Resume.pdf",
+    "fileUrl": "https://your-sharepoint-file-url",
+    "fileType": "pdf"
+  }
+}
+
+### Candidate - Get My Applications
+GET http://localhost:5000/api/candidate/applications
+Authorization: Bearer {{CandidateToken}}
+
+### Candidate - Get My Application Details
+
+### Get Application Details
+GET http://localhost:5000/api/candidate/applications/PD-APP-2026-000003
+Authorization: Bearer {{CandidateToken}}
+
+
+### Candidate - Get My Dashboard
+GET http://localhost:5000/api/candidate/dashboard
+Authorization: Bearer {{CandidateToken}}
+
+#### Candidate - Apply for Job
+POST http://localhost:5000/api/candidate/applications
+Authorization: Bearer {{CandidateToken}}
+Content-Type: application/json
+
+{
+  "jobId": "6aaccfa85f57661a794abf4b"
+}
+
+#### Candidate - Apply for Job with different Resume
+POST http://localhost:5000/api/candidate/applications
+Authorization: Bearer {{CandidateToken}}
+Content-Type: application/json
+
+{
+  "jobId": "6aaccfa85f57661a794abf4a",
+  "resume": {
+    "fileName": "Prasanna_Updated_Resume.pdf",
+    "fileUrl": "https://your-updated-resume-url",
+    "fileType": "pdf"
+  }
+}
+
+#### Candidate - Get My Applications after applying for jobs
+GET http://localhost:5000/api/candidate/notifications
+Authorization: Bearer {{CandidateToken}}
+
+#### Candidate - Get My Unread Notifications Count
+GET http://localhost:5000/api/candidate/notifications/unread-count
+Authorization: Bearer {{CandidateToken}}
+
+#### Candidate - Mark Notification as Read
+PATCH http://localhost:5000/api/candidate/notifications/6addec48711d1f7995ee9850/read
+Authorization: Bearer {{CandidateToken}}
+
+#### Candidate - Mark All Notifications as Read
+PATCH http://localhost:5000/api/candidate/notifications/read-all
+Authorization: Bearer {{CandidateToken}}
+
+### Verify Unread Notifications Count
+GET http://localhost:5000/api/candidate/notifications/unread-count
+Authorization: Bearer {{CandidateToken}}

@@ -14,6 +14,17 @@ import jobRoutes from "./routes/jobRoutes.js";
 import teamMemberRoute from "./routes/teamMemberRoute.js";
 import siteSettingRoutes from "./routes/siteSettingRoutes.js";
 
+import candidateAuthRoutes from "./modules/candidate/routes/candidateAuthRoutes.js";
+import candidateProfileRoutes from "./modules/candidate/routes/candidateProfileRoute.js";
+import candidateJobRoutes from "./modules/candidate/routes/candidateJobRoutes.js";
+
+import candidateApplicationRoutes from "./modules/candidate/routes/candidateApplicationRoute.js";
+import candidateDashboardRoute from "./modules/candidate/routes/candidateDashboardRoute.js";
+
+import candidateNotificationRoutes from "./modules/candidate/routes/candidateNotificationRoute.js";
+
+
+
 dotenv.config();
 
 const app = express();
@@ -71,6 +82,27 @@ const startServer = async () => {
 
     // Site Settings routes
     app.use("/api/settings", siteSettingRoutes);
+
+    // Candidate Authentication Routes
+    app.use("/api/candidate/auth", candidateAuthRoutes);
+    
+    // Candidate Profile Routes
+    app.use("/api/candidate", candidateProfileRoutes);
+
+    // Candidate Job Routes
+    app.use("/api/candidate/jobs", candidateJobRoutes);
+
+    // Candidate Dashboard Routes
+    app.use("/api/candidate/dashboard", candidateDashboardRoute);
+
+    // Candidate Application Routes
+    app.use("/api/candidate/applications", candidateApplicationRoutes);
+
+    // Candidate Notification Routes
+    app.use(
+      "/api/candidate/notifications",
+      candidateNotificationRoutes
+    );
 
     app.get("/", (req, res) => {
       res.json({

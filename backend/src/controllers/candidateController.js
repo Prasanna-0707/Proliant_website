@@ -2,13 +2,13 @@ import Candidate from "../models/Candidate.js";
 
 import {
   generateCandidatesExcel,
-} from "../services/excelService.js";
+} from "../shared/services/excelService.js";
 
 import {
   sendCandidateApplicationThankYouEmail,
   sendCandidateShortlistedEmailToHR,
   sendCandidateRejectedEmail,
-} from "../services/emailService.js";
+} from "../shared/services/emailService.js";
 
 // =====================================================
 // CREATE CANDIDATE

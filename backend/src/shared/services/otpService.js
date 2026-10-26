@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import OTP from "../models/OTP.js";
+import OTP from "../../models/OTP.js";
 
 const OTP_EXPIRY_MINUTES = 5;
 const MAX_OTP_ATTEMPTS = 3;

@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 
 import Admin from "../models/Admin.js";
 
-import { sendTemporaryPasswordEmail } from "../services/emailService.js";
+import { sendTemporaryPasswordEmail } from "../shared/services/emailService.js";
 
 
 const normalizeEmail = (email = "") => {
