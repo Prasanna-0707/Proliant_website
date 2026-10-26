@@ -1,3 +1,4 @@
+
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
@@ -14,6 +15,24 @@ import jobRoutes from "./routes/jobRoutes.js";
 import teamMemberRoute from "./routes/teamMemberRoute.js";
 import siteSettingRoutes from "./routes/siteSettingRoutes.js";
 import applicationRoutes from "./routes/applicationRoutes.js";
+import screeningRoutes from "./modules/screener/routes/screeningRoutes.js";
+
+// =====================================================
+// L1/L2 AND CONFIGURABLE INTERVIEWER MODULE
+// =====================================================
+
+import interviewRoutes, {
+  applicationInterviewRouter,
+  evaluationFormRouter,
+} from "./modules/interviewer/routes/interviewRoutes.js";
+
+// =====================================================
+// HIRING MANAGER MODULE
+// =====================================================
+
+import hiringManagerRoutes, {
+  applicationHiringManagerRouter,
+} from "./modules/hiring-manager/routes/hiringManagerRoutes.js";
 
 dotenv.config();
 
@@ -47,7 +66,7 @@ const startServer = async () => {
     await seedDatabase();
 
     // =================================================
-    // API ROUTES
+    // EXISTING API ROUTES
     // =================================================
 
     app.use("/api/employees", employeeRoutes);
@@ -58,13 +77,60 @@ const startServer = async () => {
     // Login, OTP, profile, password, and logout APIs
     app.use("/api/auth", authRoutes);
 
+    // Existing website APIs
     app.use("/api/locations", locationRoutes);
     app.use("/api/dashboard", dashboardRoutes);
     app.use("/api/contacts", contactRoutes);
     app.use("/api/candidates", candidateRoutes);
     app.use("/api/jobs", jobRoutes);
     app.use("/api/settings", siteSettingRoutes);
+
+    // =================================================
+    // HIRING MANAGER APIs
+    // =================================================
+
+    // Hiring pipeline and feedback history
+    app.use("/api/hiring", hiringManagerRoutes);
+
+    // IMPORTANT:
+    // Register Hiring Manager application routes before
+    // the existing application routes.
+    app.use(
+      "/api/applications",
+      applicationHiringManagerRouter
+    );
+
+    // =================================================
+    // APPLICATION APIs
+    // =================================================
+
+    // Existing application details, resume, and L0 APIs
     app.use("/api/applications", applicationRoutes);
+
+    // Interview history for a specific application
+    app.use(
+      "/api/applications",
+      applicationInterviewRouter
+    );
+
+    // =================================================
+    // EXISTING L0 SCREENER APIs
+    // =================================================
+
+    app.use("/api/screenings", screeningRoutes);
+
+    // =================================================
+    // L1/L2 AND CONFIGURABLE INTERVIEWER APIs
+    // =================================================
+
+    // Assigned interviews, interview details, evaluations
+    app.use("/api/interviews", interviewRoutes);
+
+    // Stage-specific evaluation forms
+    app.use(
+      "/api/evaluation-forms",
+      evaluationFormRouter
+    );
 
     // =================================================
     // ROOT ROUTE
