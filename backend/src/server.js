@@ -16,8 +16,20 @@ import jobRoutes from "./routes/jobRoutes.js";
 import teamMemberRoute from "./routes/teamMemberRoute.js";
 import siteSettingRoutes from "./routes/siteSettingRoutes.js";
 import applicationRoutes from "./routes/applicationRoutes.js";
+import screeningRoutes from "./modules/screener/routes/screeningRoutes.js";
 
-// Candidate Portal routes
+// L1/L2 and configurable interviewer module
+import interviewRoutes, {
+  applicationInterviewRouter,
+  evaluationFormRouter,
+} from "./modules/interviewer/routes/interviewRoutes.js";
+
+// Hiring manager module
+import hiringManagerRoutes, {
+  applicationHiringManagerRouter,
+} from "./modules/hiring-manager/routes/hiringManagerRoutes.js";
+
+// Candidate portal routes
 import candidateAuthRoutes from "./modules/candidate/routes/candidateAuthRoutes.js";
 import candidateProfileRoutes from "./modules/candidate/routes/candidateProfileRoute.js";
 import candidateJobRoutes from "./modules/candidate/routes/candidateJobRoutes.js";
@@ -29,20 +41,17 @@ dotenv.config();
 
 const app = express();
 
-// =====================================================
-// MIDDLEWARE
-// =====================================================
-
+// Middleware
 app.use(
   cors({
     origin: [
       // Development
-      "http://localhost:5173", // Public Website
-      "http://localhost:5174", // Admin Portal
+      "http://localhost:5173",
+      "http://localhost:5174",
 
       // Production
-      "https://proliant-webpage.onrender.com", // Public Website
-      "https://admin-proliant.onrender.com", // Admin Portal
+      "https://proliant-webpage.onrender.com",
+      "https://admin-proliant.onrender.com",
     ],
   })
 );
@@ -51,10 +60,7 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
 
-// =====================================================
-// START SERVER
-// =====================================================
-
+// Start server
 const startServer = async () => {
   try {
     // Connect to MongoDB
@@ -63,68 +69,98 @@ const startServer = async () => {
     // Seed initial database data
     await seedDatabase();
 
-    // =================================================
-    // EXISTING API ROUTES
-    // =================================================
+    // ================================================
+    // EXISTING APIs
+    // ================================================
 
-    // Employee routes
     app.use("/api/employees", employeeRoutes);
 
-    // Team Members APIs
     app.use("/api/auth/team-members", teamMemberRoute);
 
-    // Authentication routes
     app.use("/api/auth", authRoutes);
 
-    // Location routes
     app.use("/api/locations", locationRoutes);
 
-    // Dashboard routes
     app.use("/api/dashboard", dashboardRoutes);
 
-    // Contact routes
     app.use("/api/contacts", contactRoutes);
 
-    // Existing Candidate routes
     app.use("/api/candidates", candidateRoutes);
 
-    // Job routes
     app.use("/api/jobs", jobRoutes);
 
-    // Site Settings routes
     app.use("/api/settings", siteSettingRoutes);
 
-    // Application routes
+    // ================================================
+    // HIRING MANAGER APIs
+    // ================================================
+
+    app.use("/api/hiring", hiringManagerRoutes);
+
+    // Register hiring manager application routes
+    // before the existing application routes.
+    app.use(
+      "/api/applications",
+      applicationHiringManagerRouter
+    );
+
+    // ================================================
+    // APPLICATION APIs
+    // ================================================
+
     app.use("/api/applications", applicationRoutes);
 
-    // =================================================
-    // CANDIDATE PORTAL API ROUTES
-    // =================================================
+    // Interview history for a specific application
+    app.use(
+      "/api/applications",
+      applicationInterviewRouter
+    );
 
-    // Candidate Authentication
+    // ================================================
+    // L0 SCREENER APIs
+    // ================================================
+
+    app.use("/api/screenings", screeningRoutes);
+
+    // ================================================
+    // L1/L2 INTERVIEWER APIs
+    // ================================================
+
+    app.use("/api/interviews", interviewRoutes);
+
+    app.use(
+      "/api/evaluation-forms",
+      evaluationFormRouter
+    );
+
+    // ================================================
+    // CANDIDATE PORTAL APIs
+    // ================================================
+
     app.use("/api/candidate/auth", candidateAuthRoutes);
 
-    // Candidate Profile
     app.use("/api/candidate", candidateProfileRoutes);
 
-    // Candidate Jobs
     app.use("/api/candidate/jobs", candidateJobRoutes);
 
-    // Candidate Dashboard
-    app.use("/api/candidate/dashboard", candidateDashboardRoute);
+    app.use(
+      "/api/candidate/dashboard",
+      candidateDashboardRoute
+    );
 
-    // Candidate Applications
-    app.use("/api/candidate/applications", candidateApplicationRoutes);
+    app.use(
+      "/api/candidate/applications",
+      candidateApplicationRoutes
+    );
 
-    // Candidate Notifications
     app.use(
       "/api/candidate/notifications",
       candidateNotificationRoutes
     );
 
-    // =================================================
+    // ================================================
     // ROOT ROUTE
-    // =================================================
+    // ================================================
 
     app.get("/", (req, res) => {
       res.json({
@@ -132,16 +168,15 @@ const startServer = async () => {
       });
     });
 
-    // =================================================
+    // ================================================
     // START LISTENING
-    // =================================================
+    // ================================================
 
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
   } catch (error) {
     console.error("Server startup failed:", error.message);
-
     process.exit(1);
   }
 };

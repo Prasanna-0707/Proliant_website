@@ -22,9 +22,18 @@ const JOB_FIELDS = [
   "status",
   "jobDescription",
   "requirements",
+  "interviewWorkflow",
 ];
 
 const STAFF_DISPLAY_FIELDS = "name email role designation";
+
+const ALLOWED_STAGE_TYPES = [
+  "SCREENING",
+  "INTERVIEW",
+  "HR_FINAL",
+  "OFFER",
+  "CUSTOM",
+];
 
 // =====================================================
 // HELPER: CHECK WHETHER A FIELD EXISTS
@@ -41,6 +50,138 @@ const badRequest = (message) => {
   const error = new Error(message);
   error.statusCode = 400;
   return error;
+};
+
+// =====================================================
+// HELPER: PREPARE CONFIGURABLE INTERVIEW WORKFLOW
+//
+// Supports:
+// L0 -> L1
+// L0 -> L1 -> L2
+// L0 -> L1 -> L2 -> L3 -> L4
+// Custom stage codes and names are also supported.
+// =====================================================
+
+const prepareInterviewWorkflow = (stages) => {
+  if (!Array.isArray(stages)) {
+    throw badRequest(
+      "Interview workflow must be an array"
+    );
+  }
+
+  const normalizedStages = stages.map((stage, index) => {
+    if (
+      !stage ||
+      typeof stage !== "object" ||
+      Array.isArray(stage)
+    ) {
+      throw badRequest(
+        `Interview workflow stage ${index + 1} must be an object`
+      );
+    }
+
+    const stageCode =
+      typeof stage.stageCode === "string"
+        ? stage.stageCode.trim().toUpperCase()
+        : "";
+
+    const stageName =
+      typeof stage.stageName === "string"
+        ? stage.stageName.trim()
+        : "";
+
+    const stageOrder = Number(stage.stageOrder);
+
+    const stageType =
+      typeof stage.stageType === "string"
+        ? stage.stageType.trim().toUpperCase()
+        : "INTERVIEW";
+
+    const isEnabled =
+      stage.isEnabled === undefined
+        ? true
+        : stage.isEnabled;
+
+    // STAGE CODE
+    if (
+      !stageCode ||
+      stageCode.length > 100 ||
+      !/^[A-Z0-9_-]+$/.test(stageCode)
+    ) {
+      throw badRequest(
+        `Interview workflow stage ${index + 1} has an invalid stageCode`
+      );
+    }
+
+    // STAGE NAME
+    if (
+      !stageName ||
+      stageName.length > 150
+    ) {
+      throw badRequest(
+        `Interview workflow stage ${index + 1} requires a stageName of at most 150 characters`
+      );
+    }
+
+    // STAGE ORDER
+    if (
+      !Number.isInteger(stageOrder) ||
+      stageOrder < 0
+    ) {
+      throw badRequest(
+        `Interview workflow stage ${index + 1} must have a non-negative whole-number stageOrder`
+      );
+    }
+
+    // STAGE TYPE
+    if (!ALLOWED_STAGE_TYPES.includes(stageType)) {
+      throw badRequest(
+        `Invalid stageType for workflow stage ${stageCode}`
+      );
+    }
+
+    // ENABLED STATUS
+    if (typeof isEnabled !== "boolean") {
+      throw badRequest(
+        `isEnabled must be true or false for workflow stage ${stageCode}`
+      );
+    }
+
+    return {
+      stageCode,
+      stageName,
+      stageOrder,
+      stageType,
+      isEnabled,
+    };
+  });
+
+  // A stage code must be unique within the job workflow.
+  const stageCodes = normalizedStages.map(
+    (stage) => stage.stageCode
+  );
+
+  if (new Set(stageCodes).size !== stageCodes.length) {
+    throw badRequest(
+      "Interview workflow cannot contain duplicate stage codes"
+    );
+  }
+
+  // Two stages cannot use the same sequence position.
+  const stageOrders = normalizedStages.map(
+    (stage) => stage.stageOrder
+  );
+
+  if (new Set(stageOrders).size !== stageOrders.length) {
+    throw badRequest(
+      "Interview workflow cannot contain duplicate stage orders"
+    );
+  }
+
+  // Store stages in configured sequence order.
+  return normalizedStages.sort(
+    (a, b) => a.stageOrder - b.stageOrder
+  );
 };
 
 // =====================================================
@@ -64,7 +205,11 @@ const prepareJobPayload = (body = {}) => {
     const skills = payload.requiredSkills;
 
     if (Array.isArray(skills)) {
-      if (!skills.every((skill) => typeof skill === "string")) {
+      if (
+        !skills.every(
+          (skill) => typeof skill === "string"
+        )
+      ) {
         throw badRequest(
           "Required skills must contain only text values"
         );
@@ -143,6 +288,15 @@ const prepareJobPayload = (body = {}) => {
     payload.owner = null;
   }
 
+  // CONFIGURABLE INTERVIEW WORKFLOW
+
+  if (hasOwn(payload, "interviewWorkflow")) {
+    payload.interviewWorkflow =
+      prepareInterviewWorkflow(
+        payload.interviewWorkflow
+      );
+  }
+
   return payload;
 };
 
@@ -170,12 +324,17 @@ const validateDateRange = (startDate, endDate) => {
 // =====================================================
 
 const validateJobOwner = async (ownerId) => {
-  if (ownerId === null || ownerId === undefined) {
+  if (
+    ownerId === null ||
+    ownerId === undefined
+  ) {
     return;
   }
 
   if (!mongoose.isValidObjectId(ownerId)) {
-    throw badRequest("Invalid Job Owner account");
+    throw badRequest(
+      "Invalid Job Owner account"
+    );
   }
 
   const ownerExists = await Admin.exists({
@@ -203,7 +362,11 @@ const populateStaffDetails = (query) => {
 // HELPER: ERROR HANDLING
 // =====================================================
 
-const handleError = (res, error, fallbackMessage) => {
+const handleError = (
+  res,
+  error,
+  fallbackMessage
+) => {
   console.error(fallbackMessage, error);
 
   const isValidationError =
@@ -244,13 +407,21 @@ const getPublicJobsFilter = () => {
       {
         $or: [
           { applicationStartDate: null },
-          { applicationStartDate: { $lte: now } },
+          {
+            applicationStartDate: {
+              $lte: now,
+            },
+          },
         ],
       },
       {
         $or: [
           { applicationEndDate: null },
-          { applicationEndDate: { $gte: now } },
+          {
+            applicationEndDate: {
+              $gte: now,
+            },
+          },
         ],
       },
     ],
@@ -260,15 +431,13 @@ const getPublicJobsFilter = () => {
 // =====================================================
 // GET ALL PUBLIC JOBS
 // GET /api/jobs
-//
-// Used by the public Careers page.
-// Returns only published jobs currently accepting applications.
-// Does not expose internal Job Owner or Created By details.
 // =====================================================
 
 export const getJobs = async (req, res) => {
   try {
-    const jobs = await Job.find(getPublicJobsFilter())
+    const jobs = await Job.find(
+      getPublicJobsFilter()
+    )
       .select("-owner -createdBy")
       .sort({ createdAt: -1 });
 
@@ -288,8 +457,6 @@ export const getJobs = async (req, res) => {
 // =====================================================
 // GET ONE PUBLIC JOB
 // GET /api/jobs/:id
-//
-// Only returns a published job currently accepting applications.
 // =====================================================
 
 export const getJob = async (req, res) => {
@@ -332,9 +499,6 @@ export const getJob = async (req, res) => {
 // =====================================================
 // GET ALL JOBS FOR HR
 // GET /api/jobs/manage
-//
-// Returns Draft and Published jobs.
-// Includes Job Owner and Created By staff details.
 // =====================================================
 
 export const getJobsForHR = async (req, res) => {
@@ -359,9 +523,6 @@ export const getJobsForHR = async (req, res) => {
 // =====================================================
 // GET ONE JOB FOR HR
 // GET /api/jobs/manage/:id
-//
-// Returns the complete details of one job,
-// regardless of whether its status is Draft or Published.
 // =====================================================
 
 export const getJobForHR = async (req, res) => {
@@ -402,10 +563,6 @@ export const getJobForHR = async (req, res) => {
 // =====================================================
 // CREATE JOB
 // POST /api/jobs
-//
-// Job Owner remains blank unless selected.
-// Created By is assigned automatically using the
-// authenticated account and cannot be chosen by the client.
 // =====================================================
 
 export const createJob = async (req, res) => {
@@ -448,18 +605,13 @@ export const createJob = async (req, res) => {
       payload.applicationEndDate
     );
 
-    // If no owner was selected, this validation allows null.
     await validateJobOwner(payload.owner);
 
-    // Record who created this post.
-    // Ignore any createdBy value supplied by the frontend.
+    // Ignore any createdBy value from the client.
     payload.createdBy = req.admin._id;
 
-    // The schema defaults status to Draft when status is omitted.
     const job = await Job.create(payload);
 
-    // Return staff names, email, role and designation,
-    // instead of returning only their database IDs.
     await job.populate([
       {
         path: "owner",
@@ -488,9 +640,6 @@ export const createJob = async (req, res) => {
 // =====================================================
 // UPDATE JOB
 // PUT /api/jobs/:id
-//
-// Allows the Job Owner to be assigned or cleared.
-// Created By remains unchanged.
 // =====================================================
 
 export const updateJob = async (req, res) => {
@@ -522,8 +671,9 @@ export const updateJob = async (req, res) => {
       });
     }
 
-    // Check the effective date range, including dates
+    // Validate the effective date range, including dates
     // that were not included in this update.
+
     const startDate =
       payload.applicationStartDate !== undefined
         ? payload.applicationStartDate
@@ -540,8 +690,7 @@ export const updateJob = async (req, res) => {
       await validateJobOwner(payload.owner);
     }
 
-    // createdBy is not included in JOB_FIELDS.
-    // It cannot be overwritten through this endpoint.
+    // createdBy cannot be changed through this endpoint.
     job.set(payload);
 
     await job.save();
