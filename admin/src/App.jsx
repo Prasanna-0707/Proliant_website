@@ -31,6 +31,7 @@ import AuditLogs from "./pages/Admin/AuditLogs";
 import HRDashboard from "./pages/HR/HRDashboard";
 import HRJobs from "./pages/HR/HRJobs";
 import HRCandidates from "./pages/HR/HRCandidates";
+import HRLogin from "./pages/HR/HRLogin";
 
 // ==============================
 // Recruitment Pages
@@ -45,25 +46,20 @@ import CandidateDashboard from "./pages/Candidate/CandidateDashboard";
 import AllJobs from "./pages/Candidate/AllJobs";
 
 
+
 function App() {
   const adminToken = localStorage.getItem("adminToken");
 
   return (
     <BrowserRouter>
       <Routes>
-
-        {/* =====================================
-            ROOT ROUTE
-        ===================================== */}
+        {/* ROOT ROUTE */}
         <Route
           path="/"
           element={<Navigate to="/admin/login" replace />}
         />
 
-
-        {/* =====================================
-            ADMIN AUTHENTICATION
-        ===================================== */}
+        {/* ADMIN LOGIN - PUBLIC */}
         <Route
           path="/admin/login"
           element={
@@ -75,10 +71,13 @@ function App() {
           }
         />
 
+        {/* HR LOGIN - PUBLIC */}
+        <Route
+          path="/hr/login"
+          element={<HRLogin />}
+        />
 
-        {/* =====================================
-            CANDIDATE PUBLIC ROUTES
-        ===================================== */}
+        {/* CANDIDATE PUBLIC ROUTES */}
         <Route
           path="/candidate/login"
           element={<CandidateLogin />}
@@ -94,24 +93,16 @@ function App() {
           element={<CandidateDashboard />}
         />
 
-
-        {/* =====================================
-            PROTECTED ADMIN & HR ROUTES
-        ===================================== */}
+        {/* PROTECTED ADMIN & HR ROUTES */}
         <Route element={<ProtectedRoute />}>
           <Route element={<AdminLayout />}>
 
-            {/* =================================
-                ADMIN ROUTES
-            ================================= */}
-
-            {/* Admin Dashboard */}
+            {/* ADMIN ROUTES */}
             <Route
               path="/admin/dashboard"
               element={<AdminDashboard />}
             />
 
-            {/* Employee Management */}
             <Route
               path="/admin/employees"
               element={<Employees />}
@@ -132,7 +123,6 @@ function App() {
               element={<Countries />}
             />
 
-            {/* User & Permission Management */}
             <Route
               path="/admin/users"
               element={<Users />}
@@ -143,48 +133,37 @@ function App() {
               element={<RolePermissions />}
             />
 
-            {/* Admin Settings */}
             <Route
               path="/admin/settings"
               element={<Settings />}
             />
 
-            {/* Admin Profile */}
             <Route
               path="/admin/profile"
               element={<Profile />}
             />
 
-            {/* Audit Logs */}
             <Route
               path="/admin/audit-logs"
               element={<AuditLogs />}
             />
 
-
-            {/* =================================
-                HR ROUTES
-            ================================= */}
-
-            {/* HR Dashboard */}
+            {/* HR PROTECTED ROUTES */}
             <Route
               path="/hr/dashboard"
               element={<HRDashboard />}
             />
 
-            {/* HR Job Management */}
             <Route
               path="/hr/jobs"
               element={<HRJobs />}
             />
 
-            {/* HR Candidate Management */}
             <Route
               path="/hr/candidates"
               element={<HRCandidates />}
             />
 
-            {/* HR Enquiries */}
             <Route
               path="/hr/enquiries"
               element={<Enquiries />}
@@ -193,22 +172,17 @@ function App() {
           </Route>
         </Route>
 
-
-        {/* =====================================
-            UNKNOWN ROUTES
-        ===================================== */}
+        {/* UNKNOWN ROUTES */}
         <Route
           path="*"
           element={<Navigate to="/admin/login" replace />}
         />
-
       </Routes>
     </BrowserRouter>
   );
 }
 
 export default App;
-
 
 
 
