@@ -22,7 +22,12 @@ import Enquiries from "./pages/Enquiries";
 // Interviewer pages
 import InterviewerLogin from "./pages/Interviewer/InterviewerLogin";
 import InterviewerDashboard from "./pages/Interviewer/Interviewerdashboard";
-
+import MyInterviews from "./pages/Interviewer/MyInterviews";
+import InterviewDetails from "./pages/Interviewer/InterviewDetails";
+import CandidateReview from "./pages/Interviewer/CandidateReview";
+import InterviewEvaluation from "./pages/Interviewer/InterviewEvaluation";
+import InterviewHistory from "./pages/Interviewer/InterviewHistory";
+import InterviewerProfile from "./pages/Interviewer/InterviewerProfile";
 function App() {
   const token = localStorage.getItem("adminToken");
 
@@ -41,17 +46,47 @@ function App() {
           }
         />
 
-        {/* Interviewer Login */}
+        {/* Interviewer Routes */}
         <Route
           path="/interviewer/login"
           element={<InterviewerLogin />}
         />
 
-        {/* Interviewer Dashboard */}
         <Route
           path="/interviewer/dashboard"
           element={<InterviewerDashboard />}
         />
+
+        <Route
+          path="/interviewer/my-interviews"
+          element={<MyInterviews />}
+        />
+
+        <Route
+          path="/interviewer/interview/:id"
+          element={<InterviewDetails />}
+        />
+
+        <Route
+          path="/interviewer/candidates"
+          element={<CandidateReview />}
+        />
+
+        <Route
+          path="/interviewer/evaluation/:id"
+          element={<InterviewEvaluation />}
+        />
+
+        <Route
+          path="/interviewer/history/:id"
+          element={<InterviewHistory />}
+        />
+
+        <Route
+          path="/interviewer/profile"
+          element={<InterviewerProfile />}
+        />
+
 
         {/* Protected Admin / HR Routes */}
         <Route element={<ProtectedRoute />}>
