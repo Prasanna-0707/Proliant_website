@@ -58,6 +58,7 @@ const allJobs = [
   {
     id: 101,
     title: "SAP SD Consultant",
+    description: "Support SAP Sales and Distribution processes, configure sales workflows, troubleshoot issues, and collaborate with business teams on SAP SD solutions.",
     location: "Bangalore, India",
     experience: "3–6 years",
     date: "12 Apr 2025",
@@ -67,6 +68,7 @@ const allJobs = [
   {
     id: 102,
     title: "SAP MM Consultant",
+    description: "Support procurement and materials management processes, configure SAP MM, and help improve purchasing, inventory, and supplier workflows.",
     location: "Hyderabad, India",
     experience: "2–5 years",
     date: "10 Apr 2025",
@@ -76,6 +78,7 @@ const allJobs = [
   {
     id: 103,
     title: "SAP FICO Consultant",
+    description: "Work on SAP Financial Accounting and Controlling processes, support configuration and reporting, and help resolve finance-related system issues.",
     location: "Pune, India",
     experience: "3–7 years",
     date: "08 Apr 2025",
@@ -85,6 +88,7 @@ const allJobs = [
   {
     id: 104,
     title: "SAP ABAP Developer",
+    description: "Develop and maintain SAP ABAP programs, enhancements, and integrations while collaborating with functional teams to deliver reliable solutions.",
     location: "Bangalore, India",
     experience: "2–5 years",
     date: "05 Apr 2025",
@@ -94,6 +98,7 @@ const allJobs = [
   {
     id: 105,
     title: "SAP Basis Administrator",
+    description: "Support SAP system administration, monitoring, performance, user administration, and routine system maintenance across SAP environments.",
     location: "Chennai, India",
     experience: "3–6 years",
     date: "03 Apr 2025",
@@ -110,6 +115,11 @@ export default function CandidateAllJobs() {
   const [showFilters, setShowFilters] = useState(false);
   const [jobType, setJobType] = useState("All");
   const [darkMode, setDarkMode] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [applicationJob, setApplicationJob] = useState(null);
+  const [applicationForm, setApplicationForm] = useState({
+    areaOfInterest: "", fullName: "", email: "", phone: "", fresher: "", location: "", experienceYears: "",
+  });
 
   const candidateName =
     localStorage.getItem("candidateName") || "Candidate";
@@ -444,7 +454,7 @@ export default function CandidateAllJobs() {
                       <div className="mt-4 flex items-center justify-between">
                         <button
                           type="button"
-                          onClick={() => alert(`Selected job: ${job.title}`)}
+                          onClick={() => setSelectedJob(job)}
                           className="flex items-center gap-1.5 text-xs font-semibold text-[#f2383d] hover:underline"
                         >
                           View Details
@@ -707,7 +717,7 @@ export default function CandidateAllJobs() {
 
                       <button
                         type="button"
-                        onClick={() => alert(`Selected job: ${job.title}`)}
+                        onClick={() => setSelectedJob(job)}
                         className="flex items-center gap-2 rounded-lg border border-[#f2383d] px-3 py-2 text-xs font-semibold text-[#f2383d]"
                       >
                         View Details
@@ -728,6 +738,301 @@ export default function CandidateAllJobs() {
                 Showing {filteredJobs.length} of {allJobs.length} job posts
               </p>
             </section>
+
+
+            {/* JOB APPLICATION FORM MODAL */}
+            {applicationJob && (
+              <div
+                className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 p-3 sm:p-5"
+                onClick={() => setApplicationJob(null)}
+              >
+                <div
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="job-application-title"
+                  className="relative max-h-[95vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-8"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setApplicationJob(null)}
+                    aria-label="Close application form"
+                    className="absolute right-5 top-5 rounded-full border border-gray-200 p-2 text-gray-500 transition hover:bg-gray-100"
+                  >
+                    <X size={19} />
+                  </button>
+
+                  <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-[#f2383d]">
+                    Job Application
+                  </p>
+                  <h2 id="job-application-title" className="pr-10 text-3xl font-bold tracking-tight text-gray-950">
+                    Apply for this role
+                  </h2>
+                  <p className="mt-3 text-lg text-gray-500">{applicationJob.title}</p>
+
+                  <hr className="my-6 border-gray-200" />
+
+                  <form
+                    className="space-y-5"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      alert("Application form UI is ready. Connect the existing Careers application API to submit applications.");
+                    }}
+                  >
+                    <div>
+                      <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
+                        Position
+                      </label>
+                      <input
+                        value={applicationJob.title}
+                        readOnly
+                        className="w-full rounded-xl border border-gray-200 bg-gray-100 px-5 py-3.5 text-sm text-gray-600 outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="application-area" className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
+                        Area of Interest
+                      </label>
+                      <select
+                        id="application-area"
+                        required
+                        value={applicationForm.areaOfInterest}
+                        onChange={(event) => setApplicationForm({ ...applicationForm, areaOfInterest: event.target.value })}
+                        className="w-full rounded-xl border border-gray-200 bg-white px-5 py-3.5 text-sm text-gray-700 outline-none focus:border-[#f2383d]"
+                      >
+                        <option value="">Select an area</option>
+                        <option>SAP</option>
+                        <option>Data &amp; Analytics</option>
+                        <option>Software Development</option>
+                        <option>Business Intelligence</option>
+                        <option>Consulting</option>
+                        <option>{applicationJob.title}</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label htmlFor="application-name" className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
+                        Full Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        id="application-name"
+                        required
+                        value={applicationForm.fullName}
+                        onChange={(event) => setApplicationForm({ ...applicationForm, fullName: event.target.value })}
+                        placeholder="Enter your full name"
+                        autoComplete="name"
+                        className="w-full rounded-xl border border-gray-200 bg-white px-5 py-3.5 text-sm outline-none focus:border-[#f2383d]"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                      <div>
+                        <label htmlFor="application-email" className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
+                          Email <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          id="application-email"
+                          type="email"
+                          required
+                          value={applicationForm.email}
+                          onChange={(event) => setApplicationForm({ ...applicationForm, email: event.target.value })}
+                          placeholder="you@example.com"
+                          autoComplete="email"
+                          className="w-full rounded-xl border border-gray-200 bg-white px-5 py-3.5 text-sm outline-none focus:border-[#f2383d]"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="application-phone" className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
+                          Phone Number <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          id="application-phone"
+                          type="tel"
+                          required
+                          value={applicationForm.phone}
+                          onChange={(event) => setApplicationForm({ ...applicationForm, phone: event.target.value })}
+                          placeholder="Enter phone number"
+                          autoComplete="tel"
+                          className="w-full rounded-xl border border-gray-200 bg-white px-5 py-3.5 text-sm outline-none focus:border-[#f2383d]"
+                        />
+                      </div>
+                    </div>
+
+                    <fieldset>
+                      <legend className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
+                        Are you a fresher?
+                      </legend>
+                      <div className="flex gap-6 text-sm text-gray-700">
+                        {["Yes", "No"].map((value) => (
+                          <label key={value} className="flex items-center gap-2">
+                            <input
+                              type="radio"
+                              name="application-fresher"
+                              value={value}
+                              required
+                              checked={applicationForm.fresher === value}
+                              onChange={(event) => setApplicationForm({ ...applicationForm, fresher: event.target.value })}
+                              className="h-4 w-4 accent-[#f2383d]"
+                            />
+                            {value}
+                          </label>
+                        ))}
+                      </div>
+                    </fieldset>
+
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                      <div>
+                        <label htmlFor="application-location" className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
+                          Location
+                        </label>
+                        <input
+                          id="application-location"
+                          value={applicationForm.location}
+                          onChange={(event) => setApplicationForm({ ...applicationForm, location: event.target.value })}
+                          placeholder="City / Country"
+                          autoComplete="address-level2"
+                          className="w-full rounded-xl border border-gray-200 bg-white px-5 py-3.5 text-sm outline-none focus:border-[#f2383d]"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="application-experience" className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
+                          Years of Experience
+                        </label>
+                        <input
+                          id="application-experience"
+                          type="number"
+                          min="0"
+                          value={applicationForm.experienceYears}
+                          onChange={(event) => setApplicationForm({ ...applicationForm, experienceYears: event.target.value })}
+                          placeholder="e.g. 3"
+                          className="w-full rounded-xl border border-gray-200 bg-white px-5 py-3.5 text-sm outline-none focus:border-[#f2383d]"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setApplicationJob(null)}
+                        className="rounded-xl border border-gray-200 px-5 py-3 text-sm font-semibold text-gray-600 transition hover:bg-gray-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="flex items-center justify-center gap-2 rounded-xl bg-[#f2383d] px-6 py-3 text-sm font-semibold text-white transition hover:bg-red-600"
+                      >
+                        Submit Application
+                        <ArrowRight size={17} />
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+
+                        {/* JOB DETAILS MODAL */}
+            {selectedJob && (
+              <div
+                className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
+                onClick={() => setSelectedJob(null)}
+              >
+                <div
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="job-details-title"
+                  className={`relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl p-6 shadow-2xl sm:p-8 ${
+                    darkMode ? "bg-slate-900 text-white" : "bg-white text-slate-900"
+                  }`}
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setSelectedJob(null)}
+                    aria-label="Close job details"
+                    className="absolute right-5 top-5 rounded-full p-2 text-slate-500 transition hover:bg-slate-100"
+                  >
+                    <X size={20} />
+                  </button>
+
+                  <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-[#f2383d]">
+                    Job Details
+                  </p>
+
+                  <h2
+                    id="job-details-title"
+                    className="pr-10 text-2xl font-bold sm:text-3xl"
+                  >
+                    {selectedJob.title}
+                  </h2>
+
+                  <div className="mt-4 flex flex-wrap gap-4 text-sm text-slate-500">
+                    <span className="flex items-center gap-2">
+                      <MapPin size={16} />
+                      {selectedJob.location}
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <BriefcaseBusiness size={16} />
+                      {selectedJob.experience}
+                    </span>
+                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">
+                      {selectedJob.type}
+                    </span>
+                  </div>
+
+                  <hr className="my-6 border-slate-200" />
+
+                  <h3 className="mb-3 text-lg font-bold">Job Description</h3>
+                  <p className="text-sm leading-7 text-slate-600">
+                    {selectedJob.description ||
+                      `We are looking for a ${selectedJob.title} to contribute to our team. The candidate should have relevant experience and skills for this role.`}
+                  </p>
+
+                  <h3 className="mb-3 mt-6 text-lg font-bold">Required Skills</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedJob.skills.map((skill) => (
+                      <span
+                        key={skill}
+                        className="rounded-full bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedJob(null)}
+                      className={`rounded-lg border px-5 py-3 text-sm font-semibold transition ${
+                        darkMode
+                          ? "border-slate-700 hover:bg-slate-800"
+                          : "border-slate-200 text-slate-700 hover:bg-slate-50"
+                      }`}
+                    >
+                      Close
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setApplicationJob(selectedJob);
+                        setApplicationForm((previous) => ({
+                          ...previous,
+                          areaOfInterest: selectedJob.title,
+                        }));
+                        setSelectedJob(null);
+                      }}
+                      className="flex items-center justify-center gap-2 rounded-lg bg-[#f2383d] px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-600"
+                    >
+                      Apply for this Job
+                      <ArrowRight size={17} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
           </main>
         </div>
       </div>

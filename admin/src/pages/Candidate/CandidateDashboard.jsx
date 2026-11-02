@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import NotificationBell from "./NotificationBell";
 import {
   LayoutDashboard,
   ClipboardList,
@@ -107,6 +108,16 @@ export default function CandidateDashboard() {
   const [savedJobs, setSavedJobs] = useState([]);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [hasApplications] = useState(() => {
+    try {
+      const savedApplications = JSON.parse(
+        localStorage.getItem("candidateApplications") || "[]"
+      );
+      return Array.isArray(savedApplications) && savedApplications.length > 0;
+    } catch {
+      return false;
+    }
+  });
 
   const firstName = candidate.name.trim().split(/\s+/)[0];
 
@@ -275,14 +286,9 @@ export default function CandidateDashboard() {
             </div>
 
             <div className="ml-auto flex shrink-0 items-center gap-3 sm:gap-5">
-              <button
-                type="button"
-                aria-label="Notifications"
-                className="relative rounded-full p-2 text-slate-500 hover:bg-gray-100"
-              >
-                <Bell size={20} />
-                <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#f2383d]" />
-              </button>
+              <div className="relative z-50">
+                <NotificationBell />
+              </div>
 
               <button
                 type="button"
@@ -341,8 +347,9 @@ export default function CandidateDashboard() {
                 </h1>
 
                 <p className="mt-2 max-w-[620px] text-sm leading-6 text-slate-500 sm:text-base">
-                  Track your application progress and discover new opportunities
-                  that match your skills and experience.
+                  {hasApplications
+                    ? "Track your application progress and discover new opportunities that match your skills and experience."
+                    : "Discover new opportunities that match your skills and experience, and take the next step in your career."}
                 </p>
               </div>
 
@@ -360,143 +367,194 @@ export default function CandidateDashboard() {
               </div>
             </section>
 
-            {/* CURRENT APPLICATION */}
-            <section
-              className={`mb-4 rounded-xl border p-5 shadow-sm sm:px-6 ${
-                darkMode
-                  ? "border-slate-800 bg-slate-900"
-                  : "border-slate-200 bg-white"
-              }`}
-            >
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-2xl bg-red-50 text-[#f2383d]">
-                  <BriefcaseBusiness size={27} />
-                </div>
+            {/* APPLICATION STATUS / EMPTY STATE */}
+            {hasApplications ? (
+              <>
+                {/* CURRENT APPLICATION */}
+                <section
+                  className={`mb-4 rounded-xl border p-5 shadow-sm sm:px-6 ${
+                    darkMode
+                      ? "border-slate-800 bg-slate-900"
+                      : "border-slate-200 bg-white"
+                  }`}
+                >
+                  <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-2xl bg-red-50 text-[#f2383d]">
+                      <BriefcaseBusiness size={27} />
+                    </div>
 
-                <div className="min-w-0 flex-1">
-                  <p className="mb-1 text-sm text-slate-500">
-                    Your Current Application
-                  </p>
+                    <div className="min-w-0 flex-1">
+                      <p className="mb-1 text-sm text-slate-500">
+                        Your Current Application
+                      </p>
+                      <h2 className="text-lg font-bold">{candidate.currentJob}</h2>
 
-                  <h2 className="text-lg font-bold">{candidate.currentJob}</h2>
+                      <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-500 sm:text-sm">
+                        <span className="flex items-center gap-1.5">
+                          <MapPin size={15} />
+                          {candidate.location}
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <BriefcaseBusiness size={15} />
+                          {candidate.experience}
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <CalendarDays size={15} />
+                          Applied on {candidate.appliedDate}
+                        </span>
+                      </div>
+                    </div>
 
-                  <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-500 sm:text-sm">
-                    <span className="flex items-center gap-1.5">
-                      <MapPin size={15} />
-                      {candidate.location}
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <BriefcaseBusiness size={15} />
-                      {candidate.experience}
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <CalendarDays size={15} />
-                      Applied on {candidate.appliedDate}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3.5 py-2 text-xs font-semibold text-emerald-700">
+                        <CircleCheck size={17} />
+                        Application in Progress
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleNavigation("My Applications")}
+                        aria-label="View current application"
+                        className="rounded-lg p-2 text-slate-500 hover:bg-gray-50"
+                      >
+                        <ChevronRight size={21} />
+                      </button>
+                    </div>
                   </div>
+                </section>
+
+                {/* HIRING JOURNEY */}
+                <section
+                  className={`mb-4 rounded-xl border p-5 shadow-sm sm:p-6 ${
+                    darkMode
+                      ? "border-slate-800 bg-slate-900"
+                      : "border-slate-200 bg-white"
+                  }`}
+                >
+                  <div className="mb-7 flex items-center gap-3">
+                    <div className="flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-xl bg-red-50 text-[#f2383d]">
+                      <GitBranch size={26} />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-bold">Your Hiring Journey</h2>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Here's how your application is progressing through the
+                        interview process.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-7 md:grid-cols-5">
+                    {stages.map((stage, index) => (
+                      <div key={stage.title + index} className="relative text-center">
+                        {index < stages.length - 1 && (
+                          <div
+                            className={`absolute left-[62%] top-[22px] hidden h-[2px] w-[76%] md:block ${
+                              index < 2 ? "bg-emerald-500" : "bg-slate-200"
+                            }`}
+                          />
+                        )}
+
+                        <div
+                          className={`relative z-10 mx-auto mb-3 flex h-[44px] w-[44px] items-center justify-center rounded-full border-[4px] ${
+                            stage.state === "completed"
+                              ? "border-emerald-100 bg-emerald-500 text-white"
+                              : stage.state === "progress"
+                                ? "border-orange-100 bg-white text-orange-500 ring-2 ring-orange-400"
+                                : "border-slate-200 bg-slate-100 text-slate-500"
+                          }`}
+                        >
+                          {stage.state === "completed" ? (
+                            <Check size={22} strokeWidth={3} />
+                          ) : stage.state === "progress" ? (
+                            <Clock3 size={21} />
+                          ) : index === 4 ? (
+                            <Bookmark size={20} />
+                          ) : (
+                            <Clock3 size={20} />
+                          )}
+                        </div>
+
+                        <h3 className="text-[13px] font-bold leading-5 sm:text-sm">
+                          {stage.title}
+                          {stage.subtitle && (
+                            <>
+                              <br />
+                              {stage.subtitle}
+                            </>
+                          )}
+                        </h3>
+
+                        <p
+                          className={`mt-2 text-xs font-semibold sm:text-sm ${
+                            stage.state === "completed"
+                              ? "text-emerald-600"
+                              : stage.state === "progress"
+                                ? "text-orange-500"
+                                : "text-slate-500"
+                          }`}
+                        >
+                          {stage.status}
+                        </p>
+                        <p className="mt-2 text-xs text-slate-500">{stage.date}</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              </>
+            ) : (
+              <section
+                className={`mb-4 rounded-xl border p-4 shadow-sm sm:p-5 ${
+                  darkMode
+                    ? "border-slate-800 bg-slate-900"
+                    : "border-slate-200 bg-white"
+                }`}
+              >
+                <div className="mb-3 flex items-center gap-3">
+                  <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-red-50 text-[#f2383d]">
+                    <BriefcaseBusiness size={22} />
+                  </div>
+                  <h2 className="text-lg font-bold">Your Applications</h2>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3.5 py-2 text-xs font-semibold text-emerald-700">
-                    <CircleCheck size={17} />
-                    Application in Progress
-                  </span>
+                <div className="mx-auto flex max-w-2xl flex-col items-center py-1 text-center">
+                  <div className="mb-3 flex h-20 w-28 items-center justify-center rounded-full bg-red-50">
+                    <div className="relative flex h-[58px] w-[50px] flex-col gap-1.5 rounded-lg border-2 border-slate-200 bg-white p-2 shadow-sm">
+                      <div className="flex items-center gap-1">
+                        <div className="h-4 w-4 rounded bg-red-200" />
+                        <div className="flex-1 space-y-1">
+                          <div className="h-1.5 w-4 rounded bg-slate-300" />
+                          <div className="h-1.5 w-5 rounded bg-slate-200" />
+                        </div>
+                      </div>
+                      <div className="h-1.5 w-7 rounded bg-slate-200" />
+                      <div className="h-1.5 w-6 rounded bg-slate-200" />
+                      <Search
+                        size={30}
+                        className="absolute -bottom-1 -right-7 text-[#f2383d]"
+                      />
+                    </div>
+                  </div>
+
+                  <h3 className="text-lg font-bold sm:text-xl">
+                    You haven’t applied to any jobs yet
+                  </h3>
+                  <p className="mt-2 max-w-xl text-sm leading-5 text-slate-500 sm:text-base">
+                    Explore open positions at Proliant and take the first step
+                    towards your next opportunity.
+                  </p>
 
                   <button
                     type="button"
-                    onClick={() => handleNavigation("My Applications")}
-                    aria-label="View current application"
-                    className="rounded-lg p-2 text-slate-500 hover:bg-gray-50"
+                    onClick={() => navigate("/candidate-all-jobs")}
+                    className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#f2383d] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#df3438]"
                   >
-                    <ChevronRight size={21} />
+                    <BriefcaseBusiness size={18} />
+                    Browse All Jobs
+                    <ArrowRight size={17} />
                   </button>
                 </div>
-              </div>
-            </section>
-
-            {/* HIRING JOURNEY */}
-            <section
-              className={`mb-4 rounded-xl border p-5 shadow-sm sm:p-6 ${
-                darkMode
-                  ? "border-slate-800 bg-slate-900"
-                  : "border-slate-200 bg-white"
-              }`}
-            >
-              <div className="mb-7 flex items-center gap-3">
-                <div className="flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-xl bg-red-50 text-[#f2383d]">
-                  <GitBranch size={26} />
-                </div>
-
-                <div>
-                  <h2 className="text-lg font-bold">Your Hiring Journey</h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Here's how your application is progressing through the
-                    interview process.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-x-3 gap-y-7 md:grid-cols-5">
-                {stages.map((stage, index) => (
-                  <div key={stage.title + index} className="relative text-center">
-                    {/* Connecting line */}
-                    {index < stages.length - 1 && (
-                      <div
-                        className={`absolute left-[62%] top-[22px] hidden h-[2px] w-[76%] md:block ${
-                          index < 2 ? "bg-emerald-500" : "bg-slate-200"
-                        }`}
-                      />
-                    )}
-
-                    <div
-                      className={`relative z-10 mx-auto mb-3 flex h-[44px] w-[44px] items-center justify-center rounded-full border-[4px] ${
-                        stage.state === "completed"
-                          ? "border-emerald-100 bg-emerald-500 text-white"
-                          : stage.state === "progress"
-                            ? "border-orange-100 bg-white text-orange-500 ring-2 ring-orange-400"
-                            : "border-slate-200 bg-slate-100 text-slate-500"
-                      }`}
-                    >
-                      {stage.state === "completed" ? (
-                        <Check size={22} strokeWidth={3} />
-                      ) : stage.state === "progress" ? (
-                        <Clock3 size={21} />
-                      ) : index === 4 ? (
-                        <Bookmark size={20} />
-                      ) : (
-                        <Clock3 size={20} />
-                      )}
-                    </div>
-
-                    <h3 className="text-[13px] font-bold leading-5 sm:text-sm">
-                      {stage.title}
-                      {stage.subtitle && (
-                        <>
-                          <br />
-                          {stage.subtitle}
-                        </>
-                      )}
-                    </h3>
-
-                    <p
-                      className={`mt-2 text-xs font-semibold sm:text-sm ${
-                        stage.state === "completed"
-                          ? "text-emerald-600"
-                          : stage.state === "progress"
-                            ? "text-orange-500"
-                            : "text-slate-500"
-                      }`}
-                    >
-                      {stage.status}
-                    </p>
-
-                    <p className="mt-2 text-xs text-slate-500">
-                      {stage.date}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </section>
+              </section>
+            )}
 
             {/* RECOMMENDED JOBS */}
             <section
@@ -517,8 +575,7 @@ export default function CandidateDashboard() {
                       Recommended Jobs for You
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
-                      Based on your skills, experience and the role you recently
-                      applied for.
+                      Find roles that match your skills, experience and interests.
                     </p>
                   </div>
                 </div>

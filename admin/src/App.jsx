@@ -22,7 +22,11 @@ import Profile from "./pages/Admin/Profile";
 
 import CandidateLogin from "./pages/Candidate/CandidateLogin";
 import CandidateDashboard from "./pages/Candidate/CandidateDashboard";
+import MyApplications from "./pages/Candidate/MyApplicatins";
 import AllJobs from "./pages/Candidate/AllJobs";
+import CandidateProfile from "./pages/Candidate/CandidateProfile";
+import CandidateNotifications from "./pages/Candidate/CandidateNotifications";
+
 
 function App() {
   const token = localStorage.getItem("adminToken");
@@ -52,12 +56,21 @@ function App() {
           path="/candidate-dashboard"
           element={<CandidateDashboard />}
         />
+        <Route
+          path="/candidate-applications"
+          element={<MyApplications />}
+        />
 
         <Route
           path="/candidate-all-jobs"
           element={<AllJobs />}
         />
-
+        <Route path="/candidate-profile" element={<CandidateProfile />} />
+        <Route
+          path="/candidate-notifications"
+          element={<CandidateNotifications />}
+        />
+        
         {/* Admin protected pages */}
         <Route element={<ProtectedRoute />}>
           <Route element={<AdminLayout />}>
