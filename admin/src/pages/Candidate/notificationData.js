@@ -1,0 +1,38 @@
+export const initialNotifications = [
+  {
+    id: 1,
+    title: "Application status updated",
+    message: "Your application for SAP SD Consultant is now In Progress.",
+    time: "10 min ago",
+    type: "application",
+    path: "/candidate-applications",
+    unread: true,
+  },
+  {
+    id: 2,
+    title: "Interview reminder",
+    message: "Technical Interview (Round 2) is coming up. Review your interview details.",
+    time: "1 hour ago",
+    type: "interview",
+    path: "/candidate-applications",
+    unread: true,
+  },
+  {
+    id: 3,
+    title: "New jobs for you",
+    message: "3 new roles match your skills and experience.",
+    time: "Yesterday",
+    type: "jobs",
+    path: "/candidate-all-jobs",
+    unread: true,
+  },
+  {
+    id: 4,
+    title: "Complete your profile",
+    message: "Add your latest resume to improve your profile.",
+    time: "2 days ago",
+    type: "profile",
+    path: "/candidate-profile",
+    unread: false,
+  },
+];

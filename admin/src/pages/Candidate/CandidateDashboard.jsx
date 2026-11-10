@@ -1,6 +1,6 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import NotificationBell from "./NotificationBell";
 import {
   LayoutDashboard,
   ClipboardList,
@@ -9,7 +9,6 @@ import {
   Settings,
   LogOut,
   Search,
-  Bell,
   Moon,
   ChevronDown,
   ChevronRight,
@@ -18,7 +17,6 @@ import {
   Clock3,
   Check,
   CircleCheck,
-  Circle,
   Bookmark,
   Sparkles,
   GitBranch,
@@ -27,7 +25,6 @@ import {
   ArrowRight,
   Database,
   ChartNoAxesColumn,
-  FileText,
 } from "lucide-react";
 
 const candidate = {
@@ -102,28 +99,45 @@ const stages = [
 
 export default function CandidateDashboard() {
   const navigate = useNavigate();
+
   const [activeNav, setActiveNav] = useState("Dashboard");
   const [search, setSearch] = useState("");
   const [savedJobs, setSavedJobs] = useState([]);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
 
-  const firstName = candidate.name.trim().split(/\s+/)[0];
+  const [hasApplications] = useState(() => {
+    try {
+      const savedApplications = JSON.parse(
+        localStorage.getItem("candidateApplications") || "[]"
+      );
+
+      return (
+        Array.isArray(savedApplications) &&
+        savedApplications.length > 0
+      );
+    } catch {
+      return false;
+    }
+  });
 
   const navigation = [
-  { label: "Dashboard", icon: LayoutDashboard },
-  { label: "My Applications", icon: ClipboardList },
-  { label: "All Jobs", icon: BriefcaseBusiness },
-  { label: "Profile", icon: UserRound },
-  { label: "Settings", icon: Settings },
-];
+    { label: "Dashboard", icon: LayoutDashboard },
+    { label: "My Applications", icon: ClipboardList },
+    { label: "All Jobs", icon: BriefcaseBusiness },
+    { label: "Profile", icon: UserRound },
+    { label: "Settings", icon: Settings },
+  ];
 
   const filteredJobs = jobs.filter((job) => {
     const query = search.toLowerCase();
+
     return (
       job.title.toLowerCase().includes(query) ||
       job.location.toLowerCase().includes(query) ||
-      job.skills.some((skill) => skill.toLowerCase().includes(query))
+      job.skills.some((skill) =>
+        skill.toLowerCase().includes(query)
+      )
     );
   });
 
@@ -131,38 +145,49 @@ export default function CandidateDashboard() {
     setActiveNav(label);
     setMobileMenu(false);
 
-    if (label === "All Jobs") {
-      navigate("/candidate-all-jobs");
-      return;
-    }
+    const routes = {
+      Dashboard: "/candidate/dashboard",
+      "My Applications": "/candidate-applications",
+      "All Jobs": "/candidate-all-jobs",
+      "Recommended Jobs": "/candidate/dashboard",
+      Profile: "/candidate-profile",
+      Settings: "/candidate-profile",
+    };
 
-    // Keep the existing preview behavior for the other navigation items.
+    if (routes[label]) {
+      navigate(routes[label]);
+    }
   };
 
   const handleLogout = () => {
-    // UI preview only. Authentication/logout is not connected.
-    window.location.href = "/candidate-login";
+    localStorage.removeItem("jwt");
+    localStorage.removeItem("candidateName");
+    navigate("/candidate/login");
   };
 
   return (
     <div
       className={`min-h-screen font-sans ${
-        darkMode ? "bg-slate-950 text-white" : "bg-[#f7f9fc] text-[#101c30]"
+        darkMode
+          ? "bg-slate-950 text-white"
+          : "bg-[#f7f9fc] text-[#101c30]"
       }`}
     >
       <div className="flex min-h-screen">
-        {/* SIDEBAR */}
         <aside
           className={`fixed inset-y-0 left-0 z-40 flex w-63 flex-col border-r transition-transform duration-200 lg:static lg:translate-x-0 ${
             darkMode
               ? "border-slate-800 bg-slate-900"
               : "border-gray-200 bg-white"
-          } ${mobileMenu ? "translate-x-0" : "-translate-x-full"}`}
+          } ${
+            mobileMenu ? "translate-x-0" : "-translate-x-full"
+          }`}
         >
-          {/* Brand */}
           <div
             className={`flex h-17.5 shrink-0 items-center border-b px-6 ${
-              darkMode ? "border-slate-800" : "border-gray-100"
+              darkMode
+                ? "border-slate-800"
+                : "border-gray-100"
             }`}
           >
             <div>
@@ -182,7 +207,6 @@ export default function CandidateDashboard() {
             </button>
           </div>
 
-          {/* Navigation */}
           <div className="px-3 pt-7">
             <p className="mb-3 px-3 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
               Candidate Portal
@@ -209,10 +233,11 @@ export default function CandidateDashboard() {
             </nav>
           </div>
 
-          {/* Logout */}
           <div
             className={`mt-auto border-t p-3 ${
-              darkMode ? "border-slate-800" : "border-gray-100"
+              darkMode
+                ? "border-slate-800"
+                : "border-gray-100"
             }`}
           >
             <button
@@ -226,7 +251,6 @@ export default function CandidateDashboard() {
           </div>
         </aside>
 
-        {/* Mobile backdrop */}
         {mobileMenu && (
           <button
             type="button"
@@ -236,9 +260,7 @@ export default function CandidateDashboard() {
           />
         )}
 
-        {/* MAIN */}
         <div className="flex min-w-0 flex-1 flex-col">
-          {/* TOP BAR */}
           <header
             className={`sticky top-0 z-20 flex h-17.5 items-center gap-4 border-b px-5 sm:px-8 ${
               darkMode
@@ -255,13 +277,18 @@ export default function CandidateDashboard() {
               <Menu size={21} />
             </button>
 
-            {/* Search */}
             <div
               className={`flex h-10.5 w-full max-w-122.5 items-center gap-3 rounded-full px-4 ${
-                darkMode ? "bg-slate-800" : "bg-[#f3f5f9]"
+                darkMode
+                  ? "bg-slate-800"
+                  : "bg-[#f3f5f9]"
               }`}
             >
-              <Search size={18} className="shrink-0 text-slate-500" />
+              <Search
+                size={18}
+                className="shrink-0 text-slate-500"
+              />
+
               <input
                 type="search"
                 value={search}
@@ -275,18 +302,15 @@ export default function CandidateDashboard() {
             </div>
 
             <div className="ml-auto flex shrink-0 items-center gap-3 sm:gap-5">
-              <button
-                type="button"
-                aria-label="Notifications"
-                className="relative rounded-full p-2 text-slate-500 hover:bg-gray-100"
-              >
-                <Bell size={20} />
-                <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#f2383d]" />
-              </button>
+              <div className="relative z-50">
+                <NotificationBell />
+              </div>
 
               <button
                 type="button"
-                onClick={() => setDarkMode((value) => !value)}
+                onClick={() =>
+                  setDarkMode((value) => !value)
+                }
                 aria-label="Toggle dark mode"
                 className="rounded-full p-2 text-slate-500 hover:bg-gray-100"
               >
@@ -295,7 +319,9 @@ export default function CandidateDashboard() {
 
               <div
                 className={`hidden h-8 w-px sm:block ${
-                  darkMode ? "bg-slate-700" : "bg-gray-200"
+                  darkMode
+                    ? "bg-slate-700"
+                    : "bg-gray-200"
                 }`}
               />
 
@@ -317,6 +343,7 @@ export default function CandidateDashboard() {
                   <span className="block max-w-37.5 truncate text-sm font-semibold">
                     {candidate.name}
                   </span>
+
                   <span className="block text-xs text-slate-500">
                     Candidate
                   </span>
@@ -330,176 +357,250 @@ export default function CandidateDashboard() {
             </div>
           </header>
 
-          {/* DASHBOARD CONTENT */}
           <main className="mx-auto w-full max-w-[1600px] flex-1 px-5 py-7 sm:px-8 sm:py-9">
-            {/* Greeting: name on the same line */}
             <section className="relative mb-6 flex min-h-26.25 items-center justify-between gap-5 overflow-hidden">
               <div className="relative z-10 min-w-0">
                 <h1 className="text-[27px] font-bold leading-tight tracking-tight sm:text-[32px]">
                   Good morning,{" "}
-                  <span className="text-[#f2383d]">{candidate.name}!</span>
+                  <span className="text-[#f2383d]">
+                    {candidate.name}!
+                  </span>
                 </h1>
 
-                <p className="mt-2 max-w-155 text-sm leading-6 text-slate-500 sm:text-base">
-                  Track your application progress and discover new opportunities
-                  that match your skills and experience.
+                <p className="mt-2 max-w-[620px] text-sm leading-6 text-slate-500 sm:text-base">
+                  {hasApplications
+                    ? "Track your application progress and discover new opportunities that match your skills and experience."
+                    : "Discover new opportunities that match your skills and experience, and take the next step in your career."}
                 </p>
               </div>
 
-              {/* Illustration placeholder */}
               <div className="hidden h-28.75 w-51.25 shrink-0 items-center justify-center rounded-full bg-red-50/80 md:flex">
                 <div className="relative flex h-23 w-37.5 items-end justify-center">
                   <div className="absolute bottom-0 left-1 h-12 w-8 rounded-t-full bg-blue-200/80" />
                   <div className="absolute bottom-0 right-1 h-14 w-7 rounded-t-full bg-emerald-200/80" />
+
                   <div className="relative z-10 flex h-16 w-16 flex-col items-center">
                     <div className="h-7 w-7 rounded-full bg-[#f6c7a7]" />
                     <div className="h-9 w-12 rounded-t-xl bg-[#f2383d]" />
                   </div>
+
                   <div className="absolute bottom-0 z-20 h-3 w-24 rounded-sm bg-slate-800" />
                 </div>
               </div>
             </section>
 
-            {/* CURRENT APPLICATION */}
-            <section
-              className={`mb-4 rounded-xl border p-5 shadow-sm sm:px-6 ${
-                darkMode
-                  ? "border-slate-800 bg-slate-900"
-                  : "border-slate-200 bg-white"
-              }`}
-            >
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex h-15 w-15 shrink-0 items-center justify-center rounded-2xl bg-red-50 text-[#f2383d]">
-                  <BriefcaseBusiness size={27} />
-                </div>
+            {hasApplications ? (
+              <>
+                <section
+                  className={`mb-4 rounded-xl border p-5 shadow-sm sm:px-6 ${
+                    darkMode
+                      ? "border-slate-800 bg-slate-900"
+                      : "border-slate-200 bg-white"
+                  }`}
+                >
+                  <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-2xl bg-red-50 text-[#f2383d]">
+                      <BriefcaseBusiness size={27} />
+                    </div>
 
-                <div className="min-w-0 flex-1">
-                  <p className="mb-1 text-sm text-slate-500">
-                    Your Current Application
-                  </p>
+                    <div className="min-w-0 flex-1">
+                      <p className="mb-1 text-sm text-slate-500">
+                        Your Current Application
+                      </p>
 
-                  <h2 className="text-lg font-bold">{candidate.currentJob}</h2>
+                      <h2 className="text-lg font-bold">
+                        {candidate.currentJob}
+                      </h2>
 
-                  <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-500 sm:text-sm">
-                    <span className="flex items-center gap-1.5">
-                      <MapPin size={15} />
-                      {candidate.location}
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <BriefcaseBusiness size={15} />
-                      {candidate.experience}
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <CalendarDays size={15} />
-                      Applied on {candidate.appliedDate}
-                    </span>
+                      <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-500 sm:text-sm">
+                        <span className="flex items-center gap-1.5">
+                          <MapPin size={15} />
+                          {candidate.location}
+                        </span>
+
+                        <span className="flex items-center gap-1.5">
+                          <BriefcaseBusiness size={15} />
+                          {candidate.experience}
+                        </span>
+
+                        <span className="flex items-center gap-1.5">
+                          <CalendarDays size={15} />
+                          Applied on {candidate.appliedDate}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3.5 py-2 text-xs font-semibold text-emerald-700">
+                        <CircleCheck size={17} />
+                        Application in Progress
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleNavigation("My Applications")
+                        }
+                        aria-label="View current application"
+                        className="rounded-lg p-2 text-slate-500 hover:bg-gray-50"
+                      >
+                        <ChevronRight size={21} />
+                      </button>
+                    </div>
                   </div>
+                </section>
+
+                <section
+                  className={`mb-4 rounded-xl border p-5 shadow-sm sm:p-6 ${
+                    darkMode
+                      ? "border-slate-800 bg-slate-900"
+                      : "border-slate-200 bg-white"
+                  }`}
+                >
+                  <div className="mb-7 flex items-center gap-3">
+                    <div className="flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-xl bg-red-50 text-[#f2383d]">
+                      <GitBranch size={26} />
+                    </div>
+
+                    <div>
+                      <h2 className="text-lg font-bold">
+                        Your Hiring Journey
+                      </h2>
+
+                      <p className="mt-1 text-sm text-slate-500">
+                        Here's how your application is progressing through the interview process.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-7 md:grid-cols-5">
+                    {stages.map((stage, index) => (
+                      <div
+                        key={stage.title + index}
+                        className="relative text-center"
+                      >
+                        {index < stages.length - 1 && (
+                          <div
+                            className={`absolute left-[62%] top-[22px] hidden h-[2px] w-[76%] md:block ${
+                              index < 2
+                                ? "bg-emerald-500"
+                                : "bg-slate-200"
+                            }`}
+                          />
+                        )}
+
+                        <div
+                          className={`relative z-10 mx-auto mb-3 flex h-[44px] w-[44px] items-center justify-center rounded-full border-[4px] ${
+                            stage.state === "completed"
+                              ? "border-emerald-100 bg-emerald-500 text-white"
+                              : stage.state === "progress"
+                                ? "border-orange-100 bg-white text-orange-500 ring-2 ring-orange-400"
+                                : "border-slate-200 bg-slate-100 text-slate-500"
+                          }`}
+                        >
+                          {stage.state === "completed" ? (
+                            <Check size={22} strokeWidth={3} />
+                          ) : stage.state === "progress" ? (
+                            <Clock3 size={21} />
+                          ) : index === 4 ? (
+                            <Bookmark size={20} />
+                          ) : (
+                            <Clock3 size={20} />
+                          )}
+                        </div>
+
+                        <h3 className="text-[13px] font-bold leading-5 sm:text-sm">
+                          {stage.title}
+
+                          {stage.subtitle && (
+                            <>
+                              <br />
+                              {stage.subtitle}
+                            </>
+                          )}
+                        </h3>
+
+                        <p
+                          className={`mt-2 text-xs font-semibold sm:text-sm ${
+                            stage.state === "completed"
+                              ? "text-emerald-600"
+                              : stage.state === "progress"
+                                ? "text-orange-500"
+                                : "text-slate-500"
+                          }`}
+                        >
+                          {stage.status}
+                        </p>
+
+                        <p className="mt-2 text-xs text-slate-500">
+                          {stage.date}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              </>
+            ) : (
+              <section
+                className={`mb-4 rounded-xl border p-4 shadow-sm sm:p-5 ${
+                  darkMode
+                    ? "border-slate-800 bg-slate-900"
+                    : "border-slate-200 bg-white"
+                }`}
+              >
+                <div className="mb-3 flex items-center gap-3">
+                  <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-red-50 text-[#f2383d]">
+                    <BriefcaseBusiness size={22} />
+                  </div>
+
+                  <h2 className="text-lg font-bold">
+                    Your Applications
+                  </h2>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3.5 py-2 text-xs font-semibold text-emerald-700">
-                    <CircleCheck size={17} />
-                    Application in Progress
-                  </span>
+                <div className="mx-auto flex max-w-2xl flex-col items-center py-1 text-center">
+                  <div className="mb-3 flex h-20 w-28 items-center justify-center rounded-full bg-red-50">
+                    <div className="relative flex h-[58px] w-[50px] flex-col gap-1.5 rounded-lg border-2 border-slate-200 bg-white p-2 shadow-sm">
+                      <div className="flex items-center gap-1">
+                        <div className="h-4 w-4 rounded bg-red-200" />
+
+                        <div className="flex-1 space-y-1">
+                          <div className="h-1.5 w-4 rounded bg-slate-300" />
+                          <div className="h-1.5 w-5 rounded bg-slate-200" />
+                        </div>
+                      </div>
+
+                      <div className="h-1.5 w-7 rounded bg-slate-200" />
+                      <div className="h-1.5 w-6 rounded bg-slate-200" />
+
+                      <Search
+                        size={30}
+                        className="absolute -bottom-1 -right-7 text-[#f2383d]"
+                      />
+                    </div>
+                  </div>
+
+                  <h3 className="text-lg font-bold sm:text-xl">
+                    You haven’t applied to any jobs yet
+                  </h3>
+
+                  <p className="mt-2 max-w-xl text-sm leading-5 text-slate-500 sm:text-base">
+                    Explore open positions at Proliant and take the first step towards your next opportunity.
+                  </p>
 
                   <button
                     type="button"
-                    onClick={() => handleNavigation("My Applications")}
-                    aria-label="View current application"
-                    className="rounded-lg p-2 text-slate-500 hover:bg-gray-50"
+                    onClick={() => navigate("/candidate-all-jobs")}
+                    className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#f2383d] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#df3438]"
                   >
-                    <ChevronRight size={21} />
+                    <BriefcaseBusiness size={18} />
+                    Browse All Jobs
+                    <ArrowRight size={17} />
                   </button>
                 </div>
-              </div>
-            </section>
-
-            {/* HIRING JOURNEY */}
-            <section
-              className={`mb-4 rounded-xl border p-5 shadow-sm sm:p-6 ${
-                darkMode
-                  ? "border-slate-800 bg-slate-900"
-                  : "border-slate-200 bg-white"
-              }`}
-            >
-              <div className="mb-7 flex items-center gap-3">
-                <div className="flex h-12.5 w-12.5 shrink-0 items-center justify-center rounded-xl bg-red-50 text-[#f2383d]">
-                  <GitBranch size={26} />
-                </div>
-
-                <div>
-                  <h2 className="text-lg font-bold">Your Hiring Journey</h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Here's how your application is progressing through the
-                    interview process.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-x-3 gap-y-7 md:grid-cols-5">
-                {stages.map((stage, index) => (
-                  <div key={stage.title + index} className="relative text-center">
-                    {/* Connecting line */}
-                    {index < stages.length - 1 && (
-                      <div
-                        className={`absolute left-[62%] top-5.5 hidden h-0.5 w-[76%] md:block ${
-                          index < 2 ? "bg-emerald-500" : "bg-slate-200"
-                        }`}
-                      />
-                    )}
-
-                    <div
-                      className={`relative z-10 mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full border-4 ${
-                        stage.state === "completed"
-                          ? "border-emerald-100 bg-emerald-500 text-white"
-                          : stage.state === "progress"
-                            ? "border-orange-100 bg-white text-orange-500 ring-2 ring-orange-400"
-                            : "border-slate-200 bg-slate-100 text-slate-500"
-                      }`}
-                    >
-                      {stage.state === "completed" ? (
-                        <Check size={22} strokeWidth={3} />
-                      ) : stage.state === "progress" ? (
-                        <Clock3 size={21} />
-                      ) : index === 4 ? (
-                        <Bookmark size={20} />
-                      ) : (
-                        <Clock3 size={20} />
-                      )}
-                    </div>
-
-                    <h3 className="text-[13px] font-bold leading-5 sm:text-sm">
-                      {stage.title}
-                      {stage.subtitle && (
-                        <>
-                          <br />
-                          {stage.subtitle}
-                        </>
-                      )}
-                    </h3>
-
-                    <p
-                      className={`mt-2 text-xs font-semibold sm:text-sm ${
-                        stage.state === "completed"
-                          ? "text-emerald-600"
-                          : stage.state === "progress"
-                            ? "text-orange-500"
-                            : "text-slate-500"
-                      }`}
-                    >
-                      {stage.status}
-                    </p>
-
-                    <p className="mt-2 text-xs text-slate-500">
-                      {stage.date}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* RECOMMENDED JOBS */}
-            <section
+              </section>
+            )}
+                        <section
               className={`mb-4 rounded-xl border p-4 shadow-sm sm:p-5 ${
                 darkMode
                   ? "border-slate-800 bg-slate-900"
@@ -516,16 +617,18 @@ export default function CandidateDashboard() {
                     <h2 className="text-lg font-bold">
                       Recommended Jobs for You
                     </h2>
+
                     <p className="mt-1 text-sm text-slate-500">
-                      Based on your skills, experience and the role you recently
-                      applied for.
+                      Find roles that match your skills, experience and interests.
                     </p>
                   </div>
                 </div>
 
                 <button
                   type="button"
-                  onClick={() => handleNavigation("Recommended Jobs")}
+                  onClick={() =>
+                    handleNavigation("Recommended Jobs")
+                  }
                   className="flex items-center gap-2 text-sm font-semibold text-[#f2383d] hover:underline"
                 >
                   View All Recommended Jobs
@@ -589,7 +692,9 @@ export default function CandidateDashboard() {
                       <div className="mt-4 flex items-center justify-between">
                         <button
                           type="button"
-                          onClick={() => handleNavigation("Recommended Jobs")}
+                          onClick={() =>
+                            handleNavigation("All Jobs")
+                          }
                           className="flex items-center gap-1.5 text-xs font-semibold text-[#f2383d] hover:underline"
                         >
                           View Details
@@ -601,11 +706,15 @@ export default function CandidateDashboard() {
                           onClick={() =>
                             setSavedJobs((previous) =>
                               saved
-                                ? previous.filter((title) => title !== job.title)
+                                ? previous.filter(
+                                    (title) => title !== job.title
+                                  )
                                 : [...previous, job.title]
                             )
                           }
-                          aria-label={saved ? "Remove saved job" : "Save job"}
+                          aria-label={
+                            saved ? "Remove saved job" : "Save job"
+                          }
                           className={`rounded-lg p-1.5 ${
                             saved
                               ? "text-[#f2383d]"
@@ -614,7 +723,9 @@ export default function CandidateDashboard() {
                         >
                           <Bookmark
                             size={18}
-                            fill={saved ? "currentColor" : "none"}
+                            fill={
+                              saved ? "currentColor" : "none"
+                            }
                           />
                         </button>
                       </div>
@@ -630,7 +741,6 @@ export default function CandidateDashboard() {
               </div>
             </section>
 
-            {/* EXPLORE ALL JOBS */}
             <section
               className={`flex flex-wrap items-center justify-between gap-4 rounded-xl border p-4 shadow-sm sm:px-6 ${
                 darkMode
@@ -644,10 +754,12 @@ export default function CandidateDashboard() {
                 </div>
 
                 <div>
-                  <h2 className="font-bold">Explore All Jobs</h2>
+                  <h2 className="font-bold">
+                    Explore All Jobs
+                  </h2>
+
                   <p className="mt-1 text-xs leading-5 text-slate-500 sm:text-sm">
-                    Browse all active jobs posted by our team. Find the right
-                    opportunity for your next career move.
+                    Browse all active jobs posted by our team. Find the right opportunity for your next career move.
                   </p>
                 </div>
               </div>
