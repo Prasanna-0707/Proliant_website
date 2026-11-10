@@ -4,6 +4,16 @@ import mongoose from "mongoose";
 
 import Admin from "../models/Admin.js";
 import { sendTemporaryPasswordEmail } from "../services/emailService.js";
+import { createAuditLog } from "../services/auditLogService.js";
+
+import {
+  isL0Screener,
+} from "../modules/administrator/services/authorizationService.js";
+
+import {
+  retryPendingL0Assignments,
+  reassignL0ApplicationsFromInactiveScreener,
+} from "../services/screenerAssignmentService.js";
 
 // =====================================================
 // TEMPORARY DEVELOPMENT SETTING
@@ -12,8 +22,7 @@ import { sendTemporaryPasswordEmail } from "../services/emailService.js";
 // false = allow authenticated users to view the directory
 // true  = enforce role/department restrictions for GET APIs
 //
-// IMPORTANT: Keep false only during local development.
-// Enable role-based read restrictions before deployment.
+// Restore role-based restrictions before deployment.
 const ROLE_BASED_TEAM_MEMBER_READ_ACCESS = false;
 
 // =====================================================
@@ -83,7 +92,6 @@ const getAccessContext = (admin) => {
     };
   }
 
-  // Regular staff must have a department and no administrator scope.
   if (
     !isAdministrator(admin) &&
     !admin.adminScope &&
@@ -112,6 +120,25 @@ const toSafeMember = (member) => ({
   updatedAt: member.updatedAt || null,
 });
 
+// Only record relevant account fields. Never include passwords,
+// tokens, OTPs, or other authentication credentials.
+const toAuditSnapshot = (member) => {
+  if (!member) return null;
+
+  return {
+    _id: member._id.toString(),
+    name: member.name || "",
+    email: member.email || "",
+    role: member.role || "",
+    designation: member.designation || "",
+    phone: member.phone || "",
+    department: member.department || "",
+    adminScope: member.adminScope ?? null,
+    status: member.status || "Active",
+    deletedAt: member.deletedAt || null,
+  };
+};
+
 const parseScope = (value) => {
   if (value === null || value === undefined || value === "") {
     return null;
@@ -119,9 +146,7 @@ const parseScope = (value) => {
 
   const scope = String(value).trim().toUpperCase();
 
-  if (scope === "NONE") {
-    return null;
-  }
+  if (scope === "NONE") return null;
 
   if (["GLOBAL", "DEPARTMENT"].includes(scope)) {
     return scope;
@@ -144,15 +169,140 @@ const countActiveGlobalAdministrators = () =>
   });
 
 // =====================================================
-// AUTHORIZE ACCOUNT MANAGEMENT
+// ATOMIC ACCOUNT SAVE + AUDIT
 // =====================================================
 
-// Global Administrators can manage accounts across departments.
-// Department Administrators can manage accounts in their own
-// department, including Department Administrator accounts.
-// They cannot manage Global Administrators.
-//
-// Regular employees cannot manage accounts.
+// The account change and its audit record must commit together.
+// If either operation fails, withTransaction aborts the transaction.
+const saveAccountAndAuditAtomically = async ({
+  req,
+  target,
+  action,
+  before,
+  reason = "",
+}) => {
+  const session = await mongoose.startSession();
+
+  try {
+    await session.withTransaction(async () => {
+      await target.save({ session });
+
+      await createAuditLog({
+        req,
+        action,
+        targetType: "Admin",
+        targetId: target._id,
+        targetLabel: target.email || target.name,
+        department:
+          target.department || before?.department || "",
+        before,
+        after: toAuditSnapshot(target),
+        reason,
+        session,
+      });
+    });
+  } finally {
+    await session.endSession();
+  }
+};
+
+// =====================================================
+// RETRY PENDING L0 ASSIGNMENTS
+// =====================================================
+
+const retryPendingAssignmentsForScreener = async ({
+  member,
+  req,
+}) => {
+  if (
+    !isActiveAccount(member) ||
+    !isL0Screener(member)
+  ) {
+    return null;
+  }
+
+  try {
+    const result = await retryPendingL0Assignments({
+      limit: 100,
+      requestId: req.requestId || "",
+      correlationId: req.correlationId || "",
+    });
+
+    return {
+      triggered: true,
+      completed: true,
+      scanned: result.scanned,
+      assigned: result.assigned,
+      stillPending: result.stillPending,
+      skipped: result.skipped,
+      failed: result.failed,
+      reassignments: result.reassignments || null,
+    };
+  } catch (error) {
+    console.error(
+      "Pending L0 assignment retry failed:",
+      error
+    );
+
+    return {
+      triggered: true,
+      completed: false,
+      message:
+        "The account change was saved, but pending L0 assignments could not be retried.",
+    };
+  }
+};
+
+// =====================================================
+// REASSIGN OPEN APPLICATIONS FROM A SCREENER
+// =====================================================
+
+const reassignOpenApplicationsForScreener = async ({
+  member,
+  req,
+}) => {
+  if (!member?._id) {
+    return null;
+  }
+
+  try {
+    const result =
+      await reassignL0ApplicationsFromInactiveScreener(
+        member._id,
+        {
+          limit: 500,
+          requestId: req.requestId || "",
+          correlationId: req.correlationId || "",
+        }
+      );
+
+    return {
+      triggered: true,
+      completed: true,
+      scanned: result.scanned,
+      assigned: result.assigned,
+      stillPending: result.stillPending,
+      skipped: result.skipped,
+      failed: result.failed,
+    };
+  } catch (error) {
+    console.error(
+      "L0 application reassignment failed:",
+      error
+    );
+
+    return {
+      triggered: true,
+      completed: false,
+      message:
+        "The account change was saved, but open L0 applications could not be reassigned.",
+    };
+  }
+};
+
+// =====================================================
+// AUTHORIZE ACCOUNT MANAGEMENT
+// =====================================================
 
 const authorizeTarget = async (req, res, id) => {
   if (!mongoose.isValidObjectId(id)) {
@@ -195,12 +345,10 @@ const authorizeTarget = async (req, res, id) => {
     return null;
   }
 
-  // Global Administrator: organization-wide account management.
   if (access.type === "GLOBAL") {
     return { access, target };
   }
 
-  // Department Administrator: own department only.
   if (access.type === "DEPARTMENT_ADMIN") {
     const sameDepartment =
       normalizeDepartment(target.department) ===
@@ -262,14 +410,8 @@ export const getTeamMembers = async (req, res) => {
     const safeMembers = members.map(toSafeMember);
     const currentUserId = req.admin._id.toString();
 
-    // -------------------------------------------------
-    // TEMPORARY DEVELOPMENT MODE
-    // -------------------------------------------------
-    // Authentication is still required by authMiddleware.
-    // Only the role/department restriction on reading the
-    // directory is temporarily bypassed.
-    // -------------------------------------------------
-
+    // Temporary development mode: authenticated users can
+    // read the directory without role-based restrictions.
     if (!ROLE_BASED_TEAM_MEMBER_READ_ACCESS) {
       const teamMembers = safeMembers.map((member) => ({
         ...member,
@@ -286,11 +428,6 @@ export const getTeamMembers = async (req, res) => {
       });
     }
 
-    // -------------------------------------------------
-    // FUTURE ROLE-BASED READ LOGIC
-    // Enable by setting the constant to true.
-    // -------------------------------------------------
-
     const access = getAccessContext(req.admin);
 
     if (!access) {
@@ -301,7 +438,6 @@ export const getTeamMembers = async (req, res) => {
       });
     }
 
-    // Regular employee: own department only.
     if (access.type === "MEMBER") {
       const teamMembers = safeMembers
         .filter(
@@ -326,7 +462,6 @@ export const getTeamMembers = async (req, res) => {
       });
     }
 
-    // Department and Global Administrator views.
     const globalAdministrators = safeMembers
       .filter(isGlobalAdministrator)
       .map((member) => ({
@@ -453,8 +588,6 @@ export const getTeamMemberById = async (req, res) => {
       });
     }
 
-    // When role-based directory access is disabled, the
-    // authenticated user can read any non-deleted member.
     const access = ROLE_BASED_TEAM_MEMBER_READ_ACCESS
       ? getAccessContext(req.admin)
       : { type: "TEMPORARY_READ_ALL" };
@@ -480,7 +613,6 @@ export const getTeamMemberById = async (req, res) => {
       });
     }
 
-    // FUTURE: apply department restrictions when the switch is enabled.
     if (
       ROLE_BASED_TEAM_MEMBER_READ_ACCESS &&
       access.type === "MEMBER"
@@ -521,6 +653,8 @@ export const getTeamMemberById = async (req, res) => {
 // =====================================================
 
 export const createTeamMember = async (req, res) => {
+  let teamMember;
+
   try {
     const access = getAccessContext(req.admin);
 
@@ -543,16 +677,14 @@ export const createTeamMember = async (req, res) => {
       });
     }
 
-    const existing = await Admin.findOne({ email });
-
-    if (existing) {
+    if (await Admin.findOne({ email })) {
       return res.status(409).json({
         success: false,
         message: "An account with this email already exists.",
       });
     }
 
-    let role = String(
+    const role = String(
       req.body.role ||
         defaultRegularRole(
           access.type === "DEPARTMENT_ADMIN"
@@ -567,12 +699,6 @@ export const createTeamMember = async (req, res) => {
 
     let department = "";
     let adminScope = null;
-
-    // -------------------------------------------------
-    // DEPARTMENT ADMINISTRATOR
-    // Can create regular employees and Department Admins
-    // within their own department, but never Global Admins.
-    // -------------------------------------------------
 
     if (access.type === "DEPARTMENT_ADMIN") {
       department = access.department;
@@ -606,7 +732,6 @@ export const createTeamMember = async (req, res) => {
         });
       }
 
-      // The backend determines the scope from the role.
       if (isAdministrator({ role })) {
         adminScope = "DEPARTMENT";
       } else {
@@ -621,11 +746,6 @@ export const createTeamMember = async (req, res) => {
         adminScope = null;
       }
     }
-
-    // -------------------------------------------------
-    // GLOBAL ADMINISTRATOR
-    // Can assign organization-wide account permissions.
-    // -------------------------------------------------
 
     if (access.type === "GLOBAL") {
       department = String(req.body.department || "").trim();
@@ -686,52 +806,145 @@ export const createTeamMember = async (req, res) => {
 
     const password = await bcrypt.hash(temporaryPassword, 10);
 
-    const teamMember = await Admin.create({
-      email,
-      password,
-      name,
-      phone,
-      role,
-      designation,
-      department,
-      adminScope,
-      status: "Active",
-      deletedAt: null,
-      tokenVersion: 0,
-      resetTokenVersion: 0,
-      mustChangePassword: true,
-    });
+    // Account creation and its audit record are committed together.
+    const session = await mongoose.startSession();
 
+    try {
+      await session.withTransaction(async () => {
+        const created = await Admin.create(
+          [
+            {
+              email,
+              password,
+              name,
+              phone,
+              role,
+              designation,
+              department,
+              adminScope,
+              status: "Active",
+              deletedAt: null,
+              tokenVersion: 0,
+              resetTokenVersion: 0,
+              mustChangePassword: true,
+            },
+          ],
+          { session }
+        );
+
+        teamMember = created[0];
+
+        await createAuditLog({
+          req,
+          action: "ACCOUNT_CREATED",
+          targetType: "Admin",
+          targetId: teamMember._id,
+          targetLabel: teamMember.email || teamMember.name,
+          department: teamMember.department || "",
+          before: null,
+          after: toAuditSnapshot(teamMember),
+          reason: String(req.body.reason || "").trim(),
+          session,
+        });
+      });
+    } finally {
+      await session.endSession();
+    }
+
+    // Email is an external side effect. Send it only after
+    // the database transaction has committed.
     try {
       await sendTemporaryPasswordEmail(
         teamMember.email,
         temporaryPassword
       );
     } catch (emailError) {
-      // Avoid leaving a new account with an undelivered
-      // temporary password.
-      await Admin.deleteOne({ _id: teamMember._id });
-
       console.error(
         "Temporary password email failed:",
         emailError
       );
 
+      let cleanupSucceeded = false;
+      const cleanupSession = await mongoose.startSession();
+
+      try {
+        await cleanupSession.withTransaction(async () => {
+          const existingAccount = await Admin.findById(
+            teamMember._id
+          ).session(cleanupSession);
+
+          if (existingAccount) {
+            await Admin.deleteOne(
+              { _id: teamMember._id },
+              { session: cleanupSession }
+            );
+          }
+
+          await createAuditLog({
+            req,
+            action: "ACCOUNT_CREATION_CANCELLED",
+            targetType: "Admin",
+            targetId: teamMember._id,
+            targetLabel: teamMember.email || teamMember.name,
+            department: teamMember.department || "",
+            before: toAuditSnapshot(
+              existingAccount || teamMember
+            ),
+            after: null,
+            reason:
+              "Temporary-password email delivery failed; account removal was requested.",
+            session: cleanupSession,
+          });
+        });
+
+        cleanupSucceeded = true;
+      } catch (cleanupError) {
+        console.error(
+          "Account cleanup after email failure also failed:",
+          cleanupError
+        );
+      } finally {
+        await cleanupSession.endSession();
+      }
+
+      if (!cleanupSucceeded) {
+        return res.status(500).json({
+          success: false,
+          message:
+            "The account and its creation audit record were saved, but email delivery and account cleanup failed. Contact the system administrator.",
+          auditLogged: true,
+        });
+      }
+
       return res.status(502).json({
         success: false,
         message:
-          "The account was not completed because the temporary-password email failed.",
+          "The account was removed because the temporary-password email failed. The cancellation was recorded.",
+        auditLogged: true,
       });
     }
+
+    // A newly created active L0 Screener can receive
+    // applications that were previously waiting for assignment.
+    const pendingL0AssignmentRetry =
+      await retryPendingAssignmentsForScreener({
+        member: teamMember,
+        req,
+      });
 
     return res.status(201).json({
       success: true,
       message:
         "Team member created successfully. A temporary password was sent by email.",
+      auditLogged: true,
       teamMember: toSafeMember(teamMember),
+
+      ...(pendingL0AssignmentRetry
+        ? { pendingL0AssignmentRetry }
+        : {}),
     });
   } catch (error) {
-    console.error("Create team member error:", error);
+    console.error("Create team member or audit transaction failed:", error);
 
     if (error.code === 11000) {
       return res.status(409).json({
@@ -742,7 +955,8 @@ export const createTeamMember = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: "Team member creation failed.",
+      message:
+        "Team member creation and audit could not be completed. No account was committed by this transaction.",
     });
   }
 };
@@ -764,8 +978,17 @@ export const updateTeamMember = async (req, res) => {
 
     const { access, target } = authorized;
     const body = req.body || {};
+    const before = toAuditSnapshot(target);
 
-    // Capture the original state before modifying the record.
+    // Capture the screener's previous eligibility
+    // before changing role or department.
+    const wasEligibleL0Screener =
+      isActiveAccount(target) &&
+      isL0Screener(target);
+
+    const previousDepartment =
+      normalizeDepartment(target.department);
+
     const wasGlobalAdministrator =
       isGlobalAdministrator(target) &&
       isActiveAccount(target);
@@ -806,9 +1029,7 @@ export const updateTeamMember = async (req, res) => {
     }
 
     if (access.type === "DEPARTMENT_ADMIN") {
-      if (
-        requestedScope === "GLOBAL"
-      ) {
+      if (requestedScope === "GLOBAL") {
         return res.status(403).json({
           success: false,
           message:
@@ -879,18 +1100,13 @@ export const updateTeamMember = async (req, res) => {
       target.role = newRole;
     }
 
-    // Department Administrators can manage eligible accounts
-    // within their department. The scope is always assigned
-    // by the server, never by the client.
     if (access.type === "DEPARTMENT_ADMIN") {
       target.department = access.department;
-
       target.adminScope = isAdministrator(target)
         ? "DEPARTMENT"
         : null;
     }
 
-    // Global Administrators can manage account scope and department.
     if (access.type === "GLOBAL") {
       if (hasField(body, "department")) {
         target.department = String(body.department || "").trim();
@@ -935,12 +1151,9 @@ export const updateTeamMember = async (req, res) => {
         });
       }
 
-      const remainsGlobalAdministrator =
-        isGlobalAdministrator(target);
-
       if (
         wasGlobalAdministrator &&
-        !remainsGlobalAdministrator
+        !isGlobalAdministrator(target)
       ) {
         const count = await countActiveGlobalAdministrators();
 
@@ -954,15 +1167,77 @@ export const updateTeamMember = async (req, res) => {
       }
     }
 
-    await target.save();
+    await saveAccountAndAuditAtomically({
+      req,
+      target,
+      action: "ACCOUNT_UPDATED",
+      before,
+      reason: String(body.reason || "").trim(),
+    });
+
+    // -------------------------------------------------
+    // HANDLE SCREENER ELIGIBILITY CHANGES
+    // -------------------------------------------------
+
+    const isEligibleNow =
+      isActiveAccount(target) &&
+      isL0Screener(target);
+
+    const departmentChanged =
+      previousDepartment !==
+      normalizeDepartment(target.department);
+
+    // An existing screener's old department applications
+    // need reassignment if their department changes.
+    const shouldReassignApplications =
+      wasEligibleL0Screener &&
+      (!isEligibleNow || departmentChanged);
+
+    let openApplicationsReassignment = null;
+
+    if (shouldReassignApplications) {
+      openApplicationsReassignment =
+        await reassignOpenApplicationsForScreener({
+          member: target,
+          req,
+        });
+    }
+
+    // A newly eligible screener or a screener moved into
+    // another department can receive pending applications.
+    const shouldRetryPendingAssignments =
+      isEligibleNow &&
+      (!wasEligibleL0Screener || departmentChanged);
+
+    let pendingL0AssignmentRetry = null;
+
+    if (shouldRetryPendingAssignments) {
+      pendingL0AssignmentRetry =
+        await retryPendingAssignmentsForScreener({
+          member: target,
+          req,
+        });
+    }
 
     return res.status(200).json({
       success: true,
       message: "Team member updated successfully.",
+      auditLogged: true,
       teamMember: toSafeMember(target),
+
+      ...(openApplicationsReassignment
+        ? { openApplicationsReassignment }
+        : {}),
+
+      ...(pendingL0AssignmentRetry
+        ? { pendingL0AssignmentRetry }
+        : {}),
     });
   } catch (error) {
-    console.error("Update team member error:", error);
+    console.error(
+      "Update team member or audit transaction failed:",
+      error
+    );
 
     if (error.code === 11000) {
       return res.status(409).json({
@@ -973,7 +1248,8 @@ export const updateTeamMember = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: "Team member update failed.",
+      message:
+        "Team member update and audit could not be completed. The transaction was not committed.",
     });
   }
 };
@@ -994,7 +1270,10 @@ export const updateTeamMemberStatus = async (req, res) => {
     if (!authorized) return;
 
     const { target } = authorized;
-    const status = String(req.body.status || "").trim();
+
+    const status = String(
+      req.body.status || ""
+    ).trim();
 
     if (!["Active", "Inactive"].includes(status)) {
       return res.status(400).json({
@@ -1010,6 +1289,13 @@ export const updateTeamMemberStatus = async (req, res) => {
         teamMember: toSafeMember(target),
       });
     }
+
+    const before = toAuditSnapshot(target);
+
+    // Capture eligibility before the status changes.
+    const wasEligibleL0Screener =
+      isActiveAccount(target) &&
+      isL0Screener(target);
 
     if (
       status === "Inactive" &&
@@ -1027,24 +1313,89 @@ export const updateTeamMemberStatus = async (req, res) => {
       }
     }
 
+    // -------------------------------------------------
+    // UPDATE ACCOUNT STATUS
+    // -------------------------------------------------
+
     target.status = status;
 
-    // Invalidate previously issued tokens.
-    target.tokenVersion = (target.tokenVersion || 0) + 1;
+    target.tokenVersion =
+      (target.tokenVersion || 0) + 1;
 
-    await target.save();
+    await saveAccountAndAuditAtomically({
+      req,
+      target,
+      action: "ACCOUNT_STATUS_CHANGED",
+      before,
+      reason: String(req.body.reason || "").trim(),
+    });
+
+    // -------------------------------------------------
+    // REASSIGN APPLICATIONS IF SCREENER IS DEACTIVATED
+    // -------------------------------------------------
+
+    let openApplicationsReassignment = null;
+
+    if (
+      wasEligibleL0Screener &&
+      status === "Inactive"
+    ) {
+      openApplicationsReassignment =
+        await reassignOpenApplicationsForScreener({
+          member: target,
+          req,
+        });
+    }
+
+    // -------------------------------------------------
+    // RETRY PENDING APPLICATIONS IF SCREENER IS ACTIVATED
+    // -------------------------------------------------
+
+    let pendingL0AssignmentRetry = null;
+
+    const isEligibleNow =
+      isActiveAccount(target) &&
+      isL0Screener(target);
+
+    if (
+      status === "Active" &&
+      isEligibleNow
+    ) {
+      pendingL0AssignmentRetry =
+        await retryPendingAssignmentsForScreener({
+          member: target,
+          req,
+        });
+    }
+
+    // -------------------------------------------------
+    // RESPONSE
+    // -------------------------------------------------
 
     return res.status(200).json({
       success: true,
       message: `Team member ${status.toLowerCase()} successfully.`,
+      auditLogged: true,
       teamMember: toSafeMember(target),
+
+      ...(openApplicationsReassignment
+        ? { openApplicationsReassignment }
+        : {}),
+
+      ...(pendingL0AssignmentRetry
+        ? { pendingL0AssignmentRetry }
+        : {}),
     });
   } catch (error) {
-    console.error("Update team member status error:", error);
+    console.error(
+      "Status change or audit transaction failed:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
-      message: "Failed to update team member status.",
+      message:
+        "Status change and audit could not be completed. The transaction was not committed.",
     });
   }
 };
@@ -1065,6 +1416,11 @@ export const deleteTeamMember = async (req, res) => {
     if (!authorized) return;
 
     const { target } = authorized;
+    const before = toAuditSnapshot(target);
+
+    const wasEligibleL0Screener =
+      isActiveAccount(target) &&
+      isL0Screener(target);
 
     if (
       isGlobalAdministrator(target) &&
@@ -1081,24 +1437,50 @@ export const deleteTeamMember = async (req, res) => {
       }
     }
 
-    // Preserve the document for references and future audit history.
     target.status = "Inactive";
     target.deletedAt = new Date();
     target.tokenVersion = (target.tokenVersion || 0) + 1;
 
-    await target.save();
+    await saveAccountAndAuditAtomically({
+      req,
+      target,
+      action: "ACCOUNT_SOFT_DELETED",
+      before,
+      reason: String(req.body?.reason || "").trim(),
+    });
+
+    // Reassign open applications belonging to a screener
+    // whose account has now been soft-deleted.
+    let openApplicationsReassignment = null;
+
+    if (wasEligibleL0Screener) {
+      openApplicationsReassignment =
+        await reassignOpenApplicationsForScreener({
+          member: target,
+          req,
+        });
+    }
 
     return res.status(200).json({
       success: true,
       message:
         "Team member account removed. The record was retained for audit purposes.",
+      auditLogged: true,
+
+      ...(openApplicationsReassignment
+        ? { openApplicationsReassignment }
+        : {}),
     });
   } catch (error) {
-    console.error("Delete team member error:", error);
+    console.error(
+      "Account deletion or audit transaction failed:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
-      message: "Team member removal failed.",
+      message:
+        "Account deletion and audit could not be completed. The transaction was not committed.",
     });
   }
 };

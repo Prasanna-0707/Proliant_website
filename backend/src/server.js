@@ -15,6 +15,13 @@ import jobRoutes from "./routes/jobRoutes.js";
 import teamMemberRoute from "./routes/teamMemberRoute.js";
 import siteSettingRoutes from "./routes/siteSettingRoutes.js";
 import applicationRoutes from "./routes/applicationRoutes.js";
+
+// =====================================================
+// ADMINISTRATOR MODULE
+// =====================================================
+
+import adminRoutes from "./modules/administrator/routes/adminRoutes.js";
+
 import screeningRoutes from "./modules/screener/routes/screeningRoutes.js";
 
 // =====================================================
@@ -73,6 +80,12 @@ const startServer = async () => {
 
     // Team Members APIs
     app.use("/api/auth/team-members", teamMemberRoute);
+
+    // =================================================
+    // ADMINISTRATOR APIs
+    // =================================================
+
+    app.use("/api/admin", adminRoutes);
 
     // Login, OTP, profile, password, and logout APIs
     app.use("/api/auth", authRoutes);

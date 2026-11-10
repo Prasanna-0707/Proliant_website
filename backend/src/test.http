@@ -2,9 +2,15 @@
 @baseUrl = http://localhost:5000/api
 
 # Update this after successful OTP verification
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbklkIjoiNmFhY2NmYTg1ZjU3NjYxYTc5NGFiZWU0IiwiZW1haWwiOiJib2dhY2hhbmRyYXB1QGdtYWlsLmNvbSIsInRva2VuVmVyc2lvbiI6MTcsImlhdCI6MTc5MjY0MDM1OCwiZXhwIjoxNzkyNzI2NzU4fQ.3CmC4trtAvGCxkEAO4Eyng8n_PUypmfMrVr48SXalSM
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbklkIjoiNmFkYTRhOWViZGQ0YWMwMTlkNTg1NWE0IiwiZW1haWwiOiJhc3dpbmkzMjkzM0BnbWFpbC5jb20iLCJ0b2tlblZlcnNpb24iOjIsImlhdCI6MTc5Mjk4OTAwNywiZXhwIjoxNzkzMDc1NDA3fQ.4BZn2N48vBBLvP6nDzKlpdOULHWoOknci_8mNNdHa6c
 
+@applicationId = 6ad9b0052a4f49f5ed6ca264
 
+@interviewId = PASTE_REAL_INTERVIEW_ID_HERE
+@stageCode = L1
+
+# Use a different application ID for HR review testing
+@hrReviewApplicationId = REPLACE_WITH_ANOTHER_APPLICATION_ID
 ############################################################
 # 1. AUTHENTICATION — LOGIN + OTP
 ############################################################
@@ -557,3 +563,244 @@ GET http://localhost:5000/api/jobs
 ### Test HR Jobs - All jobs including Draft
 GET http://localhost:5000/api/jobs/manage
 Authorization: Bearer {{token}}
+
+### Test: Change SAP QM Consultant to Draft
+PUT http://localhost:5000/api/jobs/6aaccfa85f57661a794abf51
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "Draft"
+}
+
+### Get all Team Members
+GET http://localhost:5000/api/auth/team-members
+Authorization: Bearer {{token}}
+
+### Get one Team Member by ID
+GET http://localhost:5000/api/auth/team-members/6ada4a9ebdd4ac019d5855a4
+Authorization: Bearer {{token}}
+
+######################## L0 screener #########################
+
+### 1. Get Application Details
+# Open the candidates collection in MongoDB Compass
+# and copy the _id of an existing candidate.
+GET {{baseUrl}}/applications/{{applicationId}}
+Authorization: Bearer {{token}}
+
+
+### 2. Get Application Resume
+GET {{baseUrl}}/applications/{{applicationId}}/resume
+Authorization: Bearer {{token}}
+
+
+### 3. Get Assigned L0 Applications
+# Returns applications assigned to the logged-in L0 screener.
+GET {{baseUrl}}/screenings/l0/assigned
+Authorization: Bearer {{token}}
+
+
+### 4. Get L0 Screening Statistics
+# Returns screening statistics for the logged-in L0 screener.
+GET {{baseUrl}}/screenings/l0/stats
+Authorization: Bearer {{token}}
+
+
+### 5. Submit L0 Screening Decision
+# The application must be assigned to the logged-in L0 screener.
+# Use a test candidate because this request updates screening data.
+POST {{baseUrl}}/applications/{{applicationId}}/screenings/l0
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "decision": "Selected",
+  "feedback": "Candidate meets the initial screening requirements."
+}
+
+
+### 6. Get Application Screening History
+# Returns the screening record and its available history.
+GET {{baseUrl}}/applications/{{applicationId}}/screenings
+Authorization: Bearer {{token}}
+
+########################## L1/L2 Interviewer APIs ###################################
+
+
+### 1. Get My Assigned Interviews
+GET {{baseUrl}}/interviews/my
+Authorization: Bearer {{token}}
+
+
+### 2. Get Interview Details
+# Replace interviewId with a real Interview document _id.
+GET {{baseUrl}}/interviews/{{interviewId}}
+Authorization: Bearer {{token}}
+
+
+### 3. Submit Interview Evaluation
+# The interview must be assigned to the logged-in interviewer.
+POST {{baseUrl}}/interviews/{{interviewId}}/evaluation
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "overallRating": 4,
+  "strengths": "Good technical understanding.",
+  "concerns": "Could improve problem-solving explanations.",
+  "feedback": "Candidate demonstrates the required skills.",
+  "recommendation": "Advance",
+  "criteria": []
+}
+
+
+### 4. Update Interview Evaluation
+# Use only when an evaluation has already been submitted.
+PATCH {{baseUrl}}/interviews/{{interviewId}}/evaluation
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "overallRating": 5,
+  "strengths": "Strong technical understanding.",
+  "concerns": "",
+  "feedback": "Candidate meets the technical requirements.",
+  "recommendation": "Advance",
+  "criteria": [],
+  "correctionReason": "Corrected the overall rating after reviewing the notes."
+}
+
+
+### 5. Get Interviews for an Application
+# Use the existing Candidate MongoDB _id.
+GET {{baseUrl}}/applications/{{applicationId}}/interviews
+Authorization: Bearer {{token}}
+
+
+### 6. Get Evaluation Form for a Stage
+# Example: L1, L2, L3, L4, or another configured stage.
+GET {{baseUrl}}/evaluation-forms/{{stageCode}}
+Authorization: Bearer {{token}}
+
+
+### ADMINISTRATOR - GET USERS
+GET http://localhost:5000/api/admin/users?page=1&limit=20
+Authorization: Bearer {{token}}
+
+
+### ADMINISTRATOR - DASHBOARD
+GET http://localhost:5000/api/admin/dashboard
+Authorization: Bearer {{token}}
+
+######################################My Applications APIs############################
+### 1. Get all applications assigned to the logged-in L0 Screener
+GET {{baseUrl}}/applications
+Authorization: Bearer {{token}}
+
+###
+
+###############################  Get application details###############################
+GET {{baseUrl}}/applications/{{applicationId}}
+Authorization: Bearer {{token}}
+
+###
+
+### 3. Download application resume
+GET {{baseUrl}}/applications/{{applicationId}}/resume
+Authorization: Bearer {{token}}
+
+###
+
+### 4. Start L0 screening
+PATCH {{baseUrl}}/applications/{{applicationId}}/start
+Authorization: Bearer {{token}}
+
+Screening Checklist APIs
+### 5. Get screening checklist
+GET {{baseUrl}}/applications/{{applicationId}}/checklist
+Authorization: Bearer {{token}}
+
+###
+
+### 6. Update screening checklist
+PUT {{baseUrl}}/applications/{{applicationId}}/checklist
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "checklist": {
+    "skillsMatch": true,
+    "experienceMatch": true,
+    "educationMatch": true,
+    "requirementsMatch": true,
+    "additionalNotes": "Candidate meets the required technical qualifications."
+  }
+}
+
+################################Screening Decision API####################################
+###Submit SHORTLIST decision##
+POST {{baseUrl}}/applications/{{applicationId}}/decision
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "decision": "SHORTLIST",
+  "feedback": "Candidate meets the initial screening requirements.",
+  "remarks": "Proceed to the next interview stage."
+}
+
+#########################HR Review Request APIs###################
+### 8. Get all HR review requests
+GET {{baseUrl}}/hr-review-requests
+Authorization: Bearer {{token}}
+
+###
+
+### 9. Get details of a particular HR review request
+GET {{baseUrl}}/hr-review-requests/{{hrReviewApplicationId}}
+Authorization: Bearer {{token}}
+
+##################################Screening History APIs###############################
+### 10. Get L0 screening history
+GET {{baseUrl}}/history
+Authorization: Bearer {{token}}
+
+###
+
+### 11. Get screening history for a particular application
+GET {{baseUrl}}/history/{{applicationId}}
+Authorization: Bearer {{token}}
+
+
+####################################Legacy compatibility APIs###########################
+
+### 12. Get legacy L0 assigned applications
+GET {{baseUrl}}/l0/assigned
+Authorization: Bearer {{token}}
+
+###
+
+### 13. Get legacy L0 screening statistics
+GET {{baseUrl}}/l0/stats
+Authorization: Bearer {{token}}
+
+################################### 1. DASHBOARD APIs####################################
+
+### 1. Get L0 Dashboard Statistics
+GET {{baseUrl}}/dashboard
+Authorization: Bearer {{token}}
+
+###
+
+### 2. Get L0 Dashboard Recent Applications
+GET {{baseUrl}}/dashboard/recent-applications
+Authorization: Bearer {{token}}
+
+###
+
+### 3. Get L0 Dashboard Recent Activity
+GET {{baseUrl}}/dashboard/recent-activity
+Authorization: Bearer {{token}}
+
+###
