@@ -164,19 +164,19 @@ export default function CandidateAllJobs() {
       <div className="flex min-h-screen">
         {/* SIDEBAR */}
         <aside
-          className={`fixed inset-y-0 left-0 z-30 flex w-[252px] flex-col border-r lg:static ${
+          className={`fixed inset-y-0 left-0 z-30 flex w-63 flex-col border-r lg:static ${
             darkMode
               ? "border-slate-800 bg-slate-900"
               : "border-gray-200 bg-white"
           }`}
         >
           <div
-            className={`flex h-[70px] shrink-0 items-center border-b px-6 ${
+            className={`flex h-17.5 shrink-0 items-center border-b px-6 ${
               darkMode ? "border-slate-800" : "border-gray-100"
             }`}
           >
             <div>
-              <div className="mb-1 h-[6px] w-[44px] bg-[#f2383d]" />
+              <div className="mb-1 h-1.5 w-11 bg-[#f2383d]" />
               <span className="text-[23px] font-extrabold tracking-tight text-black">
                 Proliant Data
               </span>
@@ -233,14 +233,14 @@ export default function CandidateAllJobs() {
         <div className="flex min-w-0 flex-1 flex-col">
           {/* TOP BAR */}
           <header
-            className={`sticky top-0 z-20 flex h-[70px] items-center gap-4 border-b px-5 sm:px-8 ${
+            className={`sticky top-0 z-20 flex h-17.5 items-center gap-4 border-b px-5 sm:px-8 ${
               darkMode
                 ? "border-slate-800 bg-slate-900"
                 : "border-gray-200 bg-white"
             }`}
           >
             <div
-              className={`flex h-[42px] w-full max-w-[490px] items-center gap-3 rounded-full px-4 ${
+              className={`flex h-10.5 w-full max-w-122.5 items-center gap-3 rounded-full px-4 ${
                 darkMode ? "bg-slate-800" : "bg-[#f3f5f9]"
               }`}
             >
@@ -300,7 +300,7 @@ export default function CandidateAllJobs() {
                 </span>
 
                 <span className="hidden text-left sm:block">
-                  <span className="block max-w-[140px] truncate text-sm font-semibold">
+                  <span className="block max-w-35 truncate text-sm font-semibold">
                     {candidateName}
                   </span>
                   <span className="block text-xs text-slate-500">
@@ -319,7 +319,7 @@ export default function CandidateAllJobs() {
           {/* PAGE BODY */}
           <main className="mx-auto w-full max-w-[1600px] flex-1 px-5 py-6 sm:px-8 sm:py-7">
             {/* PAGE HEADING */}
-            <section className="relative mb-5 flex min-h-[90px] items-center justify-between gap-4 overflow-hidden">
+            <section className="relative mb-5 flex min-h-22.5 items-center justify-between gap-4 overflow-hidden">
               <div>
                 <p className="mb-2 text-xs font-medium text-slate-500">
                   All Jobs
@@ -335,9 +335,9 @@ export default function CandidateAllJobs() {
                 </p>
               </div>
 
-              <div className="hidden h-[90px] w-[150px] shrink-0 items-center justify-center rounded-full bg-red-50 md:flex">
+              <div className="hidden h-22.5 w-37.5 shrink-0 items-center justify-center rounded-full bg-red-50 md:flex">
                 <div className="relative">
-                  <div className="flex h-[58px] w-[65px] flex-col gap-2 rounded-lg border border-red-100 bg-white p-3 shadow-sm">
+                  <div className="flex h-14.5 w-16.25 flex-col gap-2 rounded-lg border border-red-100 bg-white p-3 shadow-sm">
                     <div className="h-2 w-5 rounded bg-red-200" />
                     <div className="h-1.5 w-9 rounded bg-slate-200" />
                     <div className="h-1.5 w-7 rounded bg-slate-200" />
@@ -360,7 +360,7 @@ export default function CandidateAllJobs() {
             >
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-[46px] w-[46px] items-center justify-center rounded-xl bg-red-50 text-[#f2383d]">
+                  <div className="flex h-11.5 w-11.5 items-center justify-center rounded-xl bg-red-50 text-[#f2383d]">
                     <Sparkles size={24} />
                   </div>
 
@@ -405,7 +405,7 @@ export default function CandidateAllJobs() {
                       }`}
                     >
                       <div className="flex items-start gap-3">
-                        <div className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-500">
+                        <div className="flex h-11.5 w-11.5 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-500">
                           <JobIcon size={24} />
                         </div>
 
@@ -488,7 +488,7 @@ export default function CandidateAllJobs() {
             >
               <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-[46px] w-[46px] items-center justify-center rounded-xl bg-red-50 text-[#f2383d]">
+                  <div className="flex h-11.5 w-11.5 items-center justify-center rounded-xl bg-red-50 text-[#f2383d]">
                     <BriefcaseBusiness size={24} />
                   </div>
 
@@ -554,7 +554,7 @@ export default function CandidateAllJobs() {
 
               {/* TABLE HEADER — DESKTOP */}
               <div className="hidden overflow-x-auto lg:block">
-                <table className="w-full min-w-[900px] border-collapse text-left">
+                <table className="w-full min-w-225 border-collapse text-left">
                   <thead>
                     <tr className="bg-slate-50 text-xs font-semibold text-slate-600">
                       <th className="rounded-l-lg px-3 py-3">Job Title</th>
@@ -627,7 +627,7 @@ export default function CandidateAllJobs() {
                         </td>
 
                         <td className="px-3 py-3">
-                          <div className="flex max-w-[250px] flex-wrap gap-1.5">
+                          <div className="flex max-w-62.5 flex-wrap gap-1.5">
                             {job.skills.map((skill) => (
                               <span
                                 key={skill}

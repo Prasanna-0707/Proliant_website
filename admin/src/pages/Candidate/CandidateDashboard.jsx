@@ -153,7 +153,7 @@ export default function CandidateDashboard() {
       <div className="flex min-h-screen">
         {/* SIDEBAR */}
         <aside
-          className={`fixed inset-y-0 left-0 z-40 flex w-[252px] flex-col border-r transition-transform duration-200 lg:static lg:translate-x-0 ${
+          className={`fixed inset-y-0 left-0 z-40 flex w-63 flex-col border-r transition-transform duration-200 lg:static lg:translate-x-0 ${
             darkMode
               ? "border-slate-800 bg-slate-900"
               : "border-gray-200 bg-white"
@@ -161,12 +161,12 @@ export default function CandidateDashboard() {
         >
           {/* Brand */}
           <div
-            className={`flex h-[70px] shrink-0 items-center border-b px-6 ${
+            className={`flex h-17.5 shrink-0 items-center border-b px-6 ${
               darkMode ? "border-slate-800" : "border-gray-100"
             }`}
           >
             <div>
-              <div className="mb-1 h-[6px] w-[44px] bg-[#f2383d]" />
+              <div className="mb-1 h-1.5 w-11 bg-[#f2383d]" />
               <span className="text-[23px] font-extrabold tracking-tight text-black">
                 Proliant Data
               </span>
@@ -240,7 +240,7 @@ export default function CandidateDashboard() {
         <div className="flex min-w-0 flex-1 flex-col">
           {/* TOP BAR */}
           <header
-            className={`sticky top-0 z-20 flex h-[70px] items-center gap-4 border-b px-5 sm:px-8 ${
+            className={`sticky top-0 z-20 flex h-17.5 items-center gap-4 border-b px-5 sm:px-8 ${
               darkMode
                 ? "border-slate-800 bg-slate-900"
                 : "border-gray-200 bg-white"
@@ -257,7 +257,7 @@ export default function CandidateDashboard() {
 
             {/* Search */}
             <div
-              className={`flex h-[42px] w-full max-w-[490px] items-center gap-3 rounded-full px-4 ${
+              className={`flex h-10.5 w-full max-w-122.5 items-center gap-3 rounded-full px-4 ${
                 darkMode ? "bg-slate-800" : "bg-[#f3f5f9]"
               }`}
             >
@@ -314,7 +314,7 @@ export default function CandidateDashboard() {
                 </span>
 
                 <span className="hidden text-left sm:block">
-                  <span className="block max-w-[150px] truncate text-sm font-semibold">
+                  <span className="block max-w-37.5 truncate text-sm font-semibold">
                     {candidate.name}
                   </span>
                   <span className="block text-xs text-slate-500">
@@ -333,22 +333,22 @@ export default function CandidateDashboard() {
           {/* DASHBOARD CONTENT */}
           <main className="mx-auto w-full max-w-[1600px] flex-1 px-5 py-7 sm:px-8 sm:py-9">
             {/* Greeting: name on the same line */}
-            <section className="relative mb-6 flex min-h-[105px] items-center justify-between gap-5 overflow-hidden">
+            <section className="relative mb-6 flex min-h-26.25 items-center justify-between gap-5 overflow-hidden">
               <div className="relative z-10 min-w-0">
                 <h1 className="text-[27px] font-bold leading-tight tracking-tight sm:text-[32px]">
                   Good morning,{" "}
                   <span className="text-[#f2383d]">{candidate.name}!</span>
                 </h1>
 
-                <p className="mt-2 max-w-[620px] text-sm leading-6 text-slate-500 sm:text-base">
+                <p className="mt-2 max-w-155 text-sm leading-6 text-slate-500 sm:text-base">
                   Track your application progress and discover new opportunities
                   that match your skills and experience.
                 </p>
               </div>
 
               {/* Illustration placeholder */}
-              <div className="hidden h-[115px] w-[205px] shrink-0 items-center justify-center rounded-full bg-red-50/80 md:flex">
-                <div className="relative flex h-[92px] w-[150px] items-end justify-center">
+              <div className="hidden h-28.75 w-51.25 shrink-0 items-center justify-center rounded-full bg-red-50/80 md:flex">
+                <div className="relative flex h-23 w-37.5 items-end justify-center">
                   <div className="absolute bottom-0 left-1 h-12 w-8 rounded-t-full bg-blue-200/80" />
                   <div className="absolute bottom-0 right-1 h-14 w-7 rounded-t-full bg-emerald-200/80" />
                   <div className="relative z-10 flex h-16 w-16 flex-col items-center">
@@ -369,7 +369,7 @@ export default function CandidateDashboard() {
               }`}
             >
               <div className="flex flex-wrap items-center gap-4">
-                <div className="flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-2xl bg-red-50 text-[#f2383d]">
+                <div className="flex h-15 w-15 shrink-0 items-center justify-center rounded-2xl bg-red-50 text-[#f2383d]">
                   <BriefcaseBusiness size={27} />
                 </div>
 
@@ -423,7 +423,7 @@ export default function CandidateDashboard() {
               }`}
             >
               <div className="mb-7 flex items-center gap-3">
-                <div className="flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-xl bg-red-50 text-[#f2383d]">
+                <div className="flex h-12.5 w-12.5 shrink-0 items-center justify-center rounded-xl bg-red-50 text-[#f2383d]">
                   <GitBranch size={26} />
                 </div>
 
@@ -442,14 +442,14 @@ export default function CandidateDashboard() {
                     {/* Connecting line */}
                     {index < stages.length - 1 && (
                       <div
-                        className={`absolute left-[62%] top-[22px] hidden h-[2px] w-[76%] md:block ${
+                        className={`absolute left-[62%] top-5.5 hidden h-0.5 w-[76%] md:block ${
                           index < 2 ? "bg-emerald-500" : "bg-slate-200"
                         }`}
                       />
                     )}
 
                     <div
-                      className={`relative z-10 mx-auto mb-3 flex h-[44px] w-[44px] items-center justify-center rounded-full border-[4px] ${
+                      className={`relative z-10 mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full border-4 ${
                         stage.state === "completed"
                           ? "border-emerald-100 bg-emerald-500 text-white"
                           : stage.state === "progress"
@@ -508,7 +508,7 @@ export default function CandidateDashboard() {
             >
               <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-[42px] w-[42px] items-center justify-center rounded-xl bg-red-50 text-[#f2383d]">
+                  <div className="flex h-10.5 w-10.5 items-center justify-center rounded-xl bg-red-50 text-[#f2383d]">
                     <Sparkles size={24} />
                   </div>
 
@@ -548,7 +548,7 @@ export default function CandidateDashboard() {
                       }`}
                     >
                       <div className="flex items-start gap-3">
-                        <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-500">
+                        <div className="flex h-10.5 w-10.5 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-500">
                           <JobIcon size={22} />
                         </div>
 
@@ -639,7 +639,7 @@ export default function CandidateDashboard() {
               }`}
             >
               <div className="flex items-center gap-4">
-                <div className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full bg-[#101c30] text-white">
+                <div className="flex h-11.5 w-11.5 shrink-0 items-center justify-center rounded-full bg-[#101c30] text-white">
                   <Search size={23} />
                 </div>
 

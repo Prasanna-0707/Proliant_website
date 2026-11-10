@@ -1,1755 +1,1071 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 
+import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
-  Users,
+  Activity,
+  ArrowRight,
+  BriefcaseBusiness,
+  CalendarDays,
+  CalendarCheck,
+  Clock3,
+  FileText,
+  RefreshCw,
   ShieldCheck,
   Settings,
-  ClipboardList,
-  UserRoundCog,
-  ArrowRight,
-  CalendarDays,
-  Activity,
   UserCheck,
-  UserX,
+  Users,
+  UserRoundCheck,
 } from "lucide-react";
 
-const adminQuickActions = [
-  {
-    title: "Manage Users",
-    description: "View and manage portal users",
-    href: "/users",
-    icon: Users,
-    iconColor: "text-blue-600",
-    wrapperColor:
-      "bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/30 dark:hover:bg-blue-950/50",
-  },
-  {
-    title: "Roles & Permissions",
-    description: "Manage roles and access permissions",
-    href: "/roles-permissions",
-    icon: ShieldCheck,
-    iconColor: "text-green-600",
-    wrapperColor:
-      "bg-green-50 hover:bg-green-100 dark:bg-green-950/30 dark:hover:bg-green-950/50",
-  },
-  {
-    title: "Audit Logs",
-    description: "Review recent system activities",
-    href: "/audit-logs",
-    icon: ClipboardList,
-    iconColor: "text-purple-600",
-    wrapperColor:
-      "bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/30 dark:hover:bg-purple-950/50",
-  },
-  {
-    title: "System Settings",
-    description: "Configure portal settings",
-    href: "/settings",
-    icon: Settings,
-    iconColor: "text-orange-600",
-    wrapperColor:
-      "bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/30 dark:hover:bg-orange-950/50",
-  },
-];
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
-function getAdminName() {
-  try {
-    const storedUser = localStorage.getItem("adminUser");
+const getList = (result, keys = []) => {
+  if (Array.isArray(result)) return result;
 
-    if (!storedUser) {
-      return "Administrator";
-    }
-
-    const user = JSON.parse(storedUser);
-
-    return (
-      user.name ||
-      user.fullName ||
-      user.firstName ||
-      user.username ||
-      user.email?.split("@")[0] ||
-      "Administrator"
-    );
-  } catch {
-    return "Administrator";
+  for (const key of keys) {
+    if (Array.isArray(result?.[key])) return result[key];
   }
-}
 
-function AdminDashboard() {
-  const [adminStats, setAdminStats] = useState({
-    totalUsers: null,
-    activeUsers: null,
-    roles: null,
-    recentActivities: [],
-  });
+  if (Array.isArray(result?.data)) return result.data;
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  return [];
+};
 
-  const adminName = getAdminName();
+const getId = (item) =>
+  item?._id || item?.id || item?.userId || item?.candidateId;
 
-  /*
-   * Admin dashboard overview.
-   *
-   * Admin statistics and activity data can be connected
-   * to the corresponding backend endpoints when available.
-   *
-   * No recruitment API data is used on this dashboard.
-   */
+const getName = (item) =>
+  item?.name ||
+  item?.fullName ||
+  [item?.firstName, item?.lastName].filter(Boolean).join(" ") ||
+  item?.candidateName ||
+  item?.user?.name ||
+  item?.candidate?.name ||
+  "Unknown";
 
-  useEffect(() => {
-    // Admin dashboard data will be fetched here
-    // when the admin statistics and activity APIs are available.
-  }, []);
+const getRole = (item) =>
+  String(
+    item?.role?.name ||
+      item?.role ||
+      item?.userRole ||
+      item?.userType ||
+      item?.designation ||
+      ""
+  ).toLowerCase();
 
-  const overviewCards = [
-    {
-      title: "Total Users",
-      value: adminStats.totalUsers,
-      description: "Registered portal users",
-      icon: Users,
-      iconBg:
-        "bg-blue-50 dark:bg-blue-950/40",
-      iconText:
-        "text-blue-600 dark:text-blue-400",
-    },
-    {
-      title: "Active Users",
-      value: adminStats.activeUsers,
-      description: "Currently active users",
-      icon: UserCheck,
-      iconBg:
-        "bg-green-50 dark:bg-green-950/40",
-      iconText:
-        "text-green-600 dark:text-green-400",
-    },
-    {
-      title: "Roles & Permissions",
-      value: adminStats.roles,
-      description: "Configured access roles",
-      icon: ShieldCheck,
-      iconBg:
-        "bg-purple-50 dark:bg-purple-950/40",
-      iconText:
-        "text-purple-600 dark:text-purple-400",
-    },
-    {
-      title: "Recent Activities",
-      value: adminStats.recentActivities.length,
-      description: "Recorded system activities",
-      icon: Activity,
-      iconBg:
-        "bg-orange-50 dark:bg-orange-950/40",
-      iconText:
-        "text-orange-600 dark:text-orange-400",
-    },
-  ];
+const getStatus = (item) =>
+  String(
+    item?.status ||
+      item?.accountStatus ||
+      item?.applicationStatus ||
+      item?.interviewStatus ||
+      "Unknown"
+  );
+
+const isActive = (item) => {
+  const status = getStatus(item).toLowerCase();
 
   return (
-    <div
-      className="
-        relative min-h-full
-        bg-slate-50 px-5 py-6
-        text-slate-900 transition-colors
-        dark:bg-slate-950 dark:text-slate-100
-        sm:px-6 sm:py-7 xl:px-8
-      "
-    >
-      <div className="mx-auto w-full max-w-375">
+    item?.isActive === true ||
+    item?.active === true ||
+    ["active", "enabled", "approved"].includes(status)
+  );
+};
 
-        {/* PAGE HEADER */}
+const formatDate = (value) => {
+  if (!value) return "—";
 
-        <div className="mb-6 flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-          <div>
-            <p className="mb-1 text-sm font-semibold uppercase tracking-wide text-[#EF3B3A]">
-              Administrator
-            </p>
+  const date = new Date(value);
 
-            <h1 className="text-3xl font-bold tracking-tight text-[#071737] dark:text-white">
-              Welcome back,{" "}
-              <span className="text-[#EF3B3A]">
-                {adminName}!
-              </span>
-            </h1>
+  if (Number.isNaN(date.getTime())) return "—";
 
-            <p className="mt-1.5 text-base text-slate-500 dark:text-slate-400">
-              Manage users, access permissions, workflow
-              templates and system settings.
-            </p>
-          </div>
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
 
-          <div
-            className="
-              flex w-full items-center gap-3
-              rounded-xl border border-white/80
-              bg-white/80 px-4 py-3 shadow-sm
-              backdrop-blur-sm dark:border-slate-800
-              dark:bg-slate-900/80 xl:w-86.25
-            "
-          >
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-50 text-[#EF3B3A] dark:bg-red-950/40">
-              <CalendarDays size={22} />
-            </div>
+const formatDateTime = (value) => {
+  if (!value) return "—";
 
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-[#071737] dark:text-white">
-                {new Date().toLocaleDateString("en-US", {
-                  weekday: "long",
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })}
-              </p>
+  const date = new Date(value);
 
-              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                Have a productive day!
-              </p>
-            </div>
-          </div>
+  if (Number.isNaN(date.getTime())) return "—";
+
+  return date.toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+const getInterviewDate = (item) =>
+  item?.scheduledAt ||
+  item?.scheduledDate ||
+  item?.interviewDate ||
+  item?.interview?.scheduledAt ||
+  item?.interview?.date ||
+  item?.interviewSchedule?.date ||
+  item?.scheduledInterviewDate ||
+  item?.date ||
+  null;
+
+const getInterviewer = (item) =>
+  item?.interviewer?.name ||
+  item?.interviewerName ||
+  item?.interviewer?.fullName ||
+  item?.assignedInterviewer?.name ||
+  item?.interview?.interviewer?.name ||
+  item?.interview?.interviewerName ||
+  "Not assigned";
+
+const getPosition = (item) =>
+  item?.jobTitle ||
+  item?.position ||
+  item?.appliedFor ||
+  item?.job?.title ||
+  item?.job?.jobTitle ||
+  item?.title ||
+  "—";
+
+const getInterviewStatus = (item) => {
+  const rawStatus =
+    item?.interviewStatus ||
+    item?.interview?.status ||
+    item?.interviewSchedule?.status ||
+    item?.status ||
+    "";
+
+  const normalized = String(rawStatus).toLowerCase();
+
+  if (
+    normalized.includes("complete") ||
+    normalized.includes("evaluated")
+  ) {
+    return "Completed";
+  }
+
+  if (
+    normalized.includes("cancel") ||
+    normalized.includes("reject")
+  ) {
+    return "Cancelled";
+  }
+
+  if (normalized.includes("reschedul")) {
+    return "Rescheduled";
+  }
+
+  if (
+    normalized.includes("progress") ||
+    normalized.includes("ongoing")
+  ) {
+    return "In Progress";
+  }
+
+  return "Scheduled";
+};
+
+const getInterviewRecords = (items) => {
+  const records = [];
+
+  items.forEach((item) => {
+    const interviewObjects = [
+      item?.interview,
+      item?.interviewSchedule,
+      ...(Array.isArray(item?.interviews) ? item.interviews : []),
+      ...(Array.isArray(item?.interviewSchedules)
+        ? item.interviewSchedules
+        : []),
+    ].filter(Boolean);
+
+    if (interviewObjects.length > 0) {
+      interviewObjects.forEach((interview, index) => {
+        const date = getInterviewDate(interview) || getInterviewDate(item);
+
+        if (!date) return;
+
+        records.push({
+          id: `${getId(item) || getName(item)}-${index}`,
+          candidate: getName(item),
+          position: getPosition(item),
+          interviewer: getInterviewer({
+            ...item,
+            ...interview,
+          }),
+          date,
+          status: getInterviewStatus(interview),
+        });
+      });
+
+      return;
+    }
+
+    const date = getInterviewDate(item);
+
+    if (!date) return;
+
+    records.push({
+      id: getId(item) || `${getName(item)}-${date}`,
+      candidate: getName(item),
+      position: getPosition(item),
+      interviewer: getInterviewer(item),
+      date,
+      status: getInterviewStatus(item),
+    });
+  });
+
+  return records.sort((a, b) => new Date(b.date) - new Date(a.date));
+};
+
+const getActivityTitle = (item) =>
+  item?.title ||
+  item?.action ||
+  item?.event ||
+  item?.activity ||
+  item?.actionType ||
+  "System activity";
+
+const getActivityDescription = (item) =>
+  item?.description ||
+  item?.details ||
+  item?.message ||
+  item?.target ||
+  item?.entity ||
+  "Activity recorded";
+
+const getActivityDate = (item) =>
+  item?.createdAt ||
+  item?.timestamp ||
+  item?.date ||
+  item?.updatedAt;
+
+const getActivityUser = (item) =>
+  item?.performedBy?.name ||
+  item?.user?.name ||
+  item?.actor?.name ||
+  item?.performedByName ||
+  item?.userName ||
+  "System";
+
+const getInitials = (name) =>
+  String(name || "U")
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || "")
+    .join("");
+
+const statusClasses = (status) => {
+  const normalized = String(status).toLowerCase();
+
+  if (
+    normalized.includes("complete") ||
+    normalized.includes("active") ||
+    normalized.includes("approved") ||
+    normalized.includes("selected")
+  ) {
+    return "bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-950/40 dark:text-green-300";
+  }
+
+  if (
+    normalized.includes("cancel") ||
+    normalized.includes("reject") ||
+    normalized.includes("inactive") ||
+    normalized.includes("disabled")
+  ) {
+    return "bg-red-50 text-red-700 ring-red-600/20 dark:bg-red-950/40 dark:text-red-300";
+  }
+
+  if (
+    normalized.includes("progress") ||
+    normalized.includes("reschedul")
+  ) {
+    return "bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-950/40 dark:text-blue-300";
+  }
+
+  return "bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-950/40 dark:text-amber-300";
+};
+
+function StatCard({
+  title,
+  value,
+  description,
+  icon: Icon,
+  iconColor,
+  iconBackground,
+  loading,
+  href,
+}) {
+  const content = (
+    <div className="flex h-full items-start justify-between gap-3">
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          {title}
+        </p>
+        <p className="mt-3 text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+          {loading ? "..." : value ?? "—"}
+        </p>
+        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          {description}
+        </p>
+      </div>
+      <div
+        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${iconBackground} ${iconColor}`}
+      >
+        <Icon size={23} />
+      </div>
+    </div>
+  );
+
+  const className =
+    "rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900";
+
+  if (href) {
+    return (
+      <Link to={href} className={className}>
+        {content}
+      </Link>
+    );
+  }
+
+  return <div className={className}>{content}</div>;
+}
+
+function SectionHeader({ icon: Icon, title, description, action }) {
+  return (
+    <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-50 text-[#EF3B3A] dark:bg-red-950/40">
+          <Icon size={21} />
         </div>
-
-        {/* ERROR MESSAGE */}
-
-        {error && (
-          <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 dark:border-red-900/50 dark:bg-red-950/30">
-            <p className="text-sm font-medium text-red-600 dark:text-red-400">
-              {error}
-            </p>
-          </div>
-        )}
-
-        {/* ADMIN OVERVIEW CARDS */}
-
-        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {overviewCards.map((stat) => {
-            const Icon = stat.icon;
-
-            return (
-              <div
-                key={stat.title}
-                className="
-                  rounded-xl border border-white/90
-                  bg-white/85 p-4 shadow-sm
-                  backdrop-blur-sm transition-colors
-                  dark:border-slate-800
-                  dark:bg-slate-900/85
-                "
-              >
-                <div className="flex items-start gap-4">
-                  <div
-                    className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-xl ${stat.iconBg} ${stat.iconText}`}
-                  >
-                    <Icon size={27} strokeWidth={2} />
-                  </div>
-
-                  <div>
-                    <p className="text-sm font-semibold text-[#071737] dark:text-white">
-                      {stat.title}
-                    </p>
-
-                    <p className="mt-1 text-3xl font-bold leading-none text-[#071737] dark:text-white">
-                      {isLoading
-                        ? "..."
-                        : stat.value ?? "—"}
-                    </p>
-
-                    <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                      {stat.description}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* MAIN ADMIN DASHBOARD CONTENT */}
-
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-
-          {/* QUICK ACTIONS */}
-
-          <section
-            className="
-              overflow-hidden rounded-xl
-              border border-white/90 bg-white/85
-              p-5 shadow-sm backdrop-blur-sm
-              dark:border-slate-800 dark:bg-slate-900/85
-              xl:col-span-5
-            "
-          >
-            <div className="mb-5 flex items-start gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-[#EF3B3A] dark:bg-red-950/40">
-                <UserRoundCog size={21} />
-              </div>
-
-              <div>
-                <h2 className="text-base font-bold text-[#071737] dark:text-white">
-                  Administration
-                </h2>
-
-                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                  Manage your portal configuration and access.
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {adminQuickActions.map((action) => {
-                const Icon = action.icon;
-
-                return (
-                  <Link
-                    key={action.title}
-                    to={action.href}
-                    className={`group flex items-center gap-3 rounded-xl px-3 py-3 transition-all ${action.wrapperColor}`}
-                  >
-                    <span
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white dark:bg-slate-800 ${action.iconColor}`}
-                    >
-                      <Icon size={19} />
-                    </span>
-
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-bold text-[#071737] dark:text-white">
-                        {action.title}
-                      </span>
-
-                      <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">
-                        {action.description}
-                      </span>
-                    </span>
-
-                    <ArrowRight
-                      size={18}
-                      className={`${action.iconColor} transition-transform group-hover:translate-x-0.5`}
-                    />
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
-
-          {/* RECENT SYSTEM ACTIVITY */}
-
-          <section
-            className="
-              overflow-hidden rounded-xl
-              border border-white/90 bg-white/85
-              shadow-sm backdrop-blur-sm
-              dark:border-slate-800 dark:bg-slate-900/85
-              xl:col-span-7
-            "
-          >
-            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400">
-                  <Activity size={21} />
-                </div>
-
-                <div>
-                  <h2 className="text-base font-bold text-[#071737] dark:text-white">
-                    Recent System Activity
-                  </h2>
-
-                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                    Latest administrative activities.
-                  </p>
-                </div>
-              </div>
-
-              <Link
-                to="/audit-logs"
-                className="flex items-center gap-1 text-sm font-semibold text-[#EF3B3A] hover:text-red-600"
-              >
-                View all
-                <ArrowRight size={16} />
-              </Link>
-            </div>
-
-            <div className="p-4">
-              {isLoading ? (
-                <div className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
-                  Loading activities...
-                </div>
-              ) : adminStats.recentActivities.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-slate-200 px-4 py-10 text-center dark:border-slate-700">
-                  <Activity
-                    size={30}
-                    className="mx-auto mb-3 text-slate-400"
-                  />
-
-                  <p className="text-sm font-semibold text-[#071737] dark:text-white">
-                    No recent activities found
-                  </p>
-
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    System activity details will appear here
-                    when available.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {adminStats.recentActivities.map(
-                    (activity, index) => (
-                      <div
-                        key={activity.id || index}
-                        className="
-                          flex items-start gap-3
-                          rounded-xl border border-slate-100
-                          bg-white px-3 py-3
-                          dark:border-slate-800
-                          dark:bg-slate-800/50
-                        "
-                      >
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">
-                          <Activity size={18} />
-                        </div>
-
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-[#071737] dark:text-white">
-                            {activity.title || "System activity"}
-                          </p>
-
-                          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                            {activity.description || "-"}
-                          </p>
-
-                          <p className="mt-1 text-[11px] text-slate-400">
-                            {activity.date || "-"}
-                          </p>
-                        </div>
-                      </div>
-                    )
-                  )}
-                </div>
-              )}
-            </div>
-          </section>
-
-          {/* SYSTEM OVERVIEW */}
-
-          <section
-            className="
-              overflow-hidden rounded-xl
-              border border-white/90 bg-white/85
-              shadow-sm backdrop-blur-sm
-              dark:border-slate-800 dark:bg-slate-900/85
-              xl:col-span-12
-            "
-          >
-            <div className="border-b border-slate-100 px-5 py-4 dark:border-slate-800">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-50 text-green-600 dark:bg-green-950/40 dark:text-green-400">
-                  <ShieldCheck size={21} />
-                </div>
-
-                <div>
-                  <h2 className="text-base font-bold text-[#071737] dark:text-white">
-                    System Overview
-                  </h2>
-
-                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                    Manage access, security and system configuration.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3">
-              <Link
-                to="/users"
-                className="
-                  flex items-center gap-3 rounded-xl
-                  border border-slate-100 bg-white p-4
-                  transition hover:border-red-200 hover:bg-red-50/40
-                  dark:border-slate-800 dark:bg-slate-800/50
-                  dark:hover:border-red-900/50
-                "
-              >
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">
-                  <Users size={21} />
-                </div>
-
-                <div>
-                  <p className="text-sm font-bold text-[#071737] dark:text-white">
-                    User Management
-                  </p>
-
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    Manage portal users
-                  </p>
-                </div>
-              </Link>
-
-              <Link
-                to="/roles-permissions"
-                className="
-                  flex items-center gap-3 rounded-xl
-                  border border-slate-100 bg-white p-4
-                  transition hover:border-red-200 hover:bg-red-50/40
-                  dark:border-slate-800 dark:bg-slate-800/50
-                  dark:hover:border-red-900/50
-                "
-              >
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-green-50 text-green-600 dark:bg-green-950/40 dark:text-green-400">
-                  <ShieldCheck size={21} />
-                </div>
-
-                <div>
-                  <p className="text-sm font-bold text-[#071737] dark:text-white">
-                    Access Control
-                  </p>
-
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    Configure roles and permissions
-                  </p>
-                </div>
-              </Link>
-
-              <Link
-                to="/settings"
-                className="
-                  flex items-center gap-3 rounded-xl
-                  border border-slate-100 bg-white p-4
-                  transition hover:border-red-200 hover:bg-red-50/40
-                  dark:border-slate-800 dark:bg-slate-800/50
-                  dark:hover:border-red-900/50
-                "
-              >
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-50 text-orange-600 dark:bg-orange-950/40 dark:text-orange-400">
-                  <Settings size={21} />
-                </div>
-
-                <div>
-                  <p className="text-sm font-bold text-[#071737] dark:text-white">
-                    System Settings
-                  </p>
-
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    Configure portal settings
-                  </p>
-                </div>
-              </Link>
-            </div>
-          </section>
+        <div>
+          <h2 className="font-bold text-slate-900 dark:text-white">
+            {title}
+          </h2>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            {description}
+          </p>
         </div>
       </div>
+      {action}
     </div>
   );
 }
 
+function EmptyState({ icon: Icon, title, description }) {
+  return (
+    <div className="px-5 py-12 text-center">
+      <Icon size={30} className="mx-auto mb-3 text-slate-400" />
+      <p className="text-sm font-semibold text-slate-800 dark:text-white">
+        {title}
+      </p>
+      <p className="mx-auto mt-1 max-w-md text-xs text-slate-500 dark:text-slate-400">
+        {description}
+      </p>
+    </div>
+  );
+}
+
+function AdminDashboard() {
+  const [data, setData] = useState({
+    users: [],
+    roles: [],
+    jobs: [],
+    candidates: [],
+    interviews: [],
+    activities: [],
+  });
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [adminName, setAdminName] = useState("Administrator");
+
+  useEffect(() => {
+    try {
+      const storedUser = JSON.parse(
+        localStorage.getItem("adminUser") || "{}"
+      );
+
+      setAdminName(
+        storedUser.name ||
+          storedUser.fullName ||
+          storedUser.firstName ||
+          storedUser.username ||
+          storedUser.email?.split("@")[0] ||
+          "Administrator"
+      );
+    } catch {
+      setAdminName("Administrator");
+    }
+  }, []);
+
+  const fetchDashboardData = useCallback(async () => {
+    setLoading(true);
+    setError("");
+
+    const token = localStorage.getItem("adminToken");
+
+    const headers = token
+      ? { Authorization: `Bearer ${token}` }
+      : {};
+
+    const request = async (path) => {
+      const response = await fetch(`${API_BASE_URL}${path}`, {
+        headers,
+      });
+
+      if (!response.ok) {
+        const apiError = new Error(`Request failed: ${path}`);
+        apiError.status = response.status;
+        throw apiError;
+      }
+
+      return response.json();
+    };
+
+    const safeRequest = async (path, keys = []) => {
+      try {
+        return getList(await request(path), keys);
+      } catch (requestError) {
+        console.warn(
+          `Dashboard data unavailable for ${path}:`,
+          requestError.message
+        );
+        return null;
+      }
+    };
+
+    try {
+      const [
+        users,
+        roles,
+        jobs,
+        candidates,
+        interviewData,
+        activities,
+      ] = await Promise.all([
+        safeRequest("/users", ["users", "data", "results"]),
+        safeRequest("/roles-permissions", [
+          "roles",
+          "data",
+          "results",
+        ]),
+        safeRequest("/jobs", ["jobs", "data", "results"]),
+        safeRequest("/candidates", [
+          "candidates",
+          "applications",
+          "data",
+          "results",
+        ]),
+        safeRequest("/interviews", [
+          "interviews",
+          "data",
+          "results",
+        ]),
+        safeRequest("/audit-logs", [
+          "logs",
+          "activities",
+          "auditLogs",
+          "data",
+          "results",
+        ]),
+      ]);
+
+      const candidateList = candidates || [];
+      const interviewsFromCandidates =
+        getInterviewRecords(candidateList);
+
+      const directInterviews = (interviewData || [])
+        .map((item, index) => {
+          const date = getInterviewDate(item);
+
+          if (!date) return null;
+
+          return {
+            id: getId(item) || `interview-${index}`,
+            candidate:
+              item?.candidate?.name ||
+              item?.candidateName ||
+              item?.applicant?.name ||
+              getName(item),
+            position: getPosition(item),
+            interviewer: getInterviewer(item),
+            date,
+            status: getInterviewStatus(item),
+          };
+        })
+        .filter(Boolean);
+
+      const combinedInterviews =
+        directInterviews.length > 0
+          ? directInterviews
+          : interviewsFromCandidates;
+
+      setData({
+        users: users || [],
+        roles: roles || [],
+        jobs: jobs || [],
+        candidates: candidateList,
+        interviews: combinedInterviews,
+        activities: activities || [],
+      });
+
+      setLastUpdated(new Date());
+
+      const hasApiFailure = [
+        users,
+        roles,
+        jobs,
+        candidates,
+        interviewData,
+        activities,
+      ].some((result) => result === null);
+
+      if (hasApiFailure) {
+        setError(
+          "Some dashboard information could not be loaded. Please check the API routes and backend server."
+        );
+      }
+    } catch (fetchError) {
+      console.error("Admin dashboard error:", fetchError);
+      setError("Dashboard data could not be loaded. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
+
+  const users = data.users;
+
+  const hrUsers = users.filter((user) => {
+    const role = getRole(user);
+
+    return (
+      role === "hr" ||
+      role.includes("human resource") ||
+      role.includes("recruiter")
+    );
+  });
+
+  const activeUsers = users.filter(isActive).length;
+
+  const activeJobs = data.jobs.filter((job) => {
+    const status = getStatus(job).toLowerCase();
+
+    return (
+      job?.isActive === true ||
+      ["active", "open", "published"].includes(status)
+    );
+  }).length;
+
+  const closedJobs = data.jobs.filter((job) =>
+  ["closed", "inactive", "archived", "expired"].includes(
+    getStatus(job).toLowerCase()
+  )
+  ).length;
+
+const pendingApplications = data.candidates.filter((candidate) =>
+  ["pending", "applied", "under review", "screening"].includes(
+    getStatus(candidate).toLowerCase()
+  )
+  ).length;
+
+const shortlistedApplications = data.candidates.filter((candidate) =>
+  ["shortlisted", "selected", "interview scheduled"].includes(
+    getStatus(candidate).toLowerCase()
+  )
+  ).length;
+
+const rejectedApplications = data.candidates.filter((candidate) =>
+  getStatus(candidate).toLowerCase().includes("reject")
+  ).length;
+
+  const upcomingInterviews = data.interviews.filter((interview) => {
+    const date = new Date(interview.date);
+
+    return (
+      !Number.isNaN(date.getTime()) &&
+      date >= new Date() &&
+      !["Completed", "Cancelled"].includes(interview.status)
+    );
+  });
+
+  const sortedInterviews = [...data.interviews].sort(
+    (a, b) => new Date(a.date) - new Date(b.date)
+  );
+
+  const sortedActivities = [...data.activities]
+    .sort((a, b) => {
+      const dateA = new Date(getActivityDate(a) || 0).getTime();
+      const dateB = new Date(getActivityDate(b) || 0).getTime();
+      return dateB - dateA;
+    })
+    .slice(0, 6);
+
+  const statCards = [
+    {
+      title: "Total Users",
+      value: users.length,
+      description: "Registered portal accounts",
+      icon: Users,
+      iconColor: "text-blue-600 dark:text-blue-400",
+      iconBackground: "bg-blue-50 dark:bg-blue-950/40",
+      href: "/admin/users",
+    },
+    {
+      title: "Active Users",
+      value: activeUsers,
+      description: "Enabled accounts",
+      icon: UserCheck,
+      iconColor: "text-green-600 dark:text-green-400",
+      iconBackground: "bg-green-50 dark:bg-green-950/40",
+      href: "/admin/users",
+    },
+    {
+      title: "HR Team",
+      value: hrUsers.length,
+      description: "HR and recruitment users",
+      icon: UserRoundCheck,
+      iconColor: "text-purple-600 dark:text-purple-400",
+      iconBackground: "bg-purple-50 dark:bg-purple-950/40",
+      href: "/admin/users",
+    },
+    {
+      title: "Active Jobs",
+      value: activeJobs,
+      description: "Currently open or published",
+      icon: BriefcaseBusiness,
+      iconColor: "text-orange-600 dark:text-orange-400",
+      iconBackground: "bg-orange-50 dark:bg-orange-950/40",
+      href: "/hr/jobs",
+    },
+    {
+      title: "Total Applications",
+      value: data.candidates.length,
+      description: "Candidate application records",
+      icon: FileText,
+      iconColor: "text-cyan-600 dark:text-cyan-400",
+      iconBackground: "bg-cyan-50 dark:bg-cyan-950/40",
+      href: "/hr/candidates",
+    },
+    {
+      title: "Scheduled Interviews",
+      value: upcomingInterviews.length,
+      description: "Upcoming interview sessions",
+      icon: CalendarCheck,
+      iconColor: "text-red-600 dark:text-red-400",
+      iconBackground: "bg-red-50 dark:bg-red-950/40",
+    },
+  ];
+
+  const quickActions = [
+    {
+      title: "Manage Users",
+      description: "Manage HR and portal accounts",
+      href: "/admin/users",
+      icon: Users,
+    },
+    {
+      title: "Roles & Permissions",
+      description: "Review role access",
+      href: "/admin/roles-permissions",
+      icon: ShieldCheck,
+    },
+    {
+      title: "System Settings",
+      description: "Configure portal settings",
+      href: "/admin/settings",
+      icon: Settings,
+    },
+    {
+      title: "Audit Logs",
+      description: "Review system activities",
+      href: "/admin/audit-logs",
+      icon: Activity,
+    },
+  ];
+
+  return (
+    <main className="min-h-full bg-slate-50 text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100 sm:px-2 sm:py-2 xl:px-2">
+      <div className="w-full">
+        <div className="mb-7 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            {/* <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-[#EF3B3A]">
+              Administrator Portal
+            </p> */}
+            <h1 className="text-2xl font-bold tracking-tight text-[#071737] dark:text-white sm:text-3xl">
+              Welcome back, {adminName}
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm text-slate-500 dark:text-slate-400">
+              Monitor the HR team, recruitment progress, interviews and portal activity.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
+              <CalendarDays className="text-[#EF3B3A]" size={21} />
+              <div>
+                <p className="text-sm font-semibold">
+                  {new Date().toLocaleDateString("en-IN", {
+                    weekday: "short",
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </p>
+                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                  {lastUpdated
+                    ? `Updated ${lastUpdated.toLocaleTimeString("en-IN", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}`
+                    : "Dashboard overview"}
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={fetchDashboardData}
+              disabled={loading}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#EF3B3A] px-4 py-3 text-sm font-semibold text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <RefreshCw
+                size={17}
+                className={loading ? "animate-spin" : ""}
+              />
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        {error && (
+          <div className="mb-5 flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 dark:border-red-900/50 dark:bg-red-950/30 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-red-700 dark:text-red-300">
+              {error}
+            </p>
+            <button
+              type="button"
+              onClick={fetchDashboardData}
+              className="text-sm font-semibold text-red-700 underline dark:text-red-300"
+            >
+              Try again
+            </button>
+          </div>
+        )}
+
+        <section className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+          {statCards.map((stat) => (
+            <StatCard key={stat.title} {...stat} loading={loading} />
+          ))}
+        </section>
+
+        <section className="mb-8 grid grid-cols-1 gap-6 xl:grid-cols-12">
+          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 xl:col-span-8">
+            <SectionHeader
+              icon={CalendarCheck}
+              title="Scheduled Interviews"
+              description="View scheduled and completed interviews across the hiring portal"
+              action={
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                  View only
+                </span>
+              }
+            />
+
+            {loading ? (
+              <div className="px-5 py-12 text-center text-sm text-slate-500">
+                Loading interviews...
+              </div>
+            ) : sortedInterviews.length === 0 ? (
+              <EmptyState
+                icon={CalendarDays}
+                title="No interview records found"
+                description="Interview information will appear here when the connected API returns scheduled or completed interviews."
+              />
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-190 text-left text-sm">
+                  <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+                    <tr>
+                      <th className="px-5 py-3 font-semibold">Candidate</th>
+                      <th className="px-5 py-3 font-semibold">Position</th>
+                      <th className="px-5 py-3 font-semibold">Interviewer</th>
+                      <th className="px-5 py-3 font-semibold">Date & Time</th>
+                      <th className="px-5 py-3 font-semibold">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {sortedInterviews.slice(0, 10).map((interview) => (
+                      <tr
+                        key={interview.id}
+                        className="transition hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
+                      >
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-50 text-xs font-bold text-[#EF3B3A] dark:bg-red-950/40">
+                              {getInitials(interview.candidate)}
+                            </div>
+                            <span className="font-semibold text-slate-800 dark:text-slate-100">
+                              {interview.candidate}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4 text-slate-600 dark:text-slate-300">
+                          {interview.position}
+                        </td>
+                        <td className="px-5 py-4 text-slate-600 dark:text-slate-300">
+                          {interview.interviewer}
+                        </td>
+                        <td className="whitespace-nowrap px-5 py-4 text-slate-600 dark:text-slate-300">
+                          {formatDateTime(interview.date)}
+                        </td>
+                        <td className="px-5 py-4">
+                          <span
+                            className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${statusClasses(interview.status)}`}
+                          >
+                            {interview.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {sortedInterviews.length > 10 && (
+                  <p className="border-t border-slate-100 px-5 py-3 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                    Showing 10 of {sortedInterviews.length} interview records.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 xl:col-span-4">
+            <SectionHeader
+              icon={UserRoundCheck}
+              title="HR Team Overview"
+              description="HR accounts and current status"
+              action={
+                <Link
+                  to="/admin/users"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#EF3B3A] hover:text-red-600"
+                >
+                  View all <ArrowRight size={14} />
+                </Link>
+              }
+            />
+
+            {loading ? (
+              <div className="px-5 py-12 text-center text-sm text-slate-500">
+                Loading HR team...
+              </div>
+            ) : hrUsers.length === 0 ? (
+              <EmptyState
+                icon={Users}
+                title="No HR users found"
+                description="HR team members will appear here when user records contain their role."
+              />
+            ) : (
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {hrUsers.slice(0, 6).map((user, index) => (
+                  <div
+                    key={getId(user) || index}
+                    className="flex items-center gap-3 px-5 py-4"
+                  >
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                      {getInitials(getName(user))}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+                        {getName(user)}
+                      </p>
+                      <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">
+                        {user.email || "No email provided"}
+                      </p>
+                    </div>
+                    <span
+                      className={`inline-flex shrink-0 items-center rounded-full px-2 py-1 text-xs font-semibold ring-1 ring-inset ${statusClasses(isActive(user) ? "Active" : getStatus(user))}`}
+                    >
+                      {isActive(user) ? "Active" : getStatus(user)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section className="mb-8 grid grid-cols-1 gap-6 xl:grid-cols-12">
+          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 xl:col-span-7">
+            <SectionHeader
+              icon={Activity}
+              title="Recent System Activity"
+              description="Latest administrative and recruitment activity records"
+              action={
+                <Link
+                  to="/admin/audit-logs"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#EF3B3A] hover:text-red-600"
+                >
+                  View audit logs <ArrowRight size={14} />
+                </Link>
+              }
+            />
+
+            {loading ? (
+              <div className="px-5 py-12 text-center text-sm text-slate-500">
+                Loading activities...
+              </div>
+            ) : sortedActivities.length === 0 ? (
+              <EmptyState
+                icon={Activity}
+                title="No recent activities available"
+                description="The activity feed will display records returned by the audit logs API."
+              />
+            ) : (
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {sortedActivities.map((activity, index) => (
+                  <div
+                    key={getId(activity) || index}
+                    className="flex items-start gap-3 px-5 py-4"
+                  >
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-300">
+                      <Activity size={18} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                        {getActivityTitle(activity)}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        {getActivityDescription(activity)}
+                      </p>
+                      <p className="mt-2 text-xs text-slate-400">
+                        {getActivityUser(activity)} ·{" "}
+                        {formatDateTime(getActivityDate(activity))}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 xl:col-span-5">
+            <SectionHeader
+              icon={BriefcaseBusiness}
+              title="Recruitment Overview"
+              description="Current jobs and candidate application progress"
+            />
+
+            <div className="space-y-5 p-5">
+              <div>
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                    Job Overview
+                  </h3>
+                  <Link
+                    to="/hr/jobs"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#EF3B3A] hover:text-red-600"
+                  >
+                    View jobs <ArrowRight size={14} />
+                  </Link>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-xl bg-orange-50 p-4 dark:bg-orange-950/30">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Active Jobs
+                    </p>
+                    <p className="mt-2 text-2xl font-bold text-orange-600 dark:text-orange-400">
+                      {loading ? "..." : activeJobs}
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl bg-slate-100 p-4 dark:bg-slate-800">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Closed Jobs
+                    </p>
+                    <p className="mt-2 text-2xl font-bold text-slate-700 dark:text-slate-200">
+                      {loading ? "..." : closedJobs}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-slate-100 pt-5 dark:border-slate-800">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                    Application Overview
+                  </h3>
+                  <Link
+                    to="/hr/candidates"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#EF3B3A] hover:text-red-600"
+                  >
+                    View applications <ArrowRight size={14} />
+                  </Link>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm text-slate-600 dark:text-slate-300">
+                      Total Applications
+                    </span>
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">
+                      {loading ? "..." : data.candidates.length}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm text-slate-600 dark:text-slate-300">
+                      Pending / Screening
+                    </span>
+                    <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+                      {loading ? "..." : pendingApplications}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm text-slate-600 dark:text-slate-300">
+                      Shortlisted / Selected
+                    </span>
+                    <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-950/40 dark:text-green-300">
+                      {loading ? "..." : shortlistedApplications}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm text-slate-600 dark:text-slate-300">
+                      Rejected Applications
+                    </span>
+                    <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 dark:bg-red-950/40 dark:text-red-300">
+                      {loading ? "..." : rejectedApplications}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div className="flex flex-col gap-2 border-t border-slate-200 pt-4 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400 sm:flex-row sm:items-center sm:justify-between">
+          <p>Proliant Data · Administrator Dashboard</p>
+          <p>
+            {lastUpdated
+              ? `Last refreshed ${formatDateTime(lastUpdated)}`
+              : "Waiting for dashboard data"}
+          </p>
+        </div>
+      </div>
+    </main>
+  );
+}
+
 export default AdminDashboard;
-
-// import { useEffect, useMemo, useState } from "react";
-
-// import {
-//   ArrowRight,
-//   BriefcaseBusiness,
-//   CalendarDays,
-//   ChevronRight,
-//   Clock3,
-//   Globe2,
-//   Mail,
-//   MapPin,
-//   MoreVertical,
-//   Server,
-//   UserRoundPlus,
-//   UserSearch,
-//   Users,
-//   Zap,
-// } from "lucide-react";
-
-// const API_BASE_URL =
-//   import.meta.env.VITE_API_BASE_URL ||
-//   "http://localhost:5000/api";
-
-// const formatDate = (date) => {
-//   if (!date) return "-";
-
-//   const parsedDate = new Date(date);
-
-//   if (Number.isNaN(parsedDate.getTime())) {
-//     return "-";
-//   }
-
-//   return parsedDate.toLocaleDateString("en-GB", {
-//     day: "2-digit",
-//     month: "short",
-//     year: "numeric",
-//   });
-// };
-
-// const formatExperience = (candidate) => {
-//   if (candidate?.isFresher) {
-//     return "Fresher";
-//   }
-
-//   if (
-//     candidate?.yearsOfExperience !== undefined &&
-//     candidate?.yearsOfExperience !== null
-//   ) {
-//     return `${candidate.yearsOfExperience} ${
-//       candidate.yearsOfExperience === 1 ? "Year" : "Years"
-//     }`;
-//   }
-
-//   return "-";
-// };
-
-// const getListFromResponse = (result, keys = []) => {
-//   for (const key of keys) {
-//     if (Array.isArray(result?.[key])) {
-//       return result[key];
-//     }
-//   }
-
-//   return Array.isArray(result) ? result : [];
-// };
-
-// const getCandidateStatus = (candidate) =>
-//   candidate?.status ||
-//   candidate?.applicationStatus ||
-//   candidate?.stage ||
-//   "New";
-
-// const getInterviewDate = (candidate) =>
-//   candidate?.interviewDate ||
-//   candidate?.interview?.date ||
-//   candidate?.scheduledInterviewDate ||
-//   candidate?.interviewSchedule?.date ||
-//   null;
-
-// const isUpcomingDate = (date) => {
-//   if (!date) return false;
-
-//   const parsedDate = new Date(date);
-
-//   if (Number.isNaN(parsedDate.getTime())) {
-//     return false;
-//   }
-
-//   return parsedDate >= new Date();
-// };
-
-// function AdminDashboard() {
-//   const [dashboardStats, setDashboardStats] = useState({});
-//   const [recentApplications, setRecentApplications] = useState([]);
-//   const [recentlyPostedJobs, setRecentlyPostedJobs] = useState([]);
-//   const [candidates, setCandidates] = useState([]);
-//   const [isLoading, setIsLoading] = useState(true);
-//   const [error, setError] = useState("");
-
-//   const getUserName = () => {
-//     try {
-//       const adminUser = localStorage.getItem("adminUser");
-
-//       if (!adminUser) {
-//         return "Admin";
-//       }
-
-//       const user = JSON.parse(adminUser);
-
-//       return (
-//         user.name ||
-//         user.fullName ||
-//         user.firstName ||
-//         user.username ||
-//         user.email?.split("@")[0] ||
-//         "Admin"
-//       );
-//     } catch {
-//       return "Admin";
-//     }
-//   };
-
-//   const userName = getUserName();
-
-//   /*
-//    * Fetch dashboard data.
-//    *
-//    * Existing API base URL, endpoints, authentication headers,
-//    * token validation, and backend connections are retained.
-//    */
-
-//   useEffect(() => {
-//     const fetchDashboardData = async () => {
-//       const token = localStorage.getItem("adminToken");
-
-//       if (!token) {
-//         setIsLoading(false);
-//         return;
-//       }
-
-//       setIsLoading(true);
-//       setError("");
-
-//       try {
-//         const authHeaders = {
-//           Authorization: `Bearer ${token}`,
-//         };
-
-//         const [
-//           statsResponse,
-//           jobsResponse,
-//           candidatesResponse,
-//           enquiriesResponse,
-//         ] = await Promise.all([
-//           fetch(`${API_BASE_URL}/dashboard/stats`, {
-//             headers: authHeaders,
-//           }),
-
-//           fetch(`${API_BASE_URL}/jobs`, {
-//             headers: authHeaders,
-//           }),
-
-//           fetch(`${API_BASE_URL}/candidates`, {
-//             headers: authHeaders,
-//           }),
-
-//           fetch(`${API_BASE_URL}/contacts`, {
-//             headers: authHeaders,
-//           }),
-//         ]);
-
-//         const responses = [
-//           statsResponse,
-//           jobsResponse,
-//           candidatesResponse,
-//           enquiriesResponse,
-//         ];
-
-//         if (responses.some((response) => response.status === 401)) {
-//           localStorage.removeItem("adminToken");
-//           localStorage.removeItem("adminUser");
-
-//           window.location.href = "/login";
-//           return;
-//         }
-
-//         if (!statsResponse.ok) {
-//           throw new Error("Failed to load dashboard statistics.");
-//         }
-
-//         if (!jobsResponse.ok) {
-//           throw new Error("Failed to load jobs.");
-//         }
-
-//         if (!candidatesResponse.ok) {
-//           throw new Error("Failed to load candidates.");
-//         }
-
-//         if (!enquiriesResponse.ok) {
-//           throw new Error("Failed to load enquiries.");
-//         }
-
-//         const [
-//           statsResult,
-//           jobsResult,
-//           candidatesResult,
-//           enquiriesResult,
-//         ] = await Promise.all([
-//           statsResponse.json(),
-//           jobsResponse.json(),
-//           candidatesResponse.json(),
-//           enquiriesResponse.json(),
-//         ]);
-
-//         const statsResultData =
-//           statsResult?.stats || statsResult || {};
-
-//         const jobs = getListFromResponse(jobsResult, [
-//           "jobs",
-//           "data",
-//         ]);
-
-//         const candidateList = getListFromResponse(
-//           candidatesResult,
-//           ["candidates", "data"]
-//         );
-
-//         const enquiries = getListFromResponse(
-//           enquiriesResult,
-//           ["contacts", "enquiries", "data"]
-//         );
-
-//         /*
-//          * Retain the existing backend stats.
-//          * Employee/deployment/enquiry metrics are still fetched,
-//          * even though the recruitment dashboard focuses on hiring.
-//          */
-
-//         setDashboardStats({
-//           ...statsResultData,
-//           employees:
-//             statsResultData?.employees ??
-//             statsResultData?.employeeCount ??
-//             0,
-//           deployments:
-//             statsResultData?.deployments ??
-//             statsResultData?.deploymentCount ??
-//             5,
-//           enquiries: Array.isArray(enquiries)
-//             ? enquiries.filter(
-//                 (enquiry) => enquiry.status === "Unread"
-//               ).length
-//             : 0,
-//         });
-
-//         /*
-//          * Existing localStorage candidate count logic retained.
-//          */
-
-//         try {
-//           const savedCandidates =
-//             localStorage.getItem("proliantCandidates");
-
-//           if (savedCandidates) {
-//             const savedCandidateList =
-//               JSON.parse(savedCandidates);
-
-//             if (Array.isArray(savedCandidateList)) {
-//               const newCandidates =
-//                 savedCandidateList.filter(
-//                   (candidate) =>
-//                     candidate.status === "New"
-//                 ).length;
-
-//               setDashboardStats((previous) => ({
-//                 ...previous,
-//                 newCandidates,
-//               }));
-//             }
-//           }
-//         } catch (storageError) {
-//           console.error(
-//             "Failed to read saved candidate data:",
-//             storageError
-//           );
-//         }
-
-//         /*
-//          * Recently posted jobs.
-//          */
-
-//         const sortedJobs = [...jobs]
-//           .sort(
-//             (a, b) =>
-//               new Date(b.createdAt || 0) -
-//               new Date(a.createdAt || 0)
-//           )
-//           .slice(0, 5);
-
-//         setRecentlyPostedJobs(
-//           sortedJobs.map((job) => ({
-//             id: job._id || job.id,
-//             title: job.title || "Untitled Job",
-//             department: job.department,
-//             location: job.location,
-//             type: job.employmentType,
-//             date: formatDate(job.createdAt),
-//             status: job.status || "Draft",
-//           }))
-//         );
-
-//         /*
-//          * Recent applications.
-//          */
-
-//         const sortedCandidates = [...candidateList]
-//           .sort(
-//             (a, b) =>
-//               new Date(b.createdAt || 0) -
-//               new Date(a.createdAt || 0)
-//           )
-//           .slice(0, 5);
-
-//         setRecentApplications(
-//           sortedCandidates.map((candidate) => ({
-//             id: candidate._id || candidate.id,
-//             name: candidate.name || "Candidate",
-//             position:
-//               candidate.position ||
-//               candidate.jobTitle ||
-//               candidate.appliedFor ||
-//               "-",
-//             experience: formatExperience(candidate),
-//             date: formatDate(candidate.createdAt),
-//             status: getCandidateStatus(candidate),
-//           }))
-//         );
-
-//         setCandidates(candidateList);
-//       } catch (fetchError) {
-//         console.error(
-//           "Dashboard data loading failed:",
-//           fetchError
-//         );
-
-//         setError(
-//           "Unable to load dashboard data. Please try again."
-//         );
-//       } finally {
-//         setIsLoading(false);
-//       }
-//     };
-
-//     fetchDashboardData();
-//   }, []);
-
-//   /*
-//    * Existing live candidate/enquiry count updates retained.
-//    */
-
-//   useEffect(() => {
-//     const updateNewCandidateCount = () => {
-//       try {
-//         const savedCandidates =
-//           localStorage.getItem("proliantCandidates");
-
-//         if (!savedCandidates) {
-//           return;
-//         }
-
-//         const candidateList =
-//           JSON.parse(savedCandidates);
-
-//         if (!Array.isArray(candidateList)) {
-//           return;
-//         }
-
-//         const newCandidateCount =
-//           candidateList.filter(
-//             (candidate) =>
-//               candidate.status === "New"
-//           ).length;
-
-//         setDashboardStats((previous) => ({
-//           ...previous,
-//           newCandidates: newCandidateCount,
-//         }));
-//       } catch (storageError) {
-//         console.error(
-//           "Failed to update new candidate count:",
-//           storageError
-//         );
-//       }
-//     };
-
-//     const updateNewEnquiryCount = async () => {
-//       try {
-//         const token =
-//           localStorage.getItem("adminToken");
-
-//         if (!token) {
-//           return;
-//         }
-
-//         const response = await fetch(
-//           `${API_BASE_URL}/contacts`,
-//           {
-//             headers: {
-//               Authorization: `Bearer ${token}`,
-//             },
-//           }
-//         );
-
-//         if (response.status === 401) {
-//           localStorage.removeItem("adminToken");
-//           localStorage.removeItem("adminUser");
-
-//           window.location.href = "/login";
-//           return;
-//         }
-
-//         if (!response.ok) {
-//           throw new Error(
-//             `Failed to update enquiry count (${response.status})`
-//           );
-//         }
-
-//         const result = await response.json();
-
-//         const enquiryList = getListFromResponse(
-//           result,
-//           ["contacts", "enquiries", "data"]
-//         );
-
-//         const unreadCount = enquiryList.filter(
-//           (enquiry) =>
-//             enquiry.status === "Unread"
-//         ).length;
-
-//         setDashboardStats((previous) => ({
-//           ...previous,
-//           enquiries: unreadCount,
-//         }));
-//       } catch (enquiryError) {
-//         console.error(
-//           "Failed to update new enquiry count:",
-//           enquiryError
-//         );
-//       }
-//     };
-
-//     const handleStorageChange = (event) => {
-//       if (event.key === "proliantCandidates") {
-//         updateNewCandidateCount();
-//       }
-
-//       if (event.key === "proliantEnquiriesUpdated") {
-//         updateNewEnquiryCount();
-//       }
-//     };
-
-//     window.addEventListener(
-//       "candidatesUpdated",
-//       updateNewCandidateCount
-//     );
-
-//     window.addEventListener(
-//       "enquiriesUpdated",
-//       updateNewEnquiryCount
-//     );
-
-//     window.addEventListener(
-//       "storage",
-//       handleStorageChange
-//     );
-
-//     updateNewCandidateCount();
-//     updateNewEnquiryCount();
-
-//     return () => {
-//       window.removeEventListener(
-//         "candidatesUpdated",
-//         updateNewCandidateCount
-//       );
-
-//       window.removeEventListener(
-//         "enquiriesUpdated",
-//         updateNewEnquiryCount
-//       );
-
-//       window.removeEventListener(
-//         "storage",
-//         handleStorageChange
-//       );
-//     };
-//   }, []);
-
-//   /*
-//    * Recruitment KPI calculations.
-//    *
-//    * The counts below use the candidate data already fetched
-//    * from the existing /candidates backend endpoint.
-//    */
-
-//   const recruitmentStats = useMemo(() => {
-//     const totalApplications = candidates.length;
-
-//     const newApplications = candidates.filter(
-//       (candidate) =>
-//         getCandidateStatus(candidate).toLowerCase() === "new"
-//     ).length;
-
-//     const pendingL0Candidates = candidates.filter(
-//       (candidate) => {
-//         const status = getCandidateStatus(candidate)
-//           .toLowerCase()
-//           .replace(/[_-]/g, " ");
-
-//         return (
-//           status.includes("pending l0") ||
-//           status.includes("l0 pending") ||
-//           status.includes("l0 screening")
-//         );
-//       }
-//     ).length;
-
-//     const upcomingInterviews = candidates.filter(
-//       (candidate) =>
-//         isUpcomingDate(getInterviewDate(candidate))
-//     ).length;
-
-//     const hasInterviewData = candidates.some(
-//       (candidate) => getInterviewDate(candidate)
-//     );
-
-//     return [
-//       {
-//         title: "Total Applications",
-//         value: totalApplications,
-//         description: "All candidate applications",
-//         type: "applications",
-//         icon: Users,
-//         iconBg:
-//           "bg-red-50 dark:bg-red-950/40",
-//         iconText: "text-[#EF3B3A]",
-//       },
-//       {
-//         title: "New Applications",
-//         value: newApplications,
-//         description: "Recently received applications",
-//         type: "new",
-//         icon: UserRoundPlus,
-//         iconBg:
-//           "bg-orange-50 dark:bg-orange-950/40",
-//         iconText:
-//           "text-orange-500 dark:text-orange-400",
-//       },
-//       {
-//         title: "Pending L0 Screening",
-//         value: pendingL0Candidates,
-//         description: "Awaiting initial screening",
-//         type: "screening",
-//         icon: UserSearch,
-//         iconBg:
-//           "bg-blue-50 dark:bg-blue-950/40",
-//         iconText:
-//           "text-blue-500 dark:text-blue-400",
-//       },
-//       {
-//         title: "Upcoming Interviews",
-//         value: hasInterviewData
-//           ? upcomingInterviews
-//           : "—",
-//         description: hasInterviewData
-//           ? "Scheduled candidate interviews"
-//           : "Interview schedule data unavailable",
-//         type: "interviews",
-//         icon: CalendarDays,
-//         iconBg:
-//           "bg-purple-50 dark:bg-purple-950/40",
-//         iconText:
-//           "text-purple-500 dark:text-purple-400",
-//       },
-//     ];
-//   }, [candidates]);
-
-//   const upcomingInterviewCandidates = useMemo(() => {
-//     return candidates
-//       .filter((candidate) =>
-//         isUpcomingDate(getInterviewDate(candidate))
-//       )
-//       .sort(
-//         (a, b) =>
-//           new Date(getInterviewDate(a)) -
-//           new Date(getInterviewDate(b))
-//       )
-//       .slice(0, 5);
-//   }, [candidates]);
-
-//   return (
-//     <div
-//       className="
-//         relative min-h-full
-//         bg-slate-50 px-5 py-6
-//         text-slate-900 transition-colors
-//         dark:bg-slate-950 dark:text-slate-100
-//         sm:px-6 sm:py-7 xl:px-8
-//       "
-//     >
-//       <div className="mx-auto w-full max-w-375">
-//         {/* PAGE HEADER */}
-
-//         <div className="mb-6 flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-//           <div>
-//             <p className="mb-1 text-sm font-semibold uppercase tracking-wide text-[#EF3B3A]">
-//               Dashboard
-//             </p>
-
-//             <h1 className="text-3xl font-bold tracking-tight text-[#071737] dark:text-white">
-//               Welcome back,{" "}
-//               <span className="text-[#EF3B3A]">
-//                 {userName}!
-//               </span>
-//             </h1>
-
-//             <p className="mt-1.5 text-base text-slate-500 dark:text-slate-400">
-//               Here's what's happening across your Proliant
-//               recruitment portal.
-//             </p>
-//           </div>
-
-//           <div
-//             className="
-//               flex w-full items-center gap-3
-//               rounded-xl border border-white/80
-//               bg-white/80 px-4 py-3 shadow-sm
-//               backdrop-blur-sm dark:border-slate-800
-//               dark:bg-slate-900/80 xl:w-86.25
-//             "
-//           >
-//             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-50 text-[#EF3B3A] dark:bg-red-950/40">
-//               <CalendarDays size={22} />
-//             </div>
-
-//             <div className="min-w-0">
-//               <p className="text-sm font-semibold text-[#071737] dark:text-white">
-//                 {new Date().toLocaleDateString("en-US", {
-//                   weekday: "long",
-//                   month: "short",
-//                   day: "numeric",
-//                   year: "numeric",
-//                 })}
-//               </p>
-
-//               <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-//                 Have a productive day!
-//               </p>
-//             </div>
-
-//             <div className="ml-auto grid grid-cols-3 gap-2">
-//               {Array.from({ length: 6 }).map((_, index) => (
-//                 <span
-//                   key={index}
-//                   className="h-1.5 w-1.5 rounded-full bg-red-200 dark:bg-red-900"
-//                 />
-//               ))}
-//             </div>
-//           </div>
-//         </div>
-
-//         {/* ERROR */}
-
-//         {error && (
-//           <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 dark:border-red-900/50 dark:bg-red-950/30">
-//             <p className="text-sm font-medium text-red-600 dark:text-red-400">
-//               {error}
-//             </p>
-//           </div>
-//         )}
-
-//         {/* RECRUITMENT KPI CARDS */}
-
-//         <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-//           {recruitmentStats.map((stat) => {
-//             const Icon = stat.icon;
-
-//             return (
-//               <div
-//                 key={stat.title}
-//                 className="
-//                   rounded-xl border border-white/90
-//                   bg-white/85 p-4 shadow-sm
-//                   backdrop-blur-sm transition-colors
-//                   dark:border-slate-800
-//                   dark:bg-slate-900/85
-//                 "
-//               >
-//                 <div className="flex items-start justify-between gap-3">
-//                   <div className="flex items-start gap-4">
-//                     <div
-//                       className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-xl ${stat.iconBg} ${stat.iconText}`}
-//                     >
-//                       <Icon size={27} strokeWidth={2} />
-//                     </div>
-
-//                     <div>
-//                       <p className="text-sm font-semibold text-[#071737] dark:text-white">
-//                         {stat.title}
-//                       </p>
-
-//                       <p className="mt-1 text-3xl font-bold leading-none text-[#071737] dark:text-white">
-//                         {isLoading ? "..." : stat.value}
-//                       </p>
-
-//                       <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-//                         {stat.description}
-//                       </p>
-//                     </div>
-//                   </div>
-
-//                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-50 text-[#EF3B3A] dark:bg-red-950/40">
-//                     <Zap size={15} />
-//                   </div>
-//                 </div>
-//               </div>
-//             );
-//           })}
-//         </div>
-
-//         {/* MAIN DASHBOARD CONTENT */}
-
-//         <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-//           {/* RECENT JOBS */}
-
-//           <section
-//             className="
-//               overflow-hidden rounded-xl
-//               border border-white/90 bg-white/85
-//               shadow-sm backdrop-blur-sm
-//               dark:border-slate-800 dark:bg-slate-900/85
-//               xl:col-span-5
-//             "
-//           >
-//             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
-//               <div className="flex items-start gap-3">
-//                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-[#EF3B3A] dark:bg-red-950/40">
-//                   <BriefcaseBusiness size={21} />
-//                 </div>
-
-//                 <div>
-//                   <h2 className="text-base font-bold text-[#071737] dark:text-white">
-//                     Recently Posted Jobs
-//                   </h2>
-
-//                   <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-//                     Latest job openings created in the portal.
-//                   </p>
-//                 </div>
-//               </div>
-
-//               <a
-//                 href="/jobs"
-//                 className="flex items-center gap-1 text-sm font-semibold text-[#EF3B3A] hover:text-red-600"
-//               >
-//                 View all
-//                 <ArrowRight size={16} />
-//               </a>
-//             </div>
-
-//             <div className="space-y-1 p-3">
-//               {isLoading ? (
-//                 <div className="px-3 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
-//                   Loading jobs...
-//                 </div>
-//               ) : recentlyPostedJobs.length === 0 ? (
-//                 <div className="px-3 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
-//                   No recent jobs found.
-//                 </div>
-//               ) : (
-//                 recentlyPostedJobs.map((job, index) => (
-//                   <div
-//                     key={job.id || index}
-//                     className="
-//                       group flex items-center gap-3
-//                       rounded-xl border border-slate-100
-//                       bg-white px-3 py-3 transition-all
-//                       hover:border-red-100 hover:bg-red-50/40
-//                       dark:border-slate-800 dark:bg-slate-800/50
-//                       dark:hover:border-red-900/50
-//                       dark:hover:bg-red-950/20
-//                     "
-//                   >
-//                     <div
-//                       className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
-//                         index % 4 === 0
-//                           ? "bg-red-50 text-[#EF3B3A] dark:bg-red-950/40"
-//                           : index % 4 === 1
-//                           ? "bg-blue-50 text-blue-500 dark:bg-blue-950/40 dark:text-blue-400"
-//                           : index % 4 === 2
-//                           ? "bg-orange-50 text-orange-500 dark:bg-orange-950/40 dark:text-orange-400"
-//                           : "bg-purple-50 text-purple-500 dark:bg-purple-950/40 dark:text-purple-400"
-//                       }`}
-//                     >
-//                       <BriefcaseBusiness size={20} />
-//                     </div>
-
-//                     <div className="min-w-0 flex-1">
-//                       <p className="truncate text-sm font-bold text-[#071737] dark:text-white">
-//                         {job.title}
-//                       </p>
-
-//                       <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-//                         {job.department || "Proliant"}
-//                       </p>
-
-//                       <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400">
-//                         <span className="inline-flex items-center gap-1">
-//                           <MapPin size={12} />
-//                           {job.location || "-"}
-//                         </span>
-
-//                         <span className="inline-flex items-center gap-1">
-//                           <Clock3 size={12} />
-//                           {job.type || "-"}
-//                         </span>
-
-//                         <span className="inline-flex items-center gap-1">
-//                           <CalendarDays size={12} />
-//                           {job.date || "-"}
-//                         </span>
-//                       </div>
-//                     </div>
-
-//                     <div className="flex items-center gap-2">
-//                       <span
-//                         className={`hidden rounded-full px-2.5 py-1 text-[11px] font-semibold sm:inline-flex ${
-//                           job.status === "Published"
-//                             ? "bg-green-50 text-green-600 dark:bg-green-950/40 dark:text-green-400"
-//                             : "bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300"
-//                         }`}
-//                       >
-//                         {job.status || "Draft"}
-//                       </span>
-
-//                       <ChevronRight
-//                         size={19}
-//                         className="text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-[#EF3B3A]"
-//                       />
-//                     </div>
-//                   </div>
-//                 ))
-//               )}
-//             </div>
-//           </section>
-
-//           {/* RECENT APPLICATIONS */}
-
-//           <section
-//             className="
-//               overflow-hidden rounded-xl
-//               border border-white/90 bg-white/85
-//               shadow-sm backdrop-blur-sm
-//               dark:border-slate-800 dark:bg-slate-900/85
-//               xl:col-span-4
-//             "
-//           >
-//             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
-//               <div className="flex items-start gap-3">
-//                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-[#EF3B3A] dark:bg-red-950/40">
-//                   <Users size={21} />
-//                 </div>
-
-//                 <div>
-//                   <h2 className="text-base font-bold text-[#071737] dark:text-white">
-//                     Recent Applications
-//                   </h2>
-
-//                   <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-//                     Latest candidate applications.
-//                   </p>
-//                 </div>
-//               </div>
-
-//               <a
-//                 href="/candidates"
-//                 className="flex items-center gap-1 text-sm font-semibold text-[#EF3B3A] hover:text-red-600"
-//               >
-//                 View all
-//                 <ArrowRight size={16} />
-//               </a>
-//             </div>
-
-//             <div className="relative px-4 py-2">
-//               {recentApplications.length > 0 && (
-//                 <div className="absolute bottom-7 left-7.75 top-7 w-px bg-slate-200 dark:bg-slate-700" />
-//               )}
-
-//               {isLoading ? (
-//                 <div className="px-3 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
-//                   Loading applications...
-//                 </div>
-//               ) : recentApplications.length === 0 ? (
-//                 <div className="px-3 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
-//                   No recent applications found.
-//                 </div>
-//               ) : (
-//                 recentApplications.map((candidate, index) => {
-//                   const statusConfig = {
-//                     New: {
-//                       dot: "bg-blue-500",
-//                       avatar:
-//                         "bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400",
-//                       badge:
-//                         "bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400",
-//                     },
-//                     Shortlisted: {
-//                       dot: "bg-green-500",
-//                       avatar:
-//                         "bg-green-50 text-green-600 dark:bg-green-950/40 dark:text-green-400",
-//                       badge:
-//                         "bg-green-50 text-green-600 dark:bg-green-950/40 dark:text-green-400",
-//                     },
-//                     Rejected: {
-//                       dot: "bg-red-500",
-//                       avatar:
-//                         "bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400",
-//                       badge:
-//                         "bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400",
-//                     },
-//                     Selected: {
-//                       dot: "bg-orange-500",
-//                       avatar:
-//                         "bg-orange-50 text-orange-600 dark:bg-orange-950/40 dark:text-orange-400",
-//                       badge:
-//                         "bg-orange-50 text-orange-600 dark:bg-orange-950/40 dark:text-orange-400",
-//                     },
-//                   };
-
-//                   const config =
-//                     statusConfig[candidate.status] ||
-//                     statusConfig.New;
-
-//                   const initials = (candidate.name || "C")
-//                     .split(" ")
-//                     .map((part) => part[0])
-//                     .join("")
-//                     .slice(0, 2)
-//                     .toUpperCase();
-
-//                   return (
-//                     <div
-//                       key={candidate.id || index}
-//                       className="relative flex items-center gap-3 rounded-xl px-2 py-3"
-//                     >
-//                       <span
-//                         className={`relative z-10 h-2.5 w-2.5 shrink-0 rounded-full ${config.dot}`}
-//                       />
-
-//                       <div
-//                         className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold ${config.avatar}`}
-//                       >
-//                         {initials}
-//                       </div>
-
-//                       <div className="min-w-0 flex-1">
-//                         <p className="truncate text-sm font-bold text-[#071737] dark:text-white">
-//                           {candidate.name}
-//                         </p>
-
-//                         <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-//                           {candidate.position || "-"}
-//                         </p>
-
-//                         <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-//                           {candidate.experience || "-"}
-//                           <span className="mx-1">·</span>
-//                           Applied on {candidate.date || "-"}
-//                         </p>
-//                       </div>
-
-//                       <span
-//                         className={`hidden rounded-full px-2.5 py-1 text-[11px] font-semibold sm:inline-flex ${config.badge}`}
-//                       >
-//                         {candidate.status || "New"}
-//                       </span>
-
-//                       <button
-//                         type="button"
-//                         className="shrink-0 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-//                         aria-label={`More options for ${candidate.name}`}
-//                       >
-//                         <MoreVertical size={17} />
-//                       </button>
-//                     </div>
-//                   );
-//                 })
-//               )}
-//             </div>
-//           </section>
-
-//           {/* HR QUICK ACTIONS */}
-
-//           <section
-//             className="
-//               overflow-hidden rounded-xl
-//               border border-white/90 bg-white/85
-//               p-4 shadow-sm backdrop-blur-sm
-//               dark:border-slate-800 dark:bg-slate-900/85
-//               xl:col-span-3
-//             "
-//           >
-//             <div className="mb-4 flex items-start gap-3">
-//               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-[#EF3B3A] dark:bg-red-950/40">
-//                 <Zap size={21} strokeWidth={2.2} />
-//               </div>
-
-//               <div>
-//                 <h2 className="text-base font-bold text-[#071737] dark:text-white">
-//                   HR Quick Actions
-//                 </h2>
-
-//                 <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-//                   Frequently used recruitment actions.
-//                 </p>
-//               </div>
-//             </div>
-
-//             <div className="space-y-2.5">
-//               {[
-//                 {
-//                   href: "/jobs",
-//                   title: "Post Job",
-//                   description: "Create a new opening",
-//                   icon: BriefcaseBusiness,
-//                   wrapper:
-//                     "bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/30 dark:hover:bg-orange-950/50",
-//                   iconText:
-//                     "text-orange-600 dark:text-orange-400",
-//                 },
-//                 {
-//                   href: "/candidates",
-//                   title: "Review Candidates",
-//                   description: "Review applications",
-//                   icon: UserSearch,
-//                   wrapper:
-//                     "bg-green-50 hover:bg-green-100 dark:bg-green-950/30 dark:hover:bg-green-950/50",
-//                   iconText:
-//                     "text-green-600 dark:text-green-400",
-//                 },
-//                 {
-//                   href: "/candidates",
-//                   title: "Screen Applications",
-//                   description: "Review new candidates",
-//                   icon: UserRoundPlus,
-//                   wrapper:
-//                     "bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/30 dark:hover:bg-blue-950/50",
-//                   iconText:
-//                     "text-blue-600 dark:text-blue-400",
-//                 },
-//                 {
-//                   href: "/jobs",
-//                   title: "Manage Jobs",
-//                   description: "View and update job posts",
-//                   icon: BriefcaseBusiness,
-//                   wrapper:
-//                     "bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/30 dark:hover:bg-purple-950/50",
-//                   iconText:
-//                     "text-purple-600 dark:text-purple-400",
-//                 },
-//               ].map((action) => {
-//                 const Icon = action.icon;
-
-//                 return (
-//                   <a
-//                     key={action.title}
-//                     href={action.href}
-//                     className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all ${action.wrapper}`}
-//                   >
-//                     <span
-//                       className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white dark:bg-slate-800 ${action.iconText}`}
-//                     >
-//                       <Icon size={18} />
-//                     </span>
-
-//                     <span className="min-w-0 flex-1">
-//                       <span className="block truncate text-sm font-bold text-[#071737] dark:text-white">
-//                         {action.title}
-//                       </span>
-
-//                       <span className="mt-0.5 block truncate text-xs text-slate-500 dark:text-slate-400">
-//                         {action.description}
-//                       </span>
-//                     </span>
-
-//                     <ArrowRight
-//                       size={18}
-//                       className={`${action.iconText} transition-transform group-hover:translate-x-0.5`}
-//                     />
-//                   </a>
-//                 );
-//               })}
-//             </div>
-//           </section>
-
-//           {/* UPCOMING INTERVIEWS */}
-
-//           <section
-//             className="
-//               overflow-hidden rounded-xl
-//               border border-white/90 bg-white/85
-//               shadow-sm backdrop-blur-sm
-//               dark:border-slate-800 dark:bg-slate-900/85
-//               xl:col-span-12
-//             "
-//           >
-//             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
-//               <div className="flex items-start gap-3">
-//                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400">
-//                   <CalendarDays size={21} />
-//                 </div>
-
-//                 <div>
-//                   <h2 className="text-base font-bold text-[#071737] dark:text-white">
-//                     Upcoming Interviews
-//                   </h2>
-
-//                   <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-//                     Candidates with upcoming interview dates.
-//                   </p>
-//                 </div>
-//               </div>
-
-//               <a
-//                 href="/candidates"
-//                 className="flex items-center gap-1 text-sm font-semibold text-[#EF3B3A] hover:text-red-600"
-//               >
-//                 View candidates
-//                 <ArrowRight size={16} />
-//               </a>
-//             </div>
-
-//             <div className="p-4">
-//               {isLoading ? (
-//                 <div className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
-//                   Loading interview schedule...
-//                 </div>
-//               ) : upcomingInterviewCandidates.length === 0 ? (
-//                 <div className="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center dark:border-slate-700">
-//                   <CalendarDays
-//                     size={28}
-//                     className="mx-auto mb-2 text-slate-400"
-//                   />
-
-//                   <p className="text-sm font-semibold text-[#071737] dark:text-white">
-//                     No upcoming interviews found
-//                   </p>
-
-//                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-//                     Interview schedule details will appear here when
-//                     available in the candidate data.
-//                   </p>
-//                 </div>
-//               ) : (
-//                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-//                   {upcomingInterviewCandidates.map(
-//                     (candidate, index) => {
-//                       const interviewDate =
-//                         getInterviewDate(candidate);
-
-//                       return (
-//                         <div
-//                           key={candidate._id || candidate.id || index}
-//                           className="rounded-xl border border-slate-100 bg-white p-4 dark:border-slate-800 dark:bg-slate-800/50"
-//                         >
-//                           <div className="flex items-start gap-3">
-//                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400">
-//                               <CalendarDays size={19} />
-//                             </div>
-
-//                             <div className="min-w-0">
-//                               <p className="truncate text-sm font-bold text-[#071737] dark:text-white">
-//                                 {candidate.name || "Candidate"}
-//                               </p>
-
-//                               <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
-//                                 {candidate.position ||
-//                                   candidate.jobTitle ||
-//                                   candidate.appliedFor ||
-//                                   "-"}
-//                               </p>
-
-//                               <p className="mt-2 text-xs font-semibold text-purple-600 dark:text-purple-400">
-//                                 {formatDate(interviewDate)}
-//                               </p>
-//                             </div>
-//                           </div>
-//                         </div>
-//                       );
-//                     }
-//                   )}
-//                 </div>
-//               )}
-//             </div>
-//           </section>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
-// export default AdminDashboard;

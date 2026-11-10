@@ -26,9 +26,9 @@ function InterviewerLogin() {
       {/* LEFT BRANDING SECTION */}
       <section className="relative hidden min-h-screen w-5/12 overflow-hidden bg-[#DA3838] lg:flex lg:flex-col lg:justify-between">
         {/* Decorative Circles */}
-        <div className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full border-[80px] border-white/10" />
+        <div className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full border-80 border-white/10" />
 
-        <div className="pointer-events-none absolute -bottom-40 -left-40 h-[32rem] w-[32rem] rounded-full border-[90px] border-white/10" />
+        <div className="pointer-events-none absolute -bottom-40 -left-40 h-128 w-lg rounded-full border-90 border-white/10" />
 
         <div className="pointer-events-none absolute bottom-24 right-16 h-24 w-24 rounded-full bg-white/5" />
 

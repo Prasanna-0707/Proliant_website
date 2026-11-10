@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-
 import {
   ArrowRight,
   BriefcaseBusiness,
@@ -21,51 +20,176 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   "http://localhost:5000/api";
 
-/*
- * FORMAT DATE
- */
-
 const formatDate = (date) => {
-  if (!date) {
-    return "-";
-  }
+  if (!date) return "-";
 
-  return new Date(date).toLocaleDateString(
-    "en-GB",
-    {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }
-  );
+  const parsedDate = new Date(date);
+
+  if (Number.isNaN(parsedDate.getTime())) return "-";
+
+  return parsedDate.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 };
 
-/*
- * FORMAT EXPERIENCE
- */
-
 const formatExperience = (candidate) => {
-  if (candidate.isFresher) {
-    return "Fresher";
-  }
+  if (candidate.isFresher) return "Fresher";
 
   if (
     candidate.yearsOfExperience !== undefined &&
     candidate.yearsOfExperience !== null
   ) {
     return `${candidate.yearsOfExperience} ${
-      candidate.yearsOfExperience === 1
-        ? "Year"
-        : "Years"
+      candidate.yearsOfExperience === 1 ? "Year" : "Years"
     }`;
   }
 
   return "-";
 };
 
-/*
- * DASHBOARD
- */
+const getDummyDashboardData = () => {
+  const today = new Date();
+
+  const dateOffset = (days) => {
+    const date = new Date(today);
+    date.setDate(date.getDate() - days);
+    return date.toISOString();
+  };
+
+  return {
+    stats: [
+      {
+        title: "Total Applications",
+        value: 128,
+        type: "totalApplications",
+        description: "All received applications",
+      },
+      {
+        title: "New Applications",
+        value: 24,
+        type: "newApplications",
+        description: "Recently received applications",
+      },
+      {
+        title: "Pending L0 Screening",
+        value: 9,
+        type: "pendingScreening",
+        description: "Awaiting initial screening",
+      },
+      {
+        title: "Upcoming Interviews",
+        value: 6,
+        type: "upcomingInterviews",
+        description: "Scheduled interview rounds",
+      },
+    ],
+
+    jobs: [
+      {
+        id: "demo-job-1",
+        title: "Senior React Developer",
+        department: "Engineering",
+        location: "Hyderabad",
+        type: "Full-time",
+        date: formatDate(dateOffset(1)),
+        status: "Published",
+      },
+      {
+        id: "demo-job-2",
+        title: "Talent Acquisition Specialist",
+        department: "Human Resources",
+        location: "Bengaluru",
+        type: "Full-time",
+        date: formatDate(dateOffset(2)),
+        status: "Published",
+      },
+      {
+        id: "demo-job-3",
+        title: "Node.js Backend Developer",
+        department: "Engineering",
+        location: "Remote",
+        type: "Full-time",
+        date: formatDate(dateOffset(3)),
+        status: "Published",
+      },
+      {
+        id: "demo-job-4",
+        title: "QA Automation Engineer",
+        department: "Quality Assurance",
+        location: "Chennai",
+        type: "Contract",
+        date: formatDate(dateOffset(4)),
+        status: "Draft",
+      },
+      {
+        id: "demo-job-5",
+        title: "HR Operations Executive",
+        department: "Human Resources",
+        location: "Hyderabad",
+        type: "Full-time",
+        date: formatDate(dateOffset(5)),
+        status: "Published",
+      },
+    ],
+
+    applications: [
+      {
+        id: "demo-app-1",
+        name: "Ananya Reddy",
+        position: "Senior React Developer",
+        experience: "5 Years",
+        date: formatDate(dateOffset(0)),
+        status: "New",
+      },
+      {
+        id: "demo-app-2",
+        name: "Rahul Sharma",
+        position: "Node.js Backend Developer",
+        experience: "4 Years",
+        date: formatDate(dateOffset(1)),
+        status: "Shortlisted",
+      },
+      {
+        id: "demo-app-3",
+        name: "Priya Kumar",
+        position: "QA Automation Engineer",
+        experience: "3 Years",
+        date: formatDate(dateOffset(2)),
+        status: "New",
+      },
+      {
+        id: "demo-app-4",
+        name: "Kiran Varma",
+        position: "Talent Acquisition Specialist",
+        experience: "2 Years",
+        date: formatDate(dateOffset(3)),
+        status: "Selected",
+      },
+      {
+        id: "demo-app-5",
+        name: "Sneha Patel",
+        position: "Senior React Developer",
+        experience: "Fresher",
+        date: formatDate(dateOffset(4)),
+        status: "Rejected",
+      },
+    ],
+  };
+};
+
+const applyDummyDashboardData = (
+  setStats,
+  setRecentlyPostedJobs,
+  setRecentApplications
+) => {
+  const demo = getDummyDashboardData();
+
+  setStats(demo.stats);
+  setRecentlyPostedJobs(demo.jobs);
+  setRecentApplications(demo.applications);
+};
 
 function Dashboard() {
   const [stats, setStats] = useState([
@@ -95,56 +219,71 @@ function Dashboard() {
     },
   ]);
 
-  const [recentApplications, setRecentApplications] =
-    useState([]);
-
-  const [recentlyPostedJobs, setRecentlyPostedJobs] =
-    useState([]);
-
+  const [recentApplications, setRecentApplications] = useState([]);
+  const [recentlyPostedJobs, setRecentlyPostedJobs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-
   const [error, setError] = useState("");
-
-  /*
-   * GET LOGGED-IN USER NAME
-   */
 
   const getUserName = () => {
     try {
-      const adminUser =
+      const storedUser =
+        localStorage.getItem("hrUser") ||
+        localStorage.getItem("user") ||
+        localStorage.getItem("currentUser") ||
         localStorage.getItem("adminUser");
 
-      if (!adminUser) {
-        return "Admin";
-      }
+      if (!storedUser) return "HR";
 
-      const user = JSON.parse(adminUser);
+      const parsedUser = JSON.parse(storedUser);
+      const user = parsedUser.user || parsedUser.data?.user || parsedUser;
+
+      const role = String(
+        user.role ||
+          user.userRole ||
+          user.designation ||
+          user.userType ||
+          ""
+      )
+        .trim()
+        .toUpperCase()
+        .replace(/[\s-]+/g, "_");
+
+      if (
+        role === "ADMIN" ||
+        role === "SUPER_ADMIN" ||
+        user.isAdmin === true
+      ) {
+        return "HR";
+      }
 
       return (
         user.name ||
         user.fullName ||
-        user.firstName ||
+        [user.firstName, user.lastName].filter(Boolean).join(" ") ||
         user.username ||
         user.email?.split("@")[0] ||
-        "Admin"
+        "HR"
       );
     } catch {
-      return "Admin";
+      return "HR";
     }
   };
 
   const userName = getUserName();
 
-  /*
-   * FETCH DASHBOARD DATA
-   */
-
   useEffect(() => {
     const fetchDashboardData = async () => {
-      const token =
-        localStorage.getItem("adminToken");
+      const token = localStorage.getItem("adminToken");
 
       if (!token) {
+        applyDummyDashboardData(
+          setStats,
+          setRecentlyPostedJobs,
+          setRecentApplications
+        );
+
+        setIsLoading(false);
+        setError("");
         return;
       }
 
@@ -162,38 +301,19 @@ function Dashboard() {
           candidatesResponse,
           enquiriesResponse,
         ] = await Promise.all([
-          fetch(
-            `${API_BASE_URL}/dashboard/stats`,
-            {
-              headers: authHeaders,
-            }
-          ),
-
-          fetch(
-            `${API_BASE_URL}/jobs`,
-            {
-              headers: authHeaders,
-            }
-          ),
-
-          fetch(
-            `${API_BASE_URL}/candidates`,
-            {
-              headers: authHeaders,
-            }
-          ),
-
-          fetch(
-            `${API_BASE_URL}/contacts`,
-            {
-              headers: authHeaders,
-            }
-          ),
+          fetch(`${API_BASE_URL}/dashboard/stats`, {
+            headers: authHeaders,
+          }),
+          fetch(`${API_BASE_URL}/jobs`, {
+            headers: authHeaders,
+          }),
+          fetch(`${API_BASE_URL}/candidates`, {
+            headers: authHeaders,
+          }),
+          fetch(`${API_BASE_URL}/contacts`, {
+            headers: authHeaders,
+          }),
         ]);
-
-        /*
-         * TOKEN VALIDATION
-         */
 
         if (
           statsResponse.status === 401 ||
@@ -201,125 +321,66 @@ function Dashboard() {
           candidatesResponse.status === 401 ||
           enquiriesResponse.status === 401
         ) {
-          localStorage.removeItem("adminToken");
-          localStorage.removeItem("adminUser");
-
-          window.location.href = "/login";
-
-          return;
+          throw new Error(
+            "Demo dashboard is shown because no valid session is available."
+          );
         }
 
-        /*
-         * RESPONSE VALIDATION
-         */
-
         if (!statsResponse.ok) {
-          throw new Error(
-            "Failed to load dashboard statistics."
-          );
+          throw new Error("Failed to load dashboard statistics.");
         }
 
         if (!jobsResponse.ok) {
-          throw new Error(
-            "Failed to load jobs."
-          );
+          throw new Error("Failed to load jobs.");
         }
 
         if (!candidatesResponse.ok) {
-          throw new Error(
-            "Failed to load candidates."
-          );
+          throw new Error("Failed to load candidates.");
         }
 
         if (!enquiriesResponse.ok) {
-          throw new Error(
-            "Failed to load enquiries."
-          );
+          throw new Error("Failed to load enquiries.");
         }
 
-        /*
-         * PARSE RESPONSES
-         */
+        const statsResult = await statsResponse.json();
+        const jobsResult = await jobsResponse.json();
+        const candidatesResult = await candidatesResponse.json();
+        const enquiriesResult = await enquiriesResponse.json();
 
-        const statsResult =
-          await statsResponse.json();
-
-        const jobsResult =
-          await jobsResponse.json();
-
-        const candidatesResult =
-          await candidatesResponse.json();
-
-        const enquiriesResult =
-          await enquiriesResponse.json();
-
-        /*
-         * RECRUITMENT STATISTICS
-         */
-
-        const dashboardStats =
-          statsResult?.stats ||
-          statsResult;
+        const dashboardStats = statsResult?.stats || statsResult;
 
         const candidatesForStats =
           candidatesResult?.candidates ||
           candidatesResult?.data ||
           [];
 
-        const totalApplicationCount =
-          Array.isArray(candidatesForStats)
-            ? candidatesForStats.length
-            : 0;
+        const totalApplicationCount = Array.isArray(candidatesForStats)
+          ? candidatesForStats.length
+          : 0;
 
-        let newApplicationCount =
-          Array.isArray(candidatesForStats)
-            ? candidatesForStats.filter(
-                (candidate) =>
-                  String(
-                    candidate.status || "New"
-                  ).toLowerCase() === "new"
-              ).length
-            : 0;
-
-        /*
-         * NEW APPLICATIONS
-         * Preserve the existing local-storage fallback.
-         */
+        let newApplicationCount = Array.isArray(candidatesForStats)
+          ? candidatesForStats.filter(
+              (candidate) =>
+                String(candidate.status || "New").toLowerCase() === "new"
+            ).length
+          : 0;
 
         try {
-          const savedCandidates =
-            localStorage.getItem(
-              "proliantCandidates"
-            );
+          const savedCandidates = localStorage.getItem("proliantCandidates");
 
           if (savedCandidates) {
-            const savedCandidateList =
-              JSON.parse(savedCandidates);
+            const savedCandidateList = JSON.parse(savedCandidates);
 
-            if (
-              Array.isArray(savedCandidateList)
-            ) {
-              newApplicationCount =
-                savedCandidateList.filter(
-                  (candidate) =>
-                    String(
-                      candidate.status || "New"
-                    ).toLowerCase() === "new"
-                ).length;
+            if (Array.isArray(savedCandidateList)) {
+              newApplicationCount = savedCandidateList.filter(
+                (candidate) =>
+                  String(candidate.status || "New").toLowerCase() === "new"
+              ).length;
             }
           }
         } catch (storageError) {
-          console.error(
-            "Failed to read saved candidate data:",
-            storageError
-          );
+          console.error("Failed to read saved candidate data:", storageError);
         }
-
-        /*
-         * EXISTING ENQUIRY RESPONSE
-         * Kept to preserve the current API validation flow.
-         * Enquiries are no longer displayed as a KPI.
-         */
 
         const enquiries =
           enquiriesResult?.contacts ||
@@ -327,22 +388,17 @@ function Dashboard() {
           enquiriesResult?.data ||
           [];
 
-        const enquiryCount =
-          Array.isArray(enquiries)
-            ? enquiries.filter(
-                (enquiry) =>
-                  enquiry.status === "Unread"
-              ).length
-            : 0;
-
-        /*
-         * SET HR DASHBOARD STATS
-         */
+        const enquiryCount = Array.isArray(enquiries)
+          ? enquiries.filter((enquiry) => enquiry.status === "Unread").length
+          : 0;
 
         setStats([
           {
             title: "Total Applications",
-            value: totalApplicationCount,
+            value:
+              dashboardStats?.totalApplications ??
+              dashboardStats?.totalCandidates ??
+              totalApplicationCount,
             type: "totalApplications",
             description: "All received applications",
           },
@@ -354,36 +410,30 @@ function Dashboard() {
           },
           {
             title: "Pending L0 Screening",
-            value: null,
+            value:
+              dashboardStats?.pendingScreening ??
+              dashboardStats?.pendingL0Screening ??
+              null,
             type: "pendingScreening",
             description: "Awaiting initial screening",
           },
           {
             title: "Upcoming Interviews",
-            value: null,
+            value: dashboardStats?.upcomingInterviews ?? null,
             type: "upcomingInterviews",
             description: "Scheduled interview rounds",
           },
         ]);
 
-        /*
-         * RECENT JOBS
-         */
-
-        const jobs =
-          jobsResult?.jobs ||
-          jobsResult?.data ||
-          [];
+        const jobs = jobsResult?.jobs || jobsResult?.data || [];
 
         const sortedJobs = [...jobs]
           .sort(
-            (a, b) =>
-              new Date(b.createdAt) -
-              new Date(a.createdAt)
+            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
           )
           .slice(0, 5);
 
-        const formattedJobs =
+        setRecentlyPostedJobs(
           sortedJobs.map((job) => ({
             id: job._id,
             title: job.title,
@@ -392,52 +442,42 @@ function Dashboard() {
             type: job.employmentType,
             date: formatDate(job.createdAt),
             status: job.status,
-          }));
-
-        setRecentlyPostedJobs(formattedJobs);
-
-        /*
-         * RECENT APPLICATIONS
-         */
+          }))
+        );
 
         const candidates =
           candidatesResult?.candidates ||
           candidatesResult?.data ||
           [];
 
-        const sortedCandidates =
-          [...candidates]
-            .sort(
-              (a, b) =>
-                new Date(b.createdAt) -
-                new Date(a.createdAt)
-            )
-            .slice(0, 5);
-
-        const formattedApplications =
-          sortedCandidates.map(
-            (candidate) => ({
-              id: candidate._id,
-              name: candidate.name,
-              position: candidate.position,
-              experience: formatExperience(candidate),
-              date: formatDate(candidate.createdAt),
-              status: candidate.status || "New",
-            })
-          );
+        const sortedCandidates = [...candidates]
+          .sort(
+            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+          )
+          .slice(0, 5);
 
         setRecentApplications(
-          formattedApplications
-        );
-      } catch (error) {
-        console.error(
-          "Dashboard data loading failed:",
-          error
+          sortedCandidates.map((candidate) => ({
+            id: candidate._id,
+            name: candidate.name,
+            position: candidate.position,
+            experience: formatExperience(candidate),
+            date: formatDate(candidate.createdAt),
+            status: candidate.status || "New",
+          }))
         );
 
-        setError(
-          "Unable to load dashboard data. Please try again."
+        void enquiryCount;
+      } catch (error) {
+        console.error("Dashboard data loading failed:", error);
+
+        applyDummyDashboardData(
+          setStats,
+          setRecentlyPostedJobs,
+          setRecentApplications
         );
+
+        setError("");
       } finally {
         setIsLoading(false);
       }
@@ -446,36 +486,21 @@ function Dashboard() {
     fetchDashboardData();
   }, []);
 
-  /*
-   * LIVE CANDIDATE COUNT UPDATES
-   */
-
   useEffect(() => {
     const updateNewCandidateCount = () => {
       try {
-        const savedCandidates =
-          localStorage.getItem(
-            "proliantCandidates"
-          );
+        const savedCandidates = localStorage.getItem("proliantCandidates");
 
-        if (!savedCandidates) {
-          return;
-        }
+        if (!savedCandidates) return;
 
-        const candidateList =
-          JSON.parse(savedCandidates);
+        const candidateList = JSON.parse(savedCandidates);
 
-        if (!Array.isArray(candidateList)) {
-          return;
-        }
+        if (!Array.isArray(candidateList)) return;
 
-        const newCandidateCount =
-          candidateList.filter(
-            (candidate) =>
-              String(
-                candidate.status || "New"
-              ).toLowerCase() === "new"
-          ).length;
+        const newCandidateCount = candidateList.filter(
+          (candidate) =>
+            String(candidate.status || "New").toLowerCase() === "new"
+        ).length;
 
         setStats((previousStats) =>
           previousStats.map((stat) =>
@@ -495,35 +520,22 @@ function Dashboard() {
       }
     };
 
-    /*
-     * UPDATE ENQUIRIES
-     * Kept for compatibility with the existing page events.
-     */
-
     const updateNewEnquiryCount = async () => {
       try {
-        const token =
-          localStorage.getItem("adminToken");
+        const token = localStorage.getItem("adminToken");
 
-        if (!token) {
-          return;
-        }
+        if (!token) return;
 
-        const response = await fetch(
-          `${API_BASE_URL}/contacts`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const response = await fetch(`${API_BASE_URL}/contacts`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         if (response.status === 401) {
           localStorage.removeItem("adminToken");
           localStorage.removeItem("adminUser");
-
           window.location.href = "/login";
-
           return;
         }
 
@@ -541,16 +553,12 @@ function Dashboard() {
           result?.data ||
           [];
 
-        const unreadEnquiryCount =
-          Array.isArray(enquiryList)
-            ? enquiryList.filter(
-                (enquiry) =>
-                  enquiry.status === "Unread"
-              ).length
-            : 0;
+        const unreadEnquiryCount = Array.isArray(enquiryList)
+          ? enquiryList.filter(
+              (enquiry) => enquiry.status === "Unread"
+            ).length
+          : 0;
 
-        // Enquiry counts are no longer displayed on this dashboard.
-        // The existing refresh event is retained for compatibility.
         void unreadEnquiryCount;
       } catch (enquiryError) {
         console.error(
@@ -560,52 +568,19 @@ function Dashboard() {
       }
     };
 
-    /*
-     * STORAGE EVENTS
-     */
-
     const handleStorageChange = (event) => {
       if (event.key === "proliantCandidates") {
         updateNewCandidateCount();
       }
 
-      if (
-        event.key === "proliantEnquiriesUpdated"
-      ) {
+      if (event.key === "proliantEnquiriesUpdated") {
         updateNewEnquiryCount();
       }
     };
 
-    /*
-     * SAME-TAB CANDIDATE UPDATE
-     */
-
-    window.addEventListener(
-      "candidatesUpdated",
-      updateNewCandidateCount
-    );
-
-    /*
-     * SAME-TAB ENQUIRY UPDATE
-     */
-
-    window.addEventListener(
-      "enquiriesUpdated",
-      updateNewEnquiryCount
-    );
-
-    /*
-     * CROSS-TAB STORAGE UPDATE
-     */
-
-    window.addEventListener(
-      "storage",
-      handleStorageChange
-    );
-
-    /*
-     * INITIAL UPDATES
-     */
+    window.addEventListener("candidatesUpdated", updateNewCandidateCount);
+    window.addEventListener("enquiriesUpdated", updateNewEnquiryCount);
+    window.addEventListener("storage", handleStorageChange);
 
     updateNewCandidateCount();
     updateNewEnquiryCount();
@@ -621,16 +596,9 @@ function Dashboard() {
         updateNewEnquiryCount
       );
 
-      window.removeEventListener(
-        "storage",
-        handleStorageChange
-      );
+      window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
-
-  /*
-   * DASHBOARD RENDER
-   */
 
   return (
     <div
@@ -650,8 +618,6 @@ function Dashboard() {
       "
     >
       <div className="mx-auto w-full max-w-375">
-        {/* PAGE HEADER */}
-
         <div className="mb-6 flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div>
             <p className="mb-1 text-sm font-semibold uppercase tracking-wide text-[#EF3B3A]">
@@ -660,17 +626,13 @@ function Dashboard() {
 
             <h1 className="text-3xl font-bold tracking-tight text-[#071737] dark:text-white">
               Welcome back,{" "}
-              <span className="text-[#EF3B3A]">
-                {userName}!
-              </span>
+              <span className="text-[#EF3B3A]">{userName}!</span>
             </h1>
 
             <p className="mt-1.5 text-base text-slate-500 dark:text-slate-400">
               Here's your recruitment overview and the latest hiring activity.
             </p>
           </div>
-
-          {/* DATE CARD */}
 
           <div
             className="
@@ -692,23 +654,17 @@ function Dashboard() {
             "
           >
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-50 text-[#EF3B3A] dark:bg-red-950/40">
-              <CalendarDays
-                size={22}
-                strokeWidth={2}
-              />
+              <CalendarDays size={22} strokeWidth={2} />
             </div>
 
             <div className="min-w-0">
               <p className="text-sm font-semibold text-[#071737] dark:text-white">
-                {new Date().toLocaleDateString(
-                  "en-US",
-                  {
-                    weekday: "long",
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  }
-                )}
+                {new Date().toLocaleDateString("en-US", {
+                  weekday: "long",
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
               </p>
 
               <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
@@ -717,9 +673,7 @@ function Dashboard() {
             </div>
 
             <div className="ml-auto grid grid-cols-3 gap-2">
-              {Array.from({
-                length: 6,
-              }).map((_, index) => (
+              {Array.from({ length: 6 }).map((_, index) => (
                 <span
                   key={index}
                   className="h-1.5 w-1.5 rounded-full bg-red-200 dark:bg-red-900"
@@ -729,8 +683,6 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* ERROR */}
-
         {error && (
           <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 dark:border-red-900/50 dark:bg-red-950/30">
             <p className="text-sm font-medium text-red-600 dark:text-red-400">
@@ -739,60 +691,40 @@ function Dashboard() {
           </div>
         )}
 
-        {/* RECRUITMENT KPI CARDS */}
-
         <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {stats.map((stat) => {
             const statConfig = {
               totalApplications: {
                 icon: Users,
-                iconBg:
-                  "bg-red-50 dark:bg-red-950/40",
+                iconBg: "bg-red-50 dark:bg-red-950/40",
                 iconText: "text-[#EF3B3A]",
-                badgeBg:
-                  "bg-red-50 dark:bg-red-950/40",
+                badgeBg: "bg-red-50 dark:bg-red-950/40",
                 badgeText: "text-[#EF3B3A]",
               },
-
               newApplications: {
                 icon: UserRoundPlus,
-                iconBg:
-                  "bg-blue-50 dark:bg-blue-950/40",
-                iconText:
-                  "text-blue-500 dark:text-blue-400",
-                badgeBg:
-                  "bg-blue-50 dark:bg-blue-950/40",
-                badgeText:
-                  "text-blue-500 dark:text-blue-400",
+                iconBg: "bg-blue-50 dark:bg-blue-950/40",
+                iconText: "text-blue-500 dark:text-blue-400",
+                badgeBg: "bg-blue-50 dark:bg-blue-950/40",
+                badgeText: "text-blue-500 dark:text-blue-400",
               },
-
               pendingScreening: {
                 icon: UserSearch,
-                iconBg:
-                  "bg-orange-50 dark:bg-orange-950/40",
-                iconText:
-                  "text-orange-500 dark:text-orange-400",
-                badgeBg:
-                  "bg-orange-50 dark:bg-orange-950/40",
-                badgeText:
-                  "text-orange-500 dark:text-orange-400",
+                iconBg: "bg-orange-50 dark:bg-orange-950/40",
+                iconText: "text-orange-500 dark:text-orange-400",
+                badgeBg: "bg-orange-50 dark:bg-orange-950/40",
+                badgeText: "text-orange-500 dark:text-orange-400",
               },
-
               upcomingInterviews: {
                 icon: CalendarDays,
-                iconBg:
-                  "bg-purple-50 dark:bg-purple-950/40",
-                iconText:
-                  "text-purple-500 dark:text-purple-400",
-                badgeBg:
-                  "bg-purple-50 dark:bg-purple-950/40",
-                badgeText:
-                  "text-purple-500 dark:text-purple-400",
+                iconBg: "bg-purple-50 dark:bg-purple-950/40",
+                iconText: "text-purple-500 dark:text-purple-400",
+                badgeBg: "bg-purple-50 dark:bg-purple-950/40",
+                badgeText: "text-purple-500 dark:text-purple-400",
               },
             }[stat.type];
 
-            const Icon =
-              statConfig?.icon || Users;
+            const Icon = statConfig?.icon || Users;
 
             return (
               <div
@@ -815,10 +747,7 @@ function Dashboard() {
                     <div
                       className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-xl ${statConfig?.iconBg} ${statConfig?.iconText}`}
                     >
-                      <Icon
-                        size={27}
-                        strokeWidth={2}
-                      />
+                      <Icon size={27} strokeWidth={2} />
                     </div>
 
                     <div>
@@ -829,8 +758,7 @@ function Dashboard() {
                       <p className="mt-1 text-3xl font-bold leading-none text-[#071737] dark:text-white">
                         {isLoading
                           ? "..."
-                          : stat.value === null ||
-                            stat.value === undefined
+                          : stat.value === null || stat.value === undefined
                           ? "—"
                           : stat.value}
                       </p>
@@ -844,22 +772,14 @@ function Dashboard() {
                   <div
                     className={`flex h-8 w-8 items-center justify-center rounded-full ${statConfig?.badgeBg} ${statConfig?.badgeText}`}
                   >
-                    <Zap
-                      size={15}
-                      strokeWidth={2}
-                    />
+                    <Zap size={15} strokeWidth={2} />
                   </div>
                 </div>
               </div>
             );
           })}
         </div>
-
-        {/* MAIN DASHBOARD CONTENT */}
-
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-          {/* RECENTLY POSTED JOBS */}
-
+                <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
           <section
             className="
               overflow-hidden
@@ -878,10 +798,7 @@ function Dashboard() {
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
               <div className="flex items-start gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-[#EF3B3A] dark:bg-red-950/40">
-                  <BriefcaseBusiness
-                    size={21}
-                    strokeWidth={2}
-                  />
+                  <BriefcaseBusiness size={21} strokeWidth={2} />
                 </div>
 
                 <div>
@@ -899,8 +816,7 @@ function Dashboard() {
                 href="/jobs"
                 className="flex items-center gap-1 text-sm font-semibold text-[#EF3B3A] hover:text-red-600"
               >
-                View all
-                <ArrowRight size={16} />
+                View all <ArrowRight size={16} />
               </a>
             </div>
 
@@ -948,10 +864,7 @@ function Dashboard() {
                           : "bg-purple-50 text-purple-500 dark:bg-purple-950/40 dark:text-purple-400"
                       }`}
                     >
-                      <BriefcaseBusiness
-                        size={20}
-                        strokeWidth={2}
-                      />
+                      <BriefcaseBusiness size={20} strokeWidth={2} />
                     </div>
 
                     <div className="min-w-0 flex-1">
@@ -966,7 +879,9 @@ function Dashboard() {
                       <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400">
                         <span className="inline-flex items-center gap-1">
                           <MapPin size={12} />
-                          {job.location || "-"}
+                          {typeof job.location === "object"
+                            ? job.location?.name || job.location?.city || "-"
+                            : job.location || "-"}
                         </span>
 
                         <span className="inline-flex items-center gap-1">
@@ -1003,8 +918,6 @@ function Dashboard() {
             </div>
           </section>
 
-          {/* RECENT APPLICATIONS */}
-
           <section
             className="
               overflow-hidden
@@ -1023,10 +936,7 @@ function Dashboard() {
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
               <div className="flex items-start gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-[#EF3B3A] dark:bg-red-950/40">
-                  <Users
-                    size={21}
-                    strokeWidth={2}
-                  />
+                  <Users size={21} strokeWidth={2} />
                 </div>
 
                 <div>
@@ -1044,8 +954,7 @@ function Dashboard() {
                 href="/candidates"
                 className="flex items-center gap-1 text-sm font-semibold text-[#EF3B3A] hover:text-red-600"
               >
-                View all
-                <ArrowRight size={16} />
+                View all <ArrowRight size={16} />
               </a>
             </div>
 
@@ -1072,7 +981,6 @@ function Dashboard() {
                       badge:
                         "bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400",
                     },
-
                     Shortlisted: {
                       dot: "bg-green-500",
                       avatar:
@@ -1080,7 +988,6 @@ function Dashboard() {
                       badge:
                         "bg-green-50 text-green-600 dark:bg-green-950/40 dark:text-green-400",
                     },
-
                     Rejected: {
                       dot: "bg-red-500",
                       avatar:
@@ -1088,7 +995,6 @@ function Dashboard() {
                       badge:
                         "bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400",
                     },
-
                     Selected: {
                       dot: "bg-orange-500",
                       avatar:
@@ -1102,9 +1008,7 @@ function Dashboard() {
                     statusConfig[candidate.status] ||
                     statusConfig.New;
 
-                  const initials = (
-                    candidate.name || "C"
-                  )
+                  const initials = (candidate.name || "C")
                     .split(" ")
                     .map((part) => part[0])
                     .join("")
@@ -1162,8 +1066,6 @@ function Dashboard() {
             </div>
           </section>
 
-          {/* HR QUICK ACTIONS */}
-
           <section
             className="
               overflow-hidden
@@ -1182,10 +1084,7 @@ function Dashboard() {
           >
             <div className="mb-4 flex items-start gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-[#EF3B3A] dark:bg-red-950/40">
-                <Zap
-                  size={21}
-                  strokeWidth={2.2}
-                />
+                <Zap size={21} strokeWidth={2.2} />
               </div>
 
               <div>
@@ -1246,10 +1145,7 @@ function Dashboard() {
                     <span
                       className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${action.iconBg} ${action.iconText}`}
                     >
-                      <Icon
-                        size={18}
-                        strokeWidth={2}
-                      />
+                      <Icon size={18} strokeWidth={2} />
                     </span>
 
                     <span className="min-w-0 flex-1">
@@ -1273,9 +1169,7 @@ function Dashboard() {
           </section>
         </div>
 
-        {/* UPCOMING INTERVIEWS */}
-
-        <section className="mt-4 overflow-hidden rounded-xl border border-white/90 bg-white/85 shadow-sm backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/85">
+              <section className="mt-4 overflow-hidden rounded-xl border border-white/90 bg-white/85 shadow-sm backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/85">
           <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400">
               <CalendarDays size={21} strokeWidth={2} />
@@ -1312,6 +1206,7 @@ function Dashboard() {
 }
 
 export default Dashboard;
+
 
 // import { useEffect, useState } from "react";
 

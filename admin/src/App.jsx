@@ -7,82 +7,80 @@ import {
 } from "react-router-dom";
 
 import AdminLayout from "./components/AdminLayout";
+import HRLayout from "./components/HR/HRLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Login from "./components/Auth/login";
 
-// Admin Pages
-import AdminLogin from "./pages/Admin/AdminLogin";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
-import AdminEmployees from "./pages/Admin/Employees";
-import EmployeesTemp from "./pages/Admin/EmployeesTemp";
-import AdminTeamMembers from "./pages/Admin/TeamMembers";
-import Countries from "./pages/Admin/Countries";
 import Profile from "./pages/Admin/Profile";
 import Users from "./pages/Admin/Users";
 import RolePermissions from "./pages/Admin/RolePermissions";
 import Settings from "./pages/Admin/Settings";
 import AuditLogs from "./pages/Admin/AuditLogs";
 
-// HR Pages
 import HRDashboard from "./pages/HR/HRDashboard";
 import HRJobs from "./pages/HR/HRJobs";
 import HRCandidates from "./pages/HR/HRCandidates";
-import HRLogin from "./pages/HR/HRLogin";
+import HRCountries from "./pages/HR/HRCountries";
+import HREnquiries from "./pages/HR/HREnquiries";
+import L0Screener from "./pages/HR/L0Screener";
+import L1Interview from "./pages/HR/L1Interview";
+import L2Interview from "./pages/HR/L2Interview";
 
-// Recruitment Pages
-import Enquiries from "./pages/Enquiries";
+import ScreenerLayout from "./components/Screener/ScreenerLayout";
+import ScreenerDashboard from "./pages/L0_Screener/ScreenerDashboard";
+import MyApplications from "./pages/L0_Screener/MyApplications";
+import PendingScreening from "./pages/L0_Screener/PendingScreening";
+import Shortlisted from "./pages/L0_Screener/Shortlisted";
+import Rejected from "./pages/L0_Screener/Rejected";
+import OnHold from "./pages/L0_Screener/OnHold";
+import HRReviewRequests from "./pages/L0_Screener/HRReviewRequests";
+import ScreeningHistory from "./pages/L0_Screener/ScreeningHistory";
+import ScreenerProfile from "./pages/L0_Screener/ScreenerProfile";
 
-// Candidate Pages
 import CandidateLogin from "./pages/Candidate/CandidateLogin";
 import CandidateDashboard from "./pages/Candidate/CandidateDashboard";
 import AllJobs from "./pages/Candidate/AllJobs";
 
-// Satya's existing shared pages
-import Dashboard from "./pages/Dashboard";
-import Employees from "./pages/Employees";
-import TeamMembers from "./pages/TeamMembers";
-import Jobs from "./pages/Jobs";
-
-// Interviewer Pages
-import InterviewerLogin from "./pages/Interviewer/InterviewerLogin";
 import InterviewerDashboard from "./pages/Interviewer/Interviewerdashboard";
 
-function App() {
-  const adminToken = localStorage.getItem("adminToken");
+import HiringManagerLayout from "./components/HiringManager/HiringManagerLayout";
+import HiringManagerDashboard from "./pages/HiringManager/HiringManagerDashboard";
+import InterviewPipeline from "./pages/HiringManager/InterviewPipeline";
+import InterviewSchedule from "./pages/HiringManager/InterviewSchedule";
+import InterviewerCoordination from "./pages/HiringManager/InterviewerCoordination";
+import Evaluations from "./pages/HiringManager/Evaluations";
+import HiringDecisions from "./pages/HiringManager/HiringDecisions";
+import FinalReview from "./pages/HiringManager/FinalReview";
+import ActivityHistory from "./pages/HiringManager/ActivityHistory";
+import HiringManagerProfile from "./pages/HiringManager/HiringManagerProfile";
 
+function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Root Route */}
         <Route
           path="/"
-          element={<Navigate to="/admin/login" replace />}
+          element={<Navigate to="/login" replace />}
         />
 
-        {/* Admin Login */}
+        <Route path="/login" element={<Login />} />
+
         <Route
           path="/admin/login"
-          element={
-            adminToken ? (
-              <Navigate to="/admin/dashboard" replace />
-            ) : (
-              <AdminLogin />
-            )
-          }
+          element={<Navigate to="/login" replace />}
         />
 
-        {/* HR Login */}
         <Route
           path="/hr/login"
-          element={<HRLogin />}
+          element={<Navigate to="/login" replace />}
         />
 
-        {/* Interviewer Login */}
         <Route
           path="/interviewer/login"
-          element={<InterviewerLogin />}
+          element={<Navigate to="/login" replace />}
         />
 
-        {/* Candidate Public Routes */}
         <Route
           path="/candidate/login"
           element={<CandidateLogin />}
@@ -98,60 +96,11 @@ function App() {
           element={<CandidateDashboard />}
         />
 
-        {/* Protected Internal Routes */}
         <Route element={<ProtectedRoute />}>
           <Route element={<AdminLayout />}>
-            {/* Satya's Shared Dashboard */}
-            <Route
-              path="/dashboard"
-              element={<Dashboard />}
-            />
-
-            {/* Satya's Shared Pages */}
-            <Route
-              path="/employees"
-              element={<Employees />}
-            />
-
-            <Route
-              path="/team-members"
-              element={<TeamMembers />}
-            />
-
-            <Route
-              path="/jobs"
-              element={<Jobs />}
-            />
-
-            <Route
-              path="/candidates"
-              element={<HRCandidates />}
-            />
-
-            {/* Admin Routes */}
             <Route
               path="/admin/dashboard"
               element={<AdminDashboard />}
-            />
-
-            <Route
-              path="/admin/employees"
-              element={<AdminEmployees />}
-            />
-
-            <Route
-              path="/admin/employees/temp"
-              element={<EmployeesTemp />}
-            />
-
-            <Route
-              path="/admin/team-members"
-              element={<AdminTeamMembers />}
-            />
-
-            <Route
-              path="/admin/countries"
-              element={<Countries />}
             />
 
             <Route
@@ -179,10 +128,21 @@ function App() {
               element={<AuditLogs />}
             />
 
-            {/* HR Routes */}
+            <Route
+              path="/candidates"
+              element={<HRCandidates />}
+            />
+          </Route>
+
+          <Route element={<HRLayout />}>
             <Route
               path="/hr/dashboard"
               element={<HRDashboard />}
+            />
+
+            <Route
+              path="/hr/countries"
+              element={<HRCountries />}
             />
 
             <Route
@@ -191,27 +151,138 @@ function App() {
             />
 
             <Route
+              path="/hr/enquiries"
+              element={<HREnquiries />}
+            />
+
+            <Route
               path="/hr/candidates"
               element={<HRCandidates />}
             />
 
             <Route
-              path="/hr/enquiries"
-              element={<Enquiries />}
+              path="/hr/l0-screeners"
+              element={<L0Screener />}
             />
 
-            {/* Interviewer Dashboard */}
+            <Route
+              path="/hr/l1-interview"
+              element={<L1Interview />}
+            />
+
+            <Route
+              path="/hr/l2-interview"
+              element={<L2Interview />}
+            />
+          </Route>
+
+          <Route element={<ProtectedRoute allowedRoles={["L0_SCREENER"]} />}>
+            <Route element={<ScreenerLayout />}>
+              <Route
+                path="/screener-dashboard"
+                element={<ScreenerDashboard />}
+              />
+
+              <Route
+                path="/assigned-applications"
+                element={<MyApplications />}
+              />
+
+              <Route
+                path="/l0-screening"
+                element={<PendingScreening />}
+              />
+
+              <Route
+                path="/screener/shortlisted"
+                element={<Shortlisted />}
+              />
+
+              <Route
+                path="/screener/rejected"
+                element={<Rejected />}
+              />
+
+              <Route
+                path="/screener/on-hold"
+                element={<OnHold />}
+              />
+
+              <Route
+                path="/screener/hr-review"
+                element={<HRReviewRequests />}
+              />
+
+              <Route
+                path="/screener/history"
+                element={<ScreeningHistory />}
+              />
+
+              <Route
+                path="/screener/profile"
+                element={<ScreenerProfile />}
+              />
+            </Route>
+          </Route>
+
+          <Route element={<AdminLayout />}>
             <Route
               path="/interviewer/dashboard"
               element={<InterviewerDashboard />}
             />
           </Route>
+
+          <Route element={<HiringManagerLayout />}>
+            <Route
+              path="/hiring-manager/dashboard"
+              element={<HiringManagerDashboard />}
+            />
+
+            <Route
+              path="/hiring-manager/interview-pipeline"
+              element={<InterviewPipeline />}
+            />
+
+            <Route
+              path="/hiring-manager/interview-schedule"
+              element={<InterviewSchedule />}
+            />
+
+            <Route
+              path="/hiring-manager/interviewer-coordination"
+              element={<InterviewerCoordination />}
+            />
+
+            <Route
+              path="/hiring-manager/evaluations"
+              element={<Evaluations />}
+            />
+
+            <Route
+              path="/hiring-manager/decisions"
+              element={<HiringDecisions />}
+            />
+
+            <Route
+              path="/hiring-manager/final-review"
+              element={<FinalReview />}
+            />
+
+            <Route
+              path="/hiring-manager/activity-history"
+              element={<ActivityHistory />}
+            />
+
+            <Route
+              path="/hiring-manager/profile"
+              element={<HiringManagerProfile />}
+            />
+          </Route>
         </Route>
 
-        {/* Unknown Routes */}
         <Route
           path="*"
-          element={<Navigate to="/admin/login" replace />}
+          element={<Navigate to="/login" replace />}
         />
       </Routes>
     </BrowserRouter>

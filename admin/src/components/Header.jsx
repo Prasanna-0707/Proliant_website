@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -11,18 +10,15 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-
 import ThemeTogglerButton from "./ThemeTogglerButton";
+
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
 function Header() {
   const navigate = useNavigate();
 
-  // Profile dropdown
   const [profileOpen, setProfileOpen] = useState(false);
-
-  // Admin data
   const [admin, setAdmin] = useState({
     name: "Admin",
     email: "",
@@ -32,10 +28,7 @@ function Header() {
   });
 
   const [isLoadingAdmin, setIsLoadingAdmin] = useState(true);
-
-  // Change password modal
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
-
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -50,14 +43,12 @@ function Header() {
   const [passwordSuccess, setPasswordSuccess] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  // Fetch admin profile
   useEffect(() => {
     const fetchAdminProfile = async () => {
       try {
         const token = localStorage.getItem("adminToken");
         const storedAdmin = localStorage.getItem("adminUser");
 
-        // Use localStorage as fallback
         if (storedAdmin) {
           try {
             const parsedAdmin = JSON.parse(storedAdmin);
@@ -107,10 +98,7 @@ function Header() {
           phone: adminData.phone || previous.phone,
         }));
 
-        localStorage.setItem(
-          "adminUser",
-          JSON.stringify(adminData)
-        );
+        localStorage.setItem("adminUser", JSON.stringify(adminData));
       } catch (error) {
         console.error("Failed to fetch admin profile:", error);
       } finally {
@@ -121,7 +109,6 @@ function Header() {
     fetchAdminProfile();
   }, []);
 
-  // Password input change
   const handlePasswordChange = (event) => {
     const { name, value } = event.target;
 
@@ -134,7 +121,6 @@ function Header() {
     setPasswordSuccess("");
   };
 
-  // Open change password
   const openChangePassword = () => {
     setProfileOpen(false);
     setPasswordError("");
@@ -142,7 +128,6 @@ function Header() {
     setChangePasswordOpen(true);
   };
 
-  // Close change password
   const closeChangePassword = () => {
     if (isChangingPassword) return;
 
@@ -156,13 +141,11 @@ function Header() {
 
     setPasswordError("");
     setPasswordSuccess("");
-
     setShowCurrentPassword(false);
     setShowNewPassword(false);
     setShowConfirmPassword(false);
   };
 
-  // Change password API
   const handleChangePassword = async () => {
     const {
       currentPassword,
@@ -258,13 +241,11 @@ function Header() {
     }
   };
 
-  // Navigate to profile
   const handleProfile = () => {
     setProfileOpen(false);
-    navigate("/profile");
+    navigate("/admin/profile");
   };
 
-  // Logout
   const handleLogout = async () => {
     try {
       const token = localStorage.getItem("adminToken");
@@ -282,12 +263,10 @@ function Header() {
     } finally {
       localStorage.removeItem("adminToken");
       localStorage.removeItem("adminUser");
-
-      window.location.href = "/login";
+      navigate("/login", { replace: true });
     }
   };
 
-  // Display values
   const displayName = admin.name?.trim() || "Admin";
 
   const displayDesignation =
@@ -324,62 +303,35 @@ function Header() {
           </p>
         </div>
 
-        {/* Right Side */}
-
         <div className="flex items-center gap-4 max-[767px]:gap-2">
-          {/* Notifications */}
-
           <button
             type="button"
             className="
-              flex
-              h-10
-              w-10
-              items-center
-              justify-center
-              rounded-lg
-              text-gray-500
-              transition-colors
-              hover:bg-gray-100
-              hover:text-gray-900
-              dark:text-gray-300
-              dark:hover:bg-gray-800
-              dark:hover:text-white
+              flex h-10 w-10 items-center justify-center rounded-lg
+              text-gray-500 transition-colors hover:bg-gray-100
+              hover:text-gray-900 dark:text-gray-300
+              dark:hover:bg-gray-800 dark:hover:text-white
             "
             aria-label="Notifications"
           >
             <Bell size={20} strokeWidth={2} />
           </button>
 
-          {/* Theme Toggle */}
-
           <ThemeTogglerButton />
 
-          {/* Divider */}
-
           <div className="h-8 w-px bg-gray-200 dark:bg-gray-700" />
-
-          {/* Admin Profile */}
 
           <div className="relative">
             <button
               type="button"
-              onClick={() =>
-                setProfileOpen((previous) => !previous)
-              }
+              onClick={() => setProfileOpen((previous) => !previous)}
               className="
-                flex
-                items-center
-                gap-3
-                rounded-lg
-                px-2
-                py-1.5
-                transition-colors
-                hover:bg-gray-50
+                flex items-center gap-3 rounded-lg px-2 py-1.5
+                transition-colors hover:bg-gray-50
                 dark:hover:bg-gray-800
               "
               aria-expanded={profileOpen}
-              aria-label="Admin profile menu"
+              aria-label="User profile menu"
             >
               <UserCircle
                 size={40}
@@ -398,12 +350,8 @@ function Header() {
               </div>
             </button>
 
-            {/* Profile Dropdown */}
-
             {profileOpen && (
               <>
-                {/* Click outside to close */}
-
                 <button
                   type="button"
                   aria-label="Close profile menu"
@@ -413,72 +361,36 @@ function Header() {
 
                 <div
                   className="
-                    absolute
-                    right-0
-                    top-full
-                    z-20
-                    mt-2
-                    w-56
-                    overflow-hidden
-                    rounded-xl
-                    border
-                    border-gray-200
-                    bg-white
-                    shadow-xl
-                    dark:border-gray-700
+                    absolute right-0 top-full z-20 mt-2 w-56
+                    overflow-hidden rounded-xl border border-gray-200
+                    bg-white shadow-xl dark:border-gray-700
                     dark:bg-gray-900
                   "
                 >
-                  {/* Profile */}
-
                   <button
                     type="button"
                     onClick={handleProfile}
                     className="
-                      flex
-                      w-full
-                      items-center
-                      gap-3
-                      px-4
-                      py-4
-                      text-sm
-                      font-medium
-                      text-gray-600
-                      transition-colors
-                      hover:bg-gray-50
-                      hover:text-gray-900
-                      dark:text-gray-300
-                      dark:hover:bg-gray-800
-                      dark:hover:text-white
+                      flex w-full items-center gap-3 px-4 py-4
+                      text-sm font-medium text-gray-600
+                      transition-colors hover:bg-gray-50
+                      hover:text-gray-900 dark:text-gray-300
+                      dark:hover:bg-gray-800 dark:hover:text-white
                     "
                   >
                     <User size={19} strokeWidth={2} />
                     <span>Profile</span>
                   </button>
 
-                  {/* Change Password */}
-
                   <button
                     type="button"
                     onClick={openChangePassword}
                     className="
-                      flex
-                      w-full
-                      items-center
-                      gap-3
-                      border-t
-                      border-gray-100
-                      px-4
-                      py-4
-                      text-sm
-                      font-medium
-                      text-gray-600
-                      transition-colors
-                      hover:bg-gray-50
-                      hover:text-gray-900
-                      dark:border-gray-700
-                      dark:text-gray-300
-                      dark:hover:bg-gray-800
+                      flex w-full items-center gap-3 border-t
+                      border-gray-100 px-4 py-4 text-sm font-medium
+                      text-gray-600 transition-colors hover:bg-gray-50
+                      hover:text-gray-900 dark:border-gray-700
+                      dark:text-gray-300 dark:hover:bg-gray-800
                       dark:hover:text-white
                     "
                   >
@@ -486,31 +398,16 @@ function Header() {
                     <span>Change Password</span>
                   </button>
 
-                  {/* Mobile Logout */}
-
                   <button
                     type="button"
                     onClick={handleLogout}
                     className="
-                      hidden
-                      w-full
-                      items-center
-                      gap-3
-                      border-t
-                      border-gray-100
-                      px-4
-                      py-4
-                      text-sm
-                      font-medium
-                      text-gray-600
-                      transition-colors
-                      hover:bg-gray-50
-                      hover:text-gray-900
-                      max-[767px]:flex
-                      dark:border-gray-700
-                      dark:text-gray-300
-                      dark:hover:bg-gray-800
-                      dark:hover:text-white
+                      hidden w-full items-center gap-3 border-t
+                      border-gray-100 px-4 py-4 text-sm font-medium
+                      text-gray-600 transition-colors hover:bg-gray-50
+                      hover:text-gray-900 max-[767px]:flex
+                      dark:border-gray-700 dark:text-gray-300
+                      dark:hover:bg-gray-800 dark:hover:text-white
                     "
                   >
                     <LogOut size={19} strokeWidth={2} />
@@ -523,40 +420,21 @@ function Header() {
         </div>
       </header>
 
-      {/* ================= CHANGE PASSWORD MODAL ================= */}
-
       {changePasswordOpen && (
         <div
           className="
-            fixed
-            inset-0
-            z-50
-            flex
-            items-center
-            justify-center
-            overflow-y-auto
-            bg-black/30
-            px-4
-            py-6
-            backdrop-blur-md
+            fixed inset-0 z-50 flex items-center justify-center
+            overflow-y-auto bg-black/30 px-4 py-6 backdrop-blur-md
           "
           onClick={closeChangePassword}
         >
           <div
             className="
-              my-auto
-              w-full
-              max-w-md
-              rounded-2xl
-              bg-white
-              p-6
-              shadow-2xl
-              dark:bg-gray-900
+              my-auto w-full max-w-md rounded-2xl bg-white p-6
+              shadow-2xl dark:bg-gray-900
             "
             onClick={(event) => event.stopPropagation()}
           >
-            {/* Modal Header */}
-
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -564,7 +442,7 @@ function Header() {
                 </h2>
 
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Update your administrator password.
+                  Update your account password.
                 </p>
               </div>
 
@@ -573,22 +451,15 @@ function Header() {
                 onClick={closeChangePassword}
                 disabled={isChangingPassword}
                 className="
-                  rounded-lg
-                  p-2
-                  text-gray-400
-                  hover:bg-gray-100
-                  hover:text-gray-700
-                  disabled:opacity-50
-                  dark:hover:bg-gray-800
-                  dark:hover:text-white
+                  rounded-lg p-2 text-gray-400 hover:bg-gray-100
+                  hover:text-gray-700 disabled:opacity-50
+                  dark:hover:bg-gray-800 dark:hover:text-white
                 "
                 aria-label="Close"
               >
                 <X size={20} />
               </button>
             </div>
-
-            {/* Error */}
 
             {passwordError && (
               <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 dark:border-red-900 dark:bg-red-950">
@@ -598,8 +469,6 @@ function Header() {
               </div>
             )}
 
-            {/* Success */}
-
             {passwordSuccess && (
               <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 dark:border-green-900 dark:bg-green-950">
                 <p className="text-sm font-medium text-green-600 dark:text-green-400">
@@ -607,8 +476,6 @@ function Header() {
                 </p>
               </div>
             )}
-
-            {/* Current Password */}
 
             <div className="mb-4">
               <label
@@ -627,21 +494,10 @@ function Header() {
                   onChange={handlePasswordChange}
                   autoComplete="current-password"
                   className="
-                    w-full
-                    rounded-lg
-                    border
-                    border-gray-300
-                    bg-white
-                    px-4
-                    py-3
-                    pr-11
-                    text-sm
-                    text-gray-900
-                    outline-none
-                    focus:border-[#EF3B3A]
-                    dark:border-gray-700
-                    dark:bg-gray-800
-                    dark:text-white
+                    w-full rounded-lg border border-gray-300
+                    bg-white px-4 py-3 pr-11 text-sm text-gray-900
+                    outline-none focus:border-red-500
+                    dark:border-gray-700 dark:bg-gray-800 dark:text-white
                   "
                 />
 
@@ -666,8 +522,6 @@ function Header() {
               </div>
             </div>
 
-            {/* New Password */}
-
             <div className="mb-4">
               <label
                 htmlFor="newPassword"
@@ -685,21 +539,10 @@ function Header() {
                   onChange={handlePasswordChange}
                   autoComplete="new-password"
                   className="
-                    w-full
-                    rounded-lg
-                    border
-                    border-gray-300
-                    bg-white
-                    px-4
-                    py-3
-                    pr-11
-                    text-sm
-                    text-gray-900
-                    outline-none
-                    focus:border-[#EF3B3A]
-                    dark:border-gray-700
-                    dark:bg-gray-800
-                    dark:text-white
+                    w-full rounded-lg border border-gray-300
+                    bg-white px-4 py-3 pr-11 text-sm text-gray-900
+                    outline-none focus:border-red-500
+                    dark:border-gray-700 dark:bg-gray-800 dark:text-white
                   "
                 />
 
@@ -724,8 +567,6 @@ function Header() {
               </div>
             </div>
 
-            {/* Confirm Password */}
-
             <div className="mb-6">
               <label
                 htmlFor="confirmPassword"
@@ -743,21 +584,10 @@ function Header() {
                   onChange={handlePasswordChange}
                   autoComplete="new-password"
                   className="
-                    w-full
-                    rounded-lg
-                    border
-                    border-gray-300
-                    bg-white
-                    px-4
-                    py-3
-                    pr-11
-                    text-sm
-                    text-gray-900
-                    outline-none
-                    focus:border-[#EF3B3A]
-                    dark:border-gray-700
-                    dark:bg-gray-800
-                    dark:text-white
+                    w-full rounded-lg border border-gray-300
+                    bg-white px-4 py-3 pr-11 text-sm text-gray-900
+                    outline-none focus:border-red-500
+                    dark:border-gray-700 dark:bg-gray-800 dark:text-white
                   "
                 />
 
@@ -782,27 +612,16 @@ function Header() {
               </div>
             </div>
 
-            {/* Action Buttons */}
-
             <div className="flex justify-end gap-3">
               <button
                 type="button"
                 onClick={closeChangePassword}
                 disabled={isChangingPassword}
                 className="
-                  rounded-lg
-                  border
-                  border-gray-300
-                  px-4
-                  py-2.5
-                  text-sm
-                  font-medium
-                  text-gray-700
-                  hover:bg-gray-50
-                  disabled:opacity-50
-                  dark:border-gray-700
-                  dark:text-gray-300
-                  dark:hover:bg-gray-800
+                  rounded-lg border border-gray-300 px-4 py-2.5
+                  text-sm font-medium text-gray-700 hover:bg-gray-50
+                  disabled:opacity-50 dark:border-gray-700
+                  dark:text-gray-300 dark:hover:bg-gray-800
                 "
               >
                 Cancel
@@ -813,16 +632,9 @@ function Header() {
                 onClick={handleChangePassword}
                 disabled={isChangingPassword}
                 className="
-                  rounded-lg
-                  bg-[#EF3B3A]
-                  px-4
-                  py-2.5
-                  text-sm
-                  font-semibold
-                  text-white
-                  hover:bg-red-600
-                  disabled:cursor-not-allowed
-                  disabled:opacity-70
+                  rounded-lg bg-red-500 px-4 py-2.5 text-sm
+                  font-semibold text-white hover:bg-red-600
+                  disabled:cursor-not-allowed disabled:opacity-70
                 "
               >
                 {isChangingPassword ? "Updating..." : "Update Password"}
