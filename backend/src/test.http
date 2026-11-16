@@ -11,6 +11,7 @@
 
 # Use a different application ID for HR review testing
 @hrReviewApplicationId = REPLACE_WITH_ANOTHER_APPLICATION_ID
+@candidateId = REPLACE_WITH_ACTUAL_CANDIDATE_ID
 ############################################################
 # 1. AUTHENTICATION — LOGIN + OTP
 ############################################################
@@ -804,3 +805,132 @@ GET {{baseUrl}}/dashboard/recent-activity
 Authorization: Bearer {{token}}
 
 ###
+
+################### 7. L0 SCREENER PROFILE APIs###############################
+
+### 1. Get Logged-in L0 Screener Profile
+GET {{baseUrl}}/profile
+Authorization: Bearer {{token}}
+
+###
+
+### 2. Update Logged-in L0 Screener Profile
+PATCH {{baseUrl}}/profile
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Updated Screener Name",
+  "phone": "9876543210"
+}
+
+###
+
+################## 3. Try Updating Restricted Profile Fields ##################3
+PATCH {{baseUrl}}/profile
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "email": "newemail@example.com",
+  "role": "Administrator",
+  "department": "HR"
+}
+
+###
+
+### ###Confirm candidate joining############
+PATCH http://localhost:5000/api/candidates/CANDIDATE_ID/confirm-joining
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+
+{
+  "joiningDate": "2026-11-10",
+  "reason": "HR verified the candidate's actual joining."
+}
+
+### =====================================================
+### DEPARTMENT ADMIN - DASHBOARD OVERVIEW
+### =====================================================
+
+GET http://localhost:5000/api/department-admin/dashboard/overview
+Authorization: Bearer YOUR_DEPARTMENT_ADMIN_TOKEN
+Content-Type: application/json
+
+### DEPARTMENT ADMIN - CANDIDATE LISTING
+
+GET http://localhost:5000/api/department-admin/candidates?page=1&limit=10
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### =====================================================
+### DEPARTMENT ADMIN - CANDIDATE PROFILE DETAILS
+### =====================================================
+
+### Get candidate profile by ID
+GET http://localhost:5000/api/department-admin/candidates/{{candidateId}}
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### =====================================================
+### API 4 - DEPARTMENT ADMIN CANDIDATE RECRUITMENT HISTORY
+### =====================================================
+
+### Get complete candidate recruitment history
+
+GET http://localhost:5000/api/department-admin/candidates/{{candidateId}}/history
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### =====================================================
+### API 5 - DEPARTMENT ADMIN CANDIDATE INTERVIEW DETAILS
+### =====================================================
+
+GET http://localhost:5000/api/department-admin/candidates/{{candidateId}}/interviews
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### =====================================================
+### API 6 - DEPARTMENT ADMIN RECRUITMENT REPORT
+### =====================================================
+
+### 1. Overall recruitment report
+
+GET http://localhost:5000/api/department-admin/reports/recruitment
+Authorization: Bearer {{token}}
+Accept: application/json
+
+
+### 2. Recruitment report with application date range
+
+GET http://localhost:5000/api/department-admin/reports/recruitment?appliedFrom=2026-01-01&appliedTo=2026-11-13
+Authorization: Bearer {{token}}
+Accept: application/json
+
+
+### 3. Global Administrator - filter by department
+
+GET http://localhost:5000/api/department-admin/reports/recruitment?department=SAP
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### API 6 - Department Admin Recruitment Report
+GET http://localhost:5000/api/department-admin/reports/recruitment
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### API - Correct Candidate Joining Date
+PATCH http://localhost:5000/api/candidates/REPLACE_WITH_CANDIDATE_ID/correct-joining-date
+Authorization: Bearer {{token}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "joiningDate": "2026-10-15",
+  "reason": "Correcting the joining date based on verified HR records."
+}
+
+### API - Get Candidate Joining History
+GET http://localhost:5000/api/candidates/REPLACE_WITH_CANDIDATE_ID/joining-history
+Authorization: Bearer {{token}}
+Accept: application/json

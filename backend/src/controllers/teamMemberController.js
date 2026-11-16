@@ -1,3 +1,4 @@
+
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
@@ -55,6 +56,64 @@ const normalizeDepartment = (department = "") =>
 
 const normalizeRole = (role = "") =>
   String(role).trim().toLowerCase();
+
+const normalizeRoleLabel = (role = "") =>
+  String(role)
+    .trim()
+    .toLowerCase()
+    .replace(/[_/-]+/g, " ")
+    .replace(/\s+/g, " ");
+
+// =====================================================
+// ADMINISTRATOR ROLE VALIDATION
+// =====================================================
+
+// Global Administrator and Department Administrator
+// are scopes, not separate role names.
+//
+// Global:
+// role = Administrator
+// adminScope = GLOBAL
+//
+// Department:
+// role = Administrator
+// adminScope = DEPARTMENT
+
+const NON_CANONICAL_ADMIN_ROLE_NAMES = new Set([
+  "hod",
+  "head of department",
+  "department head",
+  "department administrator",
+  "department admin",
+  "dept administrator",
+  "dept admin",
+  "global administrator",
+  "global admin",
+]);
+
+const isNonCanonicalAdminRole = (role) =>
+  NON_CANONICAL_ADMIN_ROLE_NAMES.has(
+    normalizeRoleLabel(role)
+  );
+
+// =====================================================
+// LEGACY HOD DESIGNATION VALIDATION
+// =====================================================
+
+const LEGACY_HOD_DESIGNATIONS = new Set([
+  "hod",
+  "head of department",
+  "department head",
+]);
+
+const isLegacyHodDesignation = (designation) =>
+  LEGACY_HOD_DESIGNATIONS.has(
+    normalizeRoleLabel(designation)
+  );
+
+// =====================================================
+// ACCOUNT HELPERS
+// =====================================================
 
 const isAdministrator = (member) =>
   normalizeRole(member.role) === "administrator";
@@ -693,9 +752,43 @@ export const createTeamMember = async (req, res) => {
         )
     ).trim();
 
+    // -------------------------------------------------
+    // PREVENT NON-CANONICAL ADMINISTRATOR ROLE CREATION
+    // -------------------------------------------------
+
+    if (isNonCanonicalAdminRole(role)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "HOD is not a separate role. Use Administrator with the appropriate administrator scope.",
+        allowedAdministratorConfiguration: [
+          {
+            role: "Administrator",
+            adminScope: "GLOBAL",
+          },
+          {
+            role: "Administrator",
+            adminScope: "DEPARTMENT",
+          },
+        ],
+      });
+    }
+
     const name = String(req.body.name || "").trim();
     let designation = String(req.body.designation || "").trim();
     const phone = String(req.body.phone || "").trim();
+
+    // -------------------------------------------------
+    // PREVENT LEGACY HOD DESIGNATION CREATION
+    // -------------------------------------------------
+
+    if (isLegacyHodDesignation(designation)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "HOD is not a separate profile. Use the Department Administrator account configuration instead.",
+      });
+    }
 
     let department = "";
     let adminScope = null;
@@ -1054,8 +1147,24 @@ export const updateTeamMember = async (req, res) => {
       target.name = String(body.name || "").trim();
     }
 
+    // -------------------------------------------------
+    // PREVENT LEGACY HOD DESIGNATION UPDATES
+    // -------------------------------------------------
+
     if (hasField(body, "designation")) {
-      target.designation = String(body.designation || "").trim();
+      const newDesignation = String(
+        body.designation || ""
+      ).trim();
+
+      if (isLegacyHodDesignation(newDesignation)) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "HOD is not a separate profile. Use the Department Administrator account configuration instead.",
+        });
+      }
+
+      target.designation = newDesignation;
     }
 
     if (hasField(body, "phone")) {
@@ -1094,6 +1203,25 @@ export const updateTeamMember = async (req, res) => {
         return res.status(400).json({
           success: false,
           message: "Role cannot be empty.",
+        });
+      }
+
+      // Prevent non-canonical administrator role names.
+      if (isNonCanonicalAdminRole(newRole)) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "HOD is not a separate role. Use Administrator with the appropriate administrator scope.",
+          allowedAdministratorConfiguration: [
+            {
+              role: "Administrator",
+              adminScope: "GLOBAL",
+            },
+            {
+              role: "Administrator",
+              adminScope: "DEPARTMENT",
+            },
+          ],
         });
       }
 

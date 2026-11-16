@@ -22,6 +22,8 @@ import applicationRoutes from "./routes/applicationRoutes.js";
 
 import adminRoutes from "./modules/administrator/routes/adminRoutes.js";
 
+import departmentAdminRoutes from "./modules/department-admin/routes/departmentAdminRoutes.js";
+
 import screeningRoutes from "./modules/screener/routes/screeningRoutes.js";
 
 // =====================================================
@@ -86,6 +88,15 @@ const startServer = async () => {
     // =================================================
 
     app.use("/api/admin", adminRoutes);
+
+    // =================================================
+    // DEPARTMENT ADMINISTRATOR APIs
+    // =================================================
+
+    app.use(
+      "/api/department-admin",
+      departmentAdminRoutes
+    );
 
     // Login, OTP, profile, password, and logout APIs
     app.use("/api/auth", authRoutes);
