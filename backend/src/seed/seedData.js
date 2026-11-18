@@ -11,6 +11,21 @@ import Location from "../models/Location.js";
 import RolePermission from "../modules/administrator/models/RolePermission.js";
 
 // =========================================================
+// APPROVED GLOBAL ADMINISTRATOR ACCOUNTS
+// =========================================================
+
+// Only existing Admin records matching these exact email addresses
+// are promoted to Global Administrator by migrateAdminProfileFields.
+// This migration does not create accounts or change passwords.
+
+const SEED_GLOBAL_ADMIN_EMAILS = [
+  "bogachandrapu@gmail.com",
+  "aswinijarugula@gmail.com",
+];
+
+const SEED_INITIAL_ADMIN_EMAIL = "bogachandrapu@gmail.com";
+
+// =========================================================
 // ADMIN PROFILE MIGRATION
 // =========================================================
 
@@ -18,9 +33,18 @@ const migrateAdminProfileFields = async () => {
   const admins = await Admin.find();
 
   let updatedCount = 0;
+  let promotedGlobalAdminCount = 0;
+  const matchedGlobalAdminEmails = new Set();
+
+  const approvedGlobalAdminEmails = new Set(
+    SEED_GLOBAL_ADMIN_EMAILS.map((email) =>
+      String(email).trim().toLowerCase()
+    )
+  );
 
   for (const admin of admins) {
     let modified = false;
+    let promotedGlobalAdmin = false;
 
     if (!admin.name) {
       admin.name = "";
@@ -42,9 +66,41 @@ const migrateAdminProfileFields = async () => {
       modified = true;
     }
 
+    // -----------------------------------------------------
+    // PROMOTE ONLY THE EXPLICITLY APPROVED GLOBAL ADMINS
+    // -----------------------------------------------------
+
+    const normalizedEmail = String(admin.email || "")
+      .trim()
+      .toLowerCase();
+
+    if (approvedGlobalAdminEmails.has(normalizedEmail)) {
+      matchedGlobalAdminEmails.add(normalizedEmail);
+
+      if (admin.role !== "Administrator") {
+        admin.role = "Administrator";
+        modified = true;
+      }
+
+      if (admin.designation !== "Administrator") {
+        admin.designation = "Administrator";
+        modified = true;
+      }
+
+      if (admin.adminScope !== "GLOBAL") {
+        admin.adminScope = "GLOBAL";
+        modified = true;
+        promotedGlobalAdmin = true;
+      }
+    }
+
     if (modified) {
       await admin.save();
       updatedCount++;
+    }
+
+    if (promotedGlobalAdmin) {
+      promotedGlobalAdminCount++;
     }
   }
 
@@ -55,6 +111,29 @@ const migrateAdminProfileFields = async () => {
   } else {
     console.log(
       "→ Admin profile fields already up to date."
+    );
+  }
+
+  console.log(
+    `→ Approved Global Administrator accounts found: ${matchedGlobalAdminEmails.size}/${SEED_GLOBAL_ADMIN_EMAILS.length}`
+  );
+
+  const missingGlobalAdminEmails = SEED_GLOBAL_ADMIN_EMAILS.filter(
+    (email) =>
+      !matchedGlobalAdminEmails.has(
+        String(email).trim().toLowerCase()
+      )
+  );
+
+  if (missingGlobalAdminEmails.length > 0) {
+    console.log(
+      `→ These approved emails do not currently have an Admin login record: ${missingGlobalAdminEmails.join(", ")}`
+    );
+  }
+
+  if (promotedGlobalAdminCount > 0) {
+    console.log(
+      `→ Global Administrator scope assigned to ${promotedGlobalAdminCount} account(s).`
     );
   }
 };
@@ -117,18 +196,6 @@ const DEFAULT_ROLE_PERMISSIONS = [
       "applications.read",
       "applications.resume.read",
       "screening.history.read",
-      "team.members.read",
-    ],
-    dataScope: "DEPARTMENT",
-    isSystemRole: true,
-    isActive: true,
-  },
-  {
-    key: "HOD",
-    name: "Head of Department",
-    description:
-      "Read-only department directory visibility.",
-    permissions: [
       "team.members.read",
     ],
     dataScope: "DEPARTMENT",
@@ -401,6 +468,117 @@ const migrateSharedApplicationPermissions = async () => {
 };
 
 // =========================================================
+// DEPARTMENT ADMIN PERMISSION MIGRATION
+// Adds read-only recruitment oversight permissions.
+// Preserves existing customized role permissions.
+// HOD is intentionally excluded as it is not a separate role.
+// =========================================================
+
+const migrateDepartmentAdminPermissions = async () => {
+  const migrationKey =
+    "2026-11-12-department-admin-read-permissions-v1";
+
+  const migrationCollection =
+    RolePermission.db.collection(
+      "role_permission_migrations"
+    );
+
+  // Check whether this migration was already completed.
+
+  const existingMigration =
+    await migrationCollection.findOne({
+      _id: migrationKey,
+    });
+
+  if (existingMigration) {
+    console.log(
+      "Department Admin permissions migration already applied."
+    );
+
+    return;
+  }
+
+  // Permissions required by the Department Admin module.
+
+  const departmentAdminPermissions = [
+    "department.dashboard.read",
+    "department.candidates.read",
+    "department.candidate.details.read",
+    "department.candidate.resume.read",
+    "department.candidate.history.read",
+    "department.interviews.feedback.read",
+    "department.reports.read",
+  ];
+
+  // Department Administrator is represented by the
+  // ADMINISTRATOR role plus adminScope = DEPARTMENT.
+
+  const permissionUpdates = [
+    {
+      key: "ADMINISTRATOR",
+      permissions: departmentAdminPermissions,
+    },
+  ];
+
+  let updatedRoles = 0;
+  const missingRoles = [];
+
+  for (const item of permissionUpdates) {
+    const result = await RolePermission.updateOne(
+      {
+        key: item.key,
+      },
+      {
+        $addToSet: {
+          permissions: {
+            $each: item.permissions,
+          },
+        },
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      missingRoles.push(item.key);
+      continue;
+    }
+
+    if (result.modifiedCount > 0) {
+      updatedRoles++;
+    }
+  }
+
+  // Do not mark migration complete if a role is missing.
+
+  if (missingRoles.length > 0) {
+    throw new Error(
+      `Department Admin permission migration could not find these roles: ${missingRoles.join(", ")}`
+    );
+  }
+
+  // Record successful migration.
+
+  await migrationCollection.updateOne(
+    {
+      _id: migrationKey,
+    },
+    {
+      $setOnInsert: {
+        name: "Department Admin Read Permissions",
+        version: 1,
+        appliedAt: new Date(),
+      },
+    },
+    {
+      upsert: true,
+    }
+  );
+
+  console.log(
+    `Department Admin permissions migration completed. ${updatedRoles} role(s) updated.`
+  );
+};
+
+// =========================================================
 // SEED DATABASE
 // =========================================================
 
@@ -426,7 +604,7 @@ const seedDatabase = async () => {
         );
 
       await Admin.create({
-        email: "bogachandrapu@gmail.com",
+        email: SEED_INITIAL_ADMIN_EMAIL,
         password: hashedPassword,
 
         name: "",
@@ -434,15 +612,17 @@ const seedDatabase = async () => {
         designation: "Administrator",
         phone: "",
 
+        adminScope: "GLOBAL",
+
         tokenVersion: 0,
         resetTokenVersion: 0,
         mustChangePassword: false,
       });
 
-      console.log("✓ Admin seeded");
+      console.log("✓ Global Administrator seeded");
     } else {
       console.log(
-        "→ Admin data already exists. Skipping."
+        "→ Admin data already exists. Skipping initial admin creation."
       );
     }
 
@@ -463,6 +643,12 @@ const seedDatabase = async () => {
     // =========================================================
 
     await migrateSharedApplicationPermissions();
+
+    // =========================================================
+    // DEPARTMENT ADMIN PERMISSION MIGRATION
+    // =========================================================
+
+    await migrateDepartmentAdminPermissions();
 
     // =========================================================
     // EMPLOYEES

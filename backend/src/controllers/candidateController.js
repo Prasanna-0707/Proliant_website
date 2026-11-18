@@ -1,6 +1,8 @@
+
 import mongoose from "mongoose";
 
 import Candidate from "../models/Candidate.js";
+import AuditLog from "../models/AuditLog.js";
 import Job from "../models/job.js";
 
 import {
@@ -16,6 +18,15 @@ import {
 import {
   assignL0ScreenerByWorkload,
 } from "../services/screenerAssignmentService.js";
+
+import { createAuditLog } from "../services/auditLogService.js";
+
+import {
+  getActiveRole,
+  isActiveAccount,
+  isGlobalAdministrator,
+  normalizeRole,
+} from "../modules/administrator/services/authorizationService.js";
 
 // =====================================================
 // CONSTANTS
@@ -36,6 +47,17 @@ const L0_WORKFLOW_STATUSES = [
   "HR_REVIEW_REQUIRED",
 ];
 
+// Only HR-specific roles can confirm joining.
+// Recruiter and combined HR/Recruiter roles are excluded.
+const HR_JOINING_ROLES = new Set([
+  "hr",
+  "hr admin",
+  "hr manager",
+]);
+
+const BUSINESS_TIME_ZONE =
+  process.env.BUSINESS_TIME_ZONE || "Asia/Kolkata";
+
 // =====================================================
 // HELPERS
 // =====================================================
@@ -54,6 +76,94 @@ const getSafeCandidate = (candidate) => {
   delete data.resume;
 
   return data;
+};
+
+// =====================================================
+// JOINING CONFIRMATION HELPERS
+// =====================================================
+
+// Obtain the current business date independently of the
+// server's operating-system timezone.
+
+const getBusinessDate = () => {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: BUSINESS_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+
+  const dateParts = Object.fromEntries(
+    parts
+      .filter((part) => part.type !== "literal")
+      .map(({ type, value }) => [type, value])
+  );
+
+  return `${dateParts.year}-${dateParts.month}-${dateParts.day}`;
+};
+
+// Validate a strict YYYY-MM-DD calendar date.
+
+const parseJoiningDate = (value) => {
+  if (
+    typeof value !== "string" ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(value)
+  ) {
+    return null;
+  }
+
+  const parsedDate = new Date(
+    `${value}T00:00:00.000Z`
+  );
+
+  if (
+    Number.isNaN(parsedDate.getTime()) ||
+    parsedDate.toISOString().slice(0, 10) !== value
+  ) {
+    return null;
+  }
+
+  return parsedDate;
+};
+
+// Format a stored joining date as YYYY-MM-DD.
+
+const formatJoiningDate = (value) => {
+  if (!value) {
+    return null;
+  }
+
+  const date =
+    value instanceof Date
+      ? value
+      : new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date.toISOString().slice(0, 10);
+};
+
+// HR and Global Administrators may confirm joining.
+// Recruiters and Department Administrators cannot.
+
+const canConfirmCandidateJoining = (
+  user,
+  activeRole
+) => {
+  const normalizedRole = normalizeRole(activeRole);
+
+  const isAuthorizedHR =
+    HR_JOINING_ROLES.has(normalizedRole);
+
+  const isAuthorizedGlobalAdministrator =
+    isGlobalAdministrator(user, activeRole);
+
+  return (
+    isAuthorizedHR ||
+    isAuthorizedGlobalAdministrator
+  );
 };
 
 // =====================================================
@@ -376,11 +486,6 @@ export const createCandidate = async (req, res) => {
     // 10. FETCH UPDATED CANDIDATE
     // -------------------------------------------------
 
-    // The assignment service may have changed:
-    // - Candidate status
-    // - Assigned screener
-    // - Screening record
-
     const updatedCandidate =
       await Candidate.findById(candidate._id);
 
@@ -390,8 +495,6 @@ export const createCandidate = async (req, res) => {
       );
     }
 
-    // Confirm that the assignment actually exists
-    // on the latest candidate record.
     const screenerAssigned = Boolean(
       assignmentResult?.assigned &&
       updatedCandidate.assignedScreener
@@ -579,8 +682,8 @@ export const updateCandidate = async (req, res) => {
 
     const body = req.body || {};
 
-    // Job association and L0 workflow fields are
-    // controlled by backend services, not direct clients.
+    // Job association, L0 workflow and joining fields
+    // are controlled by backend services, not direct clients.
 
     const protectedFields = [
       "jobId",
@@ -588,6 +691,7 @@ export const updateCandidate = async (req, res) => {
       "department",
       "currentStage",
       "assignedScreener",
+      "joinedAt",
     ];
 
     const attemptedProtectedFields =
@@ -602,7 +706,7 @@ export const updateCandidate = async (req, res) => {
       return res.status(400).json({
         success: false,
         message:
-          "Job association and recruitment workflow fields cannot be modified through this endpoint.",
+          "Job association, recruitment workflow and joining fields cannot be modified through this endpoint.",
         fields: attemptedProtectedFields,
       });
     }
@@ -766,6 +870,341 @@ export const updateCandidate = async (req, res) => {
 };
 
 // =====================================================
+// CONFIRM CANDIDATE JOINING
+// PATCH /api/candidates/:id/confirm-joining
+//
+// Authorized:
+// 1. HR
+// 2. HR Admin
+// 3. HR Manager
+// 4. Global Administrator
+//
+// Responsibilities:
+// 1. Verify authenticated user and role.
+// 2. Validate candidate ID.
+// 3. Validate actual joining date.
+// 4. Prevent duplicate confirmation.
+// 5. Update Candidate.joinedAt.
+// 6. Write an audit entry in the same transaction.
+// 7. Preserve existing recruitment status.
+// =====================================================
+
+export const confirmCandidateJoining = async (
+  req,
+  res
+) => {
+  try {
+    // -------------------------------------------------
+    // 1. AUTHENTICATION
+    // -------------------------------------------------
+
+    const user = req.admin;
+
+    if (!user || !isActiveAccount(user)) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required.",
+      });
+    }
+
+    // -------------------------------------------------
+    // 2. ROLE AUTHORIZATION
+    // -------------------------------------------------
+
+    const activeRole = getActiveRole(
+      user,
+      req.activeRole
+    );
+
+    if (
+      !activeRole ||
+      !canConfirmCandidateJoining(user, activeRole)
+    ) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Only authorized HR personnel and Global Administrators can confirm candidate joining.",
+      });
+    }
+
+    // -------------------------------------------------
+    // 3. VALIDATE CANDIDATE ID
+    // -------------------------------------------------
+
+    const { id } = req.params;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid candidate ID.",
+      });
+    }
+
+    // -------------------------------------------------
+    // 4. VALIDATE JOINING DATE
+    // -------------------------------------------------
+
+    const body = req.body || {};
+
+    const joiningDateInput = body.joiningDate;
+
+    const joiningDate = parseJoiningDate(
+      joiningDateInput
+    );
+
+    if (!joiningDate) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "A valid joiningDate in YYYY-MM-DD format is required.",
+      });
+    }
+
+    const today = getBusinessDate();
+
+    if (joiningDateInput > today) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Future joining dates cannot be confirmed as actual joining.",
+      });
+    }
+
+    // -------------------------------------------------
+    // 5. VALIDATE REASON
+    // -------------------------------------------------
+
+    const reason =
+      body.reason === undefined
+        ? ""
+        : body.reason;
+
+    if (
+      typeof reason !== "string" ||
+      reason.length > 2000
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Reason must be a string containing no more than 2000 characters.",
+      });
+    }
+
+    // -------------------------------------------------
+    // 6. DATABASE TRANSACTION
+    // -------------------------------------------------
+
+    const session = await mongoose.startSession();
+
+    let operationResult = null;
+
+    try {
+      await session.withTransaction(async () => {
+        // Reset for transaction callback retries.
+        operationResult = null;
+
+        // ---------------------------------------------
+        // FETCH CANDIDATE
+        // ---------------------------------------------
+
+        const candidate = await Candidate.findById(id)
+          .session(session);
+
+        if (!candidate) {
+          operationResult = {
+            status: 404,
+            message: "Candidate not found.",
+          };
+
+          return;
+        }
+
+        // ---------------------------------------------
+        // PREVENT DUPLICATE CONFIRMATION
+        // ---------------------------------------------
+
+        if (candidate.joinedAt) {
+          operationResult = {
+            status: 409,
+            message:
+              "Joining has already been confirmed for this candidate. Use the joining-date correction process if the recorded date is incorrect.",
+            joinedAt: candidate.joinedAt,
+          };
+
+          return;
+        }
+
+        // ---------------------------------------------
+        // DERIVE DEPARTMENT FROM JOB
+        // ---------------------------------------------
+
+        // Candidate.job -> Job.department.
+        // Candidate.department and Candidate.position
+        // are not used as authoritative sources.
+
+        const job = candidate.job
+          ? await Job.findById(candidate.job)
+              .select("_id title department")
+              .session(session)
+              .lean()
+          : null;
+
+        const department = String(
+          job?.department || ""
+        ).trim();
+
+        // ---------------------------------------------
+        // CAPTURE BEFORE SNAPSHOT
+        // ---------------------------------------------
+
+        const before = {
+          joinedAt: candidate.joinedAt || null,
+        };
+
+        // ---------------------------------------------
+        // CONFIRM JOINING
+        // ---------------------------------------------
+
+        candidate.joinedAt = joiningDate;
+
+        // Do not automatically change candidate.status.
+        // Joining is a separate recruitment outcome.
+
+        await candidate.save({ session });
+
+        // ---------------------------------------------
+        // CREATE AUDIT RECORD
+        // ---------------------------------------------
+
+        const candidateLabel = [
+          candidate.name,
+          candidate.email,
+        ]
+          .filter(Boolean)
+          .join(" - ") || candidate._id.toString();
+
+        await createAuditLog({
+          req,
+
+          action: "CANDIDATE_JOINING_CONFIRMED",
+
+          targetType: "Candidate",
+          targetId: candidate._id,
+          targetLabel: candidateLabel,
+
+          department,
+
+          before,
+
+          after: {
+            joinedAt: candidate.joinedAt,
+          },
+
+          reason: reason.trim(),
+
+          metadata: {
+            activeRole,
+            joiningDate: joiningDateInput,
+            jobId: job?._id?.toString() || "",
+            jobTitle: job?.title || "",
+            departmentSource: job
+              ? "JOB"
+              : "UNAVAILABLE",
+          },
+
+          session,
+        });
+
+        operationResult = {
+          status: 200,
+          candidate,
+          department,
+          job,
+        };
+      });
+    } finally {
+      await session.endSession();
+    }
+
+    // -------------------------------------------------
+    // 7. HANDLE TRANSACTION RESULT
+    // -------------------------------------------------
+
+    if (!operationResult) {
+      return res.status(500).json({
+        success: false,
+        message:
+          "Joining confirmation could not be completed.",
+      });
+    }
+
+    if (operationResult.status !== 200) {
+      return res.status(operationResult.status).json({
+        success: false,
+        message: operationResult.message,
+
+        ...(operationResult.joinedAt
+          ? { joinedAt: operationResult.joinedAt }
+          : {}),
+      });
+    }
+
+    // -------------------------------------------------
+    // 8. SUCCESS RESPONSE
+    // -------------------------------------------------
+
+    return res.status(200).json({
+      success: true,
+
+      message:
+        "Candidate joining confirmed successfully.",
+
+      joiningConfirmation: {
+        joinedAt:
+          operationResult.candidate.joinedAt,
+
+        confirmedBy: user._id,
+
+        confirmedByEmail: user.email,
+
+        confirmedByRole: activeRole,
+
+        department:
+          operationResult.department || null,
+      },
+
+      candidate: getSafeCandidate(
+        operationResult.candidate
+      ),
+
+      auditLogged: true,
+    });
+  } catch (error) {
+    console.error(
+      "Confirm candidate joining error:",
+      error
+    );
+
+    if (
+      error.name === "ValidationError" ||
+      error.name === "CastError"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid candidate joining information.",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Candidate joining confirmation failed.",
+    });
+  }
+};
+
+// =====================================================
 // DELETE CANDIDATE
 // DELETE /api/candidates/:id
 // =====================================================
@@ -862,6 +1301,594 @@ export const exportCandidatesExcel = async (
     return res.status(500).json({
       success: false,
       message: "Candidate Excel export failed.",
+    });
+  }
+};
+
+// =====================================================
+// CORRECT CANDIDATE JOINING DATE
+// PATCH /api/candidates/:id/correct-joining-date
+//
+// Authorized:
+// 1. HR
+// 2. HR Admin
+// 3. HR Manager
+// 4. Global Administrator
+//
+// Responsibilities:
+// 1. Verify authenticated user and role.
+// 2. Validate candidate ID.
+// 3. Require an existing joining confirmation.
+// 4. Validate corrected joining date.
+// 5. Require a mandatory correction reason.
+// 6. Update Candidate.joinedAt.
+// 7. Write an audit entry in the same transaction.
+// 8. Preserve existing recruitment status.
+// =====================================================
+
+export const correctCandidateJoiningDate = async (
+  req,
+  res
+) => {
+  try {
+    // -------------------------------------------------
+    // 1. AUTHENTICATION
+    // -------------------------------------------------
+
+    const user = req.admin;
+
+    if (!user || !isActiveAccount(user)) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required.",
+      });
+    }
+
+    // -------------------------------------------------
+    // 2. ROLE AUTHORIZATION
+    // -------------------------------------------------
+
+    const activeRole = getActiveRole(
+      user,
+      req.activeRole
+    );
+
+    if (
+      !activeRole ||
+      !canConfirmCandidateJoining(user, activeRole)
+    ) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Only authorized HR personnel and Global Administrators can correct candidate joining dates.",
+      });
+    }
+
+    // -------------------------------------------------
+    // 3. VALIDATE CANDIDATE ID
+    // -------------------------------------------------
+
+    const { id } = req.params;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid candidate ID.",
+      });
+    }
+
+    // -------------------------------------------------
+    // 4. VALIDATE CORRECTED JOINING DATE
+    // -------------------------------------------------
+
+    const body = req.body || {};
+
+    const joiningDateInput = body.joiningDate;
+
+    const joiningDate = parseJoiningDate(
+      joiningDateInput
+    );
+
+    if (!joiningDate) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "A valid joiningDate in YYYY-MM-DD format is required.",
+      });
+    }
+
+    const today = getBusinessDate();
+
+    if (joiningDateInput > today) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Future joining dates cannot be recorded as actual joining.",
+      });
+    }
+
+    // -------------------------------------------------
+    // 5. VALIDATE MANDATORY CORRECTION REASON
+    // -------------------------------------------------
+
+    const reason = body.reason;
+
+    if (
+      typeof reason !== "string" ||
+      !reason.trim()
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "A correction reason is mandatory.",
+      });
+    }
+
+    if (reason.trim().length > 2000) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Correction reason cannot exceed 2000 characters.",
+      });
+    }
+
+    const normalizedReason = reason.trim();
+
+    // -------------------------------------------------
+    // 6. DATABASE TRANSACTION
+    // -------------------------------------------------
+
+    const session = await mongoose.startSession();
+
+    let operationResult = null;
+
+    try {
+      await session.withTransaction(async () => {
+        // Reset before transaction callback retries.
+        operationResult = null;
+
+        // ---------------------------------------------
+        // FETCH CANDIDATE
+        // ---------------------------------------------
+
+        const candidate = await Candidate.findById(id)
+          .session(session);
+
+        if (!candidate) {
+          operationResult = {
+            status: 404,
+            message: "Candidate not found.",
+          };
+
+          return;
+        }
+
+        // ---------------------------------------------
+        // REQUIRE EXISTING JOINING CONFIRMATION
+        // ---------------------------------------------
+
+        if (!candidate.joinedAt) {
+          operationResult = {
+            status: 409,
+            message:
+              "Joining must be confirmed before its date can be corrected.",
+          };
+
+          return;
+        }
+
+        const previousJoiningDate =
+          candidate.joinedAt;
+
+        const previousJoiningDateString =
+          formatJoiningDate(previousJoiningDate);
+
+        // ---------------------------------------------
+        // PREVENT UNNECESSARY DATE CORRECTION
+        // ---------------------------------------------
+
+        if (
+          previousJoiningDateString ===
+          joiningDateInput
+        ) {
+          operationResult = {
+            status: 409,
+            message:
+              "The supplied joining date is already recorded.",
+            joinedAt: candidate.joinedAt,
+          };
+
+          return;
+        }
+
+        // ---------------------------------------------
+        // DERIVE DEPARTMENT FROM JOB
+        // ---------------------------------------------
+
+        const job = candidate.job
+          ? await Job.findById(candidate.job)
+              .select("_id title department")
+              .session(session)
+              .lean()
+          : null;
+
+        const department = String(
+          job?.department || ""
+        ).trim();
+
+        // ---------------------------------------------
+        // CAPTURE BEFORE SNAPSHOT
+        // ---------------------------------------------
+
+        const before = {
+          joinedAt: previousJoiningDate,
+        };
+
+        // ---------------------------------------------
+        // CORRECT JOINING DATE
+        // ---------------------------------------------
+
+        candidate.joinedAt = joiningDate;
+
+        // Joining date correction does not change
+        // the candidate's recruitment status.
+
+        await candidate.save({ session });
+
+        // ---------------------------------------------
+        // CREATE AUDIT RECORD
+        // ---------------------------------------------
+
+        const candidateLabel = [
+          candidate.name,
+          candidate.email,
+        ]
+          .filter(Boolean)
+          .join(" - ") || candidate._id.toString();
+
+        await createAuditLog({
+          req,
+
+          action: "CANDIDATE_JOINING_DATE_CORRECTED",
+
+          targetType: "Candidate",
+          targetId: candidate._id,
+          targetLabel: candidateLabel,
+
+          department,
+
+          before,
+
+          after: {
+            joinedAt: candidate.joinedAt,
+          },
+
+          reason: normalizedReason,
+
+          metadata: {
+            activeRole,
+
+            previousJoiningDate:
+              previousJoiningDateString,
+
+            correctedJoiningDate:
+              joiningDateInput,
+
+            jobId: job?._id?.toString() || "",
+            jobTitle: job?.title || "",
+
+            departmentSource: job
+              ? "JOB"
+              : "UNAVAILABLE",
+          },
+
+          session,
+        });
+
+        operationResult = {
+          status: 200,
+          candidate,
+          department,
+          previousJoiningDate:
+            previousJoiningDateString,
+        };
+      });
+    } finally {
+      await session.endSession();
+    }
+
+    // -------------------------------------------------
+    // 7. HANDLE TRANSACTION RESULT
+    // -------------------------------------------------
+
+    if (
+      !operationResult ||
+      operationResult.status !== 200
+    ) {
+      return res
+        .status(operationResult?.status || 500)
+        .json({
+          success: false,
+          message:
+            operationResult?.message ||
+            "Joining date correction failed.",
+
+          ...(operationResult?.joinedAt
+            ? { joinedAt: operationResult.joinedAt }
+            : {}),
+        });
+    }
+
+    // -------------------------------------------------
+    // 8. SUCCESS RESPONSE
+    // -------------------------------------------------
+
+    return res.status(200).json({
+      success: true,
+
+      message:
+        "Candidate joining date corrected successfully.",
+
+      joiningCorrection: {
+        previousJoiningDate:
+          operationResult.previousJoiningDate,
+
+        joinedAt:
+          operationResult.candidate.joinedAt,
+
+        correctedBy: user._id,
+        correctedByEmail: user.email,
+        correctedByRole: activeRole,
+
+        department:
+          operationResult.department || null,
+      },
+
+      candidate: getSafeCandidate(
+        operationResult.candidate
+      ),
+
+      auditLogged: true,
+    });
+  } catch (error) {
+    console.error(
+      "Candidate joining date correction error:",
+      error
+    );
+
+    if (
+      error.name === "ValidationError" ||
+      error.name === "CastError"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid candidate joining information.",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Candidate joining date correction failed.",
+    });
+  }
+};
+
+// =====================================================
+// GET CANDIDATE JOINING HISTORY
+// GET /api/candidates/:id/joining-history
+//
+// Authorized:
+// 1. HR
+// 2. HR Admin
+// 3. HR Manager
+// 4. Global Administrator
+//
+// Retrieves:
+// 1. Joining confirmation events.
+// 2. Joining date correction events.
+// 3. Previous and updated joining dates.
+// 4. Actor and timestamp information.
+// 5. Correction reasons.
+// =====================================================
+
+export const getCandidateJoiningHistory = async (
+  req,
+  res
+) => {
+  try {
+    // -------------------------------------------------
+    // 1. AUTHENTICATION
+    // -------------------------------------------------
+
+    const user = req.admin;
+
+    if (!user || !isActiveAccount(user)) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required.",
+      });
+    }
+
+    // -------------------------------------------------
+    // 2. ROLE AUTHORIZATION
+    // -------------------------------------------------
+
+    const activeRole = getActiveRole(
+      user,
+      req.activeRole
+    );
+
+    if (
+      !activeRole ||
+      !canConfirmCandidateJoining(user, activeRole)
+    ) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Only authorized HR personnel and Global Administrators can access candidate joining history.",
+      });
+    }
+
+    // -------------------------------------------------
+    // 3. VALIDATE CANDIDATE ID
+    // -------------------------------------------------
+
+    const { id } = req.params;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid candidate ID.",
+      });
+    }
+
+    // -------------------------------------------------
+    // 4. FETCH CANDIDATE
+    // -------------------------------------------------
+
+    const candidate = await Candidate.findById(id)
+      .select("_id name email joinedAt")
+      .lean();
+
+    if (!candidate) {
+      return res.status(404).json({
+        success: false,
+        message: "Candidate not found.",
+      });
+    }
+
+    // -------------------------------------------------
+    // 5. FETCH JOINING AUDIT RECORDS
+    // -------------------------------------------------
+
+    const auditRecords = await AuditLog.find({
+      targetType: "Candidate",
+
+      targetId: candidate._id,
+
+      outcome: "SUCCESS",
+
+      action: {
+        $in: [
+          "CANDIDATE_JOINING_CONFIRMED",
+          "CANDIDATE_JOINING_DATE_CORRECTED",
+        ],
+      },
+    })
+      .select(
+        [
+          "action",
+          "actor",
+          "actorId",
+          "actorName",
+          "actorEmail",
+          "roleUsed",
+          "department",
+          "outcome",
+          "reason",
+          "before",
+          "after",
+          "metadata",
+          "createdAt",
+        ].join(" ")
+      )
+      .sort({
+        createdAt: 1,
+        _id: 1,
+      })
+      .lean();
+
+    // -------------------------------------------------
+    // 6. FORMAT JOINING HISTORY
+    // -------------------------------------------------
+
+    const history = auditRecords.map(
+      (record) => {
+        const isConfirmation =
+          record.action ===
+          "CANDIDATE_JOINING_CONFIRMED";
+
+        return {
+          auditId: record._id,
+
+          action: record.action,
+
+          eventType: isConfirmation
+            ? "JOINING_CONFIRMED"
+            : "JOINING_DATE_CORRECTED",
+
+          previousJoiningDate:
+            formatJoiningDate(
+              record.before?.joinedAt
+            ),
+
+          joiningDate:
+            formatJoiningDate(
+              record.after?.joinedAt
+            ),
+
+          reason: record.reason || "",
+
+          performedBy: {
+            id:
+              record.actorId ||
+              record.actor?.toString() ||
+              null,
+
+            name:
+              record.actorName || "Unknown",
+
+            email:
+              record.actorEmail || "",
+
+            role:
+              record.metadata?.activeRole ||
+              record.roleUsed ||
+              "",
+          },
+
+          department:
+            record.department || null,
+
+          outcome: record.outcome,
+
+          performedAt: record.createdAt,
+        };
+      }
+    );
+
+    // -------------------------------------------------
+    // 7. SUCCESS RESPONSE
+    // -------------------------------------------------
+
+    return res.status(200).json({
+      success: true,
+
+      candidate: {
+        id: candidate._id,
+        name: candidate.name,
+        email: candidate.email,
+
+        currentJoiningDate:
+          formatJoiningDate(candidate.joinedAt),
+      },
+
+      totalEvents: history.length,
+
+      history,
+    });
+  } catch (error) {
+    console.error(
+      "Candidate joining history error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Unable to retrieve candidate joining history.",
     });
   }
 };

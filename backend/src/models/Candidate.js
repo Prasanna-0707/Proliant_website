@@ -152,6 +152,20 @@ const candidateSchema = new mongoose.Schema(
       default: "New",
       index: true,
     },
+
+    // =====================================================
+    // RECRUITMENT OUTCOME
+    // =====================================================
+
+    // Actual joining date confirmed by HR.
+    // Null means the candidate has not joined.
+    // Offer acceptance or interview clearance does not
+    // automatically mean that the candidate has joined.
+    joinedAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
   },
   {
     timestamps: true,
