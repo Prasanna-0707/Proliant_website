@@ -138,6 +138,14 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
       return;
     }
 
+    // NEW: Validate the MongoDB Job ID.
+    if (!selectedJob?._id) {
+      setSubmissionError(
+        "Invalid job reference. Please select a job again."
+      );
+      return;
+    }
+
     if (!areaOfInterest) {
       setSubmissionError("Please select an area of interest.");
       return;
@@ -172,6 +180,9 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
       ).trim();
 
       const payload = {
+        // NEW: Send the selected MongoDB Job ID.
+        jobId: selectedJob._id,
+
         position: selectedJob.title.trim(),
 
         areaOfInterest:
@@ -277,7 +288,7 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
             aria-label="Close application form"
             className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-black/10 bg-white text-lg text-black/60 transition-all duration-300 hover:border-[#EF3B3A] hover:bg-[#EF3B3A] hover:text-white sm:right-5 sm:top-5 sm:h-9 sm:w-9"
           >
-            ×
+            Ã—
           </button>
 
           {/* Form header */}
@@ -705,7 +716,7 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
                 <>
                   <span>Send Application</span>
                   <span className="transition-transform duration-300 group-hover:translate-x-1">
-                    →
+                    â†’
                   </span>
                 </>
               )}
@@ -715,7 +726,7 @@ const JobApplicationForm = ({ selectedJob, onClose }) => {
               )}
 
               {submitStatus === "success" && (
-                <span className="text-xl leading-none">✓</span>
+                <span className="text-xl leading-none">âœ“</span>
               )}
             </button>
           </form>

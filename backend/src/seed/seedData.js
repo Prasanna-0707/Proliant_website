@@ -1,11 +1,14 @@
+
 import bcrypt from "bcryptjs";
 
 import Admin from "../models/Admin.js";
 import Employee from "../models/Employee.js";
-import Job from "../models/Job.js";
+import Job from "../models/job.js";
 import Candidate from "../models/Candidate.js";
 import Contact from "../models/Contact.js";
 import Location from "../models/Location.js";
+
+import RolePermission from "../modules/administrator/models/RolePermission.js";
 
 // =========================================================
 // ADMIN PROFILE MIGRATION
@@ -57,6 +60,347 @@ const migrateAdminProfileFields = async () => {
 };
 
 // =========================================================
+// DEFAULT ROLE PERMISSIONS
+// =========================================================
+
+const DEFAULT_ROLE_PERMISSIONS = [
+  {
+    key: "ADMINISTRATOR",
+    name: "Administrator",
+    description:
+      "Administrator permissions, subject to the account's administrator scope.",
+    permissions: [
+      "admin.dashboard.read",
+      "admin.users.read",
+      "admin.users.create",
+      "admin.users.update",
+      "admin.users.role.update",
+      "admin.roles.read",
+      "admin.roles.permissions.update",
+      "admin.audit.read",
+      "admin.settings.read",
+      "admin.settings.update",
+
+      // Shared application access
+      "applications.read",
+      "applications.resume.read",
+
+      // Screening oversight
+      "screening.history.read",
+
+      "team.members.read",
+    ],
+    dataScope: "DEPARTMENT",
+    isSystemRole: true,
+    isActive: true,
+  },
+  {
+    key: "HR",
+    name: "HR",
+    description:
+      "Human Resources operations and department directory visibility.",
+    permissions: [
+      "applications.read",
+      "applications.resume.read",
+      "screening.history.read",
+      "team.members.read",
+    ],
+    dataScope: "DEPARTMENT",
+    isSystemRole: true,
+    isActive: true,
+  },
+  {
+    key: "RECRUITER",
+    name: "Recruiter",
+    description: "Recruitment operations.",
+    permissions: [
+      "applications.read",
+      "applications.resume.read",
+      "screening.history.read",
+      "team.members.read",
+    ],
+    dataScope: "DEPARTMENT",
+    isSystemRole: true,
+    isActive: true,
+  },
+  {
+    key: "HOD",
+    name: "Head of Department",
+    description:
+      "Read-only department directory visibility.",
+    permissions: [
+      "team.members.read",
+    ],
+    dataScope: "DEPARTMENT",
+    isSystemRole: true,
+    isActive: true,
+  },
+  {
+    key: "L0_SCREENER",
+    name: "L0 Screener",
+    description: "Initial candidate screening.",
+    permissions: [
+      "applications.read",
+      "applications.resume.read",
+      "screening.assigned.read",
+      "screening.history.read",
+      "screening.checklist.update",
+      "screening.decision.submit",
+    ],
+    dataScope: "ASSIGNED",
+    isSystemRole: true,
+    isActive: true,
+  },
+  {
+    key: "INTERVIEWER",
+    name: "Interviewer",
+    description:
+      "Assigned interview and evaluation operations.",
+    permissions: [
+      "applications.read",
+      "applications.resume.read",
+      "interviews.assigned.read",
+      "interviews.evaluation.submit",
+    ],
+    dataScope: "ASSIGNED",
+    isSystemRole: true,
+    isActive: true,
+  },
+  {
+    key: "L1_INTERVIEWER",
+    name: "L1 Interviewer",
+    description: "Level 1 interview operations.",
+    permissions: [
+      "applications.read",
+      "applications.resume.read",
+      "interviews.assigned.read",
+      "interviews.evaluation.submit",
+    ],
+    dataScope: "ASSIGNED",
+    isSystemRole: true,
+    isActive: true,
+  },
+  {
+    key: "L2_INTERVIEWER",
+    name: "L2 Interviewer",
+    description: "Level 2 interview operations.",
+    permissions: [
+      "applications.read",
+      "applications.resume.read",
+      "interviews.assigned.read",
+      "interviews.evaluation.submit",
+    ],
+    dataScope: "ASSIGNED",
+    isSystemRole: true,
+    isActive: true,
+  },
+  {
+    key: "HIRING_MANAGER",
+    name: "Hiring Manager",
+    description:
+      "Assigned hiring pipeline and decision operations.",
+    permissions: [
+      "hiring.pipeline.read",
+      "hiring.decision.submit",
+    ],
+    dataScope: "ASSIGNED",
+    isSystemRole: true,
+    isActive: true,
+  },
+  {
+    key: "HIRING_LEAD",
+    name: "Hiring Lead",
+    description:
+      "Assigned hiring pipeline and decision operations.",
+    permissions: [
+      "hiring.pipeline.read",
+      "hiring.decision.submit",
+    ],
+    dataScope: "ASSIGNED",
+    isSystemRole: true,
+    isActive: true,
+  },
+];
+
+// =========================================================
+// SEED DEFAULT ROLE PERMISSIONS
+// Insert missing roles without overwriting permissions
+// customized by Global Administrators.
+// =========================================================
+
+const seedDefaultRolePermissions = async () => {
+  let insertedCount = 0;
+
+  for (const role of DEFAULT_ROLE_PERMISSIONS) {
+    const result = await RolePermission.updateOne(
+      {
+        key: role.key,
+      },
+      {
+        $setOnInsert: role,
+      },
+      {
+        upsert: true,
+      }
+    );
+
+    if (result.upsertedCount > 0) {
+      insertedCount++;
+    }
+  }
+
+  console.log(
+    `Default role permissions checked. ${insertedCount} new role(s) inserted.`
+  );
+};
+
+// =========================================================
+// SHARED APPLICATION PERMISSION MIGRATION
+// Adds new permissions to existing role documents.
+// Does not replace existing permission arrays.
+// =========================================================
+
+const migrateSharedApplicationPermissions = async () => {
+  const migrationKey =
+    "2026-11-06-shared-application-permissions-v1";
+
+  const migrationCollection =
+    RolePermission.db.collection(
+      "application_access_permission_migrations"
+    );
+
+  // Check whether this migration was already completed.
+
+  const existingMigration =
+    await migrationCollection.findOne({
+      _id: migrationKey,
+    });
+
+  if (existingMigration) {
+    console.log(
+      "Shared application permissions migration already applied."
+    );
+
+    return;
+  }
+
+  // Permissions are assigned according to the existing
+  // default role responsibilities.
+
+  const permissionUpdates = [
+    {
+      key: "ADMINISTRATOR",
+      permissions: [
+        "applications.read",
+        "applications.resume.read",
+        "screening.history.read",
+      ],
+    },
+    {
+      key: "HR",
+      permissions: [
+        "applications.read",
+        "applications.resume.read",
+        "screening.history.read",
+      ],
+    },
+    {
+      key: "RECRUITER",
+      permissions: [
+        "applications.read",
+        "applications.resume.read",
+        "screening.history.read",
+      ],
+    },
+    {
+      key: "L0_SCREENER",
+      permissions: [
+        "applications.read",
+        "applications.resume.read",
+        "screening.history.read",
+      ],
+    },
+    {
+      key: "INTERVIEWER",
+      permissions: [
+        "applications.read",
+        "applications.resume.read",
+      ],
+    },
+    {
+      key: "L1_INTERVIEWER",
+      permissions: [
+        "applications.read",
+        "applications.resume.read",
+      ],
+    },
+    {
+      key: "L2_INTERVIEWER",
+      permissions: [
+        "applications.read",
+        "applications.resume.read",
+      ],
+    },
+  ];
+
+  let updatedRoles = 0;
+  const missingRoles = [];
+
+  for (const item of permissionUpdates) {
+    const result = await RolePermission.updateOne(
+      {
+        key: item.key,
+      },
+      {
+        $addToSet: {
+          permissions: {
+            $each: item.permissions,
+          },
+        },
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      missingRoles.push(item.key);
+      continue;
+    }
+
+    updatedRoles++;
+  }
+
+  // Do not mark the migration complete if an expected role
+  // document is missing. A future server startup can retry.
+
+  if (missingRoles.length > 0) {
+    throw new Error(
+      `Shared application permission migration could not find these roles: ${missingRoles.join(", ")}`
+    );
+  }
+
+  // Record successful migration only after all role updates.
+
+  await migrationCollection.updateOne(
+    {
+      _id: migrationKey,
+    },
+    {
+      $setOnInsert: {
+        name: "Shared Application Permissions",
+        version: 1,
+        appliedAt: new Date(),
+      },
+    },
+    {
+      upsert: true,
+    }
+  );
+
+  console.log(
+    `Shared application permissions migration completed. ${updatedRoles} role(s) updated.`
+  );
+};
+
+// =========================================================
 // SEED DATABASE
 // =========================================================
 
@@ -85,7 +429,6 @@ const seedDatabase = async () => {
         email: "bogachandrapu@gmail.com",
         password: hashedPassword,
 
-        // Profile fields
         name: "",
         role: "Administrator",
         designation: "Administrator",
@@ -110,6 +453,18 @@ const seedDatabase = async () => {
     await migrateAdminProfileFields();
 
     // =========================================================
+    // DEFAULT ROLE PERMISSIONS
+    // =========================================================
+
+    await seedDefaultRolePermissions();
+
+    // =========================================================
+    // SHARED APPLICATION PERMISSION MIGRATION
+    // =========================================================
+
+    await migrateSharedApplicationPermissions();
+
+    // =========================================================
     // EMPLOYEES
     // =========================================================
 
@@ -131,6 +486,7 @@ const seedDatabase = async () => {
       ];
 
       // SAP ROLES ONLY
+
       const roles = [
         "SAP MM Consultant",
         "SAP SD Consultant",
@@ -186,6 +542,7 @@ const seedDatabase = async () => {
       const employees = [];
 
       // 101 employees
+
       for (let i = 1; i <= 101; i++) {
         const firstName =
           firstNames[(i - 1) % firstNames.length];
@@ -205,13 +562,9 @@ const seedDatabase = async () => {
         });
       }
 
-      await Employee.insertMany(
-        employees
-      );
+      await Employee.insertMany(employees);
 
-      console.log(
-        "✓ 101 employees seeded"
-      );
+      console.log("✓ 101 employees seeded");
     } else {
       console.log(
         "→ Employee data already exists. Skipping."
@@ -341,9 +694,7 @@ const seedDatabase = async () => {
 
       await Job.insertMany(jobs);
 
-      console.log(
-        "✓ 10 jobs seeded"
-      );
+      console.log("✓ 10 jobs seeded");
     } else {
       console.log(
         "→ Job data already exists. Skipping."
@@ -447,11 +798,11 @@ const seedDatabase = async () => {
       const candidates = [];
 
       // 55 candidates
+
       for (let i = 1; i <= 55; i++) {
         const firstName =
           candidateFirstNames[
-            (i - 1) %
-              candidateFirstNames.length
+            (i - 1) % candidateFirstNames.length
           ];
 
         const isFresher = i % 3 === 0;
@@ -459,33 +810,26 @@ const seedDatabase = async () => {
         candidates.push({
           position:
             positions[
-              (i - 1) %
-                positions.length
+              (i - 1) % positions.length
             ],
 
           areaOfInterest:
             interests[
-              (i - 1) %
-                interests.length
+              (i - 1) % interests.length
             ],
 
           name: `${firstName} Candidate ${i}`,
 
-          email:
-            `candidate${i}@example.com`,
+          email: `candidate${i}@example.com`,
 
           phone:
-            `987650${String(i).padStart(
-              4,
-              "0"
-            )}`,
+            `987650${String(i).padStart(4, "0")}`,
 
           isFresher,
 
           location:
             locations[
-              (i - 1) %
-                locations.length
+              (i - 1) % locations.length
             ],
 
           yearsOfExperience:
@@ -495,8 +839,7 @@ const seedDatabase = async () => {
 
           highestQualification:
             qualifications[
-              (i - 1) %
-                qualifications.length
+              (i - 1) % qualifications.length
             ],
 
           currentCompany:
@@ -506,36 +849,28 @@ const seedDatabase = async () => {
 
           noticePeriod:
             noticePeriods[
-              (i - 1) %
-                noticePeriods.length
+              (i - 1) % noticePeriods.length
             ],
 
           coverMessage:
             `I am interested in the ${
               positions[
-                (i - 1) %
-                  positions.length
+                (i - 1) % positions.length
               ]
             } position at Proliant and would like to be considered for this opportunity.`,
 
-          resume:
-            `resume-placeholder-${i}.pdf`,
+          resume: `resume-placeholder-${i}.pdf`,
 
           status:
             candidateStatuses[
-              (i - 1) %
-                candidateStatuses.length
+              (i - 1) % candidateStatuses.length
             ],
         });
       }
 
-      await Candidate.insertMany(
-        candidates
-      );
+      await Candidate.insertMany(candidates);
 
-      console.log(
-        "✓ 55 candidates seeded"
-      );
+      console.log("✓ 55 candidates seeded");
     } else {
       console.log(
         "→ Candidate data already exists. Skipping."
@@ -553,85 +888,63 @@ const seedDatabase = async () => {
       const contacts = [
         {
           name: "Rajesh Kumar",
-          email:
-            "rajesh.kumar@example.com",
-          company:
-            "Tech Solutions Pvt Ltd",
-          subject:
-            "Business Partnership",
+          email: "rajesh.kumar@example.com",
+          company: "Tech Solutions Pvt Ltd",
+          subject: "Business Partnership",
           message:
             "We would like to discuss a potential business partnership with Proliant.",
           status: "Unread",
         },
         {
           name: "Priya Sharma",
-          email:
-            "priya.sharma@example.com",
-          company:
-            "Global Systems",
-          subject:
-            "Technology Services",
+          email: "priya.sharma@example.com",
+          company: "Global Systems",
+          subject: "Technology Services",
           message:
             "We are interested in learning more about your technology services.",
           status: "Read",
         },
         {
           name: "Michael Johnson",
-          email:
-            "michael.johnson@example.com",
-          company:
-            "Innovate Corp",
-          subject:
-            "Enterprise Solutions",
+          email: "michael.johnson@example.com",
+          company: "Innovate Corp",
+          subject: "Enterprise Solutions",
           message:
             "Please share more information about your enterprise technology solutions.",
           status: "Unread",
         },
         {
           name: "Sneha Reddy",
-          email:
-            "sneha.reddy@example.com",
-          company:
-            "Digital Works",
-          subject:
-            "Project Discussion",
+          email: "sneha.reddy@example.com",
+          company: "Digital Works",
+          subject: "Project Discussion",
           message:
             "We would like to schedule a discussion regarding an upcoming project.",
           status: "Read",
         },
         {
           name: "Arjun Rao",
-          email:
-            "arjun.rao@example.com",
-          company:
-            "NextGen Technologies",
-          subject:
-            "Service Enquiry",
+          email: "arjun.rao@example.com",
+          company: "NextGen Technologies",
+          subject: "Service Enquiry",
           message:
             "Please contact us regarding your software development services.",
           status: "Unread",
         },
         {
           name: "David Wilson",
-          email:
-            "david.wilson@example.com",
-          company:
-            "FutureTech Inc",
-          subject:
-            "General Enquiry",
+          email: "david.wilson@example.com",
+          company: "FutureTech Inc",
+          subject: "General Enquiry",
           message:
             "We would like to know more about Proliant and the services you provide.",
           status: "Read",
         },
       ];
 
-      await Contact.insertMany(
-        contacts
-      );
+      await Contact.insertMany(contacts);
 
-      console.log(
-        "✓ 6 contact enquiries seeded"
-      );
+      console.log("✓ 6 contact enquiries seeded");
     } else {
       console.log(
         "→ Contact data already exists. Skipping."
@@ -673,45 +986,31 @@ const seedDatabase = async () => {
           country: "India",
           state: "Telangana",
           city: "Hyderabad",
-          companyName:
-            "Roliant Data Pvt. Ltd.",
+          companyName: "Roliant Data Pvt. Ltd.",
           address:
             "Pranava Vaishnoi Business Park, Kothaguda, Telangana, India",
-          latitude:
-            17.46148007233937,
-          longitude:
-            78.36740788019645,
-          phone:
-            "+91 8008199903",
-          email:
-            "hr@proliantdatallc.com",
+          latitude: 17.46148007233937,
+          longitude: 78.36740788019645,
+          phone: "+91 8008199903",
+          email: "hr@proliantdatallc.com",
         },
         {
           country: "UAE",
           state: "Dubai",
           city: "Dubai",
-          companyName:
-            "Proliant Data FZCO",
+          companyName: "Proliant Data FZCO",
           address:
             "IFZA Business Park, Dubai, United Arab Emirates",
-          latitude:
-            25.118804862011046,
-          longitude:
-            55.37773192460008,
-          phone:
-            "+971 505 185363",
-          email:
-            "hr@proliantdatallc.com",
+          latitude: 25.118804862011046,
+          longitude: 55.37773192460008,
+          phone: "+971 505 185363",
+          email: "hr@proliantdatallc.com",
         },
       ];
 
-      await Location.insertMany(
-        locations
-      );
+      await Location.insertMany(locations);
 
-      console.log(
-        "✓ 4 locations seeded"
-      );
+      console.log("✓ 4 locations seeded");
     } else {
       console.log(
         "→ Location data already exists. Skipping."

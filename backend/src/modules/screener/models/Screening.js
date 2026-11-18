@@ -1,6 +1,61 @@
 import mongoose from "mongoose";
 
 // =====================================================
+// COMMON ENUMS
+// =====================================================
+
+const ACTOR_TYPES = ["HUMAN", "SYSTEM", "AI_AGENT"];
+
+const SCREENING_DECISIONS = [
+  "SHORTLIST",
+  "REJECT",
+  "ON_HOLD",
+  "ESCALATE",
+
+  // Legacy decisions - retained for compatibility
+  "Selected",
+  "Rejected",
+  "On Hold",
+];
+
+// =====================================================
+// SCREENING CHECKLIST
+// =====================================================
+
+const screeningChecklistSchema = new mongoose.Schema(
+  {
+    skillsMatch: {
+      type: Boolean,
+      default: null,
+    },
+
+    experienceMatch: {
+      type: Boolean,
+      default: null,
+    },
+
+    educationMatch: {
+      type: Boolean,
+      default: null,
+    },
+
+    requirementsMatch: {
+      type: Boolean,
+      default: null,
+    },
+
+    additionalNotes: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+  },
+  {
+    _id: false,
+  }
+);
+
+// =====================================================
 // SCREENING HISTORY ENTRY
 // =====================================================
 
@@ -8,14 +63,102 @@ const screeningHistorySchema = new mongoose.Schema(
   {
     action: {
       type: String,
-      enum: ["ASSIGNED", "REASSIGNED", "SUBMITTED"],
+      enum: [
+        "ASSIGNED",
+        "REASSIGNED",
+        "STARTED",
+        "CHECKLIST_UPDATED",
+        "SUBMITTED",
+        "HR_REVIEW_REQUESTED",
+      ],
       required: true,
     },
 
+    // Application and candidate snapshot
+    applicationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Candidate",
+      default: null,
+    },
+
+    candidateName: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    // Screener responsible for the application
+    screenerName: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    // Candidate application status transition
+    previousStatus: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    newStatus: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    // L0 screening status transition
+    previousScreeningStatus: {
+      type: String,
+      enum: [
+        "Pending",
+        "In Progress",
+        "Completed",
+        "Cancelled",
+        "",
+      ],
+      default: "",
+    },
+
+    newScreeningStatus: {
+      type: String,
+      enum: [
+        "Pending",
+        "In Progress",
+        "Completed",
+        "Cancelled",
+        "",
+      ],
+      default: "",
+    },
+
+    // Admin reference for human actions.
+    // Null for system-generated actions.
     performedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Admin",
+      default: null,
+    },
+
+    performedByType: {
+      type: String,
+      enum: ACTOR_TYPES,
+      default: "HUMAN",
       required: true,
+    },
+
+    // Generic identifier for system and future AI actors.
+    performedById: {
+      type: String,
+      trim: true,
+      default: "",
+      maxlength: 150,
+    },
+
+    performedByName: {
+      type: String,
+      trim: true,
+      default: "",
     },
 
     assignedTo: {
@@ -26,7 +169,7 @@ const screeningHistorySchema = new mongoose.Schema(
 
     decision: {
       type: String,
-      enum: ["Selected", "Rejected", "On Hold"],
+      enum: SCREENING_DECISIONS,
       default: null,
     },
 
@@ -36,6 +179,19 @@ const screeningHistorySchema = new mongoose.Schema(
       default: "",
     },
 
+    remarks: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    rejectionReason: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    // Date and time when this action occurred
     createdAt: {
       type: Date,
       default: Date.now,
@@ -52,7 +208,6 @@ const screeningHistorySchema = new mongoose.Schema(
 
 const screeningSchema = new mongoose.Schema(
   {
-    // Existing application record in the Candidate collection
     application: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Candidate",
@@ -60,7 +215,6 @@ const screeningSchema = new mongoose.Schema(
       index: true,
     },
 
-    // Initial screening level
     level: {
       type: String,
       enum: ["L0"],
@@ -68,7 +222,6 @@ const screeningSchema = new mongoose.Schema(
       required: true,
     },
 
-    // Interviewer currently responsible for the screening
     assignedTo: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Admin",
@@ -76,23 +229,67 @@ const screeningSchema = new mongoose.Schema(
       index: true,
     },
 
-    // HR/recruiter or authorized administrator who assigned it
+    // -------------------------------------------------
+    // PENDING REASSIGNMENT TRACKING
+    // -------------------------------------------------
+
+    // True when the assigned screener is no longer
+    // eligible and a replacement has not yet been found.
+    //
+    // assignedTo retains the previous screener reference
+    // until a replacement is successfully assigned.
+    assignmentPending: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+
+    assignmentPendingReason: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    assignmentPendingSince: {
+      type: Date,
+      default: null,
+    },
+
     assignedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Admin",
+      default: null,
+    },
+
+    assignedByType: {
+      type: String,
+      enum: ACTOR_TYPES,
+      default: "HUMAN",
       required: true,
+    },
+
+    assignedById: {
+      type: String,
+      trim: true,
+      default: "",
+      maxlength: 150,
     },
 
     status: {
       type: String,
-      enum: ["Pending", "Completed"],
+      enum: [
+        "Pending",
+        "In Progress",
+        "Completed",
+        "Cancelled",
+      ],
       default: "Pending",
       index: true,
     },
 
     decision: {
       type: String,
-      enum: ["Selected", "Rejected", "On Hold"],
+      enum: SCREENING_DECISIONS,
       default: null,
     },
 
@@ -102,9 +299,37 @@ const screeningSchema = new mongoose.Schema(
       default: "",
     },
 
+    remarks: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    rejectionReason: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    escalationReason: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    checklist: {
+      type: screeningChecklistSchema,
+      default: () => ({}),
+    },
+
     assignedAt: {
       type: Date,
       default: Date.now,
+    },
+
+    startedAt: {
+      type: Date,
+      default: null,
     },
 
     submittedAt: {
@@ -112,7 +337,6 @@ const screeningSchema = new mongoose.Schema(
       default: null,
     },
 
-    // Preserve previous assignments and screening submissions
     history: {
       type: [screeningHistorySchema],
       default: [],
@@ -123,13 +347,45 @@ const screeningSchema = new mongoose.Schema(
   }
 );
 
-// One current L0 screening record per application.
-// Reassignment and previous decisions are preserved in history.
+// =====================================================
+// INDEXES
+// =====================================================
+
 screeningSchema.index(
-  { application: 1, level: 1 },
-  { unique: true }
+  {
+    application: 1,
+    level: 1,
+  },
+  {
+    unique: true,
+  }
 );
 
-const Screening = mongoose.model("Screening", screeningSchema);
+screeningSchema.index({
+  assignedTo: 1,
+  level: 1,
+  status: 1,
+});
+
+screeningSchema.index({
+  level: 1,
+  assignmentPending: 1,
+  status: 1,
+  createdAt: 1,
+});
+
+screeningSchema.index({
+  status: 1,
+  decision: 1,
+  createdAt: -1,
+});
+
+// =====================================================
+// MODEL
+// =====================================================
+
+const Screening =
+  mongoose.models.Screening ||
+  mongoose.model("Screening", screeningSchema);
 
 export default Screening;

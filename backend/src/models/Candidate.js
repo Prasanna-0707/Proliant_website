@@ -1,7 +1,12 @@
+
 import mongoose from "mongoose";
 
 const candidateSchema = new mongoose.Schema(
   {
+    // =====================================================
+    // CANDIDATE INFORMATION
+    // =====================================================
+
     position: {
       type: String,
       required: true,
@@ -60,7 +65,12 @@ const candidateSchema = new mongoose.Schema(
 
     noticePeriod: {
       type: String,
-      enum: ["Immediately", "30 Days", "60 Days", "90 Days"],
+      enum: [
+        "Immediately",
+        "30 Days",
+        "60 Days",
+        "90 Days",
+      ],
       required: true,
     },
 
@@ -73,10 +83,74 @@ const candidateSchema = new mongoose.Schema(
       type: String,
     },
 
+    // =====================================================
+    // JOB RELATIONSHIP
+    // Connects the candidate application to a Job record.
+    // Optional for existing legacy candidate records.
+    // =====================================================
+
+    job: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Job",
+      default: null,
+      index: true,
+    },
+
+    // Department is derived from the associated Job
+    // by the backend, never trusted from the frontend.
+    department: {
+      type: String,
+      trim: true,
+      default: "",
+      index: true,
+    },
+
+    // =====================================================
+    // RECRUITMENT WORKFLOW
+    // =====================================================
+
+    // Current recruitment stage.
+    // Custom workflow stage codes are supported.
+    currentStage: {
+      type: String,
+      trim: true,
+      uppercase: true,
+      maxlength: 100,
+      match: /^[A-Z0-9_-]+$/,
+      default: "L0_SCREENING",
+      index: true,
+    },
+
+    // Assigned L0 screener.
+    assignedScreener: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Admin",
+      default: null,
+      index: true,
+    },
+
+    // Current application status.
+    // Legacy statuses are retained for backward compatibility.
     status: {
       type: String,
-      enum: ["New", "Shortlisted", "Interview", "Selected", "Rejected", "On Hold"],
+      enum: [
+        // Existing application statuses
+        "New",
+        "Shortlisted",
+        "Interview",
+        "Selected",
+        "Rejected",
+        "On Hold",
+
+        // L0 recruitment workflow statuses
+        "ASSIGNED_TO_L0",
+        "L0_SHORTLISTED",
+        "L0_REJECTED",
+        "L0_ON_HOLD",
+        "HR_REVIEW_REQUIRED",
+      ],
       default: "New",
+      index: true,
     },
   },
   {
@@ -84,6 +158,30 @@ const candidateSchema = new mongoose.Schema(
   }
 );
 
-const Candidate = mongoose.model("Candidate", candidateSchema);
+// =====================================================
+// INDEXES
+// =====================================================
+
+// Support job-specific recruitment workflow queries.
+candidateSchema.index({
+  job: 1,
+  currentStage: 1,
+  status: 1,
+});
+
+// Support assigned screener application queries.
+candidateSchema.index({
+  assignedScreener: 1,
+  status: 1,
+  createdAt: -1,
+});
+
+// =====================================================
+// EXPORT MODEL
+// =====================================================
+
+const Candidate =
+  mongoose.models.Candidate ||
+  mongoose.model("Candidate", candidateSchema);
 
 export default Candidate;
