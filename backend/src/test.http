@@ -1,9 +1,18 @@
-
 @baseUrl = http://localhost:5000/api
 
-# Update this after successful OTP verification
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbklkIjoiNmFhY2NmYTg1ZjU3NjYxYTc5NGFiZWU0IiwiZW1haWwiOiJib2dhY2hhbmRyYXB1QGdtYWlsLmNvbSIsInRva2VuVmVyc2lvbiI6MTYsImlhdCI6MTc5MTQ2MTgyMiwiZXhwIjoxNzkxNTQ4MjIyfQ.hUlkZQ_Udarwun4YnRQkdTSq5TFzAwlN90eYVt1gVO0
+# Update these after successful OTP verification
+@token = PASTE_ADMIN_TOKEN_HERE
 
+@CandidateToken = PASTE_CANDIDATE_TOKEN_HERE
+
+@applicationId = 6ad9b0052a4f49f5ed6ca264
+
+@interviewId = PASTE_REAL_INTERVIEW_ID_HERE
+@stageCode = L1
+
+# Use a different application ID for HR review testing
+@hrReviewApplicationId = REPLACE_WITH_ANOTHER_APPLICATION_ID
+@candidateId = REPLACE_WITH_ACTUAL_CANDIDATE_ID
 ############################################################
 # 1. AUTHENTICATION — LOGIN + OTP
 ############################################################
@@ -13,8 +22,8 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "bogachandrapu@gmail.com",
-  "password": "Admin@123"
+  "email": "YOUR_ADMIN_EMAIL",
+  "password": "YOUR_ADMIN_PASSWORD"
 }
 
 ###
@@ -25,16 +34,8 @@ POST {{baseUrl}}/auth/verify-login-otp
 Content-Type: application/json
 
 {
-  "email": "bogachandrapu@gmail.com",
-<<<<<<< HEAD
-  "otp": "239749"
-=======
-<<<<<<< HEAD
-  "otp": "846317"
-=======
-  "otp": "239749"
->>>>>>> origin/lavanya-dev
->>>>>>> prasanna-dev
+  "email": "YOUR_ADMIN_EMAIL",
+  "otp": "ENTER_LOGIN_OTP_HERE"
 }
 
 ###
@@ -44,7 +45,6 @@ POST {{baseUrl}}/auth/logout
 Authorization: Bearer {{token}}
 
 ###
-
 
 ############################################################
 # 2. DASHBOARD
@@ -61,7 +61,6 @@ Authorization: Bearer {{token}}
 GET {{baseUrl}}/dashboard/stats
 
 ###
-
 
 ############################################################
 # 3. EMPLOYEES
@@ -111,7 +110,6 @@ Authorization: Bearer {{token}}
 
 ###
 
-
 ############################################################
 # 4. LOCATIONS
 ############################################################
@@ -160,7 +158,6 @@ Authorization: Bearer {{token}}
 
 ###
 
-
 ############################################################
 # 5. JOBS
 ############################################################
@@ -172,7 +169,7 @@ GET {{baseUrl}}/jobs
 
 ### 5.2 Get Single Published Job - PUBLIC
 # Replace JOB_ID with actual published job _id
-GET {{baseUrl}}/jobs/JOB_ID
+GET {{baseUrl}}/jobs/6aaccfa85f57661a794abf51
 
 ###
 
@@ -219,7 +216,6 @@ DELETE {{baseUrl}}/jobs/JOB_ID
 Authorization: Bearer {{token}}
 
 ###
-
 
 ############################################################
 # 6. CONTACT ENQUIRIES
@@ -270,7 +266,6 @@ DELETE {{baseUrl}}/contacts/CONTACT_ID
 Authorization: Bearer {{token}}
 
 ###
-
 
 ############################################################
 # 7. CANDIDATES
@@ -330,7 +325,6 @@ Authorization: Bearer {{token}}
 
 ###
 
-
 ############################################################
 # 8. PASSWORD RESET
 ############################################################
@@ -340,7 +334,7 @@ POST {{baseUrl}}/auth/forgot-password
 Content-Type: application/json
 
 {
-  "email": "bogachandrapu@gmail.com"
+  "email": "YOUR_ADMIN_EMAIL"
 }
 
 ###
@@ -351,7 +345,7 @@ POST {{baseUrl}}/auth/verify-reset-otp
 Content-Type: application/json
 
 {
-  "email": "bogachandrapu@gmail.com",
+  "email": "YOUR_ADMIN_EMAIL",
   "otp": "ENTER_RESET_OTP_HERE"
 }
 
@@ -363,7 +357,7 @@ POST {{baseUrl}}/auth/reset-password
 Content-Type: application/json
 
 {
-  "email": "bogachandrapu@gmail.com",
+  "email": "YOUR_ADMIN_EMAIL",
   "resetToken": "RESET_TOKEN_HERE",
   "newPassword": "NewAdmin@123"
 }
@@ -377,12 +371,11 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "currentPassword": "NewAdmin@123",
-  "newPassword": "Admin@123"
+  "currentPassword": "YOUR_CURRENT_PASSWORD",
+  "newPassword": "NewAdmin@123"
 }
 
 ###
-
 
 ############################################################
 # 9. EXCEL EXPORT
@@ -393,7 +386,6 @@ GET {{baseUrl}}/candidates/export/excel
 Authorization: Bearer {{token}}
 
 ###
-
 
 ############################################################
 # 10. TEAM MEMBER APIs
@@ -449,7 +441,6 @@ DELETE {{baseUrl}}/auth/team-members/TEAM_MEMBER_ID
 Authorization: Bearer {{token}}
 
 ###
-
 
 ############################################################
 # 11. ADMIN PROFILE APIs
@@ -508,7 +499,6 @@ Content-Type: application/json
 
 ###
 
-
 ############################################################
 # 12. CANDIDATE EMAIL NOTIFICATIONS
 ############################################################
@@ -559,3 +549,632 @@ Content-Type: application/json
 }
 
 ###
+
+############################################################
+# 13. CANDIDATE PORTAL APIs
+############################################################
+
+### 13.1 Candidate Registration
+POST {{baseUrl}}/candidate/auth/register
+Content-Type: application/json
+
+{
+  "name": "PrasannaKumar",
+  "email": "prasanna@example.com",
+  "phone": "9876543210",
+  "password": "Candidate@123"
+}
+
+###
+
+### 13.2 Candidate Login
+POST {{baseUrl}}/candidate/auth/login
+Content-Type: application/json
+
+{
+  "email": "prasanna@example.com",
+  "password": "Candidate@123"
+}
+
+###
+
+### 13.3 Candidate Profile
+GET {{baseUrl}}/candidate/profile
+Authorization: Bearer {{CandidateToken}}
+
+###
+
+### 13.4 Update Candidate Profile
+PUT {{baseUrl}}/candidate/profile
+Content-Type: application/json
+Authorization: Bearer {{CandidateToken}}
+
+{
+  "name": "Prasanna Kumar Reddy",
+  "phone": "9876543210"
+}
+
+###
+
+### 13.5 Upload Resume to Profile
+PUT {{baseUrl}}/candidate/profile/resume
+Authorization: Bearer {{CandidateToken}}
+Content-Type: application/json
+
+{
+  "fileName": "Prasanna_Kumar_Reddy_Resume.pdf",
+  "fileUrl": "https://your-sharepoint-resume-url",
+  "fileType": "pdf"
+}
+
+###
+
+### 13.6 Delete Resume from Profile
+DELETE {{baseUrl}}/candidate/profile/resume
+Authorization: Bearer {{CandidateToken}}
+
+###
+
+### 13.7 Candidate - Get Published Jobs
+GET {{baseUrl}}/candidate/jobs
+
+###
+
+### 13.8 Search SAP Jobs
+GET {{baseUrl}}/candidate/jobs?search=SAP
+
+###
+
+### 13.9 Filter Hyderabad Jobs
+GET {{baseUrl}}/candidate/jobs?location=Hyderabad
+
+###
+
+### 13.10 Page 1
+GET {{baseUrl}}/candidate/jobs?page=1&limit=10
+
+###
+
+### 13.11 Candidate - Get Job Details
+GET {{baseUrl}}/candidate/jobs/6aaccfa85f57661a794abf4a
+
+###
+
+### 13.12 Candidate - Apply for Job with Resume
+POST {{baseUrl}}/candidate/applications
+Content-Type: application/json
+Authorization: Bearer {{CandidateToken}}
+
+{
+  "jobId": "6aaccfa85f57661a794abf4f",
+  "resume": {
+    "fileName": "Prasanna_PD-APP-2026-000001_Resume.pdf",
+    "fileUrl": "https://your-sharepoint-file-url",
+    "fileType": "pdf"
+  }
+}
+
+###
+
+### 13.13 Candidate - Get My Applications
+GET {{baseUrl}}/candidate/applications
+Authorization: Bearer {{CandidateToken}}
+
+###
+
+### 13.14 Candidate - Get My Application Details
+GET {{baseUrl}}/candidate/applications/PD-APP-2026-000003
+Authorization: Bearer {{CandidateToken}}
+
+###
+
+### 13.15 Candidate - Get My Dashboard
+GET {{baseUrl}}/candidate/dashboard
+Authorization: Bearer {{CandidateToken}}
+
+###
+
+### 13.16 Candidate - Apply for Job
+POST {{baseUrl}}/candidate/applications
+Authorization: Bearer {{CandidateToken}}
+Content-Type: application/json
+
+{
+  "jobId": "6aaccfa85f57661a794abf4b"
+}
+
+###
+
+### 13.17 Candidate - Apply for Job with Different Resume
+POST {{baseUrl}}/candidate/applications
+Authorization: Bearer {{CandidateToken}}
+Content-Type: application/json
+
+{
+  "jobId": "6aaccfa85f57661a794abf4a",
+  "resume": {
+    "fileName": "Prasanna_Updated_Resume.pdf",
+    "fileUrl": "https://your-updated-resume-url",
+    "fileType": "pdf"
+  }
+}
+
+###
+
+### 13.18 Candidate - Get My Notifications
+GET {{baseUrl}}/candidate/notifications
+Authorization: Bearer {{CandidateToken}}
+
+###
+
+### 13.19 Candidate - Get My Unread Notifications Count
+GET {{baseUrl}}/candidate/notifications/unread-count
+Authorization: Bearer {{CandidateToken}}
+
+###
+
+### 13.20 Candidate - Mark Notification as Read
+PATCH {{baseUrl}}/candidate/notifications/6addec48711d1f7995ee9850/read
+Authorization: Bearer {{CandidateToken}}
+
+###
+
+### 13.21 Candidate - Mark All Notifications as Read
+PATCH {{baseUrl}}/candidate/notifications/read-all
+Authorization: Bearer {{CandidateToken}}
+
+###
+
+### 13.22 Verify Unread Notifications Count
+GET {{baseUrl}}/candidate/notifications/unread-count
+Authorization: Bearer {{CandidateToken}}
+
+###
+
+############################################################
+# 14. JOB MANAGEMENT APIs
+############################################################
+
+### 14.1 Get All Jobs - PUBLIC
+GET {{baseUrl}}/jobs
+
+###
+
+### 14.2 Test HR Jobs - All Jobs Including Draft
+GET {{baseUrl}}/jobs/manage
+Authorization: Bearer {{token}}
+
+###
+
+### 14.3 Test: Change SAP QM Consultant to Draft
+PUT {{baseUrl}}/jobs/6aaccfa85f57661a794abf51
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "Draft"
+}
+
+###
+
+############################################################
+# 15. TEAM MEMBER VERIFICATION
+############################################################
+
+### 15.1 Get All Team Members
+GET {{baseUrl}}/auth/team-members
+Authorization: Bearer {{token}}
+
+###
+
+### 15.2 Get One Team Member by ID
+GET {{baseUrl}}/auth/team-members/TEAM_MEMBER_ID
+Authorization: Bearer {{token}}
+
+###
+
+############################################################
+# 16. L0 SCREENER APIs
+############################################################
+
+### 16.1 Get Application Details
+# Open the candidates collection in MongoDB Compass
+# and copy the _id of an existing candidate.
+GET {{baseUrl}}/applications/{{applicationId}}
+Authorization: Bearer {{token}}
+
+###
+
+### 16.2 Get Application Resume
+GET {{baseUrl}}/applications/{{applicationId}}/resume
+Authorization: Bearer {{token}}
+
+###
+
+### 16.3 Get Assigned L0 Applications
+# Returns applications assigned to the logged-in L0 screener.
+GET {{baseUrl}}/screenings/l0/assigned
+Authorization: Bearer {{token}}
+
+###
+
+### 16.4 Get L0 Screening Statistics
+# Returns screening statistics for the logged-in L0 screener.
+GET {{baseUrl}}/screenings/l0/stats
+Authorization: Bearer {{token}}
+
+###
+
+### 16.5 Submit L0 Screening Decision
+# The application must be assigned to the logged-in L0 screener.
+# Use a test candidate because this request updates screening data.
+POST {{baseUrl}}/applications/{{applicationId}}/screenings/l0
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "decision": "Selected",
+  "feedback": "Candidate meets the initial screening requirements."
+}
+
+###
+
+### 16.6 Get Application Screening History
+# Returns the screening record and its available history.
+GET {{baseUrl}}/applications/{{applicationId}}/screenings
+Authorization: Bearer {{token}}
+
+###
+
+############################################################
+# 17. L1/L2 INTERVIEWER APIs
+############################################################
+
+### 17.1 Get My Assigned Interviews
+GET {{baseUrl}}/interviews/my
+Authorization: Bearer {{token}}
+
+###
+
+### 17.2 Get Interview Details
+# Replace interviewId with a real Interview document _id.
+GET {{baseUrl}}/interviews/{{interviewId}}
+Authorization: Bearer {{token}}
+
+###
+
+### 17.3 Submit Interview Evaluation
+# The interview must be assigned to the logged-in interviewer.
+POST {{baseUrl}}/interviews/{{interviewId}}/evaluation
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "overallRating": 4,
+  "strengths": "Good technical understanding.",
+  "concerns": "Could improve problem-solving explanations.",
+  "feedback": "Candidate demonstrates the required skills.",
+  "recommendation": "Advance",
+  "criteria": []
+}
+
+###
+
+### 17.4 Update Interview Evaluation
+# Use only when an evaluation has already been submitted.
+PATCH {{baseUrl}}/interviews/{{interviewId}}/evaluation
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "overallRating": 5,
+  "strengths": "Strong technical understanding.",
+  "concerns": "",
+  "feedback": "Candidate meets the technical requirements.",
+  "recommendation": "Advance",
+  "criteria": [],
+  "correctionReason": "Corrected the overall rating after reviewing the notes."
+}
+
+###
+
+### 17.5 Get Interviews for an Application
+# Use the existing Candidate MongoDB _id.
+GET {{baseUrl}}/applications/{{applicationId}}/interviews
+Authorization: Bearer {{token}}
+
+###
+
+### 17.6 Get Evaluation Form for a Stage
+# Example: L1, L2, L3, L4, or another configured stage.
+GET {{baseUrl}}/evaluation-forms/{{stageCode}}
+Authorization: Bearer {{token}}
+
+###
+
+############################################################
+# 18. ADMINISTRATOR APIs
+############################################################
+
+### 18.1 Administrator - Get Users
+GET {{baseUrl}}/admin/users?page=1&limit=20
+Authorization: Bearer {{token}}
+
+###
+
+### 18.2 Administrator - Dashboard
+GET {{baseUrl}}/admin/dashboard
+Authorization: Bearer {{token}}
+
+###
+
+############################################################
+# 19. MY APPLICATIONS APIs
+############################################################
+
+### 19.1 Get All Applications Assigned to Logged-in L0 Screener
+GET {{baseUrl}}/applications
+Authorization: Bearer {{token}}
+
+###
+
+### 19.2 Get Application Details
+GET {{baseUrl}}/applications/{{applicationId}}
+Authorization: Bearer {{token}}
+
+###
+
+### 19.3 Download Application Resume
+GET {{baseUrl}}/applications/{{applicationId}}/resume
+Authorization: Bearer {{token}}
+
+###
+
+### 19.4 Start L0 Screening
+PATCH {{baseUrl}}/applications/{{applicationId}}/start
+Authorization: Bearer {{token}}
+
+###
+
+############################################################
+# 20. SCREENING CHECKLIST APIs
+############################################################
+
+### 20.1 Get Screening Checklist
+GET {{baseUrl}}/applications/{{applicationId}}/checklist
+Authorization: Bearer {{token}}
+
+###
+
+### 20.2 Update Screening Checklist
+PUT {{baseUrl}}/applications/{{applicationId}}/checklist
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "checklist": {
+    "skillsMatch": true,
+    "experienceMatch": true,
+    "educationMatch": true,
+    "requirementsMatch": true,
+    "additionalNotes": "Candidate meets the required technical qualifications."
+  }
+}
+
+###
+
+############################################################
+# 21. SCREENING DECISION APIs
+############################################################
+
+### 21.1 Submit SHORTLIST Decision
+POST {{baseUrl}}/applications/{{applicationId}}/decision
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "decision": "SHORTLIST",
+  "feedback": "Candidate meets the initial screening requirements.",
+  "remarks": "Proceed to the next interview stage."
+}
+
+###
+
+############################################################
+# 22. HR REVIEW REQUEST APIs
+############################################################
+
+### 22.1 Get All HR Review Requests
+GET {{baseUrl}}/hr-review-requests
+Authorization: Bearer {{token}}
+
+###
+
+### 22.2 Get Details of a Particular HR Review Request
+GET {{baseUrl}}/hr-review-requests/{{hrReviewApplicationId}}
+Authorization: Bearer {{token}}
+
+###
+
+############################################################
+# 23. SCREENING HISTORY APIs
+############################################################
+
+### 23.1 Get L0 Screening History
+GET {{baseUrl}}/history
+Authorization: Bearer {{token}}
+
+###
+
+### 23.2 Get Screening History for a Particular Application
+GET {{baseUrl}}/history/{{applicationId}}
+Authorization: Bearer {{token}}
+
+###
+
+############################################################
+# 24. LEGACY COMPATIBILITY APIs
+############################################################
+
+### 24.1 Get Legacy L0 Assigned Applications
+GET {{baseUrl}}/l0/assigned
+Authorization: Bearer {{token}}
+
+###
+
+### 24.2 Get Legacy L0 Screening Statistics
+GET {{baseUrl}}/l0/stats
+Authorization: Bearer {{token}}
+
+###
+
+############################################################
+# 25. L0 DASHBOARD APIs
+############################################################
+
+### 25.1 Get L0 Dashboard Statistics
+GET {{baseUrl}}/dashboard
+Authorization: Bearer {{token}}
+
+###
+
+### 25.2 Get L0 Dashboard Recent Applications
+GET {{baseUrl}}/dashboard/recent-applications
+Authorization: Bearer {{token}}
+
+###
+
+### 25.3 Get L0 Dashboard Recent Activity
+GET {{baseUrl}}/dashboard/recent-activity
+Authorization: Bearer {{token}}
+
+###
+
+################### 7. L0 SCREENER PROFILE APIs###############################
+
+### 1. Get Logged-in L0 Screener Profile
+GET {{baseUrl}}/profile
+Authorization: Bearer {{token}}
+
+###
+
+### 2. Update Logged-in L0 Screener Profile
+PATCH {{baseUrl}}/profile
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Updated Screener Name",
+  "phone": "9876543210"
+}
+
+###
+
+################## 3. Try Updating Restricted Profile Fields ##################3
+PATCH {{baseUrl}}/profile
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "email": "newemail@example.com",
+  "role": "Administrator",
+  "department": "HR"
+}
+
+###
+
+### ###Confirm candidate joining############
+PATCH http://localhost:5000/api/candidates/CANDIDATE_ID/confirm-joining
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+
+{
+  "joiningDate": "2026-11-10",
+  "reason": "HR verified the candidate's actual joining."
+}
+
+### =====================================================
+### DEPARTMENT ADMIN - DASHBOARD OVERVIEW
+### =====================================================
+
+GET http://localhost:5000/api/department-admin/dashboard/overview
+Authorization: Bearer YOUR_DEPARTMENT_ADMIN_TOKEN
+Content-Type: application/json
+
+### DEPARTMENT ADMIN - CANDIDATE LISTING
+
+GET http://localhost:5000/api/department-admin/candidates?page=1&limit=10
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### =====================================================
+### DEPARTMENT ADMIN - CANDIDATE PROFILE DETAILS
+### =====================================================
+
+### Get candidate profile by ID
+GET http://localhost:5000/api/department-admin/candidates/{{candidateId}}
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### =====================================================
+### API 4 - DEPARTMENT ADMIN CANDIDATE RECRUITMENT HISTORY
+### =====================================================
+
+### Get complete candidate recruitment history
+
+GET http://localhost:5000/api/department-admin/candidates/{{candidateId}}/history
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### =====================================================
+### API 5 - DEPARTMENT ADMIN CANDIDATE INTERVIEW DETAILS
+### =====================================================
+
+GET http://localhost:5000/api/department-admin/candidates/{{candidateId}}/interviews
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### =====================================================
+### API 6 - DEPARTMENT ADMIN RECRUITMENT REPORT
+### =====================================================
+
+### 1. Overall recruitment report
+
+GET http://localhost:5000/api/department-admin/reports/recruitment
+Authorization: Bearer {{token}}
+Accept: application/json
+
+
+### 2. Recruitment report with application date range
+
+GET http://localhost:5000/api/department-admin/reports/recruitment?appliedFrom=2026-01-01&appliedTo=2026-11-13
+Authorization: Bearer {{token}}
+Accept: application/json
+
+
+### 3. Global Administrator - filter by department
+
+GET http://localhost:5000/api/department-admin/reports/recruitment?department=SAP
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### API 6 - Department Admin Recruitment Report
+GET http://localhost:5000/api/department-admin/reports/recruitment
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### API - Correct Candidate Joining Date
+PATCH http://localhost:5000/api/candidates/REPLACE_WITH_CANDIDATE_ID/correct-joining-date
+Authorization: Bearer {{token}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "joiningDate": "2026-10-15",
+  "reason": "Correcting the joining date based on verified HR records."
+}
+
+### API - Get Candidate Joining History
+GET http://localhost:5000/api/candidates/REPLACE_WITH_CANDIDATE_ID/joining-history
+Authorization: Bearer {{token}}
+Accept: application/json

@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef } from "react";
+
 import gsap from "gsap";
 
 import DotField from "@/components/ui/DotField";
@@ -25,6 +26,7 @@ const Hero = () => {
       const heroTl = gsap.timeline();
 
       heroTl
+
         /* -------------------------------------------------
            LABEL
         ------------------------------------------------- */
@@ -99,30 +101,28 @@ const Hero = () => {
 
         /* =================================================
            MOBILE
+           Same height as Home Hero
            ================================================= */
 
-        h-[60svh]
-        min-h-[400px]
-        max-h-[550px]
+        h-[42svh]
 
         /* =================================================
            LARGE MOBILE / SMALL TABLET
+           Same height as Home Hero
            ================================================= */
 
-        sm:h-[55svh]
-        sm:min-h-[430px]
-        sm:max-h-[600px]
+        sm:h-[42svh]
 
         /* =================================================
            TABLET
+           Same height as Home Hero
            ================================================= */
 
-        md:h-[50svh]
-        md:min-h-[500px]
-        md:max-h-[680px]
+        md:h-[42svh]
 
         /* =================================================
            DESKTOP
+           Original desktop height
            ================================================= */
 
         xl:min-h-screen
@@ -276,6 +276,7 @@ const Hero = () => {
               text-[#EF3B3A]
 
               sm:mb-5
+
               md:text-sm
             "
           >

@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, useState } from "react";
+
 import gsap from "gsap";
 
 import Lightfall from "../../../components/ui/Lightfall";
@@ -15,6 +16,7 @@ const capabilities = [
 
 const WhatWeDoHero = () => {
   const sectionRef = useRef(null);
+
   const capabilityRef = useRef(null);
 
   const [activeCapability, setActiveCapability] = useState(0);
@@ -25,7 +27,10 @@ const WhatWeDoHero = () => {
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
-      const isMobile = window.matchMedia("(max-width: 639px)").matches;
+      const isMobile = window.matchMedia(
+        "(max-width: 639px)"
+      ).matches;
+
       const isTablet = window.matchMedia(
         "(min-width: 640px) and (max-width: 1023px)"
       ).matches;
@@ -107,7 +112,9 @@ const WhatWeDoHero = () => {
   useLayoutEffect(() => {
     if (!capabilityRef.current) return;
 
-    const isMobile = window.matchMedia("(max-width: 639px)").matches;
+    const isMobile = window.matchMedia(
+      "(max-width: 639px)"
+    ).matches;
 
     gsap.fromTo(
       capabilityRef.current,
@@ -132,13 +139,28 @@ const WhatWeDoHero = () => {
       className="
         what-do-hero
         relative
-<<<<<<< HEAD
-        h-[100svh]
-        min-h-[100svh]
-=======
-        h-svh
-        min-h-svh
->>>>>>> prasanna-dev
+
+        /* =================================================
+           RESPONSIVE HEIGHT
+           Same height as Home + Who We Are
+        ================================================= */
+
+        h-[42svh]
+        min-h-[42svh]
+
+        sm:h-[42svh]
+        sm:min-h-[42svh]
+
+        md:h-[42svh]
+        md:min-h-[42svh]
+
+        /* =================================================
+           DESKTOP
+        ================================================= */
+
+        lg:h-[100svh]
+        lg:min-h-[100svh]
+
         overflow-hidden
         bg-black
       "
@@ -236,7 +258,16 @@ const WhatWeDoHero = () => {
           lg:py-24
         "
       >
-        <div className="w-full max-w-6xl">
+        {/* =================================================
+            CONTENT WRAPPER
+
+            pt-6 on mobile creates a small gap between
+            the fixed header/logo and "WHAT WE DO".
+
+            sm:pt-0 keeps tablet/desktop unchanged.
+        ================================================== */}
+
+        <div className="w-full max-w-6xl pt-6 sm:pt-0">
 
           {/* =================================================
               EYEBROW
@@ -519,7 +550,8 @@ const WhatWeDoHero = () => {
           PAGE INDICATOR
       ====================================================== */}
 
-      {/* <div
+      {/*
+      <div
         className="
           absolute
           bottom-7
@@ -532,7 +564,9 @@ const WhatWeDoHero = () => {
         "
       >
         01 / 03
-      </div> */}
+      </div>
+      */}
+
     </section>
   );
 };

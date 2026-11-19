@@ -546,9 +546,9 @@ function EmployeesTemp() {
                     bg-transparent
                     p-0
                     text-center
-                    !text-[52px]
-                    !font-bold
-                    !leading-none
+                    text-[52px]!
+                    font-bold!
+                    leading-none!
                     tracking-tight
                     text-gray-900
                     outline-none
@@ -560,7 +560,7 @@ function EmployeesTemp() {
 
                     dark:text-white
 
-                    sm:!text-[58px]
+                    sm:text-[58px]!
                   "
                 />
               </div>

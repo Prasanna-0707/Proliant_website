@@ -57,7 +57,17 @@ const Hero = () => {
   return (
     <section
       ref={heroRef}
-      className="relative h-75 overflow-hidden bg-black text-white sm:h-72 md:min-h-screen"
+      className="
+        relative
+        h-[42svh]
+        overflow-hidden
+        bg-black
+        text-white
+
+        sm:h-[42svh]
+
+        md:min-h-screen
+      "
     >
 
       {/* =========================

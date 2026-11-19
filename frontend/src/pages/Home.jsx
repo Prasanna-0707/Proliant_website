@@ -12,21 +12,21 @@ import ProliantInNumbers from "@/sections/HomeSection/ProliantInNumbers/Proliant
 const Home = () => {
   return (
     <>
-        <Hero />
+      <Hero />
 
-        <ProliantInNumbers />
+      <ProliantInNumbers />
 
-        <WhoWeAre />
+      <WhoWeAre />
 
-        <WhatWeDo />
+      <WhatWeDo />
 
-        <FeaturedTechnologies />
+      <FeaturedTechnologies />
 
-        <IndustriesWeServe />
+      <IndustriesWeServe />
 
-        <ProliantAdvantage />
-        
-        <Footer />
+      <ProliantAdvantage />
+
+      <Footer theme="light" />
     </>
   );
 };

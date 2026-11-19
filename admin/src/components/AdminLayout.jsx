@@ -3,10 +3,44 @@ import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 
+function getAdminUser() {
+  const storageKeys = [
+    "adminUser",
+    "currentUser",
+    "user",
+  ];
+
+  for (const key of storageKeys) {
+    try {
+      const storedValue = localStorage.getItem(key);
+
+      if (!storedValue) continue;
+
+      const parsed = JSON.parse(storedValue);
+
+      const user =
+        parsed?.user ??
+        parsed?.data?.user ??
+        parsed?.data ??
+        parsed;
+
+      if (user && typeof user === "object") {
+        return user;
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  return {};
+}
+
 function AdminLayout() {
+  const adminUser = getAdminUser();
+
   return (
     <div className="min-h-screen bg-[#fafafa] transition-colors dark:bg-gray-950">
-      <Sidebar />
+      <Sidebar user={adminUser} role="ADMIN" />
 
       <div className="min-w-0 flex-1 md:ml-64">
         <Header />
