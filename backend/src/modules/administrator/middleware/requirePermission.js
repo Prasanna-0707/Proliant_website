@@ -5,7 +5,7 @@ import {
   isActiveAccount,
   isL0Screener,
   normalizeRole,
-} from "../services/authorizationService.js";
+} from "../../../shared/services/authorizationService.js";
 
 // =====================================================
 // CONVERT ACTIVE ROLE INTO ROLE PERMISSION KEY

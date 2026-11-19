@@ -36,9 +36,9 @@ import {
 
 import {
   getScreenerApplicationResume,
-} from "../../../controllers/applicationController.js";
+} from "../../candidate/controllers/applicationController.js";
 
-import authMiddleware from "../../../middleware/authMiddleware.js";
+import authMiddleware from "../../auth/middleware/authMiddleware.js";
 
 import requirePermission from "../../administrator/middleware/requirePermission.js";
 

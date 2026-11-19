@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import Job from "../../../models/Job.js";
+import Job from "../../hr/models/HRJob.js";
 
 // =====================================================
 // GET ALL PUBLISHED JOBS

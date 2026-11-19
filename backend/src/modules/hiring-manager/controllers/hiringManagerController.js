@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
-import Candidate from "../../../models/Candidate.js";
-import Job from "../../../models/Job.js";
+import Candidate from "../../hr/models/HRCandidate.js";
+import Job from "../../hr/models/HRJob.js";
 import Screening from "../../screener/models/Screening.js";
 import Interview from "../../interviewer/models/Interview.js";
 import ApplicationDecision from "../models/ApplicationDecision.js";

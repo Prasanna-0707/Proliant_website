@@ -2,7 +2,7 @@ import express from "express";
 
 import { applyForJob, getMyApplications, getMyApplicationDetails,} from "../controllers/candidateApplicationController.js";
 
-import candidateAuthMiddleware from "../../../middleware/candidateAuthMiddleware.js";
+import candidateAuthMiddleware from "../middleware/candidateAuthMiddleware.js";
 
 const router = express.Router();
 

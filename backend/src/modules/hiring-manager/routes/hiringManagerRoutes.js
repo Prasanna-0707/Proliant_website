@@ -1,6 +1,6 @@
 import express from "express";
 
-import authMiddleware from "../../../middleware/authMiddleware.js";
+import authMiddleware from "../../auth/middleware/authMiddleware.js";
 
 import requirePermission from "../../administrator/middleware/requirePermission.js";
 

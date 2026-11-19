@@ -1,18 +1,18 @@
 
 import mongoose from "mongoose";
 
-import Admin from "../../../models/Admin.js";
+import Admin from "../models/Admin.js";
 
 import {
   getTeamDirectoryAccess,
   canManageTeamMember,
   canViewTeamMember,
-} from "../services/authorizationService.js";
+} from "../../../shared/services/authorizationService.js";
 
 import {
   createTeamMember as createExistingTeamMember,
   updateTeamMember as updateExistingTeamMember,
-} from "../../../controllers/teamMemberController.js";
+} from "./teamMemberController.js";
 
 // =====================================================
 // ADMIN USER ACCESS

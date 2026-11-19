@@ -1,12 +1,12 @@
 import mongoose from "mongoose";
 
-import Application from "../../../models/Application.js";
-import Job from "../../../models/Job.js";
+import Application from "../models/Application.js";
+import Job from "../../hr/models/HRJob.js";
 
 import generateApplicationId from "../../../shared/utils/generateApplicationId.js";
 
-import CandidateAccount from "../../../models/CandidateAccount.js";
-import CandidateNotification from "../../../models/CandidateNotification.js";
+import CandidateAccount from "../models/CandidateAccount.js";
+import CandidateNotification from "../models/CandidateNotification.js";
 
 export const applyForJob = async (req, res) => {
   try {

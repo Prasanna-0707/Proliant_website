@@ -6,9 +6,9 @@ import AdminSetting from "../models/AdminSetting.js";
 import {
   getTeamDirectoryAccess,
   isGlobalAdministrator,
-} from "../services/authorizationService.js";
+} from "../../../shared/services/authorizationService.js";
 
-import { createAuditLog } from "../../../services/auditLogService.js";
+import { createAuditLog } from "../../../shared/services/auditLogService.js";
 
 // =====================================================
 // CONSTANTS

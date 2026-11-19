@@ -1,4 +1,4 @@
-import Counter from "../../models/Counter.js";
+import Counter from "../../modules/candidate/models/Counter.js";
 
 const generateCandidateId = async () => {
   const counter = await Counter.findByIdAndUpdate(

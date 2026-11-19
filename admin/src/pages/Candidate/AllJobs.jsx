@@ -743,7 +743,7 @@ export default function CandidateAllJobs() {
             {/* JOB APPLICATION FORM MODAL */}
             {applicationJob && (
               <div
-                className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 p-3 sm:p-5"
+                className="fixed inset-0 z-110 flex items-center justify-center bg-black/50 p-3 sm:p-5"
                 onClick={() => setApplicationJob(null)}
               >
                 <div
@@ -935,7 +935,7 @@ export default function CandidateAllJobs() {
                         {/* JOB DETAILS MODAL */}
             {selectedJob && (
               <div
-                className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
+                className="fixed inset-0 z-100 flex items-center justify-center bg-black/50 p-4"
                 onClick={() => setSelectedJob(null)}
               >
                 <div

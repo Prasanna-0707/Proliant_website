@@ -1,6 +1,6 @@
 
 import mongoose from "mongoose";
-import CandidateNotification from "../../../models/CandidateNotification.js";
+import CandidateNotification from "../models/CandidateNotification.js";
 
 // Get Candidate Notifications
 export const getCandidateNotifications = async (req, res) => {

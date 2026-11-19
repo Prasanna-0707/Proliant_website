@@ -1,11 +1,11 @@
 
 import mongoose from "mongoose";
 
-import AuditLog from "../../../models/AuditLog.js";
+import AuditLog from "../models/AuditLog.js";
 
 import {
   getTeamDirectoryAccess,
-} from "../services/authorizationService.js";
+} from "../../../shared/services/authorizationService.js";
 
 // =====================================================
 // HELPERS

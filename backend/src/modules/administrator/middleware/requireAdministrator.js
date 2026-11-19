@@ -1,7 +1,7 @@
 
 import {
   getTeamDirectoryAccess,
-} from "../services/authorizationService.js";
+} from "../../../shared/services/authorizationService.js";
 
 // Allows only active Global Administrators and
 // Department Administrators to access Admin APIs.

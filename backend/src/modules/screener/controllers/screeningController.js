@@ -1,17 +1,16 @@
 import mongoose from "mongoose";
-
-import Candidate from "../../../models/Candidate.js";
+import Candidate from "../../candidate/models/Candidate.js";
 import Screening from "../models/Screening.js";
-import AuditLog from "../../../models/AuditLog.js";
+import AuditLog from "../../administrator/models/AuditLog.js";
 
 import {
   isActiveAccount,
   isL0Screener,
-} from "../../administrator/services/authorizationService.js";
+} from "../../../shared/services/authorizationService.js";
 
 import {
   createAuditLog,
-} from "../../../services/auditLogService.js";
+} from "../../../shared/services/auditLogService.js";
 
 // =====================================================
 // CONSTANTS

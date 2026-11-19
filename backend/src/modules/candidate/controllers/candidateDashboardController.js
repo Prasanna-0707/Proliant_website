@@ -1,5 +1,5 @@
-import Application from "../../../models/Application.js";
-import Job from "../../../models/Job.js";
+import Application from "../models/Application.js";
+import Job from "../../hr/models/HRJob.js";
 
 
 export const getCandidateDashboard = async (req, res) => {

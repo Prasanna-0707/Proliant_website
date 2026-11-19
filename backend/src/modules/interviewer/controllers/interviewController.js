@@ -3,8 +3,8 @@ import mongoose from "mongoose";
 import Interview from "../models/Interview.js";
 import EvaluationForm from "../models/EvaluationForm.js";
 
-import Candidate from "../../../models/Candidate.js";
-import Job from "../../../models/Job.js";
+import Candidate from "../../hr/models/HRCandidate.js";
+import Job from "../../hr/models/HRJob.js";
 
 // =====================================================
 // COMMON HELPERS

@@ -512,7 +512,7 @@ const LocationsMap = () => {
                     stroke-width="2"
                     stroke-linecap="round"
                     stroke-linejoin="round"
-                    class="block h-5 w-5 -translate-y-[1px]"
+                    class="block h-5 w-5 -translate-y-px"
                   >
                     <path
                       d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"
@@ -667,7 +667,7 @@ const LocationsMap = () => {
                           stroke-width="2"
                           stroke-linecap="round"
                           stroke-linejoin="round"
-                          class="block h-5 w-5 translate-y-[1px]"
+                          class="block h-5 w-5 translate-y-px"
                         >
                           <path
                             d="

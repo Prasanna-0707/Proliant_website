@@ -249,7 +249,7 @@ const ProliantAdvantage = () => {
               sm:text-[clamp(1.2rem,3vw,2.15rem)]
               sm:leading-[1.28]
               md:mt-6
-              md:leading-[1.25]
+              md:leading-tight
               lg:mt-8
             "
           >
@@ -266,11 +266,11 @@ const ProliantAdvantage = () => {
               mt-3
               max-w-6xl
               text-[14px]
-              leading-[1.5]
+              leading-normal
               text-white/85
               sm:mt-4
               sm:text-[14px]
-              sm:leading-[1.5]
+              sm:leading-normal
               md:mt-5
               md:text-[15px]
               md:leading-6

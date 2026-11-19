@@ -1,7 +1,7 @@
 
 import express from "express";
 
-import candidateAuthMiddleware from "../../../middleware/candidateAuthMiddleware.js";
+import candidateAuthMiddleware from "../middleware/candidateAuthMiddleware.js";
 
 import {
   getCandidateNotifications,

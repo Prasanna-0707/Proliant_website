@@ -1,15 +1,18 @@
-
 import bcrypt from "bcryptjs";
+// Admin Module
+import Admin from "../modules/administrator/models/Admin.js";
+// HR Module
+import Employee from "../modules/hr/models/HREmployee.js";
+import Job from "../modules/hr/models/HRJob.js";
+import Candidate from "../modules/hr/models/HRCandidate.js";
+import Contact from "../modules/hr/models/HRFeedback.js";
+import Location from "../modules/hr/models/HRLocation.js";
 
-import Admin from "../models/Admin.js";
-import Employee from "../models/Employee.js";
-import Job from "../models/job.js";
-import Candidate from "../models/Candidate.js";
-import Contact from "../models/Contact.js";
-import Location from "../models/Location.js";
-
+// Administrator Module
 import RolePermission from "../modules/administrator/models/RolePermission.js";
 
+// Screener Module
+import Screening from "../modules/screener/models/Screening.js";
 // =========================================================
 // APPROVED GLOBAL ADMINISTRATOR ACCOUNTS
 // =========================================================

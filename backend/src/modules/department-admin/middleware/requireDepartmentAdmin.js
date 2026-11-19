@@ -5,7 +5,7 @@ import {
   isGlobalAdministrator,
   isDepartmentAdministrator,
   isHod,
-} from "../../administrator/services/authorizationService.js";
+} from "../../../shared/services/authorizationService.js";
 
 // =====================================================
 // REQUIRE DEPARTMENT ADMINISTRATOR ACCESS

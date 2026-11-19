@@ -367,7 +367,7 @@ export default function CandidateDashboard() {
                   </span>
                 </h1>
 
-                <p className="mt-2 max-w-[620px] text-sm leading-6 text-slate-500 sm:text-base">
+                <p className="mt-2 max-w-155 text-sm leading-6 text-slate-500 sm:text-base">
                   {hasApplications
                     ? "Track your application progress and discover new opportunities that match your skills and experience."
                     : "Discover new opportunities that match your skills and experience, and take the next step in your career."}
@@ -399,7 +399,7 @@ export default function CandidateDashboard() {
                   }`}
                 >
                   <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-2xl bg-red-50 text-[#f2383d]">
+                    <div className="flex h-15 w-15 shrink-0 items-center justify-center rounded-2xl bg-red-50 text-[#f2383d]">
                       <BriefcaseBusiness size={27} />
                     </div>
 
@@ -458,7 +458,7 @@ export default function CandidateDashboard() {
                   }`}
                 >
                   <div className="mb-7 flex items-center gap-3">
-                    <div className="flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-xl bg-red-50 text-[#f2383d]">
+                    <div className="flex h-12.5 w-12.5 shrink-0 items-center justify-center rounded-xl bg-red-50 text-[#f2383d]">
                       <GitBranch size={26} />
                     </div>
 
@@ -481,7 +481,7 @@ export default function CandidateDashboard() {
                       >
                         {index < stages.length - 1 && (
                           <div
-                            className={`absolute left-[62%] top-[22px] hidden h-[2px] w-[76%] md:block ${
+                            className={`absolute left-[62%] top-5.5 hidden h-0.5 w-[76%] md:block ${
                               index < 2
                                 ? "bg-emerald-500"
                                 : "bg-slate-200"
@@ -490,7 +490,7 @@ export default function CandidateDashboard() {
                         )}
 
                         <div
-                          className={`relative z-10 mx-auto mb-3 flex h-[44px] w-[44px] items-center justify-center rounded-full border-[4px] ${
+                          className={`relative z-10 mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full border-4 ${
                             stage.state === "completed"
                               ? "border-emerald-100 bg-emerald-500 text-white"
                               : stage.state === "progress"
@@ -549,7 +549,7 @@ export default function CandidateDashboard() {
                 }`}
               >
                 <div className="mb-3 flex items-center gap-3">
-                  <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-red-50 text-[#f2383d]">
+                  <div className="flex h-10.5 w-10.5 shrink-0 items-center justify-center rounded-xl bg-red-50 text-[#f2383d]">
                     <BriefcaseBusiness size={22} />
                   </div>
 
@@ -560,7 +560,7 @@ export default function CandidateDashboard() {
 
                 <div className="mx-auto flex max-w-2xl flex-col items-center py-1 text-center">
                   <div className="mb-3 flex h-20 w-28 items-center justify-center rounded-full bg-red-50">
-                    <div className="relative flex h-[58px] w-[50px] flex-col gap-1.5 rounded-lg border-2 border-slate-200 bg-white p-2 shadow-sm">
+                    <div className="relative flex h-14.5 w-12.5 flex-col gap-1.5 rounded-lg border-2 border-slate-200 bg-white p-2 shadow-sm">
                       <div className="flex items-center gap-1">
                         <div className="h-4 w-4 rounded bg-red-200" />
 

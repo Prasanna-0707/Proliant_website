@@ -1,5 +1,5 @@
 import express from "express";
-import candidateAuthMiddleware from "../../../middleware/candidateAuthMiddleware.js";
+import candidateAuthMiddleware from "../middleware/candidateAuthMiddleware.js";
 import { getCandidateDashboard } from "../controllers/candidateDashboardController.js";
 
 const router = express.Router();

@@ -1,6 +1,6 @@
 
-import Candidate from "../../../models/Candidate.js";
-import Job from "../../../models/job.js";
+import Candidate from "../../candidate/models/Candidate.js";
+import Job from "../../hr/models/HRJob.js";
 
 // =====================================================
 // COMMON REPORT HELPERS

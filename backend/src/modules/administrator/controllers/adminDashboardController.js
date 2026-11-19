@@ -1,9 +1,9 @@
 
-import Admin from "../../../models/Admin.js";
-import Employee from "../../../models/Employee.js";
-import Job from "../../../models/job.js";
-import Candidate from "../../../models/Candidate.js";
-import AuditLog from "../../../models/AuditLog.js";
+import Admin from "../models/Admin.js";
+import Employee from "../../hr/models/HREmployee.js";
+import Job from "../../hr/models/HRJob.js";
+import Candidate from "../../candidate/models/Candidate.js";
+import AuditLog from "../models/AuditLog.js";
 
 import Screening from "../../screener/models/Screening.js";
 import Interview from "../../interviewer/models/Interview.js";
@@ -13,7 +13,7 @@ import HiringManagerAssignment from "../../hiring-manager/models/HiringManagerAs
 
 import {
   getTeamDirectoryAccess,
-} from "../services/authorizationService.js";
+} from "../../../shared/services/authorizationService.js";
 
 // =====================================================
 // HELPERS

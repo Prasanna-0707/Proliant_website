@@ -1,5 +1,4 @@
-import AuditLog from "../models/AuditLog.js";
-
+import AuditLog from "../../modules/administrator/models/AuditLog.js";
 // Remove sensitive information before storing audit snapshots.
 const SENSITIVE_FIELD =
   /password|token|otp|secret|authorization|resume|filepath/i;

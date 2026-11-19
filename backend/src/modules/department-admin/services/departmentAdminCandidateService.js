@@ -1,8 +1,8 @@
 
 import mongoose from "mongoose";
 
-import Candidate from "../../../models/Candidate.js";
-import Job from "../../../models/job.js";
+import Candidate from "../../candidate/models/Candidate.js";
+import Job from "../../hr/models/HRJob.js";
 
 import Screening from "../../screener/models/Screening.js";
 import Interview from "../../interviewer/models/Interview.js";

@@ -1,7 +1,7 @@
 
 import mongoose from "mongoose";
 
-import Candidate from "../../../models/Candidate.js";
+import Candidate from "../../candidate/models/Candidate.js";
 
 import {
   getDepartmentAdminDashboardOverview,

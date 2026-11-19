@@ -1,6 +1,6 @@
 
 import bcrypt from "bcryptjs";
-import CandidateAccount from "../../../models/CandidateAccount.js";
+import CandidateAccount from "../models/CandidateAccount.js";
 import generateCandidateId from "../../../shared/utils/generateCandidateId.js";
 
 import jwt from "jsonwebtoken";

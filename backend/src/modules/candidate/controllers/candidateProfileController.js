@@ -1,4 +1,4 @@
-import CandidateAccount from "../../../models/CandidateAccount.js";
+import CandidateAccount from "../models/CandidateAccount.js";
 
 // Get Candidate Profile
 export const getCandidateProfile = async (req, res) => {

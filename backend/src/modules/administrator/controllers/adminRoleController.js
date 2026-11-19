@@ -6,9 +6,9 @@ import RolePermission from "../models/RolePermission.js";
 import {
   getTeamDirectoryAccess,
   isGlobalAdministrator,
-} from "../services/authorizationService.js";
+} from "../../../shared/services/authorizationService.js";
 
-import { createAuditLog } from "../../../services/auditLogService.js";
+import { createAuditLog } from "../../../shared/services/auditLogService.js";
 
 // =====================================================
 // ALLOWED PERMISSION CATALOG

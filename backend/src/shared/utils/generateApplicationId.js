@@ -1,5 +1,5 @@
 
-import Counter from "../../models/Counter.js";
+import Counter from "../../modules/candidate/models/Counter.js";
 
 const generateApplicationId = async () => {
   const year = new Date().getFullYear();

@@ -1,7 +1,7 @@
 
 import express from "express";
 
-import authMiddleware from "../../../middleware/authMiddleware.js";
+import authMiddleware from "../../auth/middleware/authMiddleware.js";
 
 import requireDepartmentAdmin from "../middleware/requireDepartmentAdmin.js";
 
