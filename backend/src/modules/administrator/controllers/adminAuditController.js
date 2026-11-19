@@ -63,7 +63,7 @@ const parseDateFilter = (value, isEndDate = false) => {
 export const getAdminAuditLogs = async (req, res) => {
   try {
     const access = getTeamDirectoryAccess(
-      req.admin,
+      req.user,
       req.activeRole
     );
 

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Bell,
   UserCircle,
   LogOut,
   KeyRound,
@@ -11,6 +10,7 @@ import {
   EyeOff,
 } from "lucide-react";
 import ThemeTogglerButton from "./ThemeTogglerButton";
+import StaffNotificationBell from "./StaffNotificationBell";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
@@ -304,18 +304,7 @@ function Header() {
         </div>
 
         <div className="flex items-center gap-4 max-[767px]:gap-2">
-          <button
-            type="button"
-            className="
-              flex h-10 w-10 items-center justify-center rounded-lg
-              text-gray-500 transition-colors hover:bg-gray-100
-              hover:text-gray-900 dark:text-gray-300
-              dark:hover:bg-gray-800 dark:hover:text-white
-            "
-            aria-label="Notifications"
-          >
-            <Bell size={20} strokeWidth={2} />
-          </button>
+          <StaffNotificationBell />
 
           <ThemeTogglerButton />
 

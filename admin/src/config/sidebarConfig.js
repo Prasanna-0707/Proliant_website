@@ -64,6 +64,51 @@ const adminSections = [
       },
     ],
   },
+  {
+    title: "Recruitment Oversight",
+    items: [
+      {
+        label: "Registrations",
+        path: "/hr/registrations",
+        icon: UserRoundSearch,
+      },
+      {
+        label: "L0 Screening Management",
+        path: "/hr/l0-screeners",
+        icon: ClipboardCheck,
+      },
+      {
+        label: "L1 Interviews",
+        path: "/hr/l1-interview",
+        icon: CalendarDays,
+      },
+      {
+        label: "L2 Interviews",
+        path: "/hr/l2-interview",
+        icon: ClipboardList,
+      },
+      {
+        label: "Hiring Manager Assignments",
+        path: "/hr/hiring-assignments",
+        icon: UserCog,
+      },
+      {
+        label: "Evaluation Forms",
+        path: "/hr/evaluation-forms",
+        icon: ClipboardList,
+      },
+      {
+        label: "Recruitment Reports",
+        path: "/hr/reports",
+        icon: ClipboardList,
+      },
+      {
+        label: "Employees",
+        path: "/hr/employees",
+        icon: Users,
+      },
+    ],
+  },
 ];
 
 /* =========================================================
@@ -98,6 +143,21 @@ const hrSections = [
         path: "/hr/countries",
         icon: Globe2,
       },
+      {
+        label: "Registrations",
+        path: "/hr/registrations",
+        icon: UserRoundSearch,
+      },
+      {
+        label: "Employees",
+        path: "/hr/employees",
+        icon: Users,
+      },
+      {
+        label: "Recruitment Reports",
+        path: "/hr/reports",
+        icon: ClipboardList,
+      },
     ],
   },
   {
@@ -116,6 +176,16 @@ const hrSections = [
       {
         label: "L2 Interview",
         path: "/hr/l2-interview",
+        icon: ClipboardList,
+      },
+      {
+        label: "Hiring Manager Assignments",
+        path: "/hr/hiring-assignments",
+        icon: UserCog,
+      },
+      {
+        label: "Evaluation Forms",
+        path: "/hr/evaluation-forms",
         icon: ClipboardList,
       },
     ],
@@ -226,30 +296,35 @@ const screenerSections = [
 const interviewerSections = [
   {
     title: "Overview",
-    items: [dashboardItem("/hr/dashboard")],
+    items: [dashboardItem("/interviewer/dashboard")],
   },
   {
     title: "Interviews",
     items: [
       {
-        label: "L1 Interview",
-        path: "/hr/l1-interview",
+        label: "My Interviews",
+        path: "/interviewer/my-interviews",
         icon: CalendarDays,
       },
       {
-        label: "L2 Interview",
-        path: "/hr/l2-interview",
-        icon: ClipboardList,
-      },
-      {
         label: "Assigned Candidates",
-        path: "/hr/assigned-candidates",
+        path: "/interviewer/candidates",
         icon: Users,
       },
       {
-        label: "Evaluations",
-        path: "/hr/evaluations",
-        icon: ClipboardCheck,
+        label: "Interview History",
+        path: "/interviewer/history",
+        icon: ClipboardList,
+      },
+    ],
+  },
+  {
+    title: "My Account",
+    items: [
+      {
+        label: "My Profile",
+        path: "/interviewer/profile",
+        icon: UserCog,
       },
     ],
   },
@@ -377,8 +452,11 @@ export function normalizeUserRole(user, explicitRole) {
     L0SCREENER: "L0_SCREENER",
 
     INTERVIEWER: "INTERVIEWER",
+    L1_INTERVIEWER: "INTERVIEWER",
+    L2_INTERVIEWER: "INTERVIEWER",
 
     HIRING_MANAGER: "HIRING_MANAGER",
+    HIRING_LEAD: "HIRING_MANAGER",
   };
 
   if (aliases[role]) {

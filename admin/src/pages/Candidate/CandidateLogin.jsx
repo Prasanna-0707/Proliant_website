@@ -1,13 +1,21 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Eye,
   EyeOff,
   LockKeyhole,
   Mail,
+  Phone,
   UserRound,
 } from "lucide-react";
 
+import {
+  loginCandidate,
+  registerCandidate,
+} from "../../services/candidatePortal.js";
+
+import CandidatePasswordReset from "./CandidatePasswordReset";
 import proliantLogo from "../../assets/logo/proliant black/proliant_black.png";
 
 function CandidateLogin() {
@@ -19,23 +27,65 @@ function CandidateLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (event) => {
+  const navigate = useNavigate();
+
+  // POST /api/candidate/auth/login
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    // Connect the existing authentication API here.
+    setError("");
+    setLoading(true);
+
+    try {
+      await loginCandidate({ email: email.trim(), password });
+      navigate("/candidate-dashboard");
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleRegister = (event) => {
+  // POST /api/candidate/auth/register, then sign the new candidate in
+  const handleRegister = async (event) => {
     event.preventDefault();
+    setError("");
 
     if (!acceptedTerms) {
-      alert("Please accept the Terms and Conditions.");
+      setError("Please accept the Terms and Conditions.");
       return;
     }
 
-    // Connect the candidate registration API here.
-    console.log({ firstName, lastName, email, password });
+    setLoading(true);
+
+    try {
+      await registerCandidate({
+        name: `${firstName.trim()} ${lastName.trim()}`.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        password,
+      });
+
+      await loginCandidate({ email: email.trim(), password });
+      navigate("/candidate-dashboard");
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const errorBanner = error ? (
+    <p
+      role="alert"
+      className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+    >
+      {error}
+    </p>
+  ) : null;
 
   const inputClass =
     "w-full rounded-lg border border-gray-300 bg-[#e9f0fd] py-3 pl-11 pr-4 text-sm text-gray-900 outline-none transition focus:border-[#EF3B3A] focus:ring-4 focus:ring-red-50";
@@ -107,30 +157,9 @@ function CandidateLogin() {
             </p>
           </div>
 
-          {/* Forgot password placeholder */}
+          {/* Forgot password (OTP by email) */}
           {showForgotPassword ? (
-            <div>
-              <button
-                type="button"
-                onClick={() => setShowForgotPassword(false)}
-                className="mb-6 text-sm font-medium text-gray-500 transition hover:text-[#EF3B3A]"
-              >
-                ← Back to Login
-              </button>
-
-              <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-[#EF3B3A]">
-                Account Recovery
-              </p>
-
-              <h2 className="text-3xl font-bold tracking-tight text-gray-900">
-                Forgot your password?
-              </h2>
-
-              <p className="mt-3 text-sm leading-6 text-gray-500">
-                Password recovery will be available when candidate
-                authentication is connected.
-              </p>
-            </div>
+            <CandidatePasswordReset onBack={() => setShowForgotPassword(false)} />
           ) : isRegister ? (
             <>
               {/* REGISTER HEADER */}
@@ -233,6 +262,32 @@ function CandidateLogin() {
 
                 <div>
                   <label
+                    htmlFor="register-phone"
+                    className="mb-2 block text-sm font-semibold text-gray-800"
+                  >
+                    Phone Number *
+                  </label>
+
+                  <div className="relative">
+                    <Phone
+                      size={18}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                    />
+                    <input
+                      id="register-phone"
+                      type="tel"
+                      autoComplete="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="Enter your phone number"
+                      required
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label
                     htmlFor="register-password"
                     className="mb-2 block text-sm font-semibold text-gray-800"
                   >
@@ -303,11 +358,14 @@ function CandidateLogin() {
                   </span>
                 </label>
 
+                {errorBanner}
+
                 <button
                   type="submit"
-                  className="w-full rounded-lg bg-[#EF3B3A] px-5 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-600 focus:outline-none focus:ring-4 focus:ring-red-100"
+                  disabled={loading}
+                  className="w-full rounded-lg bg-[#EF3B3A] px-5 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-600 focus:outline-none focus:ring-4 focus:ring-red-100 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  Create Account
+                  {loading ? "Creating account..." : "Create Account"}
                 </button>
 
                 <p className="pt-1 text-center text-sm text-gray-500">
@@ -419,11 +477,14 @@ function CandidateLogin() {
                   </button>
                 </div>
 
+                {errorBanner && <div className="mb-4">{errorBanner}</div>}
+
                 <button
                   type="submit"
-                  className="w-full rounded-lg bg-[#EF3B3A] px-5 py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-red-600 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-red-100"
+                  disabled={loading}
+                  className="w-full rounded-lg bg-[#EF3B3A] px-5 py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-red-600 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-red-100 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  Continue
+                  {loading ? "Signing in..." : "Continue"}
                 </button>
               </form>
 

@@ -1,5 +1,10 @@
 import mongoose from "mongoose";
 
+import {
+  ADMIN_ROLE,
+  ADMIN_SCOPES,
+} from "../../../shared/constants/roles.js";
+
 const adminSchema = new mongoose.Schema(
   {
     // Login credentials
@@ -14,6 +19,7 @@ const adminSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
+      select: false,
     },
 
     // Personal information
@@ -29,11 +35,12 @@ const adminSchema = new mongoose.Schema(
       default: "",
     },
 
-    // Portal permissions and organizational information
+    // The Admin collection holds Global and Department Administrators
+    // only. All other staff roles belong in the User collection.
     role: {
       type: String,
-      trim: true,
-      default: "Administrator",
+      enum: [ADMIN_ROLE],
+      default: ADMIN_ROLE,
     },
 
     designation: {
@@ -48,10 +55,16 @@ const adminSchema = new mongoose.Schema(
       default: "",
     },
 
+    // GLOBAL = Global Administrator, DEPARTMENT = Department Administrator
     adminScope: {
       type: String,
-      enum: ["GLOBAL", "DEPARTMENT"],
+      enum: ADMIN_SCOPES,
       default: null,
+      // New administrators must always declare a scope. Existing
+      // legacy records without one remain loadable and savable.
+      required: function requiresScopeForNewAdmin() {
+        return this.isNew;
+      },
     },
 
     // Account status
@@ -88,6 +101,7 @@ const adminSchema = new mongoose.Schema(
   }
 );
 
-const Admin = mongoose.model("Admin", adminSchema);
+const Admin =
+  mongoose.models.Admin || mongoose.model("Admin", adminSchema);
 
 export default Admin;

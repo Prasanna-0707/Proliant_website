@@ -61,7 +61,7 @@ export const getPublishedJobs = async (req, res) => {
 
     const jobs = await Job.find(filter)
       .select(
-        "title department employmentType location experience jobDescription requirements createdAt"
+        "title department employmentType location experience jobDescription requirements requiredSkills workArrangement vacancies createdAt"
       )
       .sort({ createdAt: -1 })
       .skip((currentPage - 1) * pageLimit)
@@ -112,7 +112,7 @@ export const getPublishedJobById = async (req, res) => {
       status: "Published",
     })
       .select(
-        "title department employmentType location experience jobDescription requirements createdAt"
+        "title department employmentType location experience jobDescription requirements requiredSkills workArrangement vacancies createdAt"
       )
       .lean();
 

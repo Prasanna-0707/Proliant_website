@@ -48,7 +48,7 @@ const applicationDecisionSchema = new mongoose.Schema(
     // Actual decision, separate from interviewer recommendation
     decision: {
       type: String,
-      enum: ["Advance", "Reject", "Hold"],
+      enum: ["Advance", "Reject", "Hold", "Select"],
       required: true,
     },
 
@@ -63,7 +63,7 @@ const applicationDecisionSchema = new mongoose.Schema(
     // Person recording the decision
     decidedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin",
+      ref: "User",
       required: true,
     },
 

@@ -7,43 +7,44 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-const ScreenerStats = ({ applications = [] }) => {
-  const stats = [
+// `stats` comes from GET /api/screenings/dashboard:
+//   { totalAssigned, pending, inProgress, shortlisted, rejected, onHold,
+//     escalated, hrReviewRequests }
+const ScreenerStats = ({ stats = {} }) => {
+  const cards = [
     {
       label: "Assigned Applications",
-      value: applications.length,
+      value: stats.totalAssigned ?? 0,
       icon: Users,
       style: "bg-blue-50 text-blue-600",
     },
     {
       label: "Pending Screening",
-      value: applications.filter((item) =>
-        ["ASSIGNED_TO_L0", "L0_IN_PROGRESS"].includes(item.status)
-      ).length,
+      value: (stats.pending ?? 0) + (stats.inProgress ?? 0),
       icon: Clock3,
       style: "bg-amber-50 text-amber-600",
     },
     {
       label: "Shortlisted",
-      value: applications.filter((item) => item.status === "L0_SHORTLISTED").length,
+      value: stats.shortlisted ?? 0,
       icon: CheckCircle2,
       style: "bg-green-50 text-green-600",
     },
     {
       label: "Rejected",
-      value: applications.filter((item) => item.status === "L0_REJECTED").length,
+      value: stats.rejected ?? 0,
       icon: XCircle,
       style: "bg-red-50 text-red-600",
     },
     {
       label: "On Hold",
-      value: applications.filter((item) => item.status === "L0_ON_HOLD").length,
+      value: stats.onHold ?? 0,
       icon: PauseCircle,
       style: "bg-orange-50 text-orange-600",
     },
     {
       label: "HR Review",
-      value: applications.filter((item) => item.status === "HR_REVIEW_REQUIRED").length,
+      value: (stats.escalated ?? 0) + (stats.hrReviewRequests ?? 0),
       icon: AlertCircle,
       style: "bg-purple-50 text-purple-600",
     },
@@ -51,7 +52,7 @@ const ScreenerStats = ({ applications = [] }) => {
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-      {stats.map((stat) => {
+      {cards.map((stat) => {
         const Icon = stat.icon;
 
         return (

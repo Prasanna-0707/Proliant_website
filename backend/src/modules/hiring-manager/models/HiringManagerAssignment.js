@@ -1,11 +1,12 @@
 import mongoose from "mongoose";
+import { STAFF_MODELS } from "../../../shared/constants/roles.js";
 
 const hiringManagerAssignmentSchema = new mongoose.Schema(
   {
     // The Hiring Manager who receives access to the job.
     hiringManager: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin",
+      ref: "User",
       required: true,
       index: true,
     },
@@ -21,8 +22,15 @@ const hiringManagerAssignmentSchema = new mongoose.Schema(
     // The authenticated user who made the assignment.
     assignedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin",
+      refPath: "assignedByModel",
       required: true,
+    },
+
+    // Which staff collection "assignedBy" refers to.
+    assignedByModel: {
+      type: String,
+      enum: STAFF_MODELS,
+      default: "Admin",
     },
 
     assignedAt: {
@@ -40,8 +48,15 @@ const hiringManagerAssignmentSchema = new mongoose.Schema(
 
     revokedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin",
+      refPath: "revokedByModel",
       default: null,
+    },
+
+    // Which staff collection "revokedBy" refers to.
+    revokedByModel: {
+      type: String,
+      enum: STAFF_MODELS,
+      default: "Admin",
     },
 
     revokedAt: {

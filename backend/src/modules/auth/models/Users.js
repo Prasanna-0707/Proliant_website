@@ -1,5 +1,18 @@
 import mongoose from "mongoose";
 
+import { USER_ROLES } from "../../../shared/constants/roles.js";
+
+// =====================================================
+// USER MODEL
+//
+// Staff accounts that are NOT administrators:
+// HR, Interviewer, Hiring Manager and L0 Screener
+// (plus their related role variants).
+//
+// Global and Department Administrators are stored in the
+// separate Admin collection and must never be stored here.
+// =====================================================
+
 const userSchema = new mongoose.Schema(
   {
     email: {
@@ -30,13 +43,7 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: [
-        "ADMIN",
-        "HR",
-        "INTERVIEWER",
-        "HIRING_MANAGER",
-        "L0_SCREENER",
-      ],
+      enum: USER_ROLES,
       required: true,
     },
 
@@ -52,18 +59,13 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
-    adminScope: {
-      type: String,
-      enum: ["GLOBAL", "DEPARTMENT"],
-      default: null,
-    },
-
     status: {
       type: String,
       enum: ["Active", "Inactive"],
       default: "Active",
     },
 
+    // Soft deletion: null means the account has not been deleted.
     deletedAt: {
       type: Date,
       default: null,

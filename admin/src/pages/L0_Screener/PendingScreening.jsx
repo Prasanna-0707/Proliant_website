@@ -4,7 +4,7 @@ const PendingScreening = () => (
   <ScreenerApplications
     title="Pending Screening"
     description="Review applications waiting for your screening decision."
-    filterStatus="ASSIGNED_TO_L0"
+    filterStatus={["ASSIGNED_TO_L0", "L0_IN_PROGRESS"]}
   />
 );
 

@@ -8,6 +8,10 @@ import generateApplicationId from "../../../shared/utils/generateApplicationId.j
 import CandidateAccount from "../models/CandidateAccount.js";
 import CandidateNotification from "../models/CandidateNotification.js";
 
+import { getOrCreateRegistration, applyPortalEvent } from "../../../shared/services/portalApplicationService.js";
+import { assignL0ScreenerByWorkload } from "../../../shared/services/screenerAssignmentService.js";
+import { notifyStaff, notifyHr } from "../../../shared/services/notificationService.js";
+
 export const applyForJob = async (req, res) => {
   try {
     // Candidate ID from authentication middleware
@@ -134,6 +138,63 @@ export const applyForJob = async (req, res) => {
       status: "Applied",
     });
 
+    // 9b. Link the application to a Candidate registration record and
+    // send it into the HR review / L0 screening workflow. The portal
+    // application itself is already saved, so failures here are logged
+    // and the registration can be linked later.
+    let workflowLink = { linked: false, screenerAssigned: false };
+
+    try {
+      const { registration } = await getOrCreateRegistration({
+        account: candidate,
+        job,
+        resume: resumeToUse,
+      });
+
+      application.registration = registration._id;
+      await application.save();
+
+      workflowLink.linked = true;
+
+      let assignment = null;
+
+      try {
+        assignment = await assignL0ScreenerByWorkload(registration._id);
+      } catch (assignmentError) {
+        console.error(
+          "Portal L0 assignment failed:",
+          assignmentError.message
+        );
+      }
+
+      workflowLink.screenerAssigned = Boolean(assignment?.assigned);
+
+      if (assignment?.assigned && !assignment.alreadyAssigned) {
+        await applyPortalEvent(registration._id, "ASSIGNED");
+
+        await notifyStaff(assignment.screenerId, {
+          title: "New screening assignment",
+          message: `${candidate.name} applied for ${job.title} and has been assigned to you for L0 screening.`,
+          type: "SCREENING",
+          link: "/l0-screening",
+          relatedApplication: registration._id,
+        });
+      }
+
+      await notifyHr({
+        title: "New candidate application",
+        message: `${candidate.name} applied for ${job.title} through the candidate portal.`,
+        type: "WORKFLOW",
+        link: "/hr/candidates",
+        relatedApplication: registration._id,
+      });
+    } catch (linkError) {
+      console.error(
+        "Portal application registration link failed:",
+        linkError
+      );
+    }
+
     // 10. Create Candidate Notification
       try {
         await CandidateNotification.create({
@@ -170,6 +231,7 @@ export const applyForJob = async (req, res) => {
         status: application.status,
         createdAt: application.createdAt,
       },
+      workflow: workflowLink,
     });
   } catch (error) {
     console.error("Apply for Job Error:", error);

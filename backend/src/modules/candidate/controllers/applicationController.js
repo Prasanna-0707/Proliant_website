@@ -7,6 +7,8 @@ import {
   isL0Screener,
 } from "../../../shared/services/authorizationService.js";
 
+import { canViewApplication } from "../../../shared/services/applicationAccessService.js";
+
 // =====================================================
 // GET APPLICATION DETAILS
 // GET /api/applications/:id
@@ -29,6 +31,13 @@ export const getApplicationById = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Application not found.",
+      });
+    }
+
+    if (!(await canViewApplication(req.user, candidate, req.activeRole))) {
+      return res.status(403).json({
+        success: false,
+        message: "You do not have access to this application.",
       });
     }
 
@@ -236,6 +245,33 @@ const downloadApplicationResume = async (req, res) => {
 
 export const getApplicationResume = async (req, res) => {
   try {
+    const { id } = req.params;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid application ID.",
+      });
+    }
+
+    const candidate = await Candidate.findById(id)
+      .select("_id department job")
+      .lean();
+
+    if (!candidate) {
+      return res.status(404).json({
+        success: false,
+        message: "Application not found.",
+      });
+    }
+
+    if (!(await canViewApplication(req.user, candidate, req.activeRole))) {
+      return res.status(403).json({
+        success: false,
+        message: "You do not have access to this application.",
+      });
+    }
+
     return await downloadApplicationResume(req, res);
   } catch (error) {
     console.error("Get application resume error:", error);
@@ -256,7 +292,7 @@ export const getApplicationResume = async (req, res) => {
 export const getScreenerApplicationResume = async (req, res) => {
   try {
     const { id } = req.params;
-    const admin = req.admin;
+    const admin = req.user;
 
     if (!mongoose.isValidObjectId(id)) {
       return res.status(400).json({

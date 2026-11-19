@@ -117,7 +117,7 @@ const getAuditSnapshot = (setting) => ({
 export const getAdminSettings = async (req, res) => {
   try {
     const access = getTeamDirectoryAccess(
-      req.admin,
+      req.user,
       req.activeRole
     );
 
@@ -214,7 +214,7 @@ export const updateAdminSettings = async (req, res) => {
   try {
     if (
       !isGlobalAdministrator(
-        req.admin,
+        req.user,
         req.activeRole
       )
     ) {
@@ -340,7 +340,7 @@ export const updateAdminSettings = async (req, res) => {
         setting.value = body.value;
         setting.category = category;
         setting.description = description;
-        setting.updatedBy = req.admin._id;
+        setting.updatedBy = req.user._id;
 
         action = "ADMIN_SETTING_UPDATED";
       } else {
@@ -350,8 +350,8 @@ export const updateAdminSettings = async (req, res) => {
           category,
           description,
           isEditable: true,
-          createdBy: req.admin._id,
-          updatedBy: req.admin._id,
+          createdBy: req.user._id,
+          updatedBy: req.user._id,
         });
 
         action = "ADMIN_SETTING_CREATED";

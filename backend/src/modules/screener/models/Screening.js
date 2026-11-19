@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { STAFF_MODELS } from "../../../shared/constants/roles.js";
 
 // =====================================================
 // COMMON ENUMS
@@ -136,7 +137,7 @@ const screeningHistorySchema = new mongoose.Schema(
     // Null for system-generated actions.
     performedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin",
+      ref: "User",
       default: null,
     },
 
@@ -163,7 +164,7 @@ const screeningHistorySchema = new mongoose.Schema(
 
     assignedTo: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin",
+      ref: "User",
       default: null,
     },
 
@@ -224,7 +225,7 @@ const screeningSchema = new mongoose.Schema(
 
     assignedTo: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin",
+      ref: "User",
       required: true,
       index: true,
     },
@@ -257,8 +258,15 @@ const screeningSchema = new mongoose.Schema(
 
     assignedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin",
+      refPath: "assignedByModel",
       default: null,
+    },
+
+    // Which staff collection "assignedBy" refers to.
+    assignedByModel: {
+      type: String,
+      enum: STAFF_MODELS,
+      default: "User",
     },
 
     assignedByType: {

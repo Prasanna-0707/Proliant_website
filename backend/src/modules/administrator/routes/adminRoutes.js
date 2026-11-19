@@ -4,7 +4,7 @@ import authMiddleware from "../../auth/middleware/authMiddleware.js";
 
 import requireAdministrator from "../middleware/requireAdministrator.js";
 
-import requirePermission from "../middleware/requirePermission.js";
+import requirePermission from "../../../shared/middleware/requirePermission.js";
 
 // =====================================================
 // USER MANAGEMENT CONTROLLER

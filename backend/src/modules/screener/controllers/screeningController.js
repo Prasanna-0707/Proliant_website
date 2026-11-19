@@ -1,11 +1,16 @@
 import mongoose from "mongoose";
 import Candidate from "../../candidate/models/Candidate.js";
 import Screening from "../models/Screening.js";
+import { announceScreeningDecision } from "../../../shared/services/workflowEventService.js";
+import { canViewApplication } from "../../../shared/services/applicationAccessService.js";
 import AuditLog from "../../administrator/models/AuditLog.js";
 
 import {
   isActiveAccount,
   isL0Screener,
+  isGlobalAdministrator as isGlobalAdministratorAccount,
+  isDepartmentAdministrator as isDepartmentAdministratorAccount,
+  isHrOrRecruiter as isHrOrRecruiterAccount,
 } from "../../../shared/services/authorizationService.js";
 
 import {
@@ -70,27 +75,15 @@ const normalize = (value = "") =>
 const isAuthorizedL0Screener = (user) =>
   isActiveAccount(user) && isL0Screener(user);
 
+// Role checks come from the shared authorization service.
 const isGlobalAdministrator = (user) =>
-  normalize(user?.role) === "administrator" &&
-  user?.adminScope === "GLOBAL";
+  isGlobalAdministratorAccount(user);
 
 const isDepartmentAdministrator = (user) =>
-  normalize(user?.role) === "administrator" &&
-  user?.adminScope === "DEPARTMENT" &&
-  Boolean(String(user?.department || "").trim());
+  isDepartmentAdministratorAccount(user);
 
-const isHrOrRecruiter = (user) => {
-  const role = normalize(user?.role);
-
-  return (
-    role === "hr" ||
-    role === "recruiter" ||
-    role === "hr recruiter" ||
-    role === "hr/recruiter" ||
-    role === "hr admin" ||
-    role === "hr manager"
-  );
-};
+const isHrOrRecruiter = (user) =>
+  isHrOrRecruiterAccount(user);
 
 const isReadOnlyOversightUser = (user) =>
   isActiveAccount(user) &&
@@ -278,7 +271,7 @@ export const getAssignedL0Applications = async (
   res
 ) => {
   try {
-    if (!isAuthorizedL0Screener(req.admin)) {
+    if (!isAuthorizedL0Screener(req.user)) {
       return res.status(403).json({
         success: false,
         message:
@@ -391,7 +384,7 @@ export const getAssignedL0Applications = async (
     // -------------------------------------------------
 
     const filter = {
-      assignedTo: req.admin._id,
+      assignedTo: req.user._id,
       level: "L0",
     };
 
@@ -552,7 +545,7 @@ export const getL0ApplicationDetails = async (
   res
 ) => {
   try {
-    if (!isAuthorizedL0Screener(req.admin)) {
+    if (!isAuthorizedL0Screener(req.user)) {
       return res.status(403).json({
         success: false,
         message:
@@ -572,7 +565,7 @@ export const getL0ApplicationDetails = async (
     const screening = await Screening.findOne({
       application: applicationId,
       level: "L0",
-      assignedTo: req.admin._id,
+      assignedTo: req.user._id,
     })
       .select(
         [
@@ -651,7 +644,7 @@ export const startL0Screening = async (req, res) => {
   let session;
 
   try {
-    if (!isAuthorizedL0Screener(req.admin)) {
+    if (!isAuthorizedL0Screener(req.user)) {
       return res.status(403).json({
         success: false,
         message:
@@ -676,7 +669,7 @@ export const startL0Screening = async (req, res) => {
       const screening = await Screening.findOne({
         application: applicationId,
         level: "L0",
-        assignedTo: req.admin._id,
+        assignedTo: req.user._id,
       }).session(session);
 
       if (!screening) {
@@ -763,16 +756,16 @@ export const startL0Screening = async (req, res) => {
         action: "STARTED",
         applicationId: candidate._id,
         candidateName: candidate.name || "",
-        screenerName: req.admin.name || "",
+        screenerName: req.user.name || "",
         previousStatus: previousCandidateStatus,
         newStatus: candidate.status,
         previousScreeningStatus: previousStatus,
         newScreeningStatus: screening.status,
-        performedBy: req.admin._id,
+        performedBy: req.user._id,
         performedByType: "HUMAN",
-        performedById: req.admin._id.toString(),
-        performedByName: req.admin.name || "",
-        assignedTo: req.admin._id,
+        performedById: req.user._id.toString(),
+        performedByName: req.user.name || "",
+        assignedTo: req.user._id,
         remarks: "L0 screening started.",
         feedback: "L0 screening started.",
         createdAt: startedAt,
@@ -786,7 +779,7 @@ export const startL0Screening = async (req, res) => {
         targetType: "Candidate",
         targetId: screening.application,
         targetLabel: `Application ${screening.application}`,
-        department: req.admin.department || "",
+        department: req.user.department || "",
         outcome: "SUCCESS",
         before: {
           screeningStatus: previousStatus,
@@ -843,7 +836,7 @@ export const getL0ScreeningChecklist = async (
   res
 ) => {
   try {
-    if (!isAuthorizedL0Screener(req.admin)) {
+    if (!isAuthorizedL0Screener(req.user)) {
       return res.status(403).json({
         success: false,
         message:
@@ -863,7 +856,7 @@ export const getL0ScreeningChecklist = async (
     const screening = await Screening.findOne({
       application: applicationId,
       level: "L0",
-      assignedTo: req.admin._id,
+      assignedTo: req.user._id,
     })
       .select(
         "_id application level status checklist assignedAt startedAt updatedAt"
@@ -911,7 +904,7 @@ export const updateL0ScreeningChecklist = async (
   let session;
 
   try {
-    if (!isAuthorizedL0Screener(req.admin)) {
+    if (!isAuthorizedL0Screener(req.user)) {
       return res.status(403).json({
         success: false,
         message:
@@ -1021,7 +1014,7 @@ export const updateL0ScreeningChecklist = async (
       const screening = await Screening.findOne({
         application: applicationId,
         level: "L0",
-        assignedTo: req.admin._id,
+        assignedTo: req.user._id,
       }).session(session);
 
       if (!screening) {
@@ -1107,16 +1100,16 @@ export const updateL0ScreeningChecklist = async (
         action: "CHECKLIST_UPDATED",
         applicationId: candidate._id,
         candidateName: candidate.name || "",
-        screenerName: req.admin.name || "",
+        screenerName: req.user.name || "",
         previousStatus,
         newStatus: candidate.status,
         previousScreeningStatus,
         newScreeningStatus: screening.status,
-        performedBy: req.admin._id,
+        performedBy: req.user._id,
         performedByType: "HUMAN",
-        performedById: req.admin._id.toString(),
-        performedByName: req.admin.name || "",
-        assignedTo: req.admin._id,
+        performedById: req.user._id.toString(),
+        performedByName: req.user.name || "",
+        assignedTo: req.user._id,
         remarks:
           updatedChecklist.additionalNotes || "Checklist updated.",
         feedback: "Screening checklist updated.",
@@ -1131,7 +1124,7 @@ export const updateL0ScreeningChecklist = async (
         targetType: "Candidate",
         targetId: screening.application,
         targetLabel: `Application ${screening.application}`,
-        department: req.admin.department || "",
+        department: req.user.department || "",
         outcome: "SUCCESS",
         before: {
           checklist: previousChecklist,
@@ -1191,7 +1184,7 @@ export const submitL0ScreeningDecision = async (
   let session;
 
   try {
-    if (!isAuthorizedL0Screener(req.admin)) {
+    if (!isAuthorizedL0Screener(req.user)) {
       return res.status(403).json({
         success: false,
         message:
@@ -1310,7 +1303,7 @@ export const submitL0ScreeningDecision = async (
       const screening = await Screening.findOne({
         application: applicationId,
         level: "L0",
-        assignedTo: req.admin._id,
+        assignedTo: req.user._id,
       }).session(session);
 
       if (!screening) {
@@ -1414,16 +1407,16 @@ export const submitL0ScreeningDecision = async (
         action: "SUBMITTED",
         applicationId: candidate._id,
         candidateName: candidate.name || "",
-        screenerName: req.admin.name || "",
+        screenerName: req.user.name || "",
         previousStatus: previousState.candidateStatus,
         newStatus: candidate.status,
         previousScreeningStatus: previousState.screeningStatus,
         newScreeningStatus: screening.status,
-        performedBy: req.admin._id,
+        performedBy: req.user._id,
         performedByType: "HUMAN",
-        performedById: req.admin._id.toString(),
-        performedByName: req.admin.name || "",
-        assignedTo: req.admin._id,
+        performedById: req.user._id.toString(),
+        performedByName: req.user.name || "",
+        assignedTo: req.user._id,
         decision,
         feedback: cleanFeedback,
         remarks: cleanRemarks,
@@ -1443,16 +1436,16 @@ export const submitL0ScreeningDecision = async (
           action: "HR_REVIEW_REQUESTED",
           applicationId: candidate._id,
           candidateName: candidate.name || "",
-          screenerName: req.admin.name || "",
+          screenerName: req.user.name || "",
           previousStatus: previousState.candidateStatus,
           newStatus: candidate.status,
           previousScreeningStatus: previousState.screeningStatus,
           newScreeningStatus: screening.status,
-          performedBy: req.admin._id,
+          performedBy: req.user._id,
           performedByType: "HUMAN",
-          performedById: req.admin._id.toString(),
-          performedByName: req.admin.name || "",
-          assignedTo: req.admin._id,
+          performedById: req.user._id.toString(),
+          performedByName: req.user.name || "",
+          assignedTo: req.user._id,
           decision,
           feedback: hrReviewReason,
           remarks: hrReviewReason,
@@ -1517,6 +1510,10 @@ export const submitL0ScreeningDecision = async (
       };
     });
 
+    if (operationResult.statusCode === 200) {
+      await announceScreeningDecision(operationResult.body, req.user);
+    }
+
     return res
       .status(operationResult.statusCode)
       .json(operationResult.body);
@@ -1557,7 +1554,7 @@ export const getL0HRReviewRequests = async (
   res
 ) => {
   try {
-    if (!isAuthorizedL0Screener(req.admin)) {
+    if (!isAuthorizedL0Screener(req.user)) {
       return res.status(403).json({
         success: false,
         message:
@@ -1628,7 +1625,7 @@ export const getL0HRReviewRequests = async (
     }
 
     const filter = {
-      assignedTo: req.admin._id,
+      assignedTo: req.user._id,
       level: "L0",
       status: "Completed",
       decision: {
@@ -1735,7 +1732,7 @@ export const getL0HRReviewRequestDetails = async (
   res
 ) => {
   try {
-    if (!isAuthorizedL0Screener(req.admin)) {
+    if (!isAuthorizedL0Screener(req.user)) {
       return res.status(403).json({
         success: false,
         message:
@@ -1755,7 +1752,7 @@ export const getL0HRReviewRequestDetails = async (
     const screening = await Screening.findOne({
       application: applicationId,
       level: "L0",
-      assignedTo: req.admin._id,
+      assignedTo: req.user._id,
       status: "Completed",
       decision: {
         $in: HR_REVIEW_DECISIONS,
@@ -1866,14 +1863,33 @@ export const getApplicationScreeningHistory = async (
       });
     }
 
-    const candidateExists = await Candidate.exists({
-      _id: id,
-    });
+    const applicationRecord = await Candidate.findById(id)
+      .select("department job")
+      .lean();
 
-    if (!candidateExists) {
+    if (!applicationRecord) {
       return res.status(404).json({
         success: false,
         message: "Application not found.",
+      });
+    }
+
+    // Department-scoped oversight (Department Administrator / HOD) may
+    // only see applications for jobs of their own department.
+    if (
+      !isGlobalAdministrator(req.user) &&
+      !isHrOrRecruiter(req.user) &&
+      isReadOnlyOversightUser(req.user) &&
+      !(await canViewApplication(
+        req.user,
+        applicationRecord,
+        req.activeRole
+      ))
+    ) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "You can only view screening details for your own department.",
       });
     }
 
@@ -1899,7 +1915,7 @@ export const getApplicationScreeningHistory = async (
       )
       .lean();
 
-    const user = req.admin;
+    const user = req.user;
     const userId = user?._id?.toString();
 
     const isAssignedScreener =
@@ -1960,7 +1976,7 @@ export const getL0ScreeningStats = async (
   res
 ) => {
   try {
-    if (!isAuthorizedL0Screener(req.admin)) {
+    if (!isAuthorizedL0Screener(req.user)) {
       return res.status(403).json({
         success: false,
         message:
@@ -1971,7 +1987,7 @@ export const getL0ScreeningStats = async (
     const result = await Screening.aggregate([
       {
         $match: {
-          assignedTo: req.admin._id,
+          assignedTo: req.user._id,
           level: "L0",
         },
       },
@@ -2112,7 +2128,7 @@ export const getL0ScreeningHistory = async (
   res
 ) => {
   try {
-    if (!isAuthorizedL0Screener(req.admin)) {
+    if (!isAuthorizedL0Screener(req.user)) {
       return res.status(403).json({
         success: false,
         message:
@@ -2170,9 +2186,9 @@ export const getL0ScreeningHistory = async (
         $in: ["Completed", "Cancelled"],
       },
       $or: [
-        { assignedTo: req.admin._id },
-        { "history.performedBy": req.admin._id },
-        { "history.assignedTo": req.admin._id },
+        { assignedTo: req.user._id },
+        { "history.performedBy": req.user._id },
+        { "history.assignedTo": req.user._id },
       ],
     };
 
@@ -2299,7 +2315,7 @@ export const getL0ApplicationHistoryDetails = async (
   res
 ) => {
   try {
-    if (!isAuthorizedL0Screener(req.admin)) {
+    if (!isAuthorizedL0Screener(req.user)) {
       return res.status(403).json({
         success: false,
         message:
@@ -2323,9 +2339,9 @@ export const getL0ApplicationHistoryDetails = async (
         $in: ["Completed", "Cancelled"],
       },
       $or: [
-        { assignedTo: req.admin._id },
-        { "history.performedBy": req.admin._id },
-        { "history.assignedTo": req.admin._id },
+        { assignedTo: req.user._id },
+        { "history.performedBy": req.user._id },
+        { "history.assignedTo": req.user._id },
       ],
     })
       .select(
@@ -2426,7 +2442,7 @@ export const getL0ApplicationHistoryDetails = async (
 
 export const getL0Dashboard = async (req, res) => {
   try {
-    if (!isAuthorizedL0Screener(req.admin)) {
+    if (!isAuthorizedL0Screener(req.user)) {
       return res.status(403).json({
         success: false,
         message:
@@ -2434,7 +2450,7 @@ export const getL0Dashboard = async (req, res) => {
       });
     }
 
-    const screenerId = req.admin._id;
+    const screenerId = req.user._id;
 
     const [aggregation, hrReviewRequests] =
       await Promise.all([
@@ -2573,9 +2589,9 @@ export const getL0Dashboard = async (req, res) => {
 
       dashboard: {
         screener: {
-          id: req.admin._id,
-          name: req.admin.name || "",
-          department: req.admin.department || "",
+          id: req.user._id,
+          name: req.user.name || "",
+          department: req.user.department || "",
         },
 
         stats,
@@ -2601,7 +2617,7 @@ export const getL0DashboardRecentApplications = async (
   res
 ) => {
   try {
-    if (!isAuthorizedL0Screener(req.admin)) {
+    if (!isAuthorizedL0Screener(req.user)) {
       return res.status(403).json({
         success: false,
         message:
@@ -2628,7 +2644,7 @@ export const getL0DashboardRecentApplications = async (
     }
 
     const screenings = await Screening.find({
-      assignedTo: req.admin._id,
+      assignedTo: req.user._id,
       level: "L0",
     })
       .select(
@@ -2701,7 +2717,7 @@ export const getL0DashboardRecentActivity = async (
   res
 ) => {
   try {
-    if (!isAuthorizedL0Screener(req.admin)) {
+    if (!isAuthorizedL0Screener(req.user)) {
       return res.status(403).json({
         success: false,
         message:
@@ -2729,7 +2745,7 @@ export const getL0DashboardRecentActivity = async (
 
     const activities = await AuditLog.find({
       actorType: "HUMAN",
-      actor: req.admin._id,
+      actor: req.user._id,
 
       action: {
         $in: [
@@ -2776,7 +2792,7 @@ export const getL0DashboardRecentActivity = async (
 
         performedBy:
           activity.actorName ||
-          req.admin.name ||
+          req.user.name ||
           "",
 
         role: activity.roleUsed,
@@ -2831,7 +2847,7 @@ const getL0ProfileData = (admin) => ({
 
 export const getL0Profile = async (req, res) => {
   try {
-    const admin = req.admin;
+    const admin = req.user;
 
     if (!isAuthorizedL0Screener(admin)) {
       return res.status(403).json({
@@ -2870,7 +2886,7 @@ export const getL0Profile = async (req, res) => {
 
 export const updateL0Profile = async (req, res) => {
   try {
-    const admin = req.admin;
+    const admin = req.user;
 
     if (!isAuthorizedL0Screener(admin)) {
       return res.status(403).json({

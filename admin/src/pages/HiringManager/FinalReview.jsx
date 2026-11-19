@@ -1,197 +1,256 @@
-import { useMemo, useState } from "react";
-import { Search, Award, CheckCircle2, XCircle, Clock3 } from "lucide-react";
+import { useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 
-const initialCandidates = [
-  {
-    id: "APP-1005",
-    name: "Rohit Kumar",
-    position: "Frontend Developer",
-    experience: "3 Years",
-    completedStages: "L1, L2, L3",
-    rating: 4.5,
-    recommendation: "Strong Hire",
-    status: "Awaiting Final Review",
-  },
-  {
-    id: "APP-1006",
-    name: "Meera Nair",
-    position: "Backend Developer",
-    experience: "4 Years",
-    completedStages: "L1, L2",
-    rating: 4,
-    recommendation: "Hire",
-    status: "Awaiting Final Review",
-  },
-  {
-    id: "APP-1007",
-    name: "Sandeep Rao",
-    position: "Full Stack Developer",
-    experience: "5 Years",
-    completedStages: "L1, L2, L3",
-    rating: 3.5,
-    recommendation: "Hold",
-    status: "Awaiting Final Review",
-  },
-];
+import DataState, { EmptyState } from "../../components/StateMessage.jsx";
+import useApi from "../../services/useApi.js";
+import {
+  getApplicationFeedback,
+  getHiringApplication,
+  getHiringPipeline,
+  listDecisions,
+  submitHiringDecision,
+} from "../../services/hiring.js";
+import { formatDateTime } from "../../services/format.js";
 
-export default function FinalReview() {
-  const [candidates, setCandidates] = useState(initialCandidates);
-  const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState(null);
-  const [finalStatus, setFinalStatus] = useState("Selected");
-  const [comments, setComments] = useState("");
+const inputClass =
+  "mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-red-500";
 
-  const filtered = useMemo(
-    () =>
-      candidates.filter((candidate) =>
-        `${candidate.name} ${candidate.position} ${candidate.id}`
-          .toLowerCase()
-          .includes(search.toLowerCase())
-      ),
-    [candidates, search]
+// Candidate picker (when no ?application= is given)
+function CandidatePicker() {
+  const { data, loading, error, reload } = useApi(
+    (signal) => getHiringPipeline(undefined, signal),
+    []
   );
 
-  const submitFinalDecision = (event) => {
+  const candidates = (data?.jobs || []).flatMap((job) =>
+    job.stages.flatMap((stage) =>
+      stage.candidates.map((candidate) => ({ ...candidate, jobTitle: job.jobTitle, stageName: stage.stageName }))
+    )
+  );
+
+  return (
+    <DataState loading={loading} error={error} onRetry={reload}>
+      {candidates.length === 0 ? (
+        <EmptyState text="There are no candidates to review." />
+      ) : (
+        <ul className="divide-y divide-gray-100 rounded-xl border border-gray-200 bg-white">
+          {candidates.map((candidate) => (
+            <li key={candidate._id} className="flex items-center justify-between gap-3 p-4">
+              <div>
+                <p className="font-medium text-gray-900">{candidate.name}</p>
+                <p className="text-xs text-gray-500">{candidate.jobTitle} · {candidate.stageName}</p>
+              </div>
+              <Link
+                to={`/hiring-manager/final-review?application=${candidate._id}`}
+                className="rounded-lg border border-red-500 px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-500 hover:text-white"
+              >
+                Review
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </DataState>
+  );
+}
+
+// GET /api/applications/:id, /:id/feedback, /:id/decisions
+// POST /api/applications/:id/decisions
+function Review({ applicationId }) {
+  const loaded = useApi(
+    async (signal) => {
+      const [application, feedback, decisions] = await Promise.all([
+        getHiringApplication(applicationId, signal),
+        getApplicationFeedback(applicationId, signal),
+        listDecisions(applicationId, signal),
+      ]);
+
+      return { application, feedback, decisions };
+    },
+    [applicationId]
+  );
+
+  const [form, setForm] = useState({ stageCode: "", decision: "Advance", reason: "" });
+  const [submit, setSubmit] = useState({ busy: false, error: "", done: false });
+
+  const application = loaded.data?.application?.application;
+  const job = loaded.data?.application?.job;
+  const feedback = loaded.data?.feedback?.feedback || [];
+  const decisions = loaded.data?.decisions?.decisions || [];
+
+  const stages = (job?.interviewWorkflow || []).filter((stage) => stage.isEnabled);
+  const stageCode = form.stageCode || stages.find((stage) => stage.stageType === "INTERVIEW")?.stageCode || stages[0]?.stageCode || "";
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
+    setSubmit({ busy: true, error: "", done: false });
 
-    if (!comments.trim()) {
-      window.alert("Please provide final review comments.");
-      return;
+    try {
+      await submitHiringDecision(applicationId, {
+        stageCode,
+        decision: form.decision,
+        reason: form.reason,
+      });
+
+      setForm({ ...form, reason: "" });
+      setSubmit({ busy: false, error: "", done: true });
+      loaded.reload();
+    } catch (error) {
+      setSubmit({ busy: false, error: error.message, done: false });
     }
-
-    setCandidates((current) =>
-      current.map((candidate) =>
-        candidate.id === selected.id
-          ? {
-              ...candidate,
-              status: finalStatus,
-              finalComments: comments.trim(),
-            }
-          : candidate
-      )
-    );
-
-    setSelected(null);
-    setComments("");
-    setFinalStatus("Selected");
   };
+
+  return (
+    <DataState loading={loaded.loading} error={loaded.error} onRetry={loaded.reload}>
+      {application && (
+        <div className="space-y-6">
+          <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-gray-900">{application.name}</h2>
+            <p className="text-sm text-gray-500">{job?.title} · {job?.department}</p>
+            <dl className="mt-4 grid gap-4 text-sm sm:grid-cols-3">
+              {[
+                ["Email", application.email],
+                ["Phone", application.phone],
+                ["Qualification", application.highestQualification],
+                ["Notice period", application.noticePeriod],
+                ["Current company", application.currentCompany],
+                ["Status", application.status],
+              ].map(([label, value]) => (
+                <div key={label}>
+                  <dt className="text-xs uppercase text-gray-500">{label}</dt>
+                  <dd className="mt-1 text-gray-900">{value || "—"}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+
+          <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="mb-4 font-semibold text-gray-900">Interviewer Feedback</h2>
+            {feedback.length === 0 ? (
+              <p className="text-sm text-gray-500">No feedback has been submitted yet.</p>
+            ) : (
+              <ul className="space-y-4">
+                {feedback.map((item) => (
+                  <li key={item.interviewId} className="rounded-lg border border-gray-100 p-4 text-sm">
+                    <p className="font-medium text-gray-900">
+                      {item.stageName} · {item.interviewer?.name}
+                    </p>
+                    <p className="mt-1 text-gray-600">
+                      {item.evaluation?.recommendation} · rating {item.evaluation?.overallRating ?? "—"}/5
+                    </p>
+                    {item.evaluation?.feedback && <p className="mt-2 text-gray-700">{item.evaluation.feedback}</p>}
+                    {item.evaluation?.strengths && <p className="mt-1 text-xs text-gray-500">Strengths: {item.evaluation.strengths}</p>}
+                    {item.evaluation?.concerns && <p className="mt-1 text-xs text-gray-500">Concerns: {item.evaluation.concerns}</p>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="mb-4 font-semibold text-gray-900">Record a Decision</h2>
+
+            <form onSubmit={handleSubmit} className="max-w-xl space-y-4">
+              <div>
+                <label htmlFor="decision-stage" className="block text-sm font-medium">Stage</label>
+                <select
+                  id="decision-stage"
+                  value={stageCode}
+                  onChange={(event) => setForm({ ...form, stageCode: event.target.value })}
+                  className={inputClass}
+                >
+                  {stages.map((stage) => (
+                    <option key={stage.stageCode} value={stage.stageCode}>{stage.stageName}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="decision-value" className="block text-sm font-medium">Decision</label>
+                <select
+                  id="decision-value"
+                  value={form.decision}
+                  onChange={(event) => setForm({ ...form, decision: event.target.value })}
+                  className={inputClass}
+                >
+                  <option>Advance</option>
+                  <option>Hold</option>
+                  <option>Reject</option>
+                  <option value="Select">Select (complete hiring)</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="decision-reason" className="block text-sm font-medium">
+                  Reason {form.decision !== "Advance" && <span className="text-red-500">*</span>}
+                </label>
+                <textarea
+                  id="decision-reason"
+                  rows={3}
+                  required={form.decision !== "Advance"}
+                  value={form.reason}
+                  onChange={(event) => setForm({ ...form, reason: event.target.value })}
+                  className={inputClass}
+                />
+              </div>
+
+              {submit.error && (
+                <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{submit.error}</p>
+              )}
+              {submit.done && (
+                <p role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                  Decision recorded.
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={submit.busy || !stageCode}
+                className="rounded-lg bg-red-500 px-6 py-2.5 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-60"
+              >
+                {submit.busy ? "Saving..." : "Record Decision"}
+              </button>
+            </form>
+          </section>
+
+          <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="mb-4 font-semibold text-gray-900">Decision History</h2>
+            {decisions.length === 0 ? (
+              <p className="text-sm text-gray-500">No decisions have been recorded yet.</p>
+            ) : (
+              <ul className="space-y-3 text-sm">
+                {decisions.map((item) => (
+                  <li key={item._id} className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-3 last:border-0">
+                    <span>
+                      <span className="font-medium">{item.decision}</span> · {item.stageName}
+                      {item.reason && <span className="text-gray-500"> — {item.reason}</span>}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {item.decidedBy?.name} · {formatDateTime(item.decidedAt)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
+      )}
+    </DataState>
+  );
+}
+
+export default function FinalReview() {
+  const [params] = useSearchParams();
+  const applicationId = params.get("application");
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Final Review</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Review candidates who have completed the required interview stages and record the final outcome.
-        </p>
+        <h1 className="text-2xl font-bold text-gray-900">Final Review</h1>
+        <p className="mt-1 text-sm text-gray-500">Review interview feedback and record your hiring decision.</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-          <Clock3 className="text-amber-600" size={21} />
-          <p className="mt-3 text-sm text-gray-500">Awaiting Final Review</p>
-          <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{candidates.filter((item) => item.status === "Awaiting Final Review").length}</p>
-        </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-          <CheckCircle2 className="text-green-600" size={21} />
-          <p className="mt-3 text-sm text-gray-500">Selected</p>
-          <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{candidates.filter((item) => item.status === "Selected").length}</p>
-        </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-          <XCircle className="text-red-600" size={21} />
-          <p className="mt-3 text-sm text-gray-500">Not Selected</p>
-          <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{candidates.filter((item) => item.status === "Not Selected").length}</p>
-        </div>
-      </div>
-
-      <section className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-        <div className="flex flex-col gap-3 border-b border-gray-200 p-4 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="font-semibold text-gray-900 dark:text-white">Candidates for Final Review</h2>
-            <p className="text-sm text-gray-500">{filtered.length} candidates</p>
-          </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search candidates..." className="w-full rounded-lg border border-gray-300 py-2 pl-9 pr-3 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:w-56" />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 p-4 lg:grid-cols-2">
-          {filtered.map((candidate) => (
-            <div key={candidate.id} className="rounded-xl border border-gray-200 p-5 dark:border-gray-800">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white">{candidate.name}</h3>
-                  <p className="text-sm text-gray-500">{candidate.position}</p>
-                  <p className="mt-1 text-xs text-gray-400">{candidate.id}</p>
-                </div>
-                <Award className="text-amber-500" size={23} />
-              </div>
-
-              <div className="mt-5 grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-gray-500">Experience</p>
-                  <p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">{candidate.experience}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Overall Rating</p>
-                  <p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">{candidate.rating}/5</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Completed Stages</p>
-                  <p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">{candidate.completedStages}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Recommendation</p>
-                  <p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">{candidate.recommendation}</p>
-                </div>
-              </div>
-
-              <div className="mt-4 flex flex-col gap-3 border-t border-gray-100 pt-4 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between">
-                <span className={`w-fit rounded-full px-2.5 py-1 text-xs font-medium ${candidate.status === "Selected" ? "bg-green-50 text-green-700" : candidate.status === "Not Selected" ? "bg-red-50 text-red-700" : candidate.status === "On Hold" ? "bg-amber-50 text-amber-700" : "bg-blue-50 text-blue-700"}`}>
-                  {candidate.status}
-                </span>
-                <button
-                  type="button"
-                  disabled={candidate.status !== "Awaiting Final Review"}
-                  onClick={() => setSelected(candidate)}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-gray-300"
-                >
-                  Complete Final Review
-                </button>
-              </div>
-
-              {candidate.finalComments && (
-                <p className="mt-3 text-sm text-gray-500">Final comment: {candidate.finalComments}</p>
-              )}
-            </div>
-          ))}
-          {filtered.length === 0 && <p className="py-10 text-center text-sm text-gray-500 lg:col-span-2">No candidates found.</p>}
-        </div>
-      </section>
-
-      {selected && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <form onSubmit={submitFinalDecision} className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-900">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Complete Final Review</h2>
-            <p className="mt-1 text-sm text-gray-500">{selected.name} · {selected.position}</p>
-
-            <label className="mt-5 block text-sm font-medium text-gray-700 dark:text-gray-300">Final Outcome</label>
-            <select value={finalStatus} onChange={(event) => setFinalStatus(event.target.value)} className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white">
-              <option>Selected</option>
-              <option>Not Selected</option>
-              <option>On Hold</option>
-            </select>
-
-            <label className="mt-4 block text-sm font-medium text-gray-700 dark:text-gray-300">Final Review Comments <span className="text-red-500">*</span></label>
-            <textarea value={comments} onChange={(event) => setComments(event.target.value)} rows="4" placeholder="Enter final review comments..." className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white" />
-
-            <div className="mt-5 flex justify-end gap-2">
-              <button type="button" onClick={() => setSelected(null)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 dark:border-gray-700 dark:text-gray-300">Cancel</button>
-              <button type="submit" className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">Save Final Outcome</button>
-            </div>
-          </form>
-        </div>
-      )}
+      {applicationId ? <Review applicationId={applicationId} /> : <CandidatePicker />}
     </div>
   );
 }

@@ -1,19 +1,33 @@
+import mongoose from "mongoose";
 
-import jwt from "jsonwebtoken";
-import User from "../models/Users.js";
+import { verifyAccessToken } from "../services/tokenService.js";
+import { findAccountById } from "../../../shared/services/accountService.js";
+import { getAccountTypeForRole } from "../../../shared/constants/roles.js";
+
+// =====================================================
+// STAFF AUTHENTICATION MIDDLEWARE
+//
+// Verifies the JWT and loads the account from the
+// collection named by the token's accountType:
+//
+//   ADMIN -> Admin  (Global / Department Administrator)
+//   USER  -> User   (HR, Interviewer, Hiring Manager, L0 Screener)
+//
+// On success it sets:
+//   req.user -> the loaded account document
+//   req.auth -> { accountType, userId, role }
+// =====================================================
+
+const unauthorized = (res, message) =>
+  res.status(401).json({ success: false, message });
 
 const authMiddleware = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({
-        success: false,
-        message: "Access denied. No token provided.",
-      });
+      return unauthorized(res, "Access denied. No token provided.");
     }
-
-    const token = authHeader.split(" ")[1];
 
     if (!process.env.JWT_SECRET) {
       console.error("JWT_SECRET is not configured");
@@ -24,64 +38,67 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const token = authHeader.split(" ")[1];
+    const decoded = verifyAccessToken(token);
 
-    if (!decoded.userId) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid token. Please login again.",
-      });
+    if (
+      !decoded.userId ||
+      !decoded.accountType ||
+      !mongoose.isValidObjectId(decoded.userId)
+    ) {
+      return unauthorized(res, "Invalid token. Please login again.");
     }
 
-    const user = await User.findById(decoded.userId);
+    const account = await findAccountById(
+      decoded.accountType,
+      decoded.userId
+    );
 
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: "User not found.",
-      });
+    if (!account) {
+      return unauthorized(res, "User not found.");
     }
 
-    if ((user.tokenVersion || 0) !== decoded.tokenVersion) {
-      return res.status(401).json({
-        success: false,
-        message: "Token is no longer valid. Please login again.",
-      });
+    if ((account.tokenVersion || 0) !== decoded.tokenVersion) {
+      return unauthorized(
+        res,
+        "Token is no longer valid. Please login again."
+      );
     }
 
-    if (user.deletedAt) {
+    if (account.deletedAt) {
       return res.status(403).json({
         success: false,
         message: "This account is no longer available.",
       });
     }
 
-    if (user.status !== "Active") {
+    if (account.status !== "Active") {
       return res.status(403).json({
         success: false,
         message: "Your account is inactive. Please contact an administrator.",
       });
     }
 
-    // Common authenticated user for all employee roles.
-    req.user = user;
-
-    // Temporary compatibility for existing Admin controllers.
-    req.admin = user;
-
-    next();
-  } catch (error) {
-    if (error.name === "TokenExpiredError") {
-      return res.status(401).json({
-        success: false,
-        message: "Token expired. Please login again.",
-      });
+    // The account's role must belong to the collection it was
+    // loaded from. This rejects inconsistent or tampered data.
+    if (getAccountTypeForRole(account.role) !== decoded.accountType) {
+      return unauthorized(res, "Invalid token. Please login again.");
     }
 
-    return res.status(401).json({
-      success: false,
-      message: "Invalid or expired token.",
-    });
+    req.user = account;
+    req.auth = {
+      accountType: decoded.accountType,
+      userId: account._id.toString(),
+      role: account.role,
+    };
+
+    return next();
+  } catch (error) {
+    if (error.name === "TokenExpiredError") {
+      return unauthorized(res, "Token expired. Please login again.");
+    }
+
+    return unauthorized(res, "Invalid or expired token.");
   }
 };
 

@@ -12,6 +12,7 @@ import {
 
 import proliantLogo from "../../assets/logo/Proliant Black/proliant_black.png";
 import ForgotPassword from "./ForgotPassword";
+import { getHomePath } from "../../services/staffAuth.js";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
@@ -24,7 +25,10 @@ const initialFormData = {
   confirmPassword: "",
 };
 
-function Login() {
+// portal="department" is the separate Department Administrator sign-in
+// (/department-admin/login). It uses the same secure login (password + OTP),
+// but only accepts Department Administrator accounts.
+function Login({ portal = "staff" }) {
   const navigate = useNavigate();
 
   const [step, setStep] = useState("login");
@@ -143,22 +147,6 @@ function Login() {
       return;
     }
 
-    // Development-only OTP shortcut retained from existing code.
-    if (import.meta.env.DEV && otp === "123456") {
-      localStorage.setItem(
-        "adminUser",
-        JSON.stringify({
-          name: "Proliant User",
-          email: formData.email.trim(),
-          role: "Admin",
-          mustChangePassword: false,
-        })
-      );
-
-      navigate("/dashboard");
-      return;
-    }
-
     setIsLoading(true);
     setErrors({});
 
@@ -196,6 +184,17 @@ function Login() {
         return;
       }
 
+      if (
+        portal === "department" &&
+        (result.admin || result.user)?.adminAccessLevel !== "DEPARTMENT"
+      ) {
+        setErrors({
+          submit:
+            "This sign-in is only for Department Administrators. Please use the main sign-in page.",
+        });
+        return;
+      }
+
       localStorage.setItem("adminToken", result.token);
 
       if (result.admin) {
@@ -210,7 +209,7 @@ function Login() {
         return;
       }
 
-      navigate("/dashboard");
+      navigate(getHomePath(result.admin || result.user));
     } catch (error) {
       console.error("Login OTP verification error:", error);
 
@@ -316,6 +315,11 @@ function Login() {
           }
         }
       }
+
+      // Changing the password invalidates the current session on the
+      // server ("Please login again"), so the user signs in again.
+      localStorage.removeItem("adminToken");
+      localStorage.removeItem("adminUser");
 
       setStep("password-success");
     } catch (error) {
@@ -447,16 +451,21 @@ function Login() {
                 <>
                   <div className="mb-9">
                     <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-[#EF3B3A]">
-                      Welcome back
+                      {portal === "department"
+                        ? "Department Administrator"
+                        : "Welcome back"}
                     </p>
 
                     <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-                      Sign in to your account
+                      {portal === "department"
+                        ? "Department Administrator sign in"
+                        : "Sign in to your account"}
                     </h2>
 
                     <p className="mt-3 max-w-md text-sm leading-6 text-gray-500 sm:text-base">
-                      Enter your work credentials to access the
-                      Proliant Hiring Portal.
+                      {portal === "department"
+                        ? "View organization-wide recruitment statistics and your department's candidates and interviews (read-only)."
+                        : "Enter your work credentials to access the Proliant Hiring Portal."}
                     </p>
                   </div>
 
@@ -804,16 +813,25 @@ function Login() {
                   </h2>
 
                   <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-gray-500 sm:text-base">
-                    Your password has been updated. You can now continue to
-                    your dashboard.
+                    Your password has been updated. Please sign in again with
+                    your new password.
                   </p>
 
                   <button
                     type="button"
-                    onClick={() => navigate("/dashboard")}
+                    onClick={() => {
+                      setFormData((previous) => ({
+                        ...previous,
+                        password: "",
+                        newPassword: "",
+                        confirmPassword: "",
+                        otp: "",
+                      }));
+                      setStep("login");
+                    }}
                     className="mt-8 w-full rounded-lg bg-[#EF3B3A] px-5 py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-red-600 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-red-100"
                   >
-                    Continue to Dashboard
+                    Sign in again
                   </button>
                 </div>
               )}

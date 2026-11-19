@@ -13,7 +13,8 @@ import {
   getCandidateJoiningHistory,
 } from "../controllers/candidateController.js";
 
-import authMiddleware from "../middleware/authMiddleware.js";
+import authMiddleware from "../../auth/middleware/authMiddleware.js";
+import requireHrAccess from "../../hr/middleware/requireHrAccess.js";
 
 const router = express.Router();
 
@@ -57,18 +58,19 @@ router.get(
 // EXISTING CANDIDATE APIs
 // =====================================================
 
-router.get("/", authMiddleware, getCandidates);
+router.get("/", authMiddleware, requireHrAccess, getCandidates);
 
 router.get(
   "/export/excel",
   authMiddleware,
+  requireHrAccess,
   exportCandidatesExcel
 );
 
-router.get("/:id", authMiddleware, getCandidate);
+router.get("/:id", authMiddleware, requireHrAccess, getCandidate);
 
-router.put("/:id", authMiddleware, updateCandidate);
+router.put("/:id", authMiddleware, requireHrAccess, updateCandidate);
 
-router.delete("/:id", authMiddleware, deleteCandidate);
+router.delete("/:id", authMiddleware, requireHrAccess, deleteCandidate);
 
 export default router;

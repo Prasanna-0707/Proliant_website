@@ -108,6 +108,7 @@ const emptyForm = {
   applicationStartDate: "",
   applicationEndDate: "",
   owner: "",
+  hiringManagerIds: [],
   jobDescription: "",
   requirements: "",
   status: "Draft",
@@ -123,6 +124,7 @@ const helpClass = "mt-1.5 text-xs text-gray-500 dark:text-gray-400";
 function Jobs() {
   const [jobs, setJobs] = useState([]);
   const [teamMembers, setTeamMembers] = useState([]);
+  const [hiringManagerOptions, setHiringManagerOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [search, setSearch] = useState("");
@@ -171,10 +173,18 @@ function Jobs() {
   const fetchTeamMembers = useCallback(async () => {
     try {
       const result = await apiRequest("/auth/team-members");
+      // HR users receive a flat list for their department. Administrators
+      // receive a grouped view (global admins, departments, unassigned).
       setTeamMembers(
         Array.isArray(result.teamMembers)
           ? result.teamMembers
-          : []
+          : [
+              ...(result.globalAdministrators || []),
+              ...(result.departments || []).flatMap(
+                (group) => group.members || []
+              ),
+              ...(result.unassignedMembers || []),
+            ]
       );
       setTeamMemberWarning("");
     } catch (error) {
@@ -188,6 +198,12 @@ function Jobs() {
     fetchJobs();
     fetchTeamMembers();
   }, [fetchJobs, fetchTeamMembers]);
+
+  useEffect(() => {
+    apiRequest("/hiring/assignments/managers")
+      .then((result) => setHiringManagerOptions(result.managers || []))
+      .catch(() => setHiringManagerOptions([]));
+  }, []);
   // =====================================================
   // SEARCH AND FILTER
   // =====================================================
@@ -302,6 +318,9 @@ function Jobs() {
         job.applicationEndDate
       ),
       owner: getStaffId(job.owner),
+      hiringManagerIds: (job.hiringManagers || []).map(
+        (manager) => manager._id
+      ),
       jobDescription: job.jobDescription || job.description || "",
       requirements: job.requirements || "",
       status: job.status || "Draft",
@@ -325,9 +344,24 @@ function Jobs() {
   // =====================================================
   // OPEN JOB DETAILS MODAL
   // =====================================================
-  const openDetailsModal = (job) => {
+  const openDetailsModal = async (job) => {
     setViewingJob(job);
     setOpenMenuId(null);
+
+    // Refresh with the full record from GET /jobs/manage/:id.
+    try {
+      const result = await apiRequest(`/jobs/manage/${getJobId(job)}`);
+
+      if (result.job) {
+        setViewingJob((current) =>
+          current && getJobId(current) === getJobId(job)
+            ? normalizeJob(result.job)
+            : current
+        );
+      }
+    } catch {
+      /* the list data is enough to show the job */
+    }
   };
   // =====================================================
   // CREATE OR UPDATE JOB
@@ -361,6 +395,8 @@ function Jobs() {
       ),
       // Owner is optional. Blank means no owner assigned.
       owner: formData.owner || null,
+      // Same assignment records as the Hiring Manager Assignments page.
+      hiringManagerIds: formData.hiringManagerIds || [],
       jobDescription: formData.jobDescription.trim(),
       requirements: formData.requirements.trim(),
       status: formData.status,
@@ -994,6 +1030,45 @@ function Jobs() {
                   Assign a team member to manage this job. This field is optional.
                 </p>
               </div>
+              {/* HIRING MANAGERS */}
+              <div>
+                <span className={labelClass}>Hiring Managers</span>
+                {hiringManagerOptions.length === 0 ? (
+                  <p className={helpClass}>
+                    No active Hiring Managers are available.
+                  </p>
+                ) : (
+                  <div className="max-h-36 space-y-1 overflow-y-auto rounded-lg border border-gray-300 p-3 dark:border-gray-700">
+                    {hiringManagerOptions.map((manager) => (
+                      <label
+                        key={manager._id}
+                        className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formData.hiringManagerIds.includes(manager._id)}
+                          onChange={(event) =>
+                            setFormData((previous) => ({
+                              ...previous,
+                              hiringManagerIds: event.target.checked
+                                ? [...previous.hiringManagerIds, manager._id]
+                                : previous.hiringManagerIds.filter(
+                                    (id) => id !== manager._id
+                                  ),
+                            }))
+                          }
+                        />
+                        {manager.name}
+                        {manager.department ? ` (${manager.department})` : ""}
+                      </label>
+                    ))}
+                  </div>
+                )}
+                <p className={helpClass}>
+                  Hiring Managers can only see applications for jobs assigned to them.
+                  This is optional and can also be managed on the Hiring Manager Assignments page.
+                </p>
+              </div>
               {/* JOB DESCRIPTION */}
               <div>
                 <label className={labelClass} htmlFor="jobDescription">
@@ -1179,6 +1254,16 @@ function Jobs() {
                   </p>
                   <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
                     {getStaffName(viewingJob.owner)}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                    Hiring Managers
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
+                    {(viewingJob.hiringManagers || []).length > 0
+                      ? viewingJob.hiringManagers.map((manager) => manager.name).join(", ")
+                      : "Not assigned"}
                   </p>
                 </div>
               </div>

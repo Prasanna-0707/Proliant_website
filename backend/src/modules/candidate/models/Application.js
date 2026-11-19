@@ -147,6 +147,16 @@ const applicationSchema = new mongoose.Schema(
       required: true,
     },
 
+    // Registration (Candidate) record that carries this application through
+    // HR review, L0 screening and the interview workflow. Null for older
+    // applications created before this link existed.
+    registration: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Candidate",
+      default: null,
+      index: true,
+    },
+
     resume: {
       fileName: {
         type: String,

@@ -1,6 +1,7 @@
 
 import { Outlet } from "react-router-dom";
 import Sidebar from "../Sidebar";
+import StaffNotificationBell from "../StaffNotificationBell";
 
 function getHRUser() {
   const storageKeys = [
@@ -43,6 +44,10 @@ function HRLayout() {
 
       <div className="min-w-0 flex-1 md:ml-64">
         <main className="min-h-screen min-w-0 px-4 py-5 pt-16 pb-20 transition-colors dark:bg-gray-950 sm:px-6 lg:px-8 lg:py-7 md:pt-5 md:pb-5">
+          <div className="mb-4 flex justify-end">
+            <StaffNotificationBell />
+          </div>
+
           <Outlet />
         </main>
       </div>

@@ -5,6 +5,8 @@ const ScreeningDecisionModal = ({
   application,
   onClose,
   onSubmit,
+  submitting = false,
+  error = "",
 }) => {
   const [decision, setDecision] = useState("");
   const [remarks, setRemarks] = useState("");
@@ -61,6 +63,15 @@ const ScreeningDecisionModal = ({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5 p-5">
+          {error && (
+            <p
+              role="alert"
+              className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+            >
+              {error}
+            </p>
+          )}
+
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-700">
               Screening Recommendation
@@ -145,10 +156,10 @@ const ScreeningDecisionModal = ({
 
             <button
               type="submit"
-              disabled={!decision}
+              disabled={!decision || submitting}
               className="rounded-lg bg-red-500 px-5 py-2 text-sm font-semibold text-white hover:bg-red-600 disabled:bg-gray-300"
             >
-              Submit Decision
+              {submitting ? "Submitting..." : "Submit Decision"}
             </button>
           </div>
         </form>

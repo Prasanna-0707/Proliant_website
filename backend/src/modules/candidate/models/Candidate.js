@@ -1,5 +1,11 @@
 import mongoose from "mongoose";
 
+// Registrations created from the candidate portal do not collect these
+// fields, so they are only mandatory for public-website registrations.
+function requiredForWebsiteRegistration() {
+  return this.source !== "PORTAL";
+}
+
 const candidateSchema = new mongoose.Schema(
   {
     // =====================================================
@@ -14,7 +20,7 @@ const candidateSchema = new mongoose.Schema(
 
     areaOfInterest: {
       type: String,
-      required: true,
+      required: requiredForWebsiteRegistration,
       trim: true,
     },
 
@@ -39,7 +45,7 @@ const candidateSchema = new mongoose.Schema(
 
     isFresher: {
       type: Boolean,
-      required: true,
+      required: requiredForWebsiteRegistration,
     },
 
     location: {
@@ -53,7 +59,7 @@ const candidateSchema = new mongoose.Schema(
 
     highestQualification: {
       type: String,
-      required: true,
+      required: requiredForWebsiteRegistration,
       trim: true,
     },
 
@@ -70,7 +76,7 @@ const candidateSchema = new mongoose.Schema(
         "60 Days",
         "90 Days",
       ],
-      required: true,
+      required: requiredForWebsiteRegistration,
     },
 
     coverMessage: {
@@ -80,6 +86,22 @@ const candidateSchema = new mongoose.Schema(
 
     resume: {
       type: String,
+    },
+
+    // Where the registration came from. PORTAL registrations are created
+    // when a candidate applies through the candidate portal.
+    source: {
+      type: String,
+      enum: ["WEBSITE", "PORTAL"],
+      default: "WEBSITE",
+    },
+
+    // Candidate portal account this registration was created for (if any).
+    portalAccount: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "CandidateAccount",
+      default: null,
+      index: true,
     },
 
     // =====================================================
@@ -123,7 +145,7 @@ const candidateSchema = new mongoose.Schema(
     // Assigned L0 screener.
     assignedScreener: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin",
+      ref: "User",
       default: null,
       index: true,
     },

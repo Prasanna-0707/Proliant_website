@@ -1,10 +1,14 @@
 import bcrypt from "bcryptjs";
+import { APPROVED_GLOBAL_ADMIN_EMAILS } from "../shared/constants/roles.js";
 // Admin Module
 import Admin from "../modules/administrator/models/Admin.js";
 // HR Module
 import Employee from "../modules/hr/models/HREmployee.js";
 import Job from "../modules/hr/models/HRJob.js";
-import Candidate from "../modules/hr/models/HRCandidate.js";
+// HR portal application records (collection: hrcandidates). The registration
+// Candidate model (collection: candidates) is never seeded: its records come
+// only from real candidate registrations.
+import HRCandidate from "../modules/hr/models/HRCandidate.js";
 import Contact from "../modules/hr/models/HRFeedback.js";
 import Location from "../modules/hr/models/HRLocation.js";
 
@@ -21,12 +25,22 @@ import Screening from "../modules/screener/models/Screening.js";
 // are promoted to Global Administrator by migrateAdminProfileFields.
 // This migration does not create accounts or change passwords.
 
-const SEED_GLOBAL_ADMIN_EMAILS = [
-  "bogachandrapu@gmail.com",
-  "aswinijarugula@gmail.com",
-];
+// Single source of truth: shared/constants/roles.js
+const SEED_GLOBAL_ADMIN_EMAILS = [...APPROVED_GLOBAL_ADMIN_EMAILS];
+
+// Sample employees, jobs, HR candidates and contact enquiries are only created
+// when SEED_SAMPLE_DATA=true (local development / tests). They are never
+// created automatically in a real database.
+const SEED_SAMPLE_DATA = process.env.SEED_SAMPLE_DATA === "true";
 
 const SEED_INITIAL_ADMIN_EMAIL = "bogachandrapu@gmail.com";
+
+// Sample Department Administrator. Sees only its own department.
+const SEED_DEPARTMENT_ADMIN = {
+  email: "dept.admin@proliant.com",
+  name: "Department Admin",
+  department: "Engineering",
+};
 
 // =========================================================
 // ADMIN PROFILE MIGRATION
@@ -49,7 +63,10 @@ const migrateAdminProfileFields = async () => {
     let modified = false;
     let promotedGlobalAdmin = false;
 
-    if (!admin.name) {
+    // Only fill fields that are genuinely missing (undefined/null).
+    // An intentionally empty string must not be rewritten on every
+    // startup, which would re-save live records each time the server boots.
+    if (admin.name === undefined || admin.name === null) {
       admin.name = "";
       modified = true;
     }
@@ -64,7 +81,7 @@ const migrateAdminProfileFields = async () => {
       modified = true;
     }
 
-    if (!admin.phone) {
+    if (admin.phone === undefined || admin.phone === null) {
       admin.phone = "";
       modified = true;
     }
@@ -137,6 +154,26 @@ const migrateAdminProfileFields = async () => {
   if (promotedGlobalAdminCount > 0) {
     console.log(
       `→ Global Administrator scope assigned to ${promotedGlobalAdminCount} account(s).`
+    );
+  }
+};
+
+// =========================================================
+// LEGACY STAFF CHECK
+// Only Administrators belong in the Admin collection. Staff
+// accounts with other roles belong in the User collection.
+// This check only reports; it never moves or deletes data.
+// =========================================================
+
+const reportLegacyStaffInAdminCollection = async () => {
+  const misplaced = await Admin.collection.countDocuments({
+    role: { $ne: "Administrator" },
+  });
+
+  if (misplaced > 0) {
+    console.warn(
+      `! ${misplaced} account(s) in the Admin collection do not have the Administrator role. ` +
+        "They cannot sign in. Move them to the User collection manually."
     );
   }
 };
@@ -630,10 +667,43 @@ const seedDatabase = async () => {
     }
 
     // =========================================================
+    // DEPARTMENT ADMIN (adminScope = DEPARTMENT)
+    // Created once, only if the email does not already exist.
+    // =========================================================
+
+    const deptAdminExists = await Admin.exists({
+      email: SEED_DEPARTMENT_ADMIN.email,
+    });
+
+    if (!deptAdminExists) {
+      await Admin.create({
+        ...SEED_DEPARTMENT_ADMIN,
+        password: await bcrypt.hash(
+          process.env.SEED_DEPARTMENT_ADMIN_PASSWORD ||
+            "DeptAdmin@123",
+          10
+        ),
+        role: "Administrator",
+        designation: "Department Administrator",
+        adminScope: "DEPARTMENT",
+        tokenVersion: 0,
+        resetTokenVersion: 0,
+        mustChangePassword: true,
+      });
+
+      console.log("✓ Department Administrator seeded");
+    } else {
+      console.log(
+        "→ Department Administrator already exists. Skipping."
+      );
+    }
+
+    // =========================================================
     // ADMIN PROFILE MIGRATION
     // =========================================================
 
     await migrateAdminProfileFields();
+    await reportLegacyStaffInAdminCollection();
 
     // =========================================================
     // DEFAULT ROLE PERMISSIONS
@@ -660,7 +730,7 @@ const seedDatabase = async () => {
     const employeeCount =
       await Employee.countDocuments();
 
-    if (employeeCount === 0) {
+    if (SEED_SAMPLE_DATA && employeeCount === 0) {
       const departments = [
         "Engineering",
         "Human Resources",
@@ -756,7 +826,9 @@ const seedDatabase = async () => {
       console.log("✓ 101 employees seeded");
     } else {
       console.log(
-        "→ Employee data already exists. Skipping."
+        SEED_SAMPLE_DATA
+        ? "→ Employee data already exists. Skipping."
+        : "→ Employee sample data not seeded (SEED_SAMPLE_DATA is not true)."
       );
     }
 
@@ -767,7 +839,7 @@ const seedDatabase = async () => {
     const jobCount =
       await Job.countDocuments();
 
-    if (jobCount === 0) {
+    if (SEED_SAMPLE_DATA && jobCount === 0) {
       const jobs = [
         {
           title: "Frontend Developer",
@@ -881,12 +953,45 @@ const seedDatabase = async () => {
         },
       ];
 
-      await Job.insertMany(jobs);
+      // HRJob now requires `experience` and supports workArrangement,
+      // vacancies, requiredSkills and an interview workflow.
+      const jobExtras = {
+        "Frontend Developer": ["2-4 years", ["HTML", "CSS", "JavaScript", "React"]],
+        "Backend Developer": ["2-5 years", ["Node.js", "Express", "MongoDB"]],
+        "Full Stack Developer": ["3-6 years", ["React", "Node.js", "MongoDB"]],
+        "QA Engineer": ["1-3 years", ["Manual Testing", "API Testing"]],
+        "UI/UX Designer": ["2-4 years", ["Figma", "User Research"]],
+        "HR Executive": ["1-3 years", ["Recruitment", "Communication"]],
+        "Business Analyst": ["3-5 years", ["Requirements", "Documentation"]],
+        "DevOps Engineer": ["3-6 years", ["CI/CD", "Docker", "Linux"]],
+        "Marketing Executive": ["1-3 years", ["Digital Marketing", "Content"]],
+        "Software Engineer Intern": ["0-1 years", ["Programming Basics"]],
+      };
+
+      const defaultWorkflow = [
+        { stageCode: "L0", stageName: "L0 Screening", stageOrder: 0, stageType: "SCREENING" },
+        { stageCode: "L1", stageName: "L1 Interview", stageOrder: 1, stageType: "INTERVIEW" },
+        { stageCode: "L2", stageName: "L2 Interview", stageOrder: 2, stageType: "INTERVIEW" },
+        { stageCode: "HR_FINAL", stageName: "HR Final", stageOrder: 3, stageType: "HR_FINAL" },
+      ];
+
+      await Job.insertMany(
+        jobs.map((job) => ({
+          ...job,
+          experience: jobExtras[job.title][0],
+          requiredSkills: jobExtras[job.title][1],
+          workArrangement: "Hybrid",
+          vacancies: 1,
+          interviewWorkflow: defaultWorkflow,
+        }))
+      );
 
       console.log("✓ 10 jobs seeded");
     } else {
       console.log(
-        "→ Job data already exists. Skipping."
+        SEED_SAMPLE_DATA
+        ? "→ Job data already exists. Skipping."
+        : "→ Job sample data not seeded (SEED_SAMPLE_DATA is not true)."
       );
     }
 
@@ -895,9 +1000,9 @@ const seedDatabase = async () => {
     // =========================================================
 
     const candidateCount =
-      await Candidate.countDocuments();
+      await HRCandidate.countDocuments();
 
-    if (candidateCount === 0) {
+    if (SEED_SAMPLE_DATA && candidateCount === 0) {
       const candidateFirstNames = [
         "Abhishek",
         "Anil",
@@ -982,6 +1087,7 @@ const seedDatabase = async () => {
         "Interview",
         "Selected",
         "Rejected",
+        "On Hold",
       ];
 
       const candidates = [];
@@ -1057,12 +1163,14 @@ const seedDatabase = async () => {
         });
       }
 
-      await Candidate.insertMany(candidates);
+      await HRCandidate.insertMany(candidates);
 
       console.log("✓ 55 candidates seeded");
     } else {
       console.log(
-        "→ Candidate data already exists. Skipping."
+        SEED_SAMPLE_DATA
+        ? "→ Candidate data already exists. Skipping."
+        : "→ Candidate sample data not seeded (SEED_SAMPLE_DATA is not true)."
       );
     }
 
@@ -1073,7 +1181,7 @@ const seedDatabase = async () => {
     const contactCount =
       await Contact.countDocuments();
 
-    if (contactCount === 0) {
+    if (SEED_SAMPLE_DATA && contactCount === 0) {
       const contacts = [
         {
           name: "Rajesh Kumar",
@@ -1136,7 +1244,9 @@ const seedDatabase = async () => {
       console.log("✓ 6 contact enquiries seeded");
     } else {
       console.log(
-        "→ Contact data already exists. Skipping."
+        SEED_SAMPLE_DATA
+        ? "→ Contact data already exists. Skipping."
+        : "→ Contact sample data not seeded (SEED_SAMPLE_DATA is not true)."
       );
     }
 

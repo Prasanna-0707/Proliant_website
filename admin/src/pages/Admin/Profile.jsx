@@ -24,12 +24,12 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
 const DEFAULT_ADMIN_PROFILE = {
-  name: "Proliant Admin",
-  email: "admin@proliant.com",
-  role: "Admin",
-  designation: "Administrator",
-  phone: "+91 98765 43210",
-  createdAt: "2026-04-01T00:00:00.000Z",
+  name: "",
+  email: "",
+  role: "",
+  designation: "",
+  phone: "",
+  createdAt: "",
   mustChangePassword: false,
 };
 

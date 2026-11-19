@@ -5,7 +5,7 @@ import authMiddleware from "../../auth/middleware/authMiddleware.js";
 
 import requireDepartmentAdmin from "../middleware/requireDepartmentAdmin.js";
 
-import requirePermission from "../../administrator/middleware/requirePermission.js";
+import requirePermission from "../../../shared/middleware/requirePermission.js";
 
 import {
   getDashboardOverview,
@@ -15,6 +15,8 @@ import {
   getDepartmentAdminCandidateInterviews,
   getDepartmentAdminRecruitmentReport,
 } from "../controllers/departmentAdminDashboardController.js";
+
+import { getDashboardStatistics } from "../controllers/departmentAdminStatisticsController.js";
 
 const router = express.Router();
 
@@ -28,6 +30,19 @@ router.get(
   requireDepartmentAdmin,
   requirePermission("department.dashboard.read"),
   getDashboardOverview
+);
+
+// =====================================================
+// API 1b: DASHBOARD STATISTICS (in interview / selected / joined,
+// department-wise, with filters). Aggregate counts only.
+// =====================================================
+
+router.get(
+  "/dashboard/statistics",
+  authMiddleware,
+  requireDepartmentAdmin,
+  requirePermission("department.dashboard.read"),
+  getDashboardStatistics
 );
 
 // =====================================================

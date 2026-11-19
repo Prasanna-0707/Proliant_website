@@ -1,5 +1,6 @@
 
 import Admin from "../models/Admin.js";
+import User from "../../auth/models/Users.js";
 import Employee from "../../hr/models/HREmployee.js";
 import Job from "../../hr/models/HRJob.js";
 import Candidate from "../../candidate/models/Candidate.js";
@@ -64,7 +65,7 @@ export const getAdminDashboard = async (req, res) => {
 
     const access =
       req.adminAccess ||
-      getTeamDirectoryAccess(req.admin, req.activeRole);
+      getTeamDirectoryAccess(req.user, req.activeRole);
 
     if (
       !access ||
@@ -104,17 +105,18 @@ export const getAdminDashboard = async (req, res) => {
       ? {}
       : { department: departmentRegex };
 
-    // 3. GET DEPARTMENT ADMINISTRATORS AND JOBS
+    // 3. GET DEPARTMENT STAFF AND JOBS
+    // Screeners are assigned from the User collection.
 
-    const [departmentJobIds, departmentAdminIds] =
+    const [departmentJobIds, departmentStaffIds] =
       await Promise.all([
         Job.distinct("_id", jobFilter),
-        Admin.distinct("_id", adminFilter),
+        User.distinct("_id", adminFilter),
       ]);
 
     const screeningFilter = isGlobal
       ? {}
-      : { assignedTo: { $in: departmentAdminIds } };
+      : { assignedTo: { $in: departmentStaffIds } };
 
     const interviewFilter = isGlobal
       ? {}
@@ -134,6 +136,7 @@ export const getAdminDashboard = async (req, res) => {
 
     const [
       adminStatusCounts,
+      staffStatusCounts,
       employeeStatusCounts,
       jobStatusCounts,
       candidateStatusCounts,
@@ -148,6 +151,8 @@ export const getAdminDashboard = async (req, res) => {
       recentActivity,
     ] = await Promise.all([
       getGroupedCounts(Admin, adminFilter, "status"),
+
+      getGroupedCounts(User, adminFilter, "status"),
 
       getGroupedCounts(Employee, employeeFilter, "status"),
 
@@ -221,6 +226,13 @@ export const getAdminDashboard = async (req, res) => {
         total: getTotal(adminStatusCounts),
         active: getCount(adminStatusCounts, "Active"),
         inactive: getCount(adminStatusCounts, "Inactive"),
+      },
+
+      // HR, Interviewer, Hiring Manager and L0 Screener accounts.
+      staff: {
+        total: getTotal(staffStatusCounts),
+        active: getCount(staffStatusCounts, "Active"),
+        inactive: getCount(staffStatusCounts, "Inactive"),
       },
 
       employees: {

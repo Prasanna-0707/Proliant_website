@@ -2,6 +2,7 @@
 import mongoose from "mongoose";
 
 import Admin from "../models/Admin.js";
+import User from "../../auth/models/Users.js";
 
 import {
   getTeamDirectoryAccess,
@@ -22,7 +23,7 @@ import {
 
 const getAdminUserAccess = (req) => {
   const access = getTeamDirectoryAccess(
-    req.admin,
+    req.user,
     req.activeRole
   );
 
@@ -231,25 +232,51 @@ export const getAdminUsers = async (req, res) => {
 
     const skip = (page - 1) * limit;
 
-    const [users, total] = await Promise.all([
-      Admin.find(filter)
-        .select(ADMIN_USER_SELECT)
-        .sort({ [sortBy]: sortOrder })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
+    // Administrators (Admin collection) and other staff (User
+    // collection) are listed together. Each collection is queried
+    // separately and the results are merged, never duplicated.
+    const [adminRows, userRows, adminTotal, userTotal] =
+      await Promise.all([
+        Admin.find(filter)
+          .select(ADMIN_USER_SELECT)
+          .sort({ [sortBy]: sortOrder })
+          .limit(skip + limit)
+          .lean(),
 
-      Admin.countDocuments(filter),
-    ]);
+        User.find(filter)
+          .select(ADMIN_USER_SELECT)
+          .sort({ [sortBy]: sortOrder })
+          .limit(skip + limit)
+          .lean(),
+
+        Admin.countDocuments(filter),
+        User.countDocuments(filter),
+      ]);
+
+    const compare = (a, b) => {
+      const left = a[sortBy] instanceof Date ? a[sortBy].getTime() : String(a[sortBy] ?? "").toLowerCase();
+      const right = b[sortBy] instanceof Date ? b[sortBy].getTime() : String(b[sortBy] ?? "").toLowerCase();
+
+      if (left < right) return -1 * sortOrder;
+      if (left > right) return 1 * sortOrder;
+
+      return 0;
+    };
+
+    const users = [...adminRows, ...userRows]
+      .sort(compare)
+      .slice(skip, skip + limit);
+
+    const total = adminTotal + userTotal;
 
     const safeUsers = users.map((user) => ({
       ...user,
 
       isMe:
-        user._id.toString() === req.admin._id.toString(),
+        user._id.toString() === req.user._id.toString(),
 
       canManage: canManageTeamMember(
-        req.admin,
+        req.user,
         user,
         req.activeRole
       ),
@@ -301,12 +328,13 @@ export const getAdminUserById = async (req, res) => {
 
     // Find the requested active account.
 
-    const user = await Admin.findOne({
-      _id: id,
-      deletedAt: null,
-    })
-      .select(ADMIN_USER_SELECT)
-      .lean();
+    const user =
+      (await Admin.findOne({ _id: id, deletedAt: null })
+        .select(ADMIN_USER_SELECT)
+        .lean()) ||
+      (await User.findOne({ _id: id, deletedAt: null })
+        .select(ADMIN_USER_SELECT)
+        .lean());
 
     if (!user) {
       return res.status(404).json({
@@ -320,7 +348,7 @@ export const getAdminUserById = async (req, res) => {
 
     if (
       !canViewTeamMember(
-        req.admin,
+        req.user,
         user,
         req.activeRole
       )
@@ -338,10 +366,10 @@ export const getAdminUserById = async (req, res) => {
         ...user,
 
         isMe:
-          user._id.toString() === req.admin._id.toString(),
+          user._id.toString() === req.user._id.toString(),
 
         canManage: canManageTeamMember(
-          req.admin,
+          req.user,
           user,
           req.activeRole
         ),

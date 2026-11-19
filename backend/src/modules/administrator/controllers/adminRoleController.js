@@ -203,7 +203,7 @@ const getAuditSnapshot = (role) => ({
 export const getAdminRoles = async (req, res) => {
   try {
     const access = getTeamDirectoryAccess(
-      req.admin,
+      req.user,
       req.activeRole
     );
 
@@ -261,7 +261,7 @@ export const updateRolePermissions = async (req, res) => {
   try {
     if (
       !isGlobalAdministrator(
-        req.admin,
+        req.user,
         req.activeRole
       )
     ) {
@@ -353,7 +353,7 @@ export const updateRolePermissions = async (req, res) => {
     const before = getAuditSnapshot(role);
 
     role.permissions = normalizedPermissions;
-    role.updatedBy = req.admin._id;
+    role.updatedBy = req.user._id;
 
     // Role modification and its audit record are committed
     // together through a MongoDB transaction.
@@ -369,7 +369,7 @@ export const updateRolePermissions = async (req, res) => {
         targetType: "RolePermission",
         targetId: role._id,
         targetLabel: role.name,
-        department: req.admin.department || "",
+        department: req.user.department || "",
         before,
         after: getAuditSnapshot(role),
         reason:

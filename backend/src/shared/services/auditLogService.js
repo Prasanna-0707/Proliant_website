@@ -1,4 +1,5 @@
 import AuditLog from "../../modules/administrator/models/AuditLog.js";
+import { ACCOUNT_TYPES } from "../constants/roles.js";
 // Remove sensitive information before storing audit snapshots.
 const SENSITIVE_FIELD =
   /password|token|otp|secret|authorization|resume|filepath/i;
@@ -113,9 +114,9 @@ export const createAuditLog = async ({
   // MongoDB transaction support
   session = null,
 }) => {
-  const adminActor = req?.admin;
+  const adminActor = req?.user;
 
-  // Automatically identify existing authenticated Admin calls as HUMAN.
+  // Automatically identify authenticated staff (Admin or User) calls as HUMAN.
   const resolvedActorType =
     actorType || (adminActor?._id ? "HUMAN" : "");
 
@@ -136,6 +137,7 @@ export const createAuditLog = async ({
   }
 
   let resolvedActor = null;
+  let resolvedActorModel = "Admin";
   let resolvedActorId = safeString(actorId);
   let resolvedActorName = safeString(actorName);
   let resolvedActorEmail = safeString(actorEmail, 254);
@@ -157,6 +159,8 @@ export const createAuditLog = async ({
     }
 
     resolvedActor = adminActor._id;
+    resolvedActorModel =
+      req?.auth?.accountType === ACCOUNT_TYPES.ADMIN ? "Admin" : "User";
     resolvedActorId = adminActor._id.toString();
     resolvedActorName = safeString(
       adminActor.name || actorName
@@ -259,6 +263,7 @@ export const createAuditLog = async ({
     // Actor details
     actorType: resolvedActorType,
     actor: resolvedActor,
+    actorModel: resolvedActorModel,
     actorId: resolvedActorId,
     actorName: resolvedActorName,
     actorEmail: resolvedActorEmail,

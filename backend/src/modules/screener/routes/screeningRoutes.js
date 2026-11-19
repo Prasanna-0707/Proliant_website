@@ -40,7 +40,7 @@ import {
 
 import authMiddleware from "../../auth/middleware/authMiddleware.js";
 
-import requirePermission from "../../administrator/middleware/requirePermission.js";
+import requirePermission from "../../../shared/middleware/requirePermission.js";
 
 const router = express.Router();
 

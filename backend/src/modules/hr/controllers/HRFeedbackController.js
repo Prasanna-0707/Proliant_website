@@ -1,4 +1,5 @@
 import Contact from "../models/HRFeedback.js";
+import { sendError } from "../../../shared/utils/httpErrors.js";
 
 // Create a new enquiry
 export const createContact = async (req, res) => {
@@ -19,11 +20,7 @@ export const createContact = async (req, res) => {
       contact,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to submit enquiry",
-      error: error.message,
-    });
+    return sendError(res, error, "Failed to submit enquiry");
   }
 };
 
@@ -37,11 +34,7 @@ export const getContacts = async (req, res) => {
       contacts,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch enquiries",
-      error: error.message,
-    });
+    return sendError(res, error, "Failed to fetch enquiries");
   }
 };
 
@@ -62,11 +55,7 @@ export const getContact = async (req, res) => {
       contact,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch enquiry",
-      error: error.message,
-    });
+    return sendError(res, error, "Failed to fetch enquiry");
   }
 };
 
@@ -97,11 +86,7 @@ export const updateContactStatus = async (req, res) => {
       contact,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to update enquiry status",
-      error: error.message,
-    });
+    return sendError(res, error, "Failed to update enquiry status");
   }
 };
 
@@ -122,10 +107,6 @@ export const deleteContact = async (req, res) => {
       message: "Enquiry deleted successfully",
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to delete enquiry",
-      error: error.message,
-    });
+    return sendError(res, error, "Failed to delete enquiry");
   }
 };

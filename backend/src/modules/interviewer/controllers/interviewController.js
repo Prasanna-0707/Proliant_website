@@ -3,8 +3,14 @@ import mongoose from "mongoose";
 import Interview from "../models/Interview.js";
 import EvaluationForm from "../models/EvaluationForm.js";
 
-import Candidate from "../../hr/models/HRCandidate.js";
+import Candidate from "../../candidate/models/Candidate.js";
 import Job from "../../hr/models/HRJob.js";
+import { notifyEvaluationEvent } from "../../../shared/services/notificationService.js";
+
+import {
+  canAccessInterviewStage,
+  isActiveInterviewer as isActiveInterviewerAccount,
+} from "../../../shared/services/authorizationService.js";
 
 // =====================================================
 // COMMON HELPERS
@@ -30,58 +36,22 @@ const isValidObjectId = (id) =>
 // to their corresponding stage.
 // =====================================================
 
-const isActiveInterviewer = (admin) => {
-  if (
-    !admin ||
-    !admin._id ||
-    admin.status !== "Active" ||
-    admin.deletedAt
-  ) {
-    return false;
-  }
+// Uses the shared authorization service so canonical User role keys such as
+// INTERVIEWER, L1_INTERVIEWER and L2_INTERVIEWER are handled correctly
+// (including the L-level stage restriction).
+const isActiveInterviewer = (user) =>
+  isActiveInterviewerAccount(user);
 
-  const role = normalize(admin.role);
-  const designation = normalize(admin.designation);
-
-  return (
-    role.includes("interviewer") ||
-    designation.includes("interviewer")
-  );
-};
-
-const canAccessStage = (admin, stageCode) => {
-  const role = normalize(admin?.role);
-  const designation = normalize(admin?.designation);
-
-  const combined = `${role} ${designation}`.toUpperCase();
-
-  // Find explicit L-level restrictions such as L1, L2, L3.
-  const permittedLevels = [
-    ...new Set(
-      combined.match(/\bL\d+\b/g) || []
-    ),
-  ];
-
-  // An interviewer without a specific L-level designation
-  // may access stages assigned to that interviewer.
-  if (permittedLevels.length === 0) {
-    return true;
-  }
-
-  // A role explicitly marked L1 or L2 must not access
-  // another L-level stage.
-  return permittedLevels.includes(
-    String(stageCode).trim().toUpperCase()
-  );
-};
+const canAccessStage = (user, stageCode) =>
+  canAccessInterviewStage(user, stageCode);
 
 const authorizeInterviewer = (req, res) => {
-  if (!req.admin?._id) {
+  if (!req.user?._id) {
     sendError(res, 401, "Authentication required.");
     return false;
   }
 
-  if (!isActiveInterviewer(req.admin)) {
+  if (!isActiveInterviewer(req.user)) {
     sendError(
       res,
       403,
@@ -133,7 +103,7 @@ export const getMyInterviews = async (req, res) => {
 
     const interviews = await populateInterviewDetails(
       Interview.find({
-        assignedTo: req.admin._id,
+        assignedTo: req.user._id,
       })
     ).sort({
       scheduledAt: 1,
@@ -141,7 +111,7 @@ export const getMyInterviews = async (req, res) => {
 
     const permittedInterviews = interviews.filter(
       (interview) =>
-        canAccessStage(req.admin, interview.stageCode)
+        canAccessStage(req.user, interview.stageCode)
     );
 
     return res.status(200).json({
@@ -186,7 +156,7 @@ export const getInterviewById = async (req, res) => {
     const interview = await populateInterviewDetails(
       Interview.findOne({
         _id: id,
-        assignedTo: req.admin._id,
+        assignedTo: req.user._id,
       })
     );
 
@@ -199,7 +169,7 @@ export const getInterviewById = async (req, res) => {
     }
 
     if (
-      !canAccessStage(req.admin, interview.stageCode)
+      !canAccessStage(req.user, interview.stageCode)
     ) {
       return sendError(
         res,
@@ -627,7 +597,7 @@ export const submitInterviewEvaluation = async (
 
     const interview = await Interview.findOne({
       _id: id,
-      assignedTo: req.admin._id,
+      assignedTo: req.user._id,
     });
 
     if (!interview) {
@@ -639,7 +609,7 @@ export const submitInterviewEvaluation = async (
     }
 
     if (
-      !canAccessStage(req.admin, interview.stageCode)
+      !canAccessStage(req.user, interview.stageCode)
     ) {
       return sendError(
         res,
@@ -684,13 +654,15 @@ export const submitInterviewEvaluation = async (
         form
       );
 
-    evaluation.submittedBy = req.admin._id;
+    evaluation.submittedBy = req.user._id;
 
     interview.evaluation = evaluation;
 
     // Feedback submission does not automatically advance
     // the candidate or change the interview stage.
     await interview.save();
+
+    await notifyEvaluationEvent(interview, "submitted");
 
     return res.status(201).json({
       success: true,
@@ -762,7 +734,7 @@ export const updateInterviewEvaluation = async (
 
     const interview = await Interview.findOne({
       _id: id,
-      assignedTo: req.admin._id,
+      assignedTo: req.user._id,
     });
 
     if (!interview) {
@@ -774,7 +746,7 @@ export const updateInterviewEvaluation = async (
     }
 
     if (
-      !canAccessStage(req.admin, interview.stageCode)
+      !canAccessStage(req.user, interview.stageCode)
     ) {
       return sendError(
         res,
@@ -841,17 +813,19 @@ export const updateInterviewEvaluation = async (
 
     interview.evaluationHistory.push({
       previousEvaluation,
-      updatedBy: req.admin._id,
+      updatedBy: req.user._id,
       correctionReason,
       changedAt: new Date(),
     });
 
     updatedEvaluation.submittedBy =
-      req.admin._id;
+      req.user._id;
 
     interview.evaluation = updatedEvaluation;
 
     await interview.save();
+
+    await notifyEvaluationEvent(interview, "corrected");
 
     return res.status(200).json({
       success: true,
@@ -937,7 +911,7 @@ export const getApplicationInterviews = async (
     const interviews = await populateInterviewDetails(
       Interview.find({
         application: id,
-        assignedTo: req.admin._id,
+        assignedTo: req.user._id,
       })
     ).sort({
       stageOrder: 1,
@@ -946,7 +920,7 @@ export const getApplicationInterviews = async (
 
     const permittedInterviews = interviews.filter(
       (interview) =>
-        canAccessStage(req.admin, interview.stageCode)
+        canAccessStage(req.user, interview.stageCode)
     );
 
     return res.status(200).json({
@@ -1005,7 +979,7 @@ export const getEvaluationFormForStage = async (
       );
     }
 
-    if (!canAccessStage(req.admin, stageCode)) {
+    if (!canAccessStage(req.user, stageCode)) {
       return sendError(
         res,
         403,
@@ -1027,7 +1001,7 @@ export const getEvaluationFormForStage = async (
       }
 
       const assignedInterview = await Interview.exists({
-        assignedTo: req.admin._id,
+        assignedTo: req.user._id,
         job: jobId,
         stageCode,
       });

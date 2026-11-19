@@ -379,6 +379,7 @@ function AdminDashboard() {
     candidates: [],
     interviews: [],
     activities: [],
+    summary: null,
   });
 
   const [loading, setLoading] = useState(true);
@@ -449,58 +450,50 @@ function AdminDashboard() {
         candidates,
         interviewData,
         activities,
+        summary,
       ] = await Promise.all([
-        safeRequest("/users", ["users", "data", "results"]),
-        safeRequest("/roles-permissions", [
+        safeRequest("/admin/users?limit=100", ["users", "data", "results"]),
+        safeRequest("/admin/roles", [
           "roles",
           "data",
           "results",
         ]),
         safeRequest("/jobs", ["jobs", "data", "results"]),
-        safeRequest("/candidates", [
+        safeRequest("/hr-candidates", [
           "candidates",
           "applications",
           "data",
           "results",
         ]),
-        safeRequest("/interviews", [
-          "interviews",
-          "data",
-          "results",
-        ]),
-        safeRequest("/audit-logs", [
+        safeRequest("/interviews?limit=200", ["interviews"]),
+        safeRequest("/admin/audit-logs?limit=10", [
           "logs",
           "activities",
           "auditLogs",
           "data",
           "results",
         ]),
+        // Aggregate statistics: GET /api/admin/dashboard
+        request("/admin/dashboard")
+          .then((result) => result.dashboard || null)
+          .catch(() => null),
       ]);
 
       const candidateList = candidates || [];
       const interviewsFromCandidates =
         getInterviewRecords(candidateList);
 
+      // GET /api/interviews (scheduled interviews across all candidates)
       const directInterviews = (interviewData || [])
-        .map((item, index) => {
-          const date = getInterviewDate(item);
-
-          if (!date) return null;
-
-          return {
-            id: getId(item) || `interview-${index}`,
-            candidate:
-              item?.candidate?.name ||
-              item?.candidateName ||
-              item?.applicant?.name ||
-              getName(item),
-            position: getPosition(item),
-            interviewer: getInterviewer(item),
-            date,
-            status: getInterviewStatus(item),
-          };
-        })
-        .filter(Boolean);
+        .filter((item) => item?.scheduledAt)
+        .map((item) => ({
+          id: item._id,
+          candidate: item.application?.name || "Candidate",
+          position: item.job?.title || item.application?.position || "",
+          interviewer: item.assignedTo?.name || "",
+          date: item.scheduledAt,
+          status: item.status,
+        }));
 
       const combinedInterviews =
         directInterviews.length > 0
@@ -514,6 +507,7 @@ function AdminDashboard() {
         candidates: candidateList,
         interviews: combinedInterviews,
         activities: activities || [],
+        summary,
       });
 
       setLastUpdated(new Date());
@@ -525,6 +519,7 @@ function AdminDashboard() {
         candidates,
         interviewData,
         activities,
+        summary,
       ].some((result) => result === null);
 
       if (hasApiFailure) {
@@ -614,7 +609,9 @@ const rejectedApplications = data.candidates.filter((candidate) =>
   const statCards = [
     {
       title: "Total Users",
-      value: users.length,
+      value: data.summary
+        ? data.summary.administrators.total + data.summary.staff.total
+        : users.length,
       description: "Registered portal accounts",
       icon: Users,
       iconColor: "text-blue-600 dark:text-blue-400",
@@ -623,7 +620,9 @@ const rejectedApplications = data.candidates.filter((candidate) =>
     },
     {
       title: "Active Users",
-      value: activeUsers,
+      value: data.summary
+        ? data.summary.administrators.active + data.summary.staff.active
+        : activeUsers,
       description: "Enabled accounts",
       icon: UserCheck,
       iconColor: "text-green-600 dark:text-green-400",
@@ -641,7 +640,7 @@ const rejectedApplications = data.candidates.filter((candidate) =>
     },
     {
       title: "Active Jobs",
-      value: activeJobs,
+      value: data.summary ? data.summary.jobs.published : activeJobs,
       description: "Currently open or published",
       icon: BriefcaseBusiness,
       iconColor: "text-orange-600 dark:text-orange-400",
@@ -650,7 +649,9 @@ const rejectedApplications = data.candidates.filter((candidate) =>
     },
     {
       title: "Total Applications",
-      value: data.candidates.length,
+      value: data.summary?.candidates?.available
+        ? data.summary.candidates.total
+        : data.candidates.length,
       description: "Candidate application records",
       icon: FileText,
       iconColor: "text-cyan-600 dark:text-cyan-400",
@@ -659,7 +660,7 @@ const rejectedApplications = data.candidates.filter((candidate) =>
     },
     {
       title: "Scheduled Interviews",
-      value: upcomingInterviews.length,
+      value: data.summary ? data.summary.interviews.upcoming : upcomingInterviews.length,
       description: "Upcoming interview sessions",
       icon: CalendarCheck,
       iconColor: "text-red-600 dark:text-red-400",

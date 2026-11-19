@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 
 import DataTable from "../../components/DataTable";
+import AddHrCandidateModal from "../../components/HR/AddHrCandidateModal";
+import { exportHrCandidates } from "../../services/registrations.js";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
@@ -36,101 +38,6 @@ const dateFilterOptions = [
   ["last7", "Last 7 Days"],
   ["last30", "Last 30 Days"],
   ["custom", "Custom Date Range"],
-];
-
-// Static fallback data used only when the candidates API is unavailable.
-// This data is for UI testing and is not saved to the backend.
-const staticCandidates = [
-  {
-    _id: "sample-candidate-1",
-    name: "Rahul Sharma",
-    email: "rahul.sharma@example.com",
-    phone: "+91 98765 43210",
-    position: "React Developer",
-    isFresher: false,
-    yearsOfExperience: 2,
-    location: "Hyderabad, India",
-    highestQualification: "B.Tech Computer Science",
-    currentCompany: "TechNova Solutions",
-    noticePeriod: "30 Days",
-    areaOfInterest: "Frontend Development",
-    status: "New",
-    createdAt: "2026-10-27T09:30:00.000Z",
-    resume: "#",
-    coverMessage: "Interested in building accessible and responsive web applications.",
-  },
-  {
-    _id: "sample-candidate-2",
-    name: "Priya Reddy",
-    email: "priya.reddy@example.com",
-    phone: "+91 91234 56780",
-    position: "Full Stack Developer",
-    isFresher: false,
-    yearsOfExperience: 3,
-    location: "Bengaluru, India",
-    highestQualification: "MCA",
-    currentCompany: "CloudBridge Technologies",
-    noticePeriod: "60 Days",
-    areaOfInterest: "React and Node.js",
-    status: "Shortlisted",
-    createdAt: "2026-10-25T11:15:00.000Z",
-    resume: "#",
-    coverMessage: "I have experience developing full-stack applications using React, Node.js, and MongoDB.",
-  },
-  {
-    _id: "sample-candidate-3",
-    name: "Kiran Kumar",
-    email: "kiran.kumar@example.com",
-    phone: "+91 99887 76655",
-    position: "Junior Software Developer",
-    isFresher: true,
-    yearsOfExperience: 0,
-    location: "Vijayawada, India",
-    highestQualification: "B.Sc. Computer Science",
-    currentCompany: "N/A",
-    noticePeriod: "Immediate",
-    areaOfInterest: "JavaScript Development",
-    status: "Interview",
-    createdAt: "2026-10-23T08:45:00.000Z",
-    resume: "#",
-    coverMessage: "I am a recent graduate looking for an opportunity to grow as a software developer.",
-  },
-  {
-    _id: "sample-candidate-4",
-    name: "Sneha Patel",
-    email: "sneha.patel@example.com",
-    phone: "+91 90123 45678",
-    position: "UI/UX Designer",
-    isFresher: false,
-    yearsOfExperience: 4,
-    location: "Pune, India",
-    highestQualification: "B.Des Interaction Design",
-    currentCompany: "PixelCraft Studio",
-    noticePeriod: "15 Days",
-    areaOfInterest: "Product Design",
-    status: "On hold",
-    createdAt: "2026-10-21T14:00:00.000Z",
-    resume: "#",
-    coverMessage: "I enjoy translating user needs into clear and useful product experiences.",
-  },
-  {
-    _id: "sample-candidate-5",
-    name: "Arjun Varma",
-    email: "arjun.varma@example.com",
-    phone: "+91 93456 78901",
-    position: "Backend Developer",
-    isFresher: false,
-    yearsOfExperience: 5,
-    location: "Chennai, India",
-    highestQualification: "B.Tech Information Technology",
-    currentCompany: "NextGen Systems",
-    noticePeriod: "90 Days",
-    areaOfInterest: "Node.js and MongoDB",
-    status: "Selected",
-    createdAt: "2026-10-19T10:20:00.000Z",
-    resume: "#",
-    coverMessage: "Experienced backend developer with an interest in scalable application architecture.",
-  },
 ];
 
 const normalizeCandidate = (candidate) => {
@@ -235,6 +142,7 @@ function Candidates() {
   const [candidates, setCandidates] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [pageError, setPageError] = useState("");
+  const [showAddCandidate, setShowAddCandidate] = useState(false);
   const [actionError, setActionError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -315,14 +223,12 @@ function Candidates() {
       setPageError("");
 
       const response = await fetch(
-        `${API_BASE_URL}/candidates`,
+        `${API_BASE_URL}/hr-candidates`,
         {
           headers: getAuthHeaders(),
         }
       );
 
-      // Do not clear the logged-in session when this data endpoint
-      // returns 401. Show sample data instead, as requested.
       if (!response.ok) {
         throw new Error(
           `Candidates API failed with status ${response.status}`
@@ -350,22 +256,11 @@ function Candidates() {
 
       setCandidates(normalized);
     } catch (error) {
-      console.warn(
-        "Candidates API is unavailable. Displaying sample candidates:",
-        error
-      );
+      console.error("Failed to load candidates:", error);
 
-      const normalizedSamples = staticCandidates
-        .map(normalizeCandidate)
-        .sort(
-          (a, b) =>
-            new Date(b.appliedDate || 0) -
-            new Date(a.appliedDate || 0)
-        );
-
-      setCandidates(normalizedSamples);
+      setCandidates([]);
       setPageError(
-        "The candidates API is unavailable. Sample data is being displayed for UI testing; changes to these sample records are not saved to the backend."
+        "Candidates could not be loaded from the server. Please try again."
       );
     } finally {
       setIsLoading(false);
@@ -689,7 +584,7 @@ function Candidates() {
       setActionError("");
 
       const response = await fetch(
-        `${API_BASE_URL}/candidates/${editingCandidate.id}`,
+        `${API_BASE_URL}/hr-candidates/${editingCandidate.id}`,
         {
           method: "PUT",
           headers: getAuthHeaders(),
@@ -807,7 +702,7 @@ function Candidates() {
       setActionError("");
 
       const response = await fetch(
-        `${API_BASE_URL}/candidates/${deleteCandidate.id}`,
+        `${API_BASE_URL}/hr-candidates/${deleteCandidate.id}`,
         {
           method: "DELETE",
           headers: getAuthHeaders(),
@@ -856,6 +751,24 @@ function Candidates() {
       );
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // GET /api/hr-candidates/export/excel (all records, generated by the server)
+  const handleServerExport = async () => {
+    try {
+      setActionError("");
+
+      const blob = await exportHrCandidates();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = "hr-candidates.xlsx";
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      setActionError(error.message || "Unable to export candidates.");
     }
   };
 
@@ -1124,6 +1037,21 @@ function Candidates() {
 
         <button
           type="button"
+          onClick={() => setShowAddCandidate(true)}
+          className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+        >
+          Add candidate
+        </button>
+        <button
+          type="button"
+          onClick={handleServerExport}
+          className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+        >
+          <Download size={17} />
+          Export Excel
+        </button>
+        <button
+          type="button"
           onClick={handleDownloadExcel}
           disabled={filteredCandidates.length === 0}
           className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#EF3B3A] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
@@ -1133,7 +1061,17 @@ function Candidates() {
         </button>
       </div>
 
-      {/* API Fallback Notice */}
+      {showAddCandidate && (
+        <AddHrCandidateModal
+          onClose={() => setShowAddCandidate(false)}
+          onCreated={() => {
+            setShowAddCandidate(false);
+            fetchCandidates();
+          }}
+        />
+      )}
+
+      {/* Load error notice */}
       {pageError && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300">
           {pageError}
@@ -2193,7 +2131,7 @@ export default Candidates;
 //       setPageError("");
 
 //       const response = await fetch(
-//         `${API_BASE_URL}/candidates`,
+//         `${API_BASE_URL}/hr-candidates`,
 //         {
 //           headers: getAuthHeaders(),
 //         }
@@ -2569,7 +2507,7 @@ export default Candidates;
 //       setActionError("");
 
 //       const response = await fetch(
-//         `${API_BASE_URL}/candidates/${editingCandidate.id}`,
+//         `${API_BASE_URL}/hr-candidates/${editingCandidate.id}`,
 //         {
 //           method: "PUT",
 //           headers: getAuthHeaders(),
@@ -2687,7 +2625,7 @@ export default Candidates;
 //       setActionError("");
 
 //       const response = await fetch(
-//         `${API_BASE_URL}/candidates/${deleteCandidate.id}`,
+//         `${API_BASE_URL}/hr-candidates/${deleteCandidate.id}`,
 //         {
 //           method: "DELETE",
 //           headers: getAuthHeaders(),

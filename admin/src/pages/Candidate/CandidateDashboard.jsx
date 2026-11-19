@@ -1,781 +1,281 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import NotificationBell from "./NotificationBell";
 import {
-  LayoutDashboard,
-  ClipboardList,
   BriefcaseBusiness,
-  UserRound,
-  Settings,
-  LogOut,
-  Search,
-  Moon,
-  ChevronDown,
-  ChevronRight,
+  ClipboardList,
   MapPin,
   CalendarDays,
   Clock3,
   Check,
   CircleCheck,
-  Bookmark,
-  Sparkles,
+  CircleX,
   GitBranch,
-  Menu,
-  X,
   ArrowRight,
-  Database,
-  ChartNoAxesColumn,
+  Sparkles,
 } from "lucide-react";
 
-const candidate = {
-  name: localStorage.getItem("candidateName") || "Candidate",
-  currentJob: "SAP SD Consultant",
-  location: "Bangalore, India",
-  experience: "3–6 years",
-  appliedDate: "12 Apr 2025",
+import CandidateLayout, {
+  PageState,
+} from "../../components/Candidate/CandidateLayout.jsx";
+import { formatDate } from "../../services/format.js";
+import useApi from "../../services/useApi.js";
+import {
+  getCandidateDashboard,
+  getCandidateUser,
+  listJobs,
+} from "../../services/candidatePortal.js";
+
+const stageStyle = (status) => {
+  switch (status) {
+    case "Completed":
+      return { dot: "bg-emerald-500 text-white", text: "text-emerald-600" };
+    case "In Progress":
+      return { dot: "bg-[#f2383d] text-white", text: "text-[#f2383d]" };
+    case "Failed":
+      return { dot: "bg-red-600 text-white", text: "text-red-600" };
+    default:
+      return { dot: "bg-slate-200 text-slate-500", text: "text-slate-400" };
+  }
 };
-
-const jobs = [
-  {
-    title: "SAP Data Analyst",
-    location: "Bangalore, India",
-    experience: "2–4 years",
-    match: 92,
-    skills: ["SAP", "Data Analysis", "Excel"],
-    icon: BriefcaseBusiness,
-  },
-  {
-    title: "SAP S/4HANA Consultant",
-    location: "Pune, India",
-    experience: "3–6 years",
-    match: 88,
-    skills: ["SAP S/4HANA", "Migration", "Problem Solving"],
-    icon: Database,
-  },
-  {
-    title: "Business Intelligence Analyst",
-    location: "Hyderabad, India",
-    experience: "2–5 years",
-    match: 85,
-    skills: ["Power BI", "SQL", "Data Visualization"],
-    icon: ChartNoAxesColumn,
-  },
-];
-
-const stages = [
-  {
-    title: "Resume Screening",
-    status: "Completed",
-    date: "12 Apr 2025",
-    state: "completed",
-  },
-  {
-    title: "Technical Interview",
-    subtitle: "(Round 1)",
-    status: "Completed",
-    date: "15 Apr 2025",
-    state: "completed",
-  },
-  {
-    title: "Technical Interview",
-    subtitle: "(Round 2)",
-    status: "In Progress",
-    date: "—",
-    state: "progress",
-  },
-  {
-    title: "HR Interview",
-    status: "Upcoming",
-    date: "—",
-    state: "upcoming",
-  },
-  {
-    title: "Final Decision",
-    status: "Upcoming",
-    date: "—",
-    state: "upcoming",
-  },
-];
 
 export default function CandidateDashboard() {
   const navigate = useNavigate();
 
-  const [activeNav, setActiveNav] = useState("Dashboard");
-  const [search, setSearch] = useState("");
-  const [savedJobs, setSavedJobs] = useState([]);
-  const [mobileMenu, setMobileMenu] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const dashboard = useApi((signal) => getCandidateDashboard(signal), []);
+  const jobs = useApi((signal) => listJobs({ limit: 3 }, signal), []);
 
-  const [hasApplications] = useState(() => {
-    try {
-      const savedApplications = JSON.parse(
-        localStorage.getItem("candidateApplications") || "[]"
-      );
+  const summary = dashboard.data?.data?.applicationSummary;
+  const current = dashboard.data?.data?.currentApplication;
+  const name =
+    dashboard.data?.data?.candidate?.name ||
+    getCandidateUser()?.name ||
+    "Candidate";
 
-      return (
-        Array.isArray(savedApplications) &&
-        savedApplications.length > 0
-      );
-    } catch {
-      return false;
-    }
-  });
-
-  const navigation = [
-    { label: "Dashboard", icon: LayoutDashboard },
-    { label: "My Applications", icon: ClipboardList },
-    { label: "All Jobs", icon: BriefcaseBusiness },
-    { label: "Profile", icon: UserRound },
-    { label: "Settings", icon: Settings },
+  const stats = [
+    { label: "Total Applications", value: summary?.totalApplications ?? 0, icon: ClipboardList, tone: "bg-red-50 text-[#f2383d]" },
+    { label: "In Screening", value: summary?.screening ?? 0, icon: Clock3, tone: "bg-blue-50 text-blue-500" },
+    { label: "Interview", value: summary?.interview ?? 0, icon: GitBranch, tone: "bg-amber-50 text-amber-600" },
+    { label: "Selected", value: summary?.selected ?? 0, icon: CircleCheck, tone: "bg-emerald-50 text-emerald-600" },
+    { label: "Rejected", value: summary?.rejected ?? 0, icon: CircleX, tone: "bg-slate-100 text-slate-600" },
   ];
 
-  const filteredJobs = jobs.filter((job) => {
-    const query = search.toLowerCase();
-
-    return (
-      job.title.toLowerCase().includes(query) ||
-      job.location.toLowerCase().includes(query) ||
-      job.skills.some((skill) =>
-        skill.toLowerCase().includes(query)
-      )
-    );
-  });
-
-  const handleNavigation = (label) => {
-    setActiveNav(label);
-    setMobileMenu(false);
-
-    const routes = {
-      Dashboard: "/candidate/dashboard",
-      "My Applications": "/candidate-applications",
-      "All Jobs": "/candidate-all-jobs",
-      "Recommended Jobs": "/candidate/dashboard",
-      Profile: "/candidate-profile",
-      Settings: "/candidate-profile",
-    };
-
-    if (routes[label]) {
-      navigate(routes[label]);
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("jwt");
-    localStorage.removeItem("candidateName");
-    navigate("/candidate/login");
-  };
-
   return (
-    <div
-      className={`min-h-screen font-sans ${
-        darkMode
-          ? "bg-slate-950 text-white"
-          : "bg-[#f7f9fc] text-[#101c30]"
-      }`}
-    >
-      <div className="flex min-h-screen">
-        <aside
-          className={`fixed inset-y-0 left-0 z-40 flex w-63 flex-col border-r transition-transform duration-200 lg:static lg:translate-x-0 ${
-            darkMode
-              ? "border-slate-800 bg-slate-900"
-              : "border-gray-200 bg-white"
-          } ${
-            mobileMenu ? "translate-x-0" : "-translate-x-full"
-          }`}
-        >
-          <div
-            className={`flex h-17.5 shrink-0 items-center border-b px-6 ${
-              darkMode
-                ? "border-slate-800"
-                : "border-gray-100"
-            }`}
-          >
-            <div>
-              <div className="mb-1 h-1.5 w-11 bg-[#f2383d]" />
-              <span className="text-[23px] font-extrabold tracking-tight text-black">
-                Proliant Data
-              </span>
-            </div>
+    <CandidateLayout active="Dashboard">
+      {({ darkMode }) => {
+        const card = darkMode
+          ? "border-slate-800 bg-slate-900"
+          : "border-slate-200 bg-white";
 
-            <button
-              type="button"
-              onClick={() => setMobileMenu(false)}
-              className="ml-auto rounded-lg p-2 text-gray-500 lg:hidden"
-              aria-label="Close navigation"
-            >
-              <X size={20} />
-            </button>
-          </div>
-
-          <div className="px-3 pt-7">
-            <p className="mb-3 px-3 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
-              Candidate Portal
-            </p>
-
-            <nav className="space-y-1.5">
-              {navigation.map(({ label, icon: Icon }) => (
-                <button
-                  key={label}
-                  type="button"
-                  onClick={() => handleNavigation(label)}
-                  className={`flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-left text-[14px] font-medium transition-colors ${
-                    activeNav === label
-                      ? "bg-[#f2383d] text-white shadow-sm"
-                      : darkMode
-                        ? "text-slate-300 hover:bg-slate-800"
-                        : "text-slate-700 hover:bg-red-50 hover:text-[#f2383d]"
-                  }`}
-                >
-                  <Icon size={19} strokeWidth={1.9} />
-                  <span>{label}</span>
-                </button>
-              ))}
-            </nav>
-          </div>
-
-          <div
-            className={`mt-auto border-t p-3 ${
-              darkMode
-                ? "border-slate-800"
-                : "border-gray-100"
-            }`}
-          >
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium text-slate-500 transition-colors hover:bg-red-50 hover:text-[#f2383d]"
-            >
-              <LogOut size={19} />
-              Logout
-            </button>
-          </div>
-        </aside>
-
-        {mobileMenu && (
-          <button
-            type="button"
-            aria-label="Close navigation backdrop"
-            onClick={() => setMobileMenu(false)}
-            className="fixed inset-0 z-30 bg-black/30 lg:hidden"
-          />
-        )}
-
-        <div className="flex min-w-0 flex-1 flex-col">
-          <header
-            className={`sticky top-0 z-20 flex h-17.5 items-center gap-4 border-b px-5 sm:px-8 ${
-              darkMode
-                ? "border-slate-800 bg-slate-900"
-                : "border-gray-200 bg-white"
-            }`}
-          >
-            <button
-              type="button"
-              onClick={() => setMobileMenu(true)}
-              className="rounded-lg p-2 text-slate-500 hover:bg-gray-100 lg:hidden"
-              aria-label="Open navigation"
-            >
-              <Menu size={21} />
-            </button>
-
-            <div
-              className={`flex h-10.5 w-full max-w-122.5 items-center gap-3 rounded-full px-4 ${
-                darkMode
-                  ? "bg-slate-800"
-                  : "bg-[#f3f5f9]"
-              }`}
-            >
-              <Search
-                size={18}
-                className="shrink-0 text-slate-500"
-              />
-
-              <input
-                type="search"
-                value={search}
-                onChange={(event) => {
-                  setSearch(event.target.value);
-                  setActiveNav("Recommended Jobs");
-                }}
-                placeholder="Search jobs, skills, or locations..."
-                className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-              />
-            </div>
-
-            <div className="ml-auto flex shrink-0 items-center gap-3 sm:gap-5">
-              <div className="relative z-50">
-                <NotificationBell />
-              </div>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setDarkMode((value) => !value)
-                }
-                aria-label="Toggle dark mode"
-                className="rounded-full p-2 text-slate-500 hover:bg-gray-100"
-              >
-                <Moon size={20} />
-              </button>
-
-              <div
-                className={`hidden h-8 w-px sm:block ${
-                  darkMode
-                    ? "bg-slate-700"
-                    : "bg-gray-200"
-                }`}
-              />
-
-              <button
-                type="button"
-                onClick={() => handleNavigation("Profile")}
-                className="flex items-center gap-3"
-              >
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f2383d] text-sm font-bold text-white">
-                  {candidate.name
-                    .split(" ")
-                    .map((part) => part[0])
-                    .slice(0, 2)
-                    .join("")
-                    .toUpperCase()}
-                </span>
-
-                <span className="hidden text-left sm:block">
-                  <span className="block max-w-37.5 truncate text-sm font-semibold">
-                    {candidate.name}
-                  </span>
-
-                  <span className="block text-xs text-slate-500">
-                    Candidate
-                  </span>
-                </span>
-
-                <ChevronDown
-                  size={16}
-                  className="hidden text-slate-500 sm:block"
-                />
-              </button>
-            </div>
-          </header>
-
-          <main className="mx-auto w-full max-w-[1600px] flex-1 px-5 py-7 sm:px-8 sm:py-9">
-            <section className="relative mb-6 flex min-h-26.25 items-center justify-between gap-5 overflow-hidden">
-              <div className="relative z-10 min-w-0">
-                <h1 className="text-[27px] font-bold leading-tight tracking-tight sm:text-[32px]">
-                  Good morning,{" "}
-                  <span className="text-[#f2383d]">
-                    {candidate.name}!
-                  </span>
-                </h1>
-
-                <p className="mt-2 max-w-155 text-sm leading-6 text-slate-500 sm:text-base">
-                  {hasApplications
-                    ? "Track your application progress and discover new opportunities that match your skills and experience."
-                    : "Discover new opportunities that match your skills and experience, and take the next step in your career."}
-                </p>
-              </div>
-
-              <div className="hidden h-28.75 w-51.25 shrink-0 items-center justify-center rounded-full bg-red-50/80 md:flex">
-                <div className="relative flex h-23 w-37.5 items-end justify-center">
-                  <div className="absolute bottom-0 left-1 h-12 w-8 rounded-t-full bg-blue-200/80" />
-                  <div className="absolute bottom-0 right-1 h-14 w-7 rounded-t-full bg-emerald-200/80" />
-
-                  <div className="relative z-10 flex h-16 w-16 flex-col items-center">
-                    <div className="h-7 w-7 rounded-full bg-[#f6c7a7]" />
-                    <div className="h-9 w-12 rounded-t-xl bg-[#f2383d]" />
-                  </div>
-
-                  <div className="absolute bottom-0 z-20 h-3 w-24 rounded-sm bg-slate-800" />
-                </div>
-              </div>
+        return (
+          <>
+            <section className="mb-5">
+              <p className="mb-2 text-xs font-medium text-slate-500">
+                Dashboard
+              </p>
+              <h1 className="text-2xl font-bold tracking-tight sm:text-[30px]">
+                Welcome back, {name}
+              </h1>
+              <p className="mt-2 text-sm text-slate-500 sm:text-base">
+                Track your applications and discover new opportunities.
+              </p>
             </section>
 
-            {hasApplications ? (
-              <>
-                <section
-                  className={`mb-4 rounded-xl border p-5 shadow-sm sm:px-6 ${
-                    darkMode
-                      ? "border-slate-800 bg-slate-900"
-                      : "border-slate-200 bg-white"
-                  }`}
-                >
-                  <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex h-15 w-15 shrink-0 items-center justify-center rounded-2xl bg-red-50 text-[#f2383d]">
-                      <BriefcaseBusiness size={27} />
+            <PageState
+              loading={dashboard.loading}
+              error={dashboard.error}
+              onRetry={dashboard.reload}
+            >
+              <section className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                {stats.map(({ label, value, icon: Icon, tone }) => (
+                  <article
+                    key={label}
+                    className={`flex items-center gap-4 rounded-xl border p-4 shadow-sm ${card}`}
+                  >
+                    <div
+                      className={`flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-xl ${tone}`}
+                    >
+                      <Icon size={24} />
                     </div>
-
-                    <div className="min-w-0 flex-1">
-                      <p className="mb-1 text-sm text-slate-500">
-                        Your Current Application
-                      </p>
-
-                      <h2 className="text-lg font-bold">
-                        {candidate.currentJob}
-                      </h2>
-
-                      <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-500 sm:text-sm">
-                        <span className="flex items-center gap-1.5">
-                          <MapPin size={15} />
-                          {candidate.location}
-                        </span>
-
-                        <span className="flex items-center gap-1.5">
-                          <BriefcaseBusiness size={15} />
-                          {candidate.experience}
-                        </span>
-
-                        <span className="flex items-center gap-1.5">
-                          <CalendarDays size={15} />
-                          Applied on {candidate.appliedDate}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3.5 py-2 text-xs font-semibold text-emerald-700">
-                        <CircleCheck size={17} />
-                        Application in Progress
-                      </span>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleNavigation("My Applications")
-                        }
-                        aria-label="View current application"
-                        className="rounded-lg p-2 text-slate-500 hover:bg-gray-50"
-                      >
-                        <ChevronRight size={21} />
-                      </button>
-                    </div>
-                  </div>
-                </section>
-
-                <section
-                  className={`mb-4 rounded-xl border p-5 shadow-sm sm:p-6 ${
-                    darkMode
-                      ? "border-slate-800 bg-slate-900"
-                      : "border-slate-200 bg-white"
-                  }`}
-                >
-                  <div className="mb-7 flex items-center gap-3">
-                    <div className="flex h-12.5 w-12.5 shrink-0 items-center justify-center rounded-xl bg-red-50 text-[#f2383d]">
-                      <GitBranch size={26} />
-                    </div>
-
                     <div>
-                      <h2 className="text-lg font-bold">
-                        Your Hiring Journey
-                      </h2>
+                      <p className="text-xs text-slate-500">{label}</p>
+                      <p className="text-2xl font-bold">{value}</p>
+                    </div>
+                  </article>
+                ))}
+              </section>
 
-                      <p className="mt-1 text-sm text-slate-500">
-                        Here's how your application is progressing through the interview process.
+              {/* CURRENT APPLICATION */}
+              <section className={`mb-5 rounded-xl border p-4 shadow-sm sm:p-5 ${card}`}>
+                <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-[46px] w-[46px] items-center justify-center rounded-xl bg-red-50 text-[#f2383d]">
+                      <GitBranch size={24} />
+                    </div>
+                    <div>
+                      <h2 className="text-base font-bold sm:text-lg">
+                        Current Application
+                      </h2>
+                      <p className="mt-1 text-xs text-slate-500 sm:text-sm">
+                        Your most recent application and its hiring stages.
                       </p>
                     </div>
                   </div>
-
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-7 md:grid-cols-5">
-                    {stages.map((stage, index) => (
-                      <div
-                        key={stage.title + index}
-                        className="relative text-center"
-                      >
-                        {index < stages.length - 1 && (
-                          <div
-                            className={`absolute left-[62%] top-5.5 hidden h-0.5 w-[76%] md:block ${
-                              index < 2
-                                ? "bg-emerald-500"
-                                : "bg-slate-200"
-                            }`}
-                          />
-                        )}
-
-                        <div
-                          className={`relative z-10 mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full border-4 ${
-                            stage.state === "completed"
-                              ? "border-emerald-100 bg-emerald-500 text-white"
-                              : stage.state === "progress"
-                                ? "border-orange-100 bg-white text-orange-500 ring-2 ring-orange-400"
-                                : "border-slate-200 bg-slate-100 text-slate-500"
-                          }`}
-                        >
-                          {stage.state === "completed" ? (
-                            <Check size={22} strokeWidth={3} />
-                          ) : stage.state === "progress" ? (
-                            <Clock3 size={21} />
-                          ) : index === 4 ? (
-                            <Bookmark size={20} />
-                          ) : (
-                            <Clock3 size={20} />
-                          )}
-                        </div>
-
-                        <h3 className="text-[13px] font-bold leading-5 sm:text-sm">
-                          {stage.title}
-
-                          {stage.subtitle && (
-                            <>
-                              <br />
-                              {stage.subtitle}
-                            </>
-                          )}
-                        </h3>
-
-                        <p
-                          className={`mt-2 text-xs font-semibold sm:text-sm ${
-                            stage.state === "completed"
-                              ? "text-emerald-600"
-                              : stage.state === "progress"
-                                ? "text-orange-500"
-                                : "text-slate-500"
-                          }`}
-                        >
-                          {stage.status}
-                        </p>
-
-                        <p className="mt-2 text-xs text-slate-500">
-                          {stage.date}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              </>
-            ) : (
-              <section
-                className={`mb-4 rounded-xl border p-4 shadow-sm sm:p-5 ${
-                  darkMode
-                    ? "border-slate-800 bg-slate-900"
-                    : "border-slate-200 bg-white"
-                }`}
-              >
-                <div className="mb-3 flex items-center gap-3">
-                  <div className="flex h-10.5 w-10.5 shrink-0 items-center justify-center rounded-xl bg-red-50 text-[#f2383d]">
-                    <BriefcaseBusiness size={22} />
-                  </div>
-
-                  <h2 className="text-lg font-bold">
-                    Your Applications
-                  </h2>
-                </div>
-
-                <div className="mx-auto flex max-w-2xl flex-col items-center py-1 text-center">
-                  <div className="mb-3 flex h-20 w-28 items-center justify-center rounded-full bg-red-50">
-                    <div className="relative flex h-14.5 w-12.5 flex-col gap-1.5 rounded-lg border-2 border-slate-200 bg-white p-2 shadow-sm">
-                      <div className="flex items-center gap-1">
-                        <div className="h-4 w-4 rounded bg-red-200" />
-
-                        <div className="flex-1 space-y-1">
-                          <div className="h-1.5 w-4 rounded bg-slate-300" />
-                          <div className="h-1.5 w-5 rounded bg-slate-200" />
-                        </div>
-                      </div>
-
-                      <div className="h-1.5 w-7 rounded bg-slate-200" />
-                      <div className="h-1.5 w-6 rounded bg-slate-200" />
-
-                      <Search
-                        size={30}
-                        className="absolute -bottom-1 -right-7 text-[#f2383d]"
-                      />
-                    </div>
-                  </div>
-
-                  <h3 className="text-lg font-bold sm:text-xl">
-                    You haven’t applied to any jobs yet
-                  </h3>
-
-                  <p className="mt-2 max-w-xl text-sm leading-5 text-slate-500 sm:text-base">
-                    Explore open positions at Proliant and take the first step towards your next opportunity.
-                  </p>
 
                   <button
                     type="button"
-                    onClick={() => navigate("/candidate-all-jobs")}
-                    className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#f2383d] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#df3438]"
+                    onClick={() => navigate("/candidate-applications")}
+                    className="flex items-center gap-2 text-sm font-semibold text-[#f2383d] hover:underline"
                   >
-                    <BriefcaseBusiness size={18} />
-                    Browse All Jobs
+                    All applications
                     <ArrowRight size={17} />
                   </button>
                 </div>
+
+                {current ? (
+                  <>
+                    <div className="mb-6 flex flex-wrap items-center gap-x-6 gap-y-2">
+                      <h3 className="text-lg font-bold">
+                        {current.job?.title}
+                      </h3>
+                      <span className="flex items-center gap-1.5 text-sm text-slate-500">
+                        <MapPin size={15} />
+                        {current.job?.location}
+                      </span>
+                      <span className="flex items-center gap-1.5 text-sm text-slate-500">
+                        <CalendarDays size={15} />
+                        Applied {formatDate(current.appliedAt)}
+                      </span>
+                      <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                        {current.status}
+                      </span>
+                    </div>
+
+                    <ol className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                      {(current.hiringStages || []).map((stage) => {
+                        const style = stageStyle(stage.status);
+
+                        return (
+                          <li key={stage._id || stage.stageKey} className="flex items-start gap-3">
+                            <span
+                              className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${style.dot}`}
+                            >
+                              {stage.status === "Completed" ? (
+                                <Check size={15} />
+                              ) : (
+                                stage.stageOrder
+                              )}
+                            </span>
+                            <span>
+                              <span className="block text-sm font-semibold">
+                                {stage.stageName}
+                              </span>
+                              <span className={`block text-xs font-medium ${style.text}`}>
+                                {stage.status}
+                              </span>
+                              <span className="block text-xs text-slate-400">
+                                {formatDate(stage.completedAt || stage.scheduledAt)}
+                              </span>
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  </>
+                ) : (
+                  <div className="py-8 text-center">
+                    <p className="text-sm text-slate-500">
+                      You have not applied for any job yet.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => navigate("/candidate-all-jobs")}
+                      className="mt-4 rounded-lg bg-[#f2383d] px-5 py-2.5 text-sm font-semibold text-white hover:bg-red-600"
+                    >
+                      Browse jobs
+                    </button>
+                  </div>
+                )}
               </section>
-            )}
-                        <section
-              className={`mb-4 rounded-xl border p-4 shadow-sm sm:p-5 ${
-                darkMode
-                  ? "border-slate-800 bg-slate-900"
-                  : "border-slate-200 bg-white"
-              }`}
-            >
-              <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+            </PageState>
+
+            {/* LATEST JOBS */}
+            <section className={`rounded-xl border p-4 shadow-sm sm:p-5 ${card}`}>
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10.5 w-10.5 items-center justify-center rounded-xl bg-red-50 text-[#f2383d]">
+                  <div className="flex h-[46px] w-[46px] items-center justify-center rounded-xl bg-red-50 text-[#f2383d]">
                     <Sparkles size={24} />
                   </div>
-
                   <div>
-                    <h2 className="text-lg font-bold">
-                      Recommended Jobs for You
+                    <h2 className="text-base font-bold sm:text-lg">
+                      Latest Openings
                     </h2>
-
-                    <p className="mt-1 text-sm text-slate-500">
-                      Find roles that match your skills, experience and interests.
+                    <p className="mt-1 text-xs text-slate-500 sm:text-sm">
+                      Newly posted roles at Proliant.
                     </p>
                   </div>
                 </div>
 
                 <button
                   type="button"
-                  onClick={() =>
-                    handleNavigation("Recommended Jobs")
-                  }
+                  onClick={() => navigate("/candidate-all-jobs")}
                   className="flex items-center gap-2 text-sm font-semibold text-[#f2383d] hover:underline"
                 >
-                  View All Recommended Jobs
+                  View all jobs
                   <ArrowRight size={17} />
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {filteredJobs.map((job) => {
-                  const JobIcon = job.icon;
-                  const saved = savedJobs.includes(job.title);
-
-                  return (
+              <PageState
+                loading={jobs.loading}
+                error={jobs.error}
+                onRetry={jobs.reload}
+              >
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                  {(jobs.data?.jobs || []).map((job) => (
                     <article
-                      key={job.title}
+                      key={job._id}
                       className={`rounded-xl border p-4 transition-shadow hover:shadow-md ${
-                        darkMode
-                          ? "border-slate-700"
-                          : "border-slate-200"
+                        darkMode ? "border-slate-700" : "border-slate-200"
                       }`}
                     >
                       <div className="flex items-start gap-3">
-                        <div className="flex h-10.5 w-10.5 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-500">
-                          <JobIcon size={22} />
+                        <div className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-500">
+                          <BriefcaseBusiness size={24} />
                         </div>
-
-                        <div className="min-w-0 flex-1">
-                          <h3 className="text-sm font-bold leading-5">
-                            {job.title}
-                          </h3>
-
-                          <span className="mt-1 inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
-                            {job.match}% Match
-                          </span>
+                        <div>
+                          <h3 className="text-sm font-bold leading-5">{job.title}</h3>
+                          <p className="text-xs text-slate-500">{job.department}</p>
                         </div>
                       </div>
-
-                      <div className="mt-3 space-y-2 text-xs text-slate-500">
-                        <p className="flex items-center gap-2">
-                          <MapPin size={14} />
-                          {job.location}
-                        </p>
-
-                        <p className="flex items-center gap-2">
-                          <BriefcaseBusiness size={14} />
-                          {job.experience}
-                        </p>
-                      </div>
-
-                      <div className="mt-3 flex flex-wrap gap-1.5">
-                        {job.skills.map((skill) => (
-                          <span
-                            key={skill}
-                            className="rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-medium text-blue-700 sm:text-[11px]"
-                          >
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
-
-                      <div className="mt-4 flex items-center justify-between">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleNavigation("All Jobs")
-                          }
-                          className="flex items-center gap-1.5 text-xs font-semibold text-[#f2383d] hover:underline"
-                        >
-                          View Details
-                          <ArrowRight size={14} />
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setSavedJobs((previous) =>
-                              saved
-                                ? previous.filter(
-                                    (title) => title !== job.title
-                                  )
-                                : [...previous, job.title]
-                            )
-                          }
-                          aria-label={
-                            saved ? "Remove saved job" : "Save job"
-                          }
-                          className={`rounded-lg p-1.5 ${
-                            saved
-                              ? "text-[#f2383d]"
-                              : "text-slate-500 hover:text-[#f2383d]"
-                          }`}
-                        >
-                          <Bookmark
-                            size={18}
-                            fill={
-                              saved ? "currentColor" : "none"
-                            }
-                          />
-                        </button>
-                      </div>
+                      <p className="mt-3 flex items-center gap-2 text-xs text-slate-500">
+                        <MapPin size={14} />
+                        {job.location}
+                      </p>
+                      <p className="mt-2 flex items-center gap-2 text-xs text-slate-500">
+                        <BriefcaseBusiness size={14} />
+                        {job.experience}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => navigate("/candidate-all-jobs")}
+                        className="mt-4 flex items-center gap-1.5 text-xs font-semibold text-[#f2383d] hover:underline"
+                      >
+                        View & apply
+                        <ArrowRight size={14} />
+                      </button>
                     </article>
-                  );
-                })}
+                  ))}
 
-                {filteredJobs.length === 0 && (
-                  <p className="col-span-full py-8 text-center text-sm text-slate-500">
-                    No matching jobs found. Try another search.
-                  </p>
-                )}
-              </div>
-            </section>
-
-            <section
-              className={`flex flex-wrap items-center justify-between gap-4 rounded-xl border p-4 shadow-sm sm:px-6 ${
-                darkMode
-                  ? "border-slate-800 bg-slate-900"
-                  : "border-slate-200 bg-white"
-              }`}
-            >
-              <div className="flex items-center gap-4">
-                <div className="flex h-11.5 w-11.5 shrink-0 items-center justify-center rounded-full bg-[#101c30] text-white">
-                  <Search size={23} />
+                  {(jobs.data?.jobs || []).length === 0 && (
+                    <p className="col-span-full py-6 text-center text-sm text-slate-500">
+                      There are no open positions right now.
+                    </p>
+                  )}
                 </div>
-
-                <div>
-                  <h2 className="font-bold">
-                    Explore All Jobs
-                  </h2>
-
-                  <p className="mt-1 text-xs leading-5 text-slate-500 sm:text-sm">
-                    Browse all active jobs posted by our team. Find the right opportunity for your next career move.
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => handleNavigation("All Jobs")}
-                className="flex items-center gap-2 rounded-lg bg-[#f2383d] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#df3438]"
-              >
-                View All Jobs
-                <ArrowRight size={17} />
-              </button>
+              </PageState>
             </section>
-          </main>
-        </div>
-      </div>
-    </div>
+          </>
+        );
+      }}
+    </CandidateLayout>
   );
 }

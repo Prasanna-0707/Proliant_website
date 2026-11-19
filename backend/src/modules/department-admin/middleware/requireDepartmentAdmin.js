@@ -22,7 +22,7 @@ const requireDepartmentAdmin = (req, res, next) => {
   try {
     // 1. CHECK AUTHENTICATED ACCOUNT
 
-    const user = req.admin;
+    const user = req.user;
 
     if (!user || !isActiveAccount(user)) {
       return res.status(401).json({

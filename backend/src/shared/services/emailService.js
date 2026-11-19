@@ -676,3 +676,176 @@ export const sendCandidateRejectedEmail = async (
 // // =====================================================
 
 // export default transporter;
+
+// =====================================================
+// CANDIDATE PASSWORD RESET
+// =====================================================
+
+const escapeHtml = (value = "") =>
+  String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
+const emailShell = (heading, bodyHtml) => `
+  <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+    <h2>${escapeHtml(heading)}</h2>
+    ${bodyHtml}
+    <p>
+      Regards,<br>
+      <strong>Proliant Data LLC</strong>
+    </p>
+  </div>
+`;
+
+export const sendCandidatePasswordResetOTPEmail = async (email, otp) => {
+  await sendEmail({
+    to: email,
+    subject: "Proliant Candidate Password Reset OTP",
+    html: emailShell(
+      "Proliant Candidate Password Reset",
+      `<p>Your password reset verification code is:</p>
+       <h1 style="letter-spacing: 5px;">${escapeHtml(otp)}</h1>
+       <p>This OTP is valid for <strong>5 minutes</strong>.</p>
+       <p>If you did not request a password reset, please ignore this email.</p>`
+    ),
+  });
+};
+
+export const sendCandidatePasswordChangedEmail = async (email, name = "") => {
+  await sendEmail({
+    to: email,
+    subject: "Your Proliant password was changed",
+    html: emailShell(
+      "Password changed",
+      `<p>Hello ${escapeHtml(name)},</p>
+       <p>The password for your Proliant candidate account was just changed.
+       If you did not do this, contact HR immediately.</p>`
+    ),
+  });
+};
+
+// =====================================================
+// INTERVIEW NOTIFICATIONS (interviewer + candidate)
+// =====================================================
+
+const formatWhen = (date, timeZone) => {
+  try {
+    return new Date(date).toLocaleString("en-US", {
+      dateStyle: "full",
+      timeStyle: "short",
+      timeZone: timeZone || "UTC",
+    }) + ` (${timeZone || "UTC"})`;
+  } catch {
+    return String(date);
+  }
+};
+
+const INTERVIEW_EVENT_TEXT = {
+  scheduled: {
+    subject: "Interview scheduled",
+    lead: "An interview has been scheduled.",
+  },
+  rescheduled: {
+    subject: "Interview rescheduled",
+    lead: "An interview has been rescheduled. Please note the new time.",
+  },
+  cancelled: {
+    subject: "Interview cancelled",
+    lead: "An interview has been cancelled.",
+  },
+};
+
+// recipient: { email, name }, interview: plain object with the fields used below.
+export const sendInterviewEmail = async (event, recipient, interview) => {
+  const text = INTERVIEW_EVENT_TEXT[event];
+
+  if (!text || !recipient?.email) return;
+
+  const rows = [
+    ["Position", interview.position],
+    ["Stage", interview.stageName],
+    ["Candidate", interview.candidateName],
+    ["Interviewer", interview.interviewerName],
+    ["When", interview.scheduledAt && formatWhen(interview.scheduledAt, interview.timeZone)],
+    ["Mode", interview.mode],
+    ["Meeting link", interview.meetingLink],
+    ["Location", interview.location],
+    ["Instructions", interview.instructions],
+    ["Reason", interview.reason],
+  ]
+    .filter(([, value]) => value)
+    .map(
+      ([label, value]) =>
+        `<tr><td style="padding:2px 12px 2px 0"><strong>${escapeHtml(label)}</strong></td><td>${escapeHtml(value)}</td></tr>`
+    )
+    .join("");
+
+  await sendEmail({
+    to: recipient.email,
+    subject: `Proliant: ${text.subject}`,
+    html: emailShell(
+      text.subject,
+      `<p>Hello ${escapeHtml(recipient.name || "")},</p>
+       <p>${escapeHtml(text.lead)}</p>
+       <table>${rows}</table>`
+    ),
+  });
+};
+
+// =====================================================
+// RECRUITMENT SUMMARY REPORT (aggregate statistics only)
+// Candidate names, contact details and interview feedback are never
+// included in this email.
+// =====================================================
+
+export const sendRecruitmentSummaryEmail = async (email, stats, sentByName = "") => {
+  const cell = (value) => (value === null || value === undefined ? "—" : escapeHtml(value));
+
+  const rows = stats.departmentWise
+    .map(
+      (row) =>
+        `<tr>
+          <td style="padding:6px 12px;border:1px solid #ddd">${escapeHtml(row.department)}</td>
+          <td style="padding:6px 12px;border:1px solid #ddd;text-align:right">${cell(row.inInterviewProcess)}</td>
+          <td style="padding:6px 12px;border:1px solid #ddd;text-align:right">${cell(row.selected)}</td>
+          <td style="padding:6px 12px;border:1px solid #ddd;text-align:right">${cell(row.joined)}</td>
+        </tr>`
+    )
+    .join("");
+
+  const total = stats.organizationTotal;
+  const range = stats.filters?.dateRange?.label;
+
+  await sendEmail({
+    to: email,
+    subject: "Proliant recruitment summary",
+    html: emailShell(
+      "Recruitment summary",
+      `<p>Aggregate recruitment statistics${range ? ` for <strong>${escapeHtml(range)}</strong>` : ""}${
+        stats.filters?.department ? ` (department: ${escapeHtml(stats.filters.department)})` : ""
+      }.</p>
+       <table style="border-collapse:collapse">
+         <thead><tr>
+           <th style="padding:6px 12px;border:1px solid #ddd;text-align:left">Department</th>
+           <th style="padding:6px 12px;border:1px solid #ddd">In Interview Process</th>
+           <th style="padding:6px 12px;border:1px solid #ddd">Selected</th>
+           <th style="padding:6px 12px;border:1px solid #ddd">Recruited / Joined</th>
+         </tr></thead>
+         <tbody>${rows}
+           <tr style="font-weight:bold">
+             <td style="padding:6px 12px;border:1px solid #ddd">Organization Total</td>
+             <td style="padding:6px 12px;border:1px solid #ddd;text-align:right">${cell(total.inInterviewProcess)}</td>
+             <td style="padding:6px 12px;border:1px solid #ddd;text-align:right">${cell(total.selected)}</td>
+             <td style="padding:6px 12px;border:1px solid #ddd;text-align:right">${cell(total.joined)}</td>
+           </tr>
+         </tbody>
+       </table>
+       <p style="font-size:12px;color:#666">Selected includes candidates who have joined. Joined counts only
+       candidates with a confirmed joining date. This summary contains aggregate counts only.${
+         sentByName ? ` Sent by ${escapeHtml(sentByName)}.` : ""
+       }</p>`
+    ),
+  });
+};

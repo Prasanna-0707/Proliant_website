@@ -1,11 +1,19 @@
 import mongoose from "mongoose";
 
-import Candidate from "../../hr/models/HRCandidate.js";
+import Candidate from "../../candidate/models/Candidate.js";
 import Job from "../../hr/models/HRJob.js";
 import Screening from "../../screener/models/Screening.js";
 import Interview from "../../interviewer/models/Interview.js";
 import ApplicationDecision from "../models/ApplicationDecision.js";
 import HiringManagerAssignment from "../models/HiringManagerAssignment.js";
+
+import { canAccessHiringManagerModule } from "../../../shared/services/authorizationService.js";
+import { notifyHr, notifyStaff } from "../../../shared/services/notificationService.js";
+import {
+  applyPortalEvent,
+  getInterviewStageIndex,
+} from "../../../shared/services/portalApplicationService.js";
+import { createAuditLog } from "../../../shared/services/auditLogService.js";
 
 // =====================================================
 // COMMON HELPERS
@@ -36,30 +44,18 @@ const isValidObjectId = (id) =>
 // HIRING MANAGER AUTHORIZATION
 // =====================================================
 
-const isHiringManager = (admin) => {
-  if (!admin?._id || admin.deletedAt) {
-    return false;
-  }
-
-  if (normalize(admin.status) !== "active") {
-    return false;
-  }
-
-  const role = normalize(admin.role);
-
-  return (
-    role === "hiring manager" ||
-    role === "hiring lead"
-  );
-};
+// Uses the shared authorization service so the role check works with the
+// canonical User role keys (HIRING_MANAGER / HIRING_LEAD).
+const isHiringManager = (user) =>
+  canAccessHiringManagerModule(user);
 
 const authorizeHiringManager = (req, res) => {
-  if (!req.admin?._id) {
+  if (!req.user?._id) {
     sendError(res, 401, "Authentication required.");
     return false;
   }
 
-  if (!isHiringManager(req.admin)) {
+  if (!isHiringManager(req.user)) {
     sendError(
       res,
       403,
@@ -268,7 +264,7 @@ export const getApplicationDetailsForHiringManager = async (
 ) => {
   // Allow non-Hiring-Manager requests to continue to the
   // application's existing general-purpose handler.
-  if (!isHiringManager(req.admin)) {
+  if (!isHiringManager(req.user)) {
     return next();
   }
 
@@ -280,7 +276,7 @@ export const getApplicationDetailsForHiringManager = async (
     const { candidate, job } =
       await getCandidateForManager(
         req.params.id,
-        req.admin._id
+        req.user._id
       );
 
     return res.status(200).json({
@@ -342,7 +338,7 @@ export const getHiringPipeline = async (req, res) => {
     }
 
     const jobs = await getJobsForManager(
-      req.admin._id
+      req.user._id
     );
 
     if (jobs.length === 0) {
@@ -539,6 +535,10 @@ export const getHiringPipeline = async (req, res) => {
       });
 
       if (latestDecision) {
+        if (latestDecision.decision === "Select") {
+          return terminalStage("SELECTED", "Selected", 999999);
+        }
+
         if (latestDecision.decision === "Reject") {
           return terminalStage(
             "REJECTED",
@@ -841,7 +841,7 @@ export const getApplicationFeedback = async (
     const { candidate, job } =
       await getCandidateForManager(
         req.params.id,
-        req.admin._id
+        req.user._id
       );
 
     const interviews = await Interview.find({
@@ -915,7 +915,7 @@ export const getApplicationDecisionHistory = async (
     const { candidate, job } =
       await getCandidateForManager(
         req.params.id,
-        req.admin._id
+        req.user._id
       );
 
     const decisions = await ApplicationDecision.find({
@@ -959,6 +959,122 @@ export const getApplicationDecisionHistory = async (
 };
 
 // =====================================================
+// APPLY A DECISION TO THE CANDIDATE RECORD
+//   Advance -> candidate moves to the next configured stage
+//   Reject  -> candidate is marked Rejected
+//   Hold    -> candidate is marked On Hold
+//   Select  -> hiring selection is complete (Selected)
+// Notifications and the linked portal application follow.
+// =====================================================
+
+const applyDecisionToCandidate = async ({
+  candidate,
+  job,
+  stage,
+  decision,
+  reason,
+  req,
+}) => {
+  const previous = {
+    status: candidate.status,
+    currentStage: candidate.currentStage,
+  };
+
+  const next =
+    decision === "Advance"
+      ? getNextStage(job, stage.stageOrder)
+      : null;
+
+  let event = null;
+  let summary = "";
+
+  if (decision === "Advance") {
+    if (next) {
+      candidate.currentStage = next.stageCode;
+      candidate.status =
+        next.stageType === "INTERVIEW" ? "Shortlisted" : candidate.status;
+      summary = `advanced from ${stage.stageName} to ${next.stageName}`;
+    } else {
+      candidate.currentStage = "WORKFLOW_COMPLETE";
+      summary = `advanced past the final stage (${stage.stageName})`;
+    }
+
+    event = "ADVANCED";
+  } else if (decision === "Reject") {
+    candidate.status = "Rejected";
+    candidate.currentStage = "CLOSED";
+    summary = `rejected at ${stage.stageName}`;
+    event = "REJECTED";
+  } else if (decision === "Hold") {
+    candidate.status = "On Hold";
+    summary = `put on hold at ${stage.stageName}`;
+  } else if (decision === "Select") {
+    candidate.status = "Selected";
+    candidate.currentStage = "SELECTED";
+    summary = `selected at ${stage.stageName}`;
+    event = "SELECTED";
+  }
+
+  await candidate.save();
+
+  const message = `${candidate.name} was ${summary}.${
+    reason ? ` Reason: ${reason}` : ""
+  }`;
+
+  await notifyHr({
+    title: `Hiring decision: ${decision}`,
+    message,
+    type: "WORKFLOW",
+    link: "/hr/candidates",
+    relatedApplication: candidate._id,
+  });
+
+  if (candidate.assignedScreener) {
+    await notifyStaff(candidate.assignedScreener, {
+      title: `Hiring decision: ${decision}`,
+      message,
+      type: "WORKFLOW",
+      relatedApplication: candidate._id,
+    });
+  }
+
+  if (event) {
+    await applyPortalEvent(candidate._id, event, {
+      interviewIndex: getInterviewStageIndex(job, stage.stageCode),
+    });
+  }
+
+  await createAuditLog({
+    req,
+    action: `HIRING_DECISION_${decision.toUpperCase()}`,
+    targetType: "Candidate",
+    targetId: candidate._id,
+    targetLabel: candidate.name,
+    department: candidate.department || "",
+    before: previous,
+    after: {
+      status: candidate.status,
+      currentStage: candidate.currentStage,
+    },
+    reason,
+    metadata: { stageCode: stage.stageCode },
+  }).catch((error) =>
+    console.error("Decision audit failed:", error.message)
+  );
+
+  return {
+    previous,
+    current: {
+      status: candidate.status,
+      currentStage: candidate.currentStage,
+    },
+    nextStage: next
+      ? { stageCode: next.stageCode, stageName: next.stageName }
+      : null,
+  };
+};
+
+// =====================================================
 // 5. SUBMIT HIRING DECISION
 // POST /api/applications/:id/decisions
 // Records an auditable decision without automatically
@@ -977,7 +1093,7 @@ export const submitApplicationDecision = async (
     const { candidate, job } =
       await getCandidateForManager(
         req.params.id,
-        req.admin._id
+        req.user._id
       );
 
     const stageCode = String(
@@ -1003,14 +1119,14 @@ export const submitApplicationDecision = async (
     }
 
     if (
-      !["Advance", "Reject", "Hold"].includes(
+      !["Advance", "Reject", "Hold", "Select"].includes(
         decision
       )
     ) {
       return sendError(
         res,
         400,
-        "Decision must be Advance, Reject, or Hold."
+        "Decision must be Advance, Reject, Hold, or Select."
       );
     }
 
@@ -1044,6 +1160,19 @@ export const submitApplicationDecision = async (
         res,
         400,
         "The selected stage is not enabled in this job's configured workflow."
+      );
+    }
+
+    // "Select" completes the hiring and is only valid at the final stage.
+    if (
+      decision === "Select" &&
+      getNextStage(job, stage.stageOrder) &&
+      !["HR_FINAL", "OFFER"].includes(stage.stageType)
+    ) {
+      return sendError(
+        res,
+        409,
+        "Select is only available at the final stage of the workflow. Use Advance to move the candidate to the next stage."
       );
     }
 
@@ -1095,8 +1224,8 @@ export const submitApplicationDecision = async (
         stageOrder: stage.stageOrder,
         decision,
         reason,
-        decidedBy: req.admin._id,
-        roleUsed: req.admin.role || "Hiring Manager",
+        decidedBy: req.user._id,
+        roleUsed: req.user.role || "Hiring Manager",
         supersedes: previousDecision?._id || null,
         decidedAt: new Date(),
       });
@@ -1106,12 +1235,26 @@ export const submitApplicationDecision = async (
       "name email role designation"
     );
 
+    // Keep the application status and stage consistent with the decision.
+    const workflowUpdate = await applyDecisionToCandidate({
+      candidate,
+      job,
+      stage,
+      decision,
+      reason,
+      req,
+    });
+
     return res.status(201).json({
       success: true,
       message: "Hiring decision recorded successfully.",
       decision: recordedDecision,
-      note:
-        "The decision has been recorded as an auditable record. Candidate status and workflow advancement are separate operations.",
+      application: {
+        _id: candidate._id,
+        status: candidate.status,
+        currentStage: candidate.currentStage,
+      },
+      workflow: workflowUpdate,
     });
   } catch (error) {
     console.error(
@@ -1145,7 +1288,7 @@ export const getHiringFeedbackHistory = async (
     }
 
     const jobs = await getJobsForManager(
-      req.admin._id
+      req.user._id
     );
 
     if (jobs.length === 0) {
@@ -1255,6 +1398,67 @@ export const getHiringFeedbackHistory = async (
       error.statusCode
         ? error.message
         : "Failed to fetch feedback history."
+    );
+  }
+};
+
+// =====================================================
+// 7. SCHEDULED INTERVIEWS FOR ASSIGNED JOBS
+// GET /api/hiring/interviews?status=
+// Read-only schedule for the Hiring Manager's assigned jobs.
+// =====================================================
+
+export const getHiringInterviews = async (req, res) => {
+  try {
+    if (!authorizeHiringManager(req, res)) {
+      return;
+    }
+
+    const jobs = await getJobsForManager(req.user._id);
+
+    if (jobs.length === 0) {
+      return res.status(200).json({
+        success: true,
+        count: 0,
+        interviews: [],
+      });
+    }
+
+    const filter = {
+      job: { $in: jobs.map((job) => job._id) },
+    };
+
+    if (req.query.status) {
+      filter.status = {
+        $in: String(req.query.status)
+          .split(",")
+          .map((item) => item.trim()),
+      };
+    }
+
+    const interviews = await Interview.find(filter)
+      .select("-evaluation -evaluationHistory -history")
+      .populate("application", "name email position status currentStage")
+      .populate("job", "title department")
+      .populate("assignedTo", "name email role designation")
+      .sort({ scheduledAt: -1 })
+      .limit(500)
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      count: interviews.length,
+      interviews,
+    });
+  } catch (error) {
+    console.error("Get hiring interviews failed:", error);
+
+    return sendError(
+      res,
+      error.statusCode || 500,
+      error.statusCode
+        ? error.message
+        : "Failed to fetch interviews."
     );
   }
 };

@@ -4,7 +4,7 @@ const Shortlisted = () => (
   <ScreenerApplications
     title="Shortlisted Candidates"
     description="Candidates shortlisted and moved to the L1 Interview queue."
-    filterStatus="L1_PENDING"
+    filterStatus={["L0_SHORTLISTED", "Interview"]}
   />
 );
 

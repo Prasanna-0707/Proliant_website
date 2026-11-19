@@ -1,6 +1,10 @@
 
+// Load environment variables BEFORE any other module is evaluated.
+// ES module imports are hoisted, so modules such as emailService read
+// process.env while they are being imported.
+import "dotenv/config";
+
 import express from "express";
-import dotenv from "dotenv";
 import cors from "cors";
 
 import connectDB from "./config/db.js";
@@ -27,11 +31,16 @@ import employeeRoutes from "./modules/hr/routes/HRemployeeRoutes.js";
 import locationRoutes from "./modules/hr/routes/HRlocationRoutes.js";
 import dashboardRoutes from "./modules/hr/routes/HRdashboardRoutes.js";
 import contactRoutes from "./modules/hr/routes/HRFeedbackRoutes.js";
-import candidateRoutes from "./modules/hr/routes/HRcandidateRoutes.js";
+import candidateRoutes from "./modules/candidate/routes/candidateRoutes.js";
+import hrCandidateRoutes from "./modules/hr/routes/HRcandidateRoutes.js";
 import jobRoutes from "./modules/hr/routes/HRjobRoutes.js";
-import teamMemberRoute from "./modules/hr/routes/HRteamMemberRoute.js";
+import teamMemberRoutes from "./modules/administrator/routes/teamMemberRoutes.js";
 import siteSettingRoutes from "./modules/hr/routes/HRsiteSettingRoutes.js";
-import applicationRoutes from "./modules/hr/routes/HRapplicationRoutes.js";
+import hrScreenerRoutes from "./modules/hr/routes/HRscreenerRoutes.js";
+import notificationRoutes from "./modules/notifications/routes/notificationRoutes.js";
+import publicRoutes from "./modules/public/routes/publicRoutes.js";
+import reportRoutes from "./modules/reports/routes/reportRoutes.js";
+import applicationRoutes from "./modules/candidate/routes/applicationRoutes.js";
 
 // =====================================================
 // SCREENER MODULE
@@ -67,8 +76,6 @@ import candidateApplicationRoutes from "./modules/candidate/routes/candidateAppl
 import candidateDashboardRoute from "./modules/candidate/routes/candidateDashboardRoute.js";
 import candidateNotificationRoutes from "./modules/candidate/routes/candidateNotificationRoute.js";
 
-dotenv.config();
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -87,6 +94,11 @@ app.use(
   })
 );
 
+// A candidate application may carry a Base64 resume (up to ~21 MB),
+// so that single endpoint gets a larger body limit. Every other
+// endpoint keeps the small default limit.
+app.use("/api/candidates", express.json({ limit: "25mb" }));
+app.use("/api/hr-candidates", express.json({ limit: "25mb" }));
 app.use(express.json());
 
 // =====================================================
@@ -108,12 +120,20 @@ const registerRoutes = () => {
   app.use("/api/locations", locationRoutes);
   app.use("/api/dashboard", dashboardRoutes);
   app.use("/api/contacts", contactRoutes);
+  // Registration-based Candidate workflow (model Candidate, collection candidates)
   app.use("/api/candidates", candidateRoutes);
+
+  // HR application records (model HRCandidate, collection hrcandidates)
+  app.use("/api/hr-candidates", hrCandidateRoutes);
   app.use("/api/jobs", jobRoutes);
   app.use("/api/settings", siteSettingRoutes);
+  app.use("/api/hr-screeners", hrScreenerRoutes);
+  app.use("/api/notifications", notificationRoutes);
+  app.use("/api/public", publicRoutes);
+  app.use("/api/reports", reportRoutes);
 
   // Team-member management
-  app.use("/api/auth/team-members", teamMemberRoute);
+  app.use("/api/auth/team-members", teamMemberRoutes);
 
   // Hiring Manager APIs
   app.use("/api/hiring", hiringManagerRoutes);
@@ -152,6 +172,39 @@ const registerRoutes = () => {
     res.json({
       success: true,
       message: "Proliant Backend is running",
+    });
+  });
+
+  // Unknown route -> JSON 404 (instead of an HTML error page)
+  app.use((req, res) => {
+    res.status(404).json({
+      success: false,
+      message: "Route not found.",
+    });
+  });
+
+  // Central error handler: body-parser errors and anything unexpected.
+  // eslint-disable-next-line no-unused-vars
+  app.use((error, req, res, next) => {
+    if (error?.type === "entity.too.large") {
+      return res.status(413).json({
+        success: false,
+        message: "Request body is too large.",
+      });
+    }
+
+    if (error instanceof SyntaxError && error.status === 400 && "body" in error) {
+      return res.status(400).json({
+        success: false,
+        message: "Request body contains invalid JSON.",
+      });
+    }
+
+    console.error("Unhandled error:", error);
+
+    return res.status(error?.status || 500).json({
+      success: false,
+      message: error?.status && error.status < 500 ? error.message : "Internal server error.",
     });
   });
 };

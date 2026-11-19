@@ -1,6 +1,12 @@
 import mongoose from "mongoose";
+import {
+  getActiveManagersByJob,
+  loadHiringManager,
+  syncJobHiringManagers,
+} from "../../../shared/services/hiringAssignmentService.js";
 import Job from "../models/HRJob.js";
-import Admin from "../../administrator/models/Admin.js";
+import { findStaffAccountById } from "../../../shared/services/accountService.js";
+import { ACCOUNT_TYPES } from "../../../shared/constants/roles.js";
 
 // =====================================================
 // ALLOWED JOB FIELDS
@@ -328,7 +334,7 @@ const validateJobOwner = async (ownerId) => {
     ownerId === null ||
     ownerId === undefined
   ) {
-    return;
+    return null;
   }
 
   if (!mongoose.isValidObjectId(ownerId)) {
@@ -337,15 +343,19 @@ const validateJobOwner = async (ownerId) => {
     );
   }
 
-  const ownerExists = await Admin.exists({
-    _id: ownerId,
-  });
+  // The owner may be an Administrator (Admin collection) or any
+  // other staff member (User collection).
+  const found = await findStaffAccountById(ownerId);
 
-  if (!ownerExists) {
+  if (!found || found.account.deletedAt) {
     throw badRequest(
       "The selected Job Owner account does not exist"
     );
   }
+
+  return found.accountType === ACCOUNT_TYPES.ADMIN
+    ? "Admin"
+    : "User";
 };
 
 // =====================================================
@@ -503,9 +513,18 @@ export const getJob = async (req, res) => {
 
 export const getJobsForHR = async (req, res) => {
   try {
-    const jobs = await populateStaffDetails(
+    const jobDocs = await populateStaffDetails(
       Job.find()
     ).sort({ createdAt: -1 });
+
+    const managersByJob = await getActiveManagersByJob(
+      jobDocs.map((job) => job._id)
+    );
+
+    const jobs = jobDocs.map((job) => ({
+      ...job.toObject(),
+      hiringManagers: managersByJob.get(String(job._id)) || [],
+    }));
 
     return res.status(200).json({
       success: true,
@@ -547,9 +566,14 @@ export const getJobForHR = async (req, res) => {
       });
     }
 
+    const managersByJob = await getActiveManagersByJob([job._id]);
+
     return res.status(200).json({
       success: true,
-      job,
+      job: {
+        ...job.toObject(),
+        hiringManagers: managersByJob.get(String(job._id)) || [],
+      },
     });
   } catch (error) {
     return handleError(
@@ -567,7 +591,7 @@ export const getJobForHR = async (req, res) => {
 
 export const createJob = async (req, res) => {
   try {
-    if (!req.admin?._id) {
+    if (!req.user?._id) {
       return res.status(401).json({
         success: false,
         message: "Authenticated staff account not found",
@@ -605,12 +629,39 @@ export const createJob = async (req, res) => {
       payload.applicationEndDate
     );
 
-    await validateJobOwner(payload.owner);
+    const ownerModel = await validateJobOwner(payload.owner);
+    if (ownerModel) payload.ownerModel = ownerModel;
 
     // Ignore any createdBy value from the client.
-    payload.createdBy = req.admin._id;
+    payload.createdBy = req.user._id;
+    payload.createdByModel =
+      req.auth.accountType === ACCOUNT_TYPES.ADMIN ? "Admin" : "User";
+
+    // Validate hiring managers before creating anything.
+    const hiringManagerIds = req.body.hiringManagerIds;
+
+    if (hiringManagerIds !== undefined) {
+      if (!Array.isArray(hiringManagerIds)) {
+        return res.status(400).json({
+          success: false,
+          message: "hiringManagerIds must be an array",
+        });
+      }
+
+      for (const managerId of hiringManagerIds) {
+        await loadHiringManager(managerId);
+      }
+    }
 
     const job = await Job.create(payload);
+
+    if (hiringManagerIds?.length) {
+      await syncJobHiringManagers({
+        job,
+        managerIds: hiringManagerIds,
+        actor: req.user,
+      });
+    }
 
     await job.populate([
       {
@@ -623,10 +674,15 @@ export const createJob = async (req, res) => {
       },
     ]);
 
+    const managersByJob = await getActiveManagersByJob([job._id]);
+
     return res.status(201).json({
       success: true,
       message: "Job created successfully",
-      job,
+      job: {
+        ...job.toObject(),
+        hiringManagers: managersByJob.get(String(job._id)) || [],
+      },
     });
   } catch (error) {
     return handleError(
@@ -655,7 +711,10 @@ export const updateJob = async (req, res) => {
 
     const payload = prepareJobPayload(req.body);
 
-    if (Object.keys(payload).length === 0) {
+    const hiringManagerIds = req.body.hiringManagerIds;
+    const hasHiringManagers = hiringManagerIds !== undefined;
+
+    if (Object.keys(payload).length === 0 && !hasHiringManagers) {
       return res.status(400).json({
         success: false,
         message: "No valid job fields were provided",
@@ -687,13 +746,35 @@ export const updateJob = async (req, res) => {
     validateDateRange(startDate, endDate);
 
     if (hasOwn(payload, "owner")) {
-      await validateJobOwner(payload.owner);
+      const ownerModel = await validateJobOwner(payload.owner);
+      payload.ownerModel = ownerModel || "User";
+    }
+
+    if (hasHiringManagers) {
+      if (!Array.isArray(hiringManagerIds)) {
+        return res.status(400).json({
+          success: false,
+          message: "hiringManagerIds must be an array",
+        });
+      }
+
+      for (const managerId of hiringManagerIds) {
+        await loadHiringManager(managerId);
+      }
     }
 
     // createdBy cannot be changed through this endpoint.
     job.set(payload);
 
     await job.save();
+
+    if (hasHiringManagers) {
+      await syncJobHiringManagers({
+        job,
+        managerIds: hiringManagerIds,
+        actor: req.user,
+      });
+    }
 
     await job.populate([
       {
@@ -706,10 +787,15 @@ export const updateJob = async (req, res) => {
       },
     ]);
 
+    const managersByJob = await getActiveManagersByJob([job._id]);
+
     return res.status(200).json({
       success: true,
       message: "Job updated successfully",
-      job,
+      job: {
+        ...job.toObject(),
+        hiringManagers: managersByJob.get(String(job._id)) || [],
+      },
     });
   } catch (error) {
     return handleError(

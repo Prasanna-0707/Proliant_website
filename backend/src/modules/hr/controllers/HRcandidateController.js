@@ -1,3 +1,5 @@
+// HR application records (model HRCandidate, collection hrcandidates).
+// Separate from the registration-based Candidate workflow.
 import Candidate from "../models/HRCandidate.js";
 
 import {
@@ -9,6 +11,7 @@ import {
   sendCandidateShortlistedEmailToHR,
   sendCandidateRejectedEmail,
 } from "../../../shared/services/emailService.js";
+import { sendError } from "../../../shared/utils/httpErrors.js";
 
 // =====================================================
 // CREATE CANDIDATE
@@ -88,11 +91,7 @@ export const createCandidate = async (req, res) => {
     });
 
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Candidate creation failed",
-      error: error.message,
-    });
+    return sendError(res, error, "Candidate creation failed");
   }
 };
 
@@ -113,11 +112,7 @@ export const getCandidates = async (req, res) => {
     });
 
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch candidates",
-      error: error.message,
-    });
+    return sendError(res, error, "Failed to fetch candidates");
   }
 };
 
@@ -144,11 +139,7 @@ export const getCandidate = async (req, res) => {
     });
 
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch candidate",
-      error: error.message,
-    });
+    return sendError(res, error, "Failed to fetch candidate");
   }
 };
 
@@ -308,11 +299,7 @@ export const updateCandidate = async (req, res) => {
     });
 
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Candidate update failed",
-      error: error.message,
-    });
+    return sendError(res, error, "Candidate update failed");
   }
 };
 
@@ -343,11 +330,7 @@ export const deleteCandidate = async (req, res) => {
     });
 
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Candidate deletion failed",
-      error: error.message,
-    });
+    return sendError(res, error, "Candidate deletion failed");
   }
 };
 
@@ -406,10 +389,6 @@ export const exportCandidatesExcel = async (
     );
 
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Candidate Excel export failed",
-      error: error.message,
-    });
+    return sendError(res, error, "Candidate Excel export failed");
   }
 };

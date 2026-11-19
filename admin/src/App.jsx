@@ -9,6 +9,7 @@ import {
 import AdminLayout from "./components/AdminLayout";
 import HRLayout from "./components/HR/HRLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
+import InterviewerLayout from "./components/Interview/InterviewerLayout";
 import Login from "./components/Auth/login";
 
 // Admin Pages
@@ -28,6 +29,11 @@ import HREnquiries from "./pages/HR/HREnquiries";
 import L0Screener from "./pages/HR/L0Screener";
 import L1Interview from "./pages/HR/L1Interview";
 import L2Interview from "./pages/HR/L2Interview";
+import HiringAssignments from "./pages/HR/HiringAssignments";
+import EvaluationForms from "./pages/HR/EvaluationForms";
+import HRRegistrations from "./pages/HR/HRRegistrations";
+import HRReports from "./pages/HR/HRReports";
+import Employees from "./pages/Admin/Employees";
 
 // Screener Pages
 import ScreenerLayout from "./components/Screener/ScreenerLayout";
@@ -86,6 +92,12 @@ function App() {
         {/* Login Routes */}
         <Route path="/login" element={<Login />} />
 
+        {/* Separate Department Administrator sign-in */}
+        <Route
+          path="/department-admin/login"
+          element={<Login portal="department" />}
+        />
+
         <Route
           path="/admin/login"
           element={<Navigate to="/login" replace />}
@@ -104,6 +116,12 @@ function App() {
         {/* Candidate Public Routes */}
         <Route
           path="/candidate/login"
+          element={<CandidateLogin />}
+        />
+
+        {/* Alias kept for existing links */}
+        <Route
+          path="/candidate-login"
           element={<CandidateLogin />}
         />
 
@@ -142,16 +160,46 @@ function App() {
           element={<CandidateNotifications />}
         />
 
-        {/* Dept admin */}
-        <Route
-          path="/dept-admin-dashboard"
-          element={<DeptAdminDashboard />}
-        />
-
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
 
-          {/* Admin Portal */}
+          {/* Department Administrator dashboard (administrators only) */}
+          <Route
+            element={
+              <ProtectedRoute
+                allowedRoles={["ADMIN"]}
+                allowedAccessLevels={["DEPARTMENT", "GLOBAL"]}
+              />
+            }
+          >
+            <Route
+              path="/dept-admin-dashboard"
+              element={<DeptAdminDashboard />}
+            />
+          </Route>
+
+          {/* Own profile: any administrator account (it is also the landing
+              page of an administrator account without effective access) */}
+          <Route
+            element={
+              <ProtectedRoute
+                allowedRoles={["ADMIN"]}
+                allowedAccessLevels={["GLOBAL", "NONE"]}
+              />
+            }
+          >
+            <Route path="/admin/profile" element={<Profile />} />
+          </Route>
+
+          {/* Admin Portal: Global Administrators only */}
+          <Route
+            element={
+              <ProtectedRoute
+                allowedRoles={["ADMIN"]}
+                allowedAccessLevels={["GLOBAL"]}
+              />
+            }
+          >
           <Route element={<AdminLayout />}>
             <Route
               path="/admin/dashboard"
@@ -174,11 +222,6 @@ function App() {
             />
 
             <Route
-              path="/admin/profile"
-              element={<Profile />}
-            />
-
-            <Route
               path="/admin/audit-logs"
               element={<AuditLogs />}
             />
@@ -188,8 +231,17 @@ function App() {
               element={<HRCandidates />}
             />
           </Route>
+          </Route>
 
           {/* HR Portal */}
+          <Route
+            element={
+              <ProtectedRoute
+                allowedRoles={["HR", "RECRUITER", "ADMIN"]}
+                allowedAccessLevels={["GLOBAL"]}
+              />
+            }
+          >
           <Route element={<HRLayout />}>
             <Route
               path="/hr/dashboard"
@@ -230,6 +282,32 @@ function App() {
               path="/hr/l2-interview"
               element={<L2Interview />}
             />
+
+            <Route
+              path="/hr/hiring-assignments"
+              element={<HiringAssignments />}
+            />
+
+            <Route
+              path="/hr/evaluation-forms"
+              element={<EvaluationForms />}
+            />
+
+            <Route
+              path="/hr/reports"
+              element={<HRReports />}
+            />
+
+            <Route
+              path="/hr/registrations"
+              element={<HRRegistrations />}
+            />
+
+            <Route
+              path="/hr/employees"
+              element={<Employees />}
+            />
+          </Route>
           </Route>
 
           {/* L0 Screener Portal */}
@@ -285,7 +363,13 @@ function App() {
           </Route>
 
           {/* Interviewer Portal */}
-          <Route element={<AdminLayout />}>
+          <Route element={<ProtectedRoute allowedRoles={["INTERVIEWER"]} />}>
+          <Route element={<InterviewerLayout />}>
+            <Route
+              path="/interviewer/history"
+              element={<InterviewHistory />}
+            />
+
             <Route
               path="/interviewer/dashboard"
               element={<InterviewerDashboard />}
@@ -321,8 +405,10 @@ function App() {
               element={<InterviewerProfile />}
             />
           </Route>
+          </Route>
 
           {/* Hiring Manager Portal */}
+          <Route element={<ProtectedRoute allowedRoles={["HIRING_MANAGER"]} />}>
           <Route element={<HiringManagerLayout />}>
             <Route
               path="/hiring-manager/dashboard"
@@ -368,6 +454,7 @@ function App() {
               path="/hiring-manager/profile"
               element={<HiringManagerProfile />}
             />
+          </Route>
           </Route>
         </Route>
 

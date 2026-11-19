@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-import Admin from "../../modules/administrator/models/Admin.js";
+import User from "../../modules/auth/models/Users.js";
 import Candidate from "../../modules/candidate/models/Candidate.js";
 import Screening from "../../modules/screener/models/Screening.js";
 
@@ -46,7 +46,7 @@ const getEligibleScreeners = async ({
   department,
   session,
 }) => {
-  const admins = await Admin.find({
+  const staff = await User.find({
     status: "Active",
     deletedAt: null,
   })
@@ -59,11 +59,11 @@ const getEligibleScreeners = async ({
   const normalizedDepartment =
     normalizeDepartment(department);
 
-  return admins.filter((admin) => {
+  return staff.filter((account) => {
     return (
-      isActiveAccount(admin) &&
-      isL0Screener(admin) &&
-      normalizeDepartment(admin.department) ===
+      isActiveAccount(account) &&
+      isL0Screener(account) &&
+      normalizeDepartment(account.department) ===
         normalizedDepartment
     );
   });
@@ -1005,7 +1005,7 @@ const performOneL0Reassignment = async ({
       const reassignedAt = new Date();
 
       const previousScreener = previousScreenerId
-        ? await Admin.findById(previousScreenerId)
+        ? await User.findById(previousScreenerId)
             .select("_id name")
             .session(session)
             .lean()

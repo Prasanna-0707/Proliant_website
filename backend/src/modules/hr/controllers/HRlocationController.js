@@ -1,4 +1,5 @@
 import Location from "../models/HRLocation.js";
+import { sendError } from "../../../shared/utils/httpErrors.js";
 
 // GET all locations
 export const getLocations = async (req, res) => {
@@ -10,11 +11,7 @@ export const getLocations = async (req, res) => {
       locations,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch locations",
-      error: error.message,
-    });
+    return sendError(res, error, "Failed to fetch locations");
   }
 };
 
@@ -52,11 +49,7 @@ export const addLocation = async (req, res) => {
       location,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to add location",
-      error: error.message,
-    });
+    return sendError(res, error, "Failed to add location");
   }
 };
 
@@ -86,11 +79,7 @@ export const updateLocation = async (req, res) => {
       location,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to update location",
-      error: error.message,
-    });
+    return sendError(res, error, "Failed to update location");
   }
 };
 
@@ -114,10 +103,6 @@ export const deleteLocation = async (req, res) => {
       message: "Location deleted successfully",
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to delete location",
-      error: error.message,
-    });
+    return sendError(res, error, "Failed to delete location");
   }
 };

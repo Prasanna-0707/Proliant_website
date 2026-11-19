@@ -307,7 +307,7 @@ function Dashboard() {
           fetch(`${API_BASE_URL}/jobs`, {
             headers: authHeaders,
           }),
-          fetch(`${API_BASE_URL}/candidates`, {
+          fetch(`${API_BASE_URL}/hr-candidates`, {
             headers: authHeaders,
           }),
           fetch(`${API_BASE_URL}/contacts`, {
@@ -365,22 +365,6 @@ function Dashboard() {
             ).length
           : 0;
 
-        try {
-          const savedCandidates = localStorage.getItem("proliantCandidates");
-
-          if (savedCandidates) {
-            const savedCandidateList = JSON.parse(savedCandidates);
-
-            if (Array.isArray(savedCandidateList)) {
-              newApplicationCount = savedCandidateList.filter(
-                (candidate) =>
-                  String(candidate.status || "New").toLowerCase() === "new"
-              ).length;
-            }
-          }
-        } catch (storageError) {
-          console.error("Failed to read saved candidate data:", storageError);
-        }
 
         const enquiries =
           enquiriesResult?.contacts ||
@@ -484,120 +468,6 @@ function Dashboard() {
     };
 
     fetchDashboardData();
-  }, []);
-
-  useEffect(() => {
-    const updateNewCandidateCount = () => {
-      try {
-        const savedCandidates = localStorage.getItem("proliantCandidates");
-
-        if (!savedCandidates) return;
-
-        const candidateList = JSON.parse(savedCandidates);
-
-        if (!Array.isArray(candidateList)) return;
-
-        const newCandidateCount = candidateList.filter(
-          (candidate) =>
-            String(candidate.status || "New").toLowerCase() === "new"
-        ).length;
-
-        setStats((previousStats) =>
-          previousStats.map((stat) =>
-            stat.type === "newApplications"
-              ? {
-                  ...stat,
-                  value: newCandidateCount,
-                }
-              : stat
-          )
-        );
-      } catch (storageError) {
-        console.error(
-          "Failed to update new application count:",
-          storageError
-        );
-      }
-    };
-
-    const updateNewEnquiryCount = async () => {
-      try {
-        const token = localStorage.getItem("adminToken");
-
-        if (!token) return;
-
-        const response = await fetch(`${API_BASE_URL}/contacts`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (response.status === 401) {
-          localStorage.removeItem("adminToken");
-          localStorage.removeItem("adminUser");
-          window.location.href = "/login";
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error(
-            `Failed to update enquiry count (${response.status})`
-          );
-        }
-
-        const result = await response.json();
-
-        const enquiryList =
-          result?.contacts ||
-          result?.enquiries ||
-          result?.data ||
-          [];
-
-        const unreadEnquiryCount = Array.isArray(enquiryList)
-          ? enquiryList.filter(
-              (enquiry) => enquiry.status === "Unread"
-            ).length
-          : 0;
-
-        void unreadEnquiryCount;
-      } catch (enquiryError) {
-        console.error(
-          "Failed to update new enquiry count:",
-          enquiryError
-        );
-      }
-    };
-
-    const handleStorageChange = (event) => {
-      if (event.key === "proliantCandidates") {
-        updateNewCandidateCount();
-      }
-
-      if (event.key === "proliantEnquiriesUpdated") {
-        updateNewEnquiryCount();
-      }
-    };
-
-    window.addEventListener("candidatesUpdated", updateNewCandidateCount);
-    window.addEventListener("enquiriesUpdated", updateNewEnquiryCount);
-    window.addEventListener("storage", handleStorageChange);
-
-    updateNewCandidateCount();
-    updateNewEnquiryCount();
-
-    return () => {
-      window.removeEventListener(
-        "candidatesUpdated",
-        updateNewCandidateCount
-      );
-
-      window.removeEventListener(
-        "enquiriesUpdated",
-        updateNewEnquiryCount
-      );
-
-      window.removeEventListener("storage", handleStorageChange);
-    };
   }, []);
 
   return (

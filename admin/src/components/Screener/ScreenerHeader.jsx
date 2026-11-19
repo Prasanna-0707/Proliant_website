@@ -1,5 +1,6 @@
 
-import { Bell, UserCircle } from "lucide-react";
+import { UserCircle } from "lucide-react";
+import StaffNotificationBell from "../StaffNotificationBell";
 import ThemeTogglerButton from "../ThemeTogglerButton";
 
 export default function ScreenerHeader({ user = {} }) {
@@ -27,13 +28,7 @@ export default function ScreenerHeader({ user = {} }) {
       </div>
 
       <div className="flex items-center gap-4">
-        <button
-          type="button"
-          aria-label="Notifications"
-          className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-        >
-          <Bell size={20} />
-        </button>
+        <StaffNotificationBell />
 
         <ThemeTogglerButton />
 

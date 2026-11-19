@@ -1,4 +1,5 @@
 import Employee from "../models/HREmployee.js";
+import { sendError } from "../../../shared/utils/httpErrors.js";
 import Location from "../models/HRLocation.js";
 
 export const getDashboardStats = async (req, res) => {
@@ -16,10 +17,6 @@ export const getDashboardStats = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch dashboard stats",
-      error: error.message,
-    });
+    return sendError(res, error, "Failed to fetch dashboard stats");
   }
 };

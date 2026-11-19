@@ -1,431 +1,222 @@
-
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard,
-  ClipboardList,
   BriefcaseBusiness,
-  UserRound,
-  Settings,
-  LogOut,
-  Search,
-  Bell,
-  Moon,
-  ChevronDown,
-  ChevronRight,
   MapPin,
   CalendarDays,
-  Bookmark,
   Sparkles,
   ArrowRight,
   Filter,
-  Database,
-  ChartNoAxesColumn,
   X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
-const recommendedJobs = [
-  {
-    id: 1,
-    title: "SAP Data Analyst",
-    location: "Bangalore, India",
-    experience: "2–4 years",
-    match: 92,
-    skills: ["SAP", "Data Analysis", "Excel"],
-    icon: BriefcaseBusiness,
-  },
-  {
-    id: 2,
-    title: "SAP S/4HANA Consultant",
-    location: "Pune, India",
-    experience: "3–6 years",
-    match: 88,
-    skills: ["SAP S/4HANA", "Migration", "Problem Solving"],
-    icon: Database,
-  },
-  {
-    id: 3,
-    title: "Business Intelligence Analyst",
-    location: "Hyderabad, India",
-    experience: "2–5 years",
-    match: 85,
-    skills: ["Power BI", "SQL", "Data Visualization"],
-    icon: ChartNoAxesColumn,
-  },
-];
+import CandidateLayout, {
+  PageState,
+} from "../../components/Candidate/CandidateLayout.jsx";
+import { formatDate } from "../../services/format.js";
+import useApi from "../../services/useApi.js";
+import {
+  applyForJob,
+  getJob,
+  getProfile,
+  listJobs,
+  listMyApplications,
+} from "../../services/candidatePortal.js";
+import { notifyUpdated } from "../../components/Candidate/notificationUi.js";
 
-const allJobs = [
-  {
-    id: 101,
-    title: "SAP SD Consultant",
-    description: "Support SAP Sales and Distribution processes, configure sales workflows, troubleshoot issues, and collaborate with business teams on SAP SD solutions.",
-    location: "Bangalore, India",
-    experience: "3–6 years",
-    date: "12 Apr 2025",
-    type: "Full Time",
-    skills: ["SAP SD", "S/4HANA", "Consulting"],
-  },
-  {
-    id: 102,
-    title: "SAP MM Consultant",
-    description: "Support procurement and materials management processes, configure SAP MM, and help improve purchasing, inventory, and supplier workflows.",
-    location: "Hyderabad, India",
-    experience: "2–5 years",
-    date: "10 Apr 2025",
-    type: "Full Time",
-    skills: ["SAP MM", "Procurement", "Configuration"],
-  },
-  {
-    id: 103,
-    title: "SAP FICO Consultant",
-    description: "Work on SAP Financial Accounting and Controlling processes, support configuration and reporting, and help resolve finance-related system issues.",
-    location: "Pune, India",
-    experience: "3–7 years",
-    date: "08 Apr 2025",
-    type: "Contract",
-    skills: ["FICO", "Financials", "Reporting"],
-  },
-  {
-    id: 104,
-    title: "SAP ABAP Developer",
-    description: "Develop and maintain SAP ABAP programs, enhancements, and integrations while collaborating with functional teams to deliver reliable solutions.",
-    location: "Bangalore, India",
-    experience: "2–5 years",
-    date: "05 Apr 2025",
-    type: "Full Time",
-    skills: ["ABAP", "Enhancement", "S/4HANA"],
-  },
-  {
-    id: 105,
-    title: "SAP Basis Administrator",
-    description: "Support SAP system administration, monitoring, performance, user administration, and routine system maintenance across SAP environments.",
-    location: "Chennai, India",
-    experience: "3–6 years",
-    date: "03 Apr 2025",
-    type: "Full Time",
-    skills: ["SAP Basis", "System Admin", "HANA"],
-  },
-];
+const PAGE_SIZE = 10;
+
+// API job -> row shown in the UI
+const toRow = (job) => ({
+  id: job._id,
+  title: job.title,
+  department: job.department,
+  description: job.jobDescription,
+  requirements: job.requirements,
+  location: job.location,
+  experience: job.experience,
+  date: formatDate(job.createdAt),
+  type: job.employmentType,
+  arrangement: job.workArrangement,
+  skills: job.requiredSkills || [],
+});
+
+const typeBadge = (type) =>
+  type === "Contract"
+    ? "bg-amber-50 text-amber-700"
+    : type === "Internship"
+      ? "bg-blue-50 text-blue-700"
+      : "bg-emerald-50 text-emerald-700";
 
 export default function CandidateAllJobs() {
   const navigate = useNavigate();
 
   const [search, setSearch] = useState("");
-  const [savedJobs, setSavedJobs] = useState([]);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const [jobType, setJobType] = useState("All");
-  const [darkMode, setDarkMode] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
-  const [applicationJob, setApplicationJob] = useState(null);
-  const [applicationForm, setApplicationForm] = useState({
-    areaOfInterest: "", fullName: "", email: "", phone: "", fresher: "", location: "", experienceYears: "",
+  const [applyJob, setApplyJob] = useState(null);
+  const [applyState, setApplyState] = useState({
+    submitting: false,
+    error: "",
+    done: false,
   });
 
-  const candidateName =
-    localStorage.getItem("candidateName") || "Candidate";
+  // Wait for the candidate to stop typing before searching the server.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search.trim());
+      setPage(1);
+    }, 350);
 
-  const navigation = [
-    { label: "Dashboard", icon: LayoutDashboard, path: "/candidate-dashboard" },
-    { label: "My Applications", icon: ClipboardList, path: "/candidate-applications" },
-    { label: "All Jobs", icon: BriefcaseBusiness, path: "/candidate-all-jobs" },
-    { label: "Profile", icon: UserRound, path: "/candidate-profile" },
-    { label: "Settings", icon: Settings, path: "/candidate-settings" },
-  ];
+    return () => clearTimeout(timer);
+  }, [search]);
 
-  const matchesSearch = (job) => {
-    const query = search.trim().toLowerCase();
+  const { data, loading, error, reload } = useApi(
+    (signal) =>
+      listJobs({ search: debouncedSearch, page, limit: PAGE_SIZE }, signal),
+    [debouncedSearch, page]
+  );
 
-    if (!query) return true;
+  // Jobs the candidate already applied for, so they are not offered twice.
+  const applications = useApi((signal) => listMyApplications(signal), []);
+  const appliedJobIds = useMemo(
+    () =>
+      new Set(
+        (applications.data?.applications || []).map(
+          (application) => application.job?._id
+        )
+      ),
+    [applications.data]
+  );
 
-    return [
-      job.title,
-      job.location,
-      job.experience,
-      job.type || "",
-      ...(job.skills || []),
-    ].some((value) => value.toLowerCase().includes(query));
+  // Profile gives us the saved resume status for the apply dialog.
+  const profile = useApi((signal) => getProfile(signal), []);
+
+  const jobs = useMemo(() => (data?.jobs || []).map(toRow), [data]);
+  const pagination = data?.pagination;
+
+  const visibleJobs = jobs.filter(
+    (job) => jobType === "All" || job.type === jobType
+  );
+
+  const latest = jobs.slice(0, 3);
+
+  // Shows the job from the list at once, then refreshes it with the full
+  // record from GET /candidate/jobs/:id.
+  const openDetails = async (job) => {
+    setSelectedJob(job);
+
+    try {
+      const detail = await getJob(job.id);
+
+      setSelectedJob((current) =>
+        current && current.id === job.id ? toRow(detail.job) : current
+      );
+    } catch {
+      /* the list data is enough to show the job */
+    }
   };
 
-  const filteredRecommended = recommendedJobs.filter(matchesSearch);
-
-  const filteredJobs = allJobs.filter((job) => {
-    const searchMatches = matchesSearch(job);
-    const typeMatches = jobType === "All" || job.type === jobType;
-
-    return searchMatches && typeMatches;
-  });
-
-  const toggleSaved = (id) => {
-    setSavedJobs((previous) =>
-      previous.includes(id)
-        ? previous.filter((savedId) => savedId !== id)
-        : [...previous, id]
-    );
+  const openApply = (job) => {
+    setApplyState({ submitting: false, error: "", done: false });
+    setApplyJob(job);
+    setSelectedJob(null);
   };
+
+  const submitApplication = async () => {
+    setApplyState({ submitting: true, error: "", done: false });
+
+    try {
+      await applyForJob({ jobId: applyJob.id });
+
+      setApplyState({ submitting: false, error: "", done: true });
+      applications.reload();
+      notifyUpdated();
+    } catch (requestError) {
+      setApplyState({
+        submitting: false,
+        error: requestError.message,
+        done: false,
+      });
+    }
+  };
+
+  const resume = profile.data?.candidate?.resume;
+  const hasResume = Boolean(resume?.fileUrl);
 
   return (
-    <div
-      className={`min-h-screen ${
-        darkMode
-          ? "bg-slate-950 text-white"
-          : "bg-[#f7f9fc] text-[#101c30]"
-      }`}
+    <CandidateLayout
+      active="All Jobs"
+      search={search}
+      onSearchChange={setSearch}
+      searchPlaceholder="Search jobs by title, department or location..."
     >
-      <div className="flex min-h-screen">
-        {/* SIDEBAR */}
-        <aside
-          className={`fixed inset-y-0 left-0 z-30 flex w-63 flex-col border-r lg:static ${
-            darkMode
-              ? "border-slate-800 bg-slate-900"
-              : "border-gray-200 bg-white"
-          }`}
-        >
-          <div
-            className={`flex h-17.5 shrink-0 items-center border-b px-6 ${
-              darkMode ? "border-slate-800" : "border-gray-100"
-            }`}
-          >
-            <div>
-              <div className="mb-1 h-1.5 w-11 bg-[#f2383d]" />
-              <span className="text-[23px] font-extrabold tracking-tight text-black">
-                Proliant Data
-              </span>
-            </div>
-          </div>
+      {({ darkMode }) => {
+        const card = darkMode
+          ? "border-slate-800 bg-slate-900"
+          : "border-slate-200 bg-white";
 
-          <div className="px-3 pt-7">
-            <p className="mb-3 px-3 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
-              Candidate Portal
-            </p>
+        return (
+          <>
+            <section className="mb-5">
+              <p className="mb-2 text-xs font-medium text-slate-500">
+                All Jobs
+              </p>
 
-            <nav className="space-y-1.5">
-              {navigation.map(({ label, icon: Icon, path }) => {
-                const active = label === "All Jobs";
+              <h1 className="text-2xl font-bold tracking-tight sm:text-[30px]">
+                Find Your Next Opportunity
+              </h1>
 
-                return (
-                  <button
-                    key={label}
-                    type="button"
-                    onClick={() => navigate(path)}
-                    className={`flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-left text-[14px] font-medium transition-colors ${
-                      active
-                        ? "bg-[#f2383d] text-white shadow-sm"
-                        : darkMode
-                          ? "text-slate-300 hover:bg-slate-800"
-                          : "text-slate-700 hover:bg-red-50 hover:text-[#f2383d]"
-                    }`}
-                  >
-                    <Icon size={19} strokeWidth={1.9} />
-                    {label}
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-
-          <div
-            className={`mt-auto border-t p-3 ${
-              darkMode ? "border-slate-800" : "border-gray-100"
-            }`}
-          >
-            <button
-              type="button"
-              onClick={() => navigate("/candidate-login")}
-              className="flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium text-slate-500 hover:bg-red-50 hover:text-[#f2383d]"
-            >
-              <LogOut size={19} />
-              Logout
-            </button>
-          </div>
-        </aside>
-
-        {/* MAIN CONTENT */}
-        <div className="flex min-w-0 flex-1 flex-col">
-          {/* TOP BAR */}
-          <header
-            className={`sticky top-0 z-20 flex h-17.5 items-center gap-4 border-b px-5 sm:px-8 ${
-              darkMode
-                ? "border-slate-800 bg-slate-900"
-                : "border-gray-200 bg-white"
-            }`}
-          >
-            <div
-              className={`flex h-10.5 w-full max-w-122.5 items-center gap-3 rounded-full px-4 ${
-                darkMode ? "bg-slate-800" : "bg-[#f3f5f9]"
-              }`}
-            >
-              <Search size={18} className="shrink-0 text-slate-500" />
-
-              <input
-                type="search"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search jobs, skills, or locations..."
-                className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-              />
-
-              {search && (
-                <button
-                  type="button"
-                  onClick={() => setSearch("")}
-                  aria-label="Clear search"
-                >
-                  <X size={16} className="text-slate-500" />
-                </button>
-              )}
-            </div>
-
-            <div className="ml-auto flex shrink-0 items-center gap-3 sm:gap-5">
-              <button
-                type="button"
-                aria-label="Notifications"
-                className="relative rounded-full p-2 text-slate-500 hover:bg-gray-100"
-              >
-                <Bell size={20} />
-                <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#f2383d]" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setDarkMode((value) => !value)}
-                aria-label="Toggle dark mode"
-                className="rounded-full p-2 text-slate-500 hover:bg-gray-100"
-              >
-                <Moon size={20} />
-              </button>
-
-              <div
-                className={`hidden h-8 w-px sm:block ${
-                  darkMode ? "bg-slate-700" : "bg-gray-200"
-                }`}
-              />
-
-              <button
-                type="button"
-                onClick={() => navigate("/candidate-profile")}
-                className="flex items-center gap-3"
-              >
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f2383d] text-sm font-bold text-white">
-                  {candidateName.charAt(0).toUpperCase()}
-                </span>
-
-                <span className="hidden text-left sm:block">
-                  <span className="block max-w-35 truncate text-sm font-semibold">
-                    {candidateName}
-                  </span>
-                  <span className="block text-xs text-slate-500">
-                    Candidate
-                  </span>
-                </span>
-
-                <ChevronDown
-                  size={16}
-                  className="hidden text-slate-500 sm:block"
-                />
-              </button>
-            </div>
-          </header>
-
-          {/* PAGE BODY */}
-          <main className="mx-auto w-full max-w-[1600px] flex-1 px-5 py-6 sm:px-8 sm:py-7">
-            {/* PAGE HEADING */}
-            <section className="relative mb-5 flex min-h-22.5 items-center justify-between gap-4 overflow-hidden">
-              <div>
-                <p className="mb-2 text-xs font-medium text-slate-500">
-                  All Jobs
-                </p>
-
-                <h1 className="text-2xl font-bold tracking-tight sm:text-[30px]">
-                  Find Your Next Opportunity
-                </h1>
-
-                <p className="mt-2 text-sm text-slate-500 sm:text-base">
-                  Explore recommended roles based on your profile and browse
-                  all job openings at Proliant.
-                </p>
-              </div>
-
-              <div className="hidden h-22.5 w-37.5 shrink-0 items-center justify-center rounded-full bg-red-50 md:flex">
-                <div className="relative">
-                  <div className="flex h-14.5 w-16.25 flex-col gap-2 rounded-lg border border-red-100 bg-white p-3 shadow-sm">
-                    <div className="h-2 w-5 rounded bg-red-200" />
-                    <div className="h-1.5 w-9 rounded bg-slate-200" />
-                    <div className="h-1.5 w-7 rounded bg-slate-200" />
-                  </div>
-                  <Search
-                    size={34}
-                    className="absolute -bottom-3 -right-5 text-[#f2383d]"
-                  />
-                </div>
-              </div>
+              <p className="mt-2 text-sm text-slate-500 sm:text-base">
+                Browse all open positions at Proliant and apply in one click.
+              </p>
             </section>
 
-            {/* RECOMMENDED JOBS */}
-            <section
-              className={`mb-5 rounded-xl border p-4 shadow-sm sm:p-5 ${
-                darkMode
-                  ? "border-slate-800 bg-slate-900"
-                  : "border-slate-200 bg-white"
-              }`}
-            >
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11.5 w-11.5 items-center justify-center rounded-xl bg-red-50 text-[#f2383d]">
+            {/* LATEST OPENINGS */}
+            {!debouncedSearch && latest.length > 0 && page === 1 && (
+              <section
+                className={`mb-5 rounded-xl border p-4 shadow-sm sm:p-5 ${card}`}
+              >
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="flex h-[46px] w-[46px] items-center justify-center rounded-xl bg-red-50 text-[#f2383d]">
                     <Sparkles size={24} />
                   </div>
 
                   <div>
                     <h2 className="text-base font-bold sm:text-lg">
-                      Recommended Jobs for You
+                      Latest Openings
                     </h2>
                     <p className="mt-1 text-xs text-slate-500 sm:text-sm">
-                      Based on your skills, experience and the role you
-                      recently applied for.
+                      The most recently posted roles.
                     </p>
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearch("");
-                    document.getElementById("all-job-posts")?.scrollIntoView({
-                      behavior: "smooth",
-                    });
-                  }}
-                  className="flex items-center gap-2 text-sm font-semibold text-[#f2383d] hover:underline"
-                >
-                  View All Recommended Jobs
-                  <ArrowRight size={17} />
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-                {filteredRecommended.map((job) => {
-                  const JobIcon = job.icon;
-                  const saved = savedJobs.includes(job.id);
-
-                  return (
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  {latest.map((job) => (
                     <article
                       key={job.id}
                       className={`rounded-xl border p-4 transition-shadow hover:shadow-md ${
-                        darkMode
-                          ? "border-slate-700"
-                          : "border-slate-200"
+                        darkMode ? "border-slate-700" : "border-slate-200"
                       }`}
                     >
                       <div className="flex items-start gap-3">
-                        <div className="flex h-11.5 w-11.5 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-500">
-                          <JobIcon size={24} />
+                        <div className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-500">
+                          <BriefcaseBusiness size={24} />
                         </div>
 
                         <div className="min-w-0 flex-1">
                           <h3 className="text-sm font-bold leading-5">
                             {job.title}
                           </h3>
-                          <span className="mt-1 inline-block rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
-                            {job.match}% Match
-                          </span>
+                          <p className="text-xs text-slate-500">
+                            {job.department}
+                          </p>
                         </div>
                       </div>
 
@@ -440,65 +231,25 @@ export default function CandidateAllJobs() {
                         </p>
                       </div>
 
-                      <div className="mt-3 flex flex-wrap gap-1.5">
-                        {job.skills.map((skill) => (
-                          <span
-                            key={skill}
-                            className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-700"
-                          >
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
-
-                      <div className="mt-4 flex items-center justify-between">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedJob(job)}
-                          className="flex items-center gap-1.5 text-xs font-semibold text-[#f2383d] hover:underline"
-                        >
-                          View Details
-                          <ArrowRight size={14} />
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => toggleSaved(job.id)}
-                          aria-label={saved ? "Unsave job" : "Save job"}
-                          className={`rounded-lg p-1.5 ${
-                            saved ? "text-[#f2383d]" : "text-slate-500"
-                          }`}
-                        >
-                          <Bookmark
-                            size={18}
-                            fill={saved ? "currentColor" : "none"}
-                          />
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => openDetails(job)}
+                        className="mt-4 flex items-center gap-1.5 text-xs font-semibold text-[#f2383d] hover:underline"
+                      >
+                        View Details
+                        <ArrowRight size={14} />
+                      </button>
                     </article>
-                  );
-                })}
-
-                {filteredRecommended.length === 0 && (
-                  <p className="col-span-full py-5 text-center text-sm text-slate-500">
-                    No recommended jobs match your search.
-                  </p>
-                )}
-              </div>
-            </section>
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* ALL JOB POSTS */}
-            <section
-              id="all-job-posts"
-              className={`rounded-xl border p-4 shadow-sm sm:p-5 ${
-                darkMode
-                  ? "border-slate-800 bg-slate-900"
-                  : "border-slate-200 bg-white"
-              }`}
-            >
+            <section className={`rounded-xl border p-4 shadow-sm sm:p-5 ${card}`}>
               <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-11.5 w-11.5 items-center justify-center rounded-xl bg-red-50 text-[#f2383d]">
+                  <div className="flex h-[46px] w-[46px] items-center justify-center rounded-xl bg-red-50 text-[#f2383d]">
                     <BriefcaseBusiness size={24} />
                   </div>
 
@@ -507,8 +258,7 @@ export default function CandidateAllJobs() {
                       All Job Posts
                     </h2>
                     <p className="mt-1 text-xs text-slate-500 sm:text-sm">
-                      Explore all open positions at Proliant and find the right
-                      opportunity for your career.
+                      Explore all open positions at Proliant.
                     </p>
                   </div>
                 </div>
@@ -527,7 +277,6 @@ export default function CandidateAllJobs() {
                 </button>
               </div>
 
-              {/* FILTERS */}
               {showFilters && (
                 <div
                   className={`mb-5 flex flex-wrap items-center gap-3 rounded-lg p-4 ${
@@ -546,7 +295,9 @@ export default function CandidateAllJobs() {
                   >
                     <option value="All">All job types</option>
                     <option value="Full Time">Full Time</option>
+                    <option value="Part Time">Part Time</option>
                     <option value="Contract">Contract</option>
+                    <option value="Internship">Internship</option>
                   </select>
 
                   <button
@@ -562,380 +313,203 @@ export default function CandidateAllJobs() {
                 </div>
               )}
 
-              {/* TABLE HEADER — DESKTOP */}
-              <div className="hidden overflow-x-auto lg:block">
-                <table className="w-full min-w-225 border-collapse text-left">
-                  <thead>
-                    <tr className="bg-slate-50 text-xs font-semibold text-slate-600">
-                      <th className="rounded-l-lg px-3 py-3">Job Title</th>
-                      <th className="px-3 py-3">Location</th>
-                      <th className="px-3 py-3">Experience</th>
-                      <th className="px-3 py-3">Posted Date</th>
-                      <th className="px-3 py-3">Job Type</th>
-                      <th className="px-3 py-3">Skills</th>
-                      <th className="rounded-r-lg px-3 py-3 text-right">
-                        Action
-                      </th>
-                    </tr>
-                  </thead>
+              <PageState loading={loading} error={error} onRetry={reload}>
+                {/* DESKTOP TABLE */}
+                <div className="hidden overflow-x-auto lg:block">
+                  <table className="w-full min-w-[900px] border-collapse text-left">
+                    <thead>
+                      <tr className="bg-slate-50 text-xs font-semibold text-slate-600">
+                        <th className="rounded-l-lg px-3 py-3">Job Title</th>
+                        <th className="px-3 py-3">Location</th>
+                        <th className="px-3 py-3">Experience</th>
+                        <th className="px-3 py-3">Posted Date</th>
+                        <th className="px-3 py-3">Job Type</th>
+                        <th className="px-3 py-3">Skills</th>
+                        <th className="rounded-r-lg px-3 py-3 text-right">
+                          Action
+                        </th>
+                      </tr>
+                    </thead>
 
-                  <tbody>
-                    {filteredJobs.map((job, index) => (
-                      <tr
-                        key={job.id}
-                        className={`border-b last:border-b-0 ${
-                          darkMode
-                            ? "border-slate-800"
-                            : "border-slate-100"
-                        }`}
-                      >
-                        <td className="px-3 py-3">
-                          <div className="flex items-center gap-3">
+                    <tbody>
+                      {visibleJobs.map((job, index) => (
+                        <tr
+                          key={job.id}
+                          className={`border-b last:border-b-0 ${
+                            darkMode ? "border-slate-800" : "border-slate-100"
+                          }`}
+                        >
+                          <td className="px-3 py-3">
+                            <div className="flex items-center gap-3">
+                              <span
+                                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+                                  index % 2 === 0
+                                    ? "bg-red-50 text-[#f2383d]"
+                                    : "bg-blue-50 text-blue-500"
+                                }`}
+                              >
+                                <BriefcaseBusiness size={20} />
+                              </span>
+                              <span>
+                                <span className="block whitespace-nowrap text-sm font-bold">
+                                  {job.title}
+                                </span>
+                                <span className="block text-xs text-slate-500">
+                                  {job.department}
+                                </span>
+                              </span>
+                            </div>
+                          </td>
+
+                          <td className="whitespace-nowrap px-3 py-3 text-xs text-slate-500">
+                            <span className="flex items-center gap-1.5">
+                              <MapPin size={14} />
+                              {job.location}
+                            </span>
+                          </td>
+
+                          <td className="whitespace-nowrap px-3 py-3 text-xs text-slate-500">
+                            {job.experience}
+                          </td>
+
+                          <td className="whitespace-nowrap px-3 py-3 text-xs text-slate-500">
+                            <span className="flex items-center gap-1.5">
+                              <CalendarDays size={14} />
+                              {job.date}
+                            </span>
+                          </td>
+
+                          <td className="px-3 py-3">
                             <span
-                              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
-                                index % 2 === 0
-                                  ? "bg-red-50 text-[#f2383d]"
-                                  : "bg-blue-50 text-blue-500"
-                              }`}
+                              className={`whitespace-nowrap rounded-full px-3 py-1.5 text-[11px] font-semibold ${typeBadge(
+                                job.type
+                              )}`}
                             >
-                              <BriefcaseBusiness size={20} />
+                              {job.type}
                             </span>
-                            <span className="whitespace-nowrap text-sm font-bold">
-                              {job.title}
-                            </span>
-                          </div>
-                        </td>
+                          </td>
 
-                        <td className="whitespace-nowrap px-3 py-3 text-xs text-slate-500">
-                          <span className="flex items-center gap-1.5">
+                          <td className="px-3 py-3">
+                            <div className="flex max-w-[250px] flex-wrap gap-1.5">
+                              {job.skills.slice(0, 4).map((skill) => (
+                                <span
+                                  key={skill}
+                                  className="whitespace-nowrap rounded-full bg-blue-50 px-2.5 py-1.5 text-[10px] font-medium text-blue-700"
+                                >
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+
+                          <td className="px-3 py-3 text-right">
+                            <button
+                              type="button"
+                              onClick={() => openDetails(job)}
+                              className="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border border-[#f2383d] px-3 py-2 text-xs font-semibold text-[#f2383d] transition hover:bg-[#f2383d] hover:text-white"
+                            >
+                              View Details
+                              <ArrowRight size={14} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* MOBILE CARDS */}
+                <div className="space-y-3 lg:hidden">
+                  {visibleJobs.map((job) => (
+                    <article
+                      key={job.id}
+                      className={`rounded-xl border p-4 ${
+                        darkMode ? "border-slate-700" : "border-slate-200"
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-50 text-[#f2383d]">
+                          <BriefcaseBusiness size={20} />
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-bold">{job.title}</h3>
+                          <p className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
                             <MapPin size={14} />
                             {job.location}
-                          </span>
-                        </td>
-
-                        <td className="whitespace-nowrap px-3 py-3 text-xs text-slate-500">
-                          {job.experience}
-                        </td>
-
-                        <td className="whitespace-nowrap px-3 py-3 text-xs text-slate-500">
-                          <span className="flex items-center gap-1.5">
-                            <CalendarDays size={14} />
-                            {job.date}
-                          </span>
-                        </td>
-
-                        <td className="px-3 py-3">
-                          <span
-                            className={`whitespace-nowrap rounded-full px-3 py-1.5 text-[11px] font-semibold ${
-                              job.type === "Contract"
-                                ? "bg-amber-50 text-amber-700"
-                                : "bg-emerald-50 text-emerald-700"
-                            }`}
-                          >
-                            {job.type}
-                          </span>
-                        </td>
-
-                        <td className="px-3 py-3">
-                          <div className="flex max-w-62.5 flex-wrap gap-1.5">
-                            {job.skills.map((skill) => (
-                              <span
-                                key={skill}
-                                className="whitespace-nowrap rounded-full bg-blue-50 px-2.5 py-1.5 text-[10px] font-medium text-blue-700"
-                              >
-                                {skill}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-
-                        <td className="px-3 py-3 text-right">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              alert(`Selected job: ${job.title}`)
-                            }
-                            className="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border border-[#f2383d] px-3 py-2 text-xs font-semibold text-[#f2383d] transition hover:bg-[#f2383d] hover:text-white"
-                          >
-                            View Details
-                            <ArrowRight size={14} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* MOBILE JOB CARDS */}
-              <div className="space-y-3 lg:hidden">
-                {filteredJobs.map((job) => (
-                  <article
-                    key={job.id}
-                    className={`rounded-xl border p-4 ${
-                      darkMode ? "border-slate-700" : "border-slate-200"
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-50 text-[#f2383d]">
-                        <BriefcaseBusiness size={20} />
+                          </p>
+                          <p className="mt-1 text-xs text-slate-500">
+                            {job.experience} · {job.date}
+                          </p>
+                        </div>
                       </div>
 
-                      <div className="min-w-0 flex-1">
-                        <h3 className="font-bold">{job.title}</h3>
-                        <p className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
-                          <MapPin size={14} />
-                          {job.location}
-                        </p>
-                        <p className="mt-1 text-xs text-slate-500">
-                          {job.experience} · {job.date}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {job.skills.map((skill) => (
+                      <div className="mt-4 flex items-center justify-between">
                         <span
-                          key={skill}
-                          className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] text-blue-700"
+                          className={`rounded-full px-3 py-1.5 text-xs font-semibold ${typeBadge(
+                            job.type
+                          )}`}
                         >
-                          {skill}
+                          {job.type}
                         </span>
-                      ))}
-                    </div>
 
-                    <div className="mt-4 flex items-center justify-between">
-                      <span
-                        className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
-                          job.type === "Contract"
-                            ? "bg-amber-50 text-amber-700"
-                            : "bg-emerald-50 text-emerald-700"
-                        }`}
-                      >
-                        {job.type}
-                      </span>
+                        <button
+                          type="button"
+                          onClick={() => openDetails(job)}
+                          className="flex items-center gap-2 rounded-lg border border-[#f2383d] px-3 py-2 text-xs font-semibold text-[#f2383d]"
+                        >
+                          View Details
+                          <ArrowRight size={14} />
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
 
+                {visibleJobs.length === 0 && (
+                  <p className="py-10 text-center text-sm text-slate-500">
+                    No jobs found. Try a different search or clear your
+                    filters.
+                  </p>
+                )}
+
+                {pagination && pagination.totalPages > 0 && (
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-xs text-slate-400">
+                      Page {pagination.currentPage} of {pagination.totalPages}{" "}
+                      · {pagination.totalJobs} job post
+                      {pagination.totalJobs === 1 ? "" : "s"}
+                    </p>
+
+                    <div className="flex gap-2">
                       <button
                         type="button"
-                        onClick={() => setSelectedJob(job)}
-                        className="flex items-center gap-2 rounded-lg border border-[#f2383d] px-3 py-2 text-xs font-semibold text-[#f2383d]"
+                        disabled={page <= 1}
+                        onClick={() => setPage((value) => value - 1)}
+                        aria-label="Previous page"
+                        className="rounded-lg border border-slate-200 p-2 disabled:opacity-40"
                       >
-                        View Details
-                        <ArrowRight size={14} />
+                        <ChevronLeft size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={page >= pagination.totalPages}
+                        onClick={() => setPage((value) => value + 1)}
+                        aria-label="Next page"
+                        className="rounded-lg border border-slate-200 p-2 disabled:opacity-40"
+                      >
+                        <ChevronRight size={16} />
                       </button>
                     </div>
-                  </article>
-                ))}
-              </div>
-
-              {filteredJobs.length === 0 && (
-                <p className="py-10 text-center text-sm text-slate-500">
-                  No jobs found. Try a different search or clear your filters.
-                </p>
-              )}
-
-              <p className="mt-4 text-xs text-slate-400">
-                Showing {filteredJobs.length} of {allJobs.length} job posts
-              </p>
+                  </div>
+                )}
+              </PageState>
             </section>
 
-
-            {/* JOB APPLICATION FORM MODAL */}
-            {applicationJob && (
-              <div
-                className="fixed inset-0 z-110 flex items-center justify-center bg-black/50 p-3 sm:p-5"
-                onClick={() => setApplicationJob(null)}
-              >
-                <div
-                  role="dialog"
-                  aria-modal="true"
-                  aria-labelledby="job-application-title"
-                  className="relative max-h-[95vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-8"
-                  onClick={(event) => event.stopPropagation()}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setApplicationJob(null)}
-                    aria-label="Close application form"
-                    className="absolute right-5 top-5 rounded-full border border-gray-200 p-2 text-gray-500 transition hover:bg-gray-100"
-                  >
-                    <X size={19} />
-                  </button>
-
-                  <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-[#f2383d]">
-                    Job Application
-                  </p>
-                  <h2 id="job-application-title" className="pr-10 text-3xl font-bold tracking-tight text-gray-950">
-                    Apply for this role
-                  </h2>
-                  <p className="mt-3 text-lg text-gray-500">{applicationJob.title}</p>
-
-                  <hr className="my-6 border-gray-200" />
-
-                  <form
-                    className="space-y-5"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      alert("Application form UI is ready. Connect the existing Careers application API to submit applications.");
-                    }}
-                  >
-                    <div>
-                      <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
-                        Position
-                      </label>
-                      <input
-                        value={applicationJob.title}
-                        readOnly
-                        className="w-full rounded-xl border border-gray-200 bg-gray-100 px-5 py-3.5 text-sm text-gray-600 outline-none"
-                      />
-                    </div>
-
-                    <div>
-                      <label htmlFor="application-area" className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
-                        Area of Interest
-                      </label>
-                      <select
-                        id="application-area"
-                        required
-                        value={applicationForm.areaOfInterest}
-                        onChange={(event) => setApplicationForm({ ...applicationForm, areaOfInterest: event.target.value })}
-                        className="w-full rounded-xl border border-gray-200 bg-white px-5 py-3.5 text-sm text-gray-700 outline-none focus:border-[#f2383d]"
-                      >
-                        <option value="">Select an area</option>
-                        <option>SAP</option>
-                        <option>Data &amp; Analytics</option>
-                        <option>Software Development</option>
-                        <option>Business Intelligence</option>
-                        <option>Consulting</option>
-                        <option>{applicationJob.title}</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label htmlFor="application-name" className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
-                        Full Name <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        id="application-name"
-                        required
-                        value={applicationForm.fullName}
-                        onChange={(event) => setApplicationForm({ ...applicationForm, fullName: event.target.value })}
-                        placeholder="Enter your full name"
-                        autoComplete="name"
-                        className="w-full rounded-xl border border-gray-200 bg-white px-5 py-3.5 text-sm outline-none focus:border-[#f2383d]"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                      <div>
-                        <label htmlFor="application-email" className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
-                          Email <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          id="application-email"
-                          type="email"
-                          required
-                          value={applicationForm.email}
-                          onChange={(event) => setApplicationForm({ ...applicationForm, email: event.target.value })}
-                          placeholder="you@example.com"
-                          autoComplete="email"
-                          className="w-full rounded-xl border border-gray-200 bg-white px-5 py-3.5 text-sm outline-none focus:border-[#f2383d]"
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="application-phone" className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
-                          Phone Number <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          id="application-phone"
-                          type="tel"
-                          required
-                          value={applicationForm.phone}
-                          onChange={(event) => setApplicationForm({ ...applicationForm, phone: event.target.value })}
-                          placeholder="Enter phone number"
-                          autoComplete="tel"
-                          className="w-full rounded-xl border border-gray-200 bg-white px-5 py-3.5 text-sm outline-none focus:border-[#f2383d]"
-                        />
-                      </div>
-                    </div>
-
-                    <fieldset>
-                      <legend className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
-                        Are you a fresher?
-                      </legend>
-                      <div className="flex gap-6 text-sm text-gray-700">
-                        {["Yes", "No"].map((value) => (
-                          <label key={value} className="flex items-center gap-2">
-                            <input
-                              type="radio"
-                              name="application-fresher"
-                              value={value}
-                              required
-                              checked={applicationForm.fresher === value}
-                              onChange={(event) => setApplicationForm({ ...applicationForm, fresher: event.target.value })}
-                              className="h-4 w-4 accent-[#f2383d]"
-                            />
-                            {value}
-                          </label>
-                        ))}
-                      </div>
-                    </fieldset>
-
-                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                      <div>
-                        <label htmlFor="application-location" className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
-                          Location
-                        </label>
-                        <input
-                          id="application-location"
-                          value={applicationForm.location}
-                          onChange={(event) => setApplicationForm({ ...applicationForm, location: event.target.value })}
-                          placeholder="City / Country"
-                          autoComplete="address-level2"
-                          className="w-full rounded-xl border border-gray-200 bg-white px-5 py-3.5 text-sm outline-none focus:border-[#f2383d]"
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="application-experience" className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
-                          Years of Experience
-                        </label>
-                        <input
-                          id="application-experience"
-                          type="number"
-                          min="0"
-                          value={applicationForm.experienceYears}
-                          onChange={(event) => setApplicationForm({ ...applicationForm, experienceYears: event.target.value })}
-                          placeholder="e.g. 3"
-                          className="w-full rounded-xl border border-gray-200 bg-white px-5 py-3.5 text-sm outline-none focus:border-[#f2383d]"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-end">
-                      <button
-                        type="button"
-                        onClick={() => setApplicationJob(null)}
-                        className="rounded-xl border border-gray-200 px-5 py-3 text-sm font-semibold text-gray-600 transition hover:bg-gray-50"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        className="flex items-center justify-center gap-2 rounded-xl bg-[#f2383d] px-6 py-3 text-sm font-semibold text-white transition hover:bg-red-600"
-                      >
-                        Submit Application
-                        <ArrowRight size={17} />
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            )}
-
-                        {/* JOB DETAILS MODAL */}
+            {/* JOB DETAILS MODAL */}
             {selectedJob && (
               <div
-                className="fixed inset-0 z-100 flex items-center justify-center bg-black/50 p-4"
+                className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
                 onClick={() => setSelectedJob(null)}
               >
                 <div
@@ -943,7 +517,9 @@ export default function CandidateAllJobs() {
                   aria-modal="true"
                   aria-labelledby="job-details-title"
                   className={`relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl p-6 shadow-2xl sm:p-8 ${
-                    darkMode ? "bg-slate-900 text-white" : "bg-white text-slate-900"
+                    darkMode
+                      ? "bg-slate-900 text-white"
+                      : "bg-white text-slate-900"
                   }`}
                   onClick={(event) => event.stopPropagation()}
                 >
@@ -976,7 +552,11 @@ export default function CandidateAllJobs() {
                       <BriefcaseBusiness size={16} />
                       {selectedJob.experience}
                     </span>
-                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">
+                    <span
+                      className={`rounded-full px-3 py-1 ${typeBadge(
+                        selectedJob.type
+                      )}`}
+                    >
                       {selectedJob.type}
                     </span>
                   </div>
@@ -985,57 +565,190 @@ export default function CandidateAllJobs() {
 
                   <h3 className="mb-3 text-lg font-bold">Job Description</h3>
                   <p className="text-sm leading-7 text-slate-600">
-                    {selectedJob.description ||
-                      `We are looking for a ${selectedJob.title} to contribute to our team. The candidate should have relevant experience and skills for this role.`}
+                    {selectedJob.description}
                   </p>
 
-                  <h3 className="mb-3 mt-6 text-lg font-bold">Required Skills</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedJob.skills.map((skill) => (
-                      <span
-                        key={skill}
-                        className="rounded-full bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700"
-                      >
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
+                  <h3 className="mb-3 mt-6 text-lg font-bold">Requirements</h3>
+                  <p className="text-sm leading-7 text-slate-600">
+                    {selectedJob.requirements}
+                  </p>
+
+                  {selectedJob.skills.length > 0 && (
+                    <>
+                      <h3 className="mb-3 mt-6 text-lg font-bold">
+                        Required Skills
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedJob.skills.map((skill) => (
+                          <span
+                            key={skill}
+                            className="rounded-full bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </>
+                  )}
 
                   <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                     <button
                       type="button"
                       onClick={() => setSelectedJob(null)}
-                      className={`rounded-lg border px-5 py-3 text-sm font-semibold transition ${
-                        darkMode
-                          ? "border-slate-700 hover:bg-slate-800"
-                          : "border-slate-200 text-slate-700 hover:bg-slate-50"
-                      }`}
+                      className="rounded-lg border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                     >
                       Close
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setApplicationJob(selectedJob);
-                        setApplicationForm((previous) => ({
-                          ...previous,
-                          areaOfInterest: selectedJob.title,
-                        }));
-                        setSelectedJob(null);
-                      }}
-                      className="flex items-center justify-center gap-2 rounded-lg bg-[#f2383d] px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-600"
-                    >
-                      Apply for this Job
-                      <ArrowRight size={17} />
-                    </button>
+
+                    {appliedJobIds.has(selectedJob.id) ? (
+                      <span className="flex items-center justify-center rounded-lg bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-700">
+                        Already applied
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => openApply(selectedJob)}
+                        className="flex items-center justify-center gap-2 rounded-lg bg-[#f2383d] px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-600"
+                      >
+                        Apply for this Job
+                        <ArrowRight size={17} />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
             )}
 
-          </main>
-        </div>
-      </div>
-    </div>
+            {/* APPLY DIALOG */}
+            {applyJob && (
+              <div
+                className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 p-4"
+                onClick={() => setApplyJob(null)}
+              >
+                <div
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="apply-title"
+                  className="relative w-full max-w-lg rounded-2xl bg-white p-6 text-slate-900 shadow-2xl sm:p-8"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setApplyJob(null)}
+                    aria-label="Close"
+                    className="absolute right-5 top-5 rounded-full border border-gray-200 p-2 text-gray-500 transition hover:bg-gray-100"
+                  >
+                    <X size={19} />
+                  </button>
+
+                  <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-[#f2383d]">
+                    Job Application
+                  </p>
+
+                  <h2
+                    id="apply-title"
+                    className="pr-10 text-2xl font-bold tracking-tight"
+                  >
+                    Apply for this role
+                  </h2>
+
+                  <p className="mt-2 text-gray-500">{applyJob.title}</p>
+
+                  {applyState.done ? (
+                    <div className="mt-6">
+                      <p
+                        role="status"
+                        className="rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
+                      >
+                        Application submitted successfully. You can follow its
+                        progress under My Applications.
+                      </p>
+
+                      <div className="mt-6 flex justify-end gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setApplyJob(null)}
+                          className="rounded-xl border border-gray-200 px-5 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-50"
+                        >
+                          Close
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => navigate("/candidate-applications")}
+                          className="rounded-xl bg-[#f2383d] px-5 py-3 text-sm font-semibold text-white hover:bg-red-600"
+                        >
+                          My Applications
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="mt-6 rounded-xl border border-gray-200 p-4 text-sm">
+                        <p className="font-semibold">Your resume</p>
+
+                        {profile.loading ? (
+                          <p className="mt-1 text-gray-500">Checking...</p>
+                        ) : hasResume ? (
+                          <p className="mt-1 text-gray-600">
+                            {resume.fileName} ({resume.fileType?.toUpperCase()})
+                            from your profile will be submitted.
+                          </p>
+                        ) : (
+                          <p className="mt-1 text-amber-700">
+                            You have not added a resume yet. Add one on your
+                            profile before applying.
+                          </p>
+                        )}
+                      </div>
+
+                      {applyState.error && (
+                        <p
+                          role="alert"
+                          className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                        >
+                          {applyState.error}
+                        </p>
+                      )}
+
+                      <div className="mt-6 flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-end">
+                        <button
+                          type="button"
+                          onClick={() => setApplyJob(null)}
+                          className="rounded-xl border border-gray-200 px-5 py-3 text-sm font-semibold text-gray-600 transition hover:bg-gray-50"
+                        >
+                          Cancel
+                        </button>
+
+                        {!hasResume && !profile.loading ? (
+                          <button
+                            type="button"
+                            onClick={() => navigate("/candidate-profile")}
+                            className="rounded-xl bg-[#f2383d] px-6 py-3 text-sm font-semibold text-white transition hover:bg-red-600"
+                          >
+                            Go to Profile
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={submitApplication}
+                            disabled={applyState.submitting || profile.loading}
+                            className="flex items-center justify-center gap-2 rounded-xl bg-[#f2383d] px-6 py-3 text-sm font-semibold text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {applyState.submitting
+                              ? "Submitting..."
+                              : "Submit Application"}
+                            <ArrowRight size={17} />
+                          </button>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
+        );
+      }}
+    </CandidateLayout>
   );
 }

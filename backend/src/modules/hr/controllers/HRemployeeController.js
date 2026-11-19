@@ -2,6 +2,7 @@ import multer from "multer";
 import * as XLSX from "xlsx";
 
 import Employee from "../models/HREmployee.js";
+import { sendError } from "../../../shared/utils/httpErrors.js";
 
 /*
  * =========================================================
@@ -219,11 +220,7 @@ export const getEmployees = async (req, res) => {
       employees,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch employees",
-      error: error.message,
-    });
+    return sendError(res, error, "Failed to fetch employees");
   }
 };
 
@@ -258,11 +255,7 @@ export const addEmployee = async (req, res) => {
       employee,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to add employee",
-      error: error.message,
-    });
+    return sendError(res, error, "Failed to add employee");
   }
 };
 
@@ -785,12 +778,7 @@ export const deleteEmployee = async (req, res) => {
         "Employee deleted successfully",
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message:
-        "Failed to delete employee",
-      error: error.message,
-    });
+    return sendError(res, error, "Failed to delete employee");
   }
 };
 
@@ -837,11 +825,6 @@ export const updateEmployee = async (req, res) => {
       employee,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message:
-        "Failed to update employee",
-      error: error.message,
-    });
+    return sendError(res, error, "Failed to update employee");
   }
 };

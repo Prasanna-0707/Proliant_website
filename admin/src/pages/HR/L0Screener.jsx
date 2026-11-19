@@ -1,317 +1,408 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { UserCheck } from "lucide-react";
+
+import useApi from "../../services/useApi.js";
 import {
-  Plus,
-  RefreshCw,
-  Users,
-  AlertCircle,
-  Loader2,
-  ClipboardCheck,
-} from "lucide-react";
+  listScreeners,
+  listScreeningQueue,
+  assignScreener,
+  reassignScreener,
+  getAssignmentHistory,
+} from "../../services/hrScreeners.js";
+import { formatDateTime } from "../../services/format.js";
 
-import ScreenerStats from "../../components/HR/ScreenerStats";
-import ScreenerTable from "../../components/HR/ScreenerTable";
-import AssignScreenerModal from "../../components/HR/AssignScreenerModal";
+import DataState, { EmptyState } from "../../components/StateMessage";
+import Modal, {
+  Field,
+  inputClass,
+  primaryButton,
+  secondaryButton,
+} from "../../components/common/Modal";
 
-import {
-  getEmployeeId,
-  getEmployeeName,
-  getEmployeeEmail,
-  getEmployeeDepartment,
-  getEmployeeDesignation,
-  isEmployeeActive,
-  isAlreadyScreener,
-} from "../../data/screenerData";
+const SCOPES = [
+  ["unassigned", "Unassigned"],
+  ["assigned", "Assigned"],
+  ["all", "All"],
+];
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
-
-function L0Screener() {
-  const [employees, setEmployees] = useState([]);
-  const [assignedIds, setAssignedIds] = useState([]);
-  const [screenerStatuses, setScreenerStatuses] = useState({});
-
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState("");
-
+// HR: real L0_SCREENER accounts, their workload, and application assignment.
+export default function L0Screener() {
+  const [scope, setScope] = useState("unassigned");
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
-  const [openMenuId, setOpenMenuId] = useState(null);
-  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState({ screenerId: "", reason: "" });
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState({ type: "", text: "" });
 
-  const fetchEmployees = async (showRefresh = false) => {
-    const token = localStorage.getItem("adminToken");
+  const screeners = useApi((signal) => listScreeners({}, signal), []);
 
-    if (!token) {
-      setError("Your session has expired. Please login again.");
-      setLoading(false);
-      return;
-    }
+  const queue = useApi(
+    (signal) => listScreeningQueue({ scope, search, limit: 200 }, signal),
+    [scope, search]
+  );
 
-    if (showRefresh) {
-      setRefreshing(true);
-    } else {
-      setLoading(true);
-    }
+  const history = useApi(
+    (signal) =>
+      modal?.type === "history"
+        ? getAssignmentHistory({ applicationId: modal.application._id }, signal)
+        : Promise.resolve(null),
+    [modal?.type, modal?.application?._id]
+  );
 
-    setError("");
+  const screenerList = useMemo(
+    () => screeners.data?.screeners || [],
+    [screeners.data]
+  );
+
+  const totals = useMemo(
+    () => ({
+      active: screenerList.filter((item) => item.status === "Active").length,
+      open: screenerList.reduce((sum, item) => sum + item.workload.open, 0),
+      completed: screenerList.reduce(
+        (sum, item) => sum + item.workload.completed,
+        0
+      ),
+    }),
+    [screenerList]
+  );
+
+  const openAssign = (application) => {
+    setForm({ screenerId: "", reason: "" });
+    setModal({
+      type: application.assignedScreener ? "reassign" : "assign",
+      application,
+    });
+  };
+
+  const submit = async (event) => {
+    event.preventDefault();
+    setSaving(true);
+    setMessage({ type: "", text: "" });
 
     try {
-      const response = await fetch(
-        `${API_BASE_URL.replace(/\/$/, "")}/employees`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const call = modal.type === "reassign" ? reassignScreener : assignScreener;
 
-      if (response.status === 401) {
-        setError("Your session has expired. Please login again.");
-        setEmployees([]);
-        return;
-      }
-
-      const result = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(
-          result.message || "Failed to fetch employees."
-        );
-      }
-
-      const employeeList = Array.isArray(result)
-        ? result
-        : result.employees || result.data || [];
-
-      setEmployees(employeeList);
-    } catch (err) {
-      console.error("Fetch employees error:", err);
-      setError(err.message || "Unable to load employees.");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchEmployees();
-  }, []);
-
-  const screeners = useMemo(() => {
-    return employees
-      .filter((employee) => {
-        const id = getEmployeeId(employee);
-
-        return (
-          assignedIds.includes(id) ||
-          isAlreadyScreener(employee)
-        );
-      })
-      .map((employee) => {
-        const id = getEmployeeId(employee);
-
-        return {
-          id,
-          name: getEmployeeName(employee),
-          email: getEmployeeEmail(employee),
-          department: getEmployeeDepartment(employee),
-          designation: getEmployeeDesignation(employee),
-          isActive:
-            screenerStatuses[id] !== undefined
-              ? screenerStatuses[id]
-              : isEmployeeActive(employee),
-          assignedApplications: 0,
-        };
+      const result = await call({
+        applicationId: modal.application._id,
+        screenerId: form.screenerId,
+        reason: form.reason,
       });
-  }, [employees, assignedIds, screenerStatuses]);
 
-  const handleAssign = (employeeId) => {
-    setAssignedIds((previous) => {
-      if (previous.includes(employeeId)) {
-        return previous;
-      }
-
-      return [...previous, employeeId];
-    });
-
-    setScreenerStatuses((previous) => ({
-      ...previous,
-      [employeeId]: true,
-    }));
-
-    setShowAssignModal(false);
-    setSearch("");
-    setStatusFilter("All");
-  };
-
-  const handleToggleStatus = (employeeId) => {
-    const screener = screeners.find(
-      (item) => item.id === employeeId
-    );
-
-    if (!screener) {
-      return;
+      setMessage({
+        type: "success",
+        text: `${result.message}${
+          result.departmentMismatch
+            ? " Note: the screener is from a different department."
+            : ""
+        }`,
+      });
+      setModal(null);
+      screeners.reload();
+      queue.reload();
+    } catch (requestError) {
+      setMessage({ type: "error", text: requestError.message });
+    } finally {
+      setSaving(false);
     }
-
-    setScreenerStatuses((previous) => ({
-      ...previous,
-      [employeeId]: !screener.isActive,
-    }));
-
-    setOpenMenuId(null);
   };
 
-  const handleRemove = (employeeId) => {
-    const screener = screeners.find(
-      (item) => item.id === employeeId
-    );
-
-    const confirmed = window.confirm(
-      `Remove ${screener?.name || "this employee"} from L0 Screener assignment?`
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    setAssignedIds((previous) =>
-      previous.filter((id) => id !== employeeId)
-    );
-
-    setScreenerStatuses((previous) => {
-      const updated = { ...previous };
-      delete updated[employeeId];
-      return updated;
-    });
-
-    setOpenMenuId(null);
-  };
-
-  const assignedIdsForModal = useMemo(() => {
-    return [
-      ...new Set([
-        ...assignedIds,
-        ...employees
-          .filter(isAlreadyScreener)
-          .map(getEmployeeId),
-      ]),
-    ];
-  }, [assignedIds, employees]);
-
-  if (loading) {
-    return (
-      <section className="min-h-screen bg-gray-100 px-4 py-6 text-gray-900 dark:bg-gray-950 dark:text-white sm:px-6 lg:px-8">
-        <div className="flex min-h-[60vh] items-center justify-center">
-          <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
-            <Loader2 size={20} className="animate-spin" />
-            Loading employees...
-          </div>
-        </div>
-      </section>
-    );
-  }
+  const activeScreeners = screenerList.filter(
+    (item) => item.status === "Active" && item._id !== modal?.application?.assignedScreener?._id
+  );
 
   return (
-    <section className="min-h-screen bg-gray-100 px-4 py-6 text-gray-900 transition-colors dark:bg-gray-950 dark:text-white sm:px-6 lg:px-8">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <ClipboardCheck
-              size={23}
-              className="text-red-600"
-            />
-
-            <h1 className="text-2xl font-semibold tracking-tight">
-              L0 Screener Management
-            </h1>
-          </div>
-
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Manage employees assigned to initial candidate screening.
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <button
-            type="button"
-            onClick={() => fetchEmployees(true)}
-            disabled={refreshing}
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
-          >
-            <RefreshCw
-              size={16}
-              className={refreshing ? "animate-spin" : ""}
-            />
-            Refresh
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setShowAssignModal(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-red-700"
-          >
-            <Plus size={18} />
-            Assign Screener
-          </button>
-        </div>
-      </div>
-
-      {error && (
-        <div className="mb-5 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400">
-          <AlertCircle size={18} className="mt-0.5 shrink-0" />
-
-          <div className="flex-1">
-            {error}
-          </div>
-
-          <button
-            type="button"
-            onClick={() => fetchEmployees(true)}
-            className="font-medium underline"
-          >
-            Retry
-          </button>
-        </div>
-      )}
-
-      <ScreenerStats screeners={screeners} />
-
-      <ScreenerTable
-        screeners={screeners}
-        search={search}
-        setSearch={setSearch}
-        statusFilter={statusFilter}
-        setStatusFilter={setStatusFilter}
-        openMenuId={openMenuId}
-        setOpenMenuId={setOpenMenuId}
-        onToggleStatus={handleToggleStatus}
-        onRemove={handleRemove}
-      />
-
-      <div className="mt-5 flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-900/50 dark:bg-blue-950/20">
-        <Users
-          size={18}
-          className="mt-0.5 shrink-0 text-blue-600 dark:text-blue-400"
-        />
-
-        <p className="text-xs leading-5 text-blue-700 dark:text-blue-300">
-          Assignments are currently maintained in frontend state only.
-          They will not be saved to the employee records until backend
-          integration is completed.
+    <div className="space-y-6">
+      <div>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
+          <UserCheck size={24} className="text-red-500" />
+          L0 Screening Management
+        </h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Assign candidates to L0 screeners, balance workload and review
+          assignment history.
         </p>
       </div>
 
-      <AssignScreenerModal
-        isOpen={showAssignModal}
-        onClose={() => setShowAssignModal(false)}
-        employees={employees}
-        assignedIds={assignedIdsForModal}
-        onAssign={handleAssign}
-      />
-    </section>
+      {message.text && (
+        <p
+          role={message.type === "error" ? "alert" : "status"}
+          className={`rounded-lg px-4 py-3 text-sm ${
+            message.type === "error"
+              ? "bg-red-50 text-red-700"
+              : "bg-emerald-50 text-emerald-700"
+          }`}
+        >
+          {message.text}
+        </p>
+      )}
+
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {[
+          ["L0 screeners", screenerList.length],
+          ["Active", totals.active],
+          ["Open applications", totals.open],
+          ["Completed screenings", totals.completed],
+        ].map(([label, value]) => (
+          <div
+            key={label}
+            className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
+          >
+            <p className="text-sm text-gray-500">{label}</p>
+            <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
+              {value}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <section className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <h2 className="border-b border-gray-200 px-4 py-3 text-base font-semibold dark:border-gray-800">
+          L0 Screeners
+        </h2>
+
+        <DataState
+          loading={screeners.loading}
+          error={screeners.error}
+          onRetry={screeners.reload}
+        >
+          {screenerList.length === 0 ? (
+            <EmptyState text="No L0 screeners found. Create L0 Screener accounts in Users." />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[720px] text-left text-sm">
+                <thead className="bg-gray-50 text-xs uppercase text-gray-500 dark:bg-gray-800">
+                  <tr>
+                    {["Screener", "Department", "Status", "Pending", "In progress", "Completed"].map(
+                      (heading) => (
+                        <th key={heading} className="px-4 py-3 font-semibold">
+                          {heading}
+                        </th>
+                      )
+                    )}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {screenerList.map((item) => (
+                    <tr key={item._id}>
+                      <td className="px-4 py-3">
+                        <p className="font-semibold text-gray-900 dark:text-white">
+                          {item.name}
+                        </p>
+                        <p className="text-xs text-gray-500">{item.email}</p>
+                      </td>
+                      <td className="px-4 py-3">{item.department || "—"}</td>
+                      <td className="px-4 py-3">{item.status}</td>
+                      <td className="px-4 py-3">{item.workload.pending}</td>
+                      <td className="px-4 py-3">{item.workload.inProgress}</td>
+                      <td className="px-4 py-3">{item.workload.completed}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </DataState>
+      </section>
+
+      <section className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <div className="flex flex-col gap-3 border-b border-gray-200 p-4 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-base font-semibold">Applications</h2>
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="flex gap-2">
+              {SCOPES.map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setScope(value)}
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${
+                    scope === value
+                      ? "bg-red-500 text-white"
+                      : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search candidate or position"
+              className={`${inputClass} sm:w-64`}
+            />
+          </div>
+        </div>
+
+        <DataState
+          loading={queue.loading}
+          error={queue.error}
+          onRetry={queue.reload}
+        >
+          {(queue.data?.applications || []).length === 0 ? (
+            <EmptyState text="No applications in this view." />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[820px] text-left text-sm">
+                <thead className="bg-gray-50 text-xs uppercase text-gray-500 dark:bg-gray-800">
+                  <tr>
+                    {["Candidate", "Position", "Department", "Status", "Screener", "Actions"].map(
+                      (heading) => (
+                        <th key={heading} className="px-4 py-3 font-semibold">
+                          {heading}
+                        </th>
+                      )
+                    )}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {queue.data.applications.map((item) => {
+                    const finished = ["L0_SHORTLISTED", "L0_REJECTED", "Interview", "Selected", "Rejected"].includes(item.status) || item.screening?.status === "Completed";
+
+                    return (
+                      <tr key={item._id}>
+                        <td className="px-4 py-3">
+                          <p className="font-semibold text-gray-900 dark:text-white">
+                            {item.name}
+                          </p>
+                          <p className="text-xs text-gray-500">{item.email}</p>
+                        </td>
+                        <td className="px-4 py-3">{item.position}</td>
+                        <td className="px-4 py-3">{item.department || "—"}</td>
+                        <td className="px-4 py-3">
+                          {item.status}
+                          {item.screening?.assignmentPending && (
+                            <span className="ml-2 text-xs text-amber-600">
+                              pending assignment
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          {item.assignedScreener?.name || "Unassigned"}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex gap-3 text-xs font-medium">
+                            {!finished && (
+                              <button
+                                type="button"
+                                onClick={() => openAssign(item)}
+                                className="text-red-600 hover:underline"
+                              >
+                                {item.assignedScreener ? "Reassign" : "Assign"}
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setModal({ type: "history", application: item })
+                              }
+                              className="text-gray-600 hover:underline"
+                            >
+                              History
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </DataState>
+      </section>
+
+      {(modal?.type === "assign" || modal?.type === "reassign") && (
+        <Modal
+          title={modal.type === "reassign" ? "Reassign screener" : "Assign screener"}
+          onClose={() => setModal(null)}
+        >
+          <form onSubmit={submit} className="space-y-4">
+            <p className="text-sm text-gray-600">
+              {modal.application.name} — {modal.application.position}
+              {modal.application.department
+                ? ` (${modal.application.department})`
+                : ""}
+            </p>
+
+            <Field label="L0 Screener">
+              <select
+                required
+                value={form.screenerId}
+                onChange={(event) =>
+                  setForm((previous) => ({ ...previous, screenerId: event.target.value }))
+                }
+                className={inputClass}
+              >
+                <option value="">Select a screener</option>
+                {activeScreeners.map((item) => (
+                  <option key={item._id} value={item._id}>
+                    {item.name} — {item.workload.open} open
+                    {item.department ? ` (${item.department})` : ""}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
+            <Field label={modal.type === "reassign" ? "Reason (required)" : "Note"}>
+              <textarea
+                rows={2}
+                required={modal.type === "reassign"}
+                value={form.reason}
+                onChange={(event) =>
+                  setForm((previous) => ({ ...previous, reason: event.target.value }))
+                }
+                className={inputClass}
+              />
+            </Field>
+
+            <div className="flex justify-end gap-3">
+              <button type="button" onClick={() => setModal(null)} className={secondaryButton}>
+                Cancel
+              </button>
+              <button type="submit" disabled={saving} className={primaryButton}>
+                {saving ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {modal?.type === "history" && (
+        <Modal title="Assignment history" onClose={() => setModal(null)}>
+          <DataState
+            loading={history.loading}
+            error={history.error}
+            onRetry={history.reload}
+          >
+            {(history.data?.history || []).length === 0 ? (
+              <EmptyState text="No assignment history yet." />
+            ) : (
+              <ol className="space-y-3">
+                {history.data.history.map((entry, index) => (
+                  <li
+                    key={index}
+                    className="rounded-lg border border-gray-200 p-3 text-sm dark:border-gray-700"
+                  >
+                    <p className="font-semibold">
+                      {entry.action === "REASSIGNED" ? "Reassigned to" : "Assigned to"}{" "}
+                      {entry.screenerName}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {formatDateTime(entry.at)} by{" "}
+                      {entry.performedByName || entry.performedByType}
+                    </p>
+                    {entry.remarks && (
+                      <p className="mt-1 text-gray-600">{entry.remarks}</p>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            )}
+          </DataState>
+        </Modal>
+      )}
+    </div>
   );
 }
-
-export default L0Screener;

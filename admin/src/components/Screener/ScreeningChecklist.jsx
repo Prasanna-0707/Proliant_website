@@ -1,34 +1,38 @@
 import { useState } from "react";
 import { CheckCircle2, Circle } from "lucide-react";
 
-const ScreeningChecklist = ({ application, onContinue }) => {
+// Calls onContinue({ skillsMatch, experienceMatch, educationMatch,
+// requirementsMatch, additionalNotes }) which the page saves with
+// PUT /api/screenings/applications/:id/checklist.
+const ScreeningChecklist = ({ application, onContinue, saving = false, error = "" }) => {
   const [checked, setChecked] = useState({
-    skills: false,
-    experience: false,
-    education: false,
-    jobRequirements: false,
+    skillsMatch: application?.checklist?.skillsMatch === true,
+    experienceMatch: application?.checklist?.experienceMatch === true,
+    educationMatch: application?.checklist?.educationMatch === true,
+    requirementsMatch: application?.checklist?.requirementsMatch === true,
   });
+  const [notes, setNotes] = useState(application?.checklist?.additionalNotes || "");
 
   if (!application) return null;
 
   const criteria = [
     {
-      key: "skills",
+      key: "skillsMatch",
       title: "Required Skills",
-      description: `Candidate skills: ${(application.skills || []).join(", ") || "Not provided"}`,
+      description: `Area of interest: ${application.areaOfInterest || application.jobTitle || "Not provided"}`,
     },
     {
-      key: "experience",
+      key: "experienceMatch",
       title: "Relevant Experience",
       description: `Candidate experience: ${application.experience || "Not provided"}`,
     },
     {
-      key: "education",
+      key: "educationMatch",
       title: "Education Qualification",
       description: `Candidate education: ${application.education || "Not provided"}`,
     },
     {
-      key: "jobRequirements",
+      key: "requirementsMatch",
       title: "Job Requirements",
       description: `Applied position: ${application.jobTitle}`,
     },
@@ -89,13 +93,35 @@ const ScreeningChecklist = ({ application, onContinue }) => {
         ))}
       </div>
 
+      <div>
+        <label
+          htmlFor="checklist-notes"
+          className="mb-2 block text-xs font-semibold uppercase text-gray-500"
+        >
+          Additional notes
+        </label>
+        <textarea
+          id="checklist-notes"
+          rows={3}
+          value={notes}
+          onChange={(event) => setNotes(event.target.value)}
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-red-500"
+        />
+      </div>
+
+      {error && (
+        <p role="alert" className="text-sm text-red-600">
+          {error}
+        </p>
+      )}
+
       <button
         type="button"
-        disabled={completedCount !== criteria.length}
-        onClick={() => onContinue(checked)}
+        disabled={completedCount !== criteria.length || saving}
+        onClick={() => onContinue({ ...checked, additionalNotes: notes.trim() })}
         className="w-full rounded-lg bg-red-500 px-5 py-3 text-sm font-semibold text-white hover:bg-red-600 disabled:cursor-not-allowed disabled:bg-gray-300"
       >
-        Continue to Screening Decision
+        {saving ? "Saving..." : "Continue to Screening Decision"}
       </button>
     </div>
   );

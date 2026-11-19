@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 
 import DataTable from "../../components/DataTable";
+import EmployeeCountCard from "../../components/HR/EmployeeCountCard";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
@@ -1255,6 +1256,8 @@ function Employees() {
           Loading employees...
         </div>
       )}
+
+      <EmployeeCountCard />
 
       {/* Import Message */}
 

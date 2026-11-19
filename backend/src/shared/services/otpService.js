@@ -6,6 +6,15 @@ const OTP_EXPIRY_MINUTES = 5;
 const MAX_OTP_ATTEMPTS = 3;
 const RESEND_COOLDOWN_SECONDS = 60;
 
+// Error carrying an HTTP status code so controllers can respond correctly.
+export class OtpError extends Error {
+  constructor(message, statusCode = 400) {
+    super(message);
+    this.name = "OtpError";
+    this.statusCode = statusCode;
+  }
+}
+
 // Generate a secure 6-digit OTP
 const generateOTP = () => {
   return crypto.randomInt(100000, 1000000).toString();
@@ -28,8 +37,9 @@ export const generateAndStoreOTP = async (email, purpose) => {
         RESEND_COOLDOWN_SECONDS - secondsSinceLastSent
       );
 
-      throw new Error(
-        `Please wait ${remainingSeconds} seconds before requesting another OTP`
+      throw new OtpError(
+        `Please wait ${remainingSeconds} seconds before requesting another OTP`,
+        429
       );
     }
 

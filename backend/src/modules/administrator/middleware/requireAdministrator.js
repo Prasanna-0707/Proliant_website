@@ -8,7 +8,7 @@ import {
 
 const requireAdministrator = (req, res, next) => {
   try {
-    if (!req.admin) {
+    if (!req.user) {
       return res.status(401).json({
         success: false,
         message: "Authentication required.",
@@ -16,7 +16,7 @@ const requireAdministrator = (req, res, next) => {
     }
 
     const access = getTeamDirectoryAccess(
-      req.admin,
+      req.user,
       req.activeRole
     );
 

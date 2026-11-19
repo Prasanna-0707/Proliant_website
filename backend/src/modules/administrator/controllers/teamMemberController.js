@@ -4,6 +4,24 @@ import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 
 import Admin from "../models/Admin.js";
+import User from "../../auth/models/Users.js";
+
+import {
+  findStaffAccountById,
+  getAccountModelForRole,
+  getAccountTypeOfDocument,
+  isEmailInUse,
+} from "../../../shared/services/accountService.js";
+
+import {
+  getAccountTypeForRole,
+  isAdministratorRole,
+  resolveUserRole,
+  ADMIN_ROLE,
+  USER_ROLES,
+  APPROVED_GLOBAL_ADMIN_EMAILS,
+  isApprovedGlobalAdminEmail,
+} from "../../../shared/constants/roles.js";
 
 import { sendTemporaryPasswordEmail } from "../../../shared/services/emailService.js";
 import { createAuditLog } from "../../../shared/services/auditLogService.js";
@@ -18,14 +36,14 @@ import {
 } from "../../../shared/services/screenerAssignmentService.js";
 
 // =====================================================
-// TEMPORARY DEVELOPMENT SETTING
+// DIRECTORY READ ACCESS
 // =====================================================
 
-// false = allow authenticated users to view the directory
-// true  = enforce role/department restrictions for GET APIs
-//
-// Restore role-based restrictions before deployment.
-const ROLE_BASED_TEAM_MEMBER_READ_ACCESS = false;
+// By default the directory is restricted by role and department.
+// Set TEAM_DIRECTORY_OPEN_ACCESS=true ONLY in local development to let any
+// authenticated staff member read the whole directory.
+const ROLE_BASED_TEAM_MEMBER_READ_ACCESS =
+  process.env.TEAM_DIRECTORY_OPEN_ACCESS !== "true";
 
 // =====================================================
 // CONSTANTS
@@ -119,9 +137,11 @@ const isLegacyHodDesignation = (designation) =>
 const isAdministrator = (member) =>
   normalizeRole(member.role) === "administrator";
 
+// Only approved accounts count as Global Administrators.
 const isGlobalAdministrator = (member) =>
   isAdministrator(member) &&
-  member.adminScope === "GLOBAL";
+  member.adminScope === "GLOBAL" &&
+  isApprovedGlobalAdminEmail(member.email);
 
 const isDepartmentAdministrator = (member) =>
   isAdministrator(member) &&
@@ -224,9 +244,52 @@ const countActiveGlobalAdministrators = () =>
   Admin.countDocuments({
     role: /^Administrator$/i,
     adminScope: "GLOBAL",
+    email: { $in: APPROVED_GLOBAL_ADMIN_EMAILS },
     status: "Active",
     deletedAt: null,
   });
+
+// =====================================================
+// STAFF ACCOUNT COLLECTIONS
+//
+// Administrators live in the Admin collection. All other
+// staff (HR, Interviewer, Hiring Manager, L0 Screener)
+// live in the User collection. Both are managed here.
+// =====================================================
+
+// Mongoose model name ("Admin" or "User") of a loaded account.
+const modelNameOf = (account) =>
+  account?.constructor?.modelName || "Admin";
+
+// Lists active (not soft-deleted) staff from both collections.
+const listStaffMembers = async () => {
+  const [admins, users] = await Promise.all([
+    Admin.find({ deletedAt: null }).select(MEMBER_FIELDS).lean(),
+    User.find({ deletedAt: null }).select(MEMBER_FIELDS).lean(),
+  ]);
+
+  return [...admins, ...users].sort(
+    (a, b) =>
+      String(a.department || "").localeCompare(
+        String(b.department || "")
+      ) ||
+      String(a.name || "").localeCompare(String(b.name || "")) ||
+      String(a.email || "").localeCompare(String(b.email || ""))
+  );
+};
+
+const findStaffMemberLean = async (id) => {
+  const [admin, user] = await Promise.all([
+    Admin.findOne({ _id: id, deletedAt: null })
+      .select(MEMBER_FIELDS)
+      .lean(),
+    User.findOne({ _id: id, deletedAt: null })
+      .select(MEMBER_FIELDS)
+      .lean(),
+  ]);
+
+  return admin || user || null;
+};
 
 // =====================================================
 // ATOMIC ACCOUNT SAVE + AUDIT
@@ -250,7 +313,7 @@ const saveAccountAndAuditAtomically = async ({
       await createAuditLog({
         req,
         action,
-        targetType: "Admin",
+        targetType: modelNameOf(target),
         targetId: target._id,
         targetLabel: target.email || target.name,
         department:
@@ -373,7 +436,7 @@ const authorizeTarget = async (req, res, id) => {
     return null;
   }
 
-  const access = getAccessContext(req.admin);
+  const access = getAccessContext(req.user);
 
   if (!access) {
     res.status(403).json({
@@ -383,7 +446,7 @@ const authorizeTarget = async (req, res, id) => {
     return null;
   }
 
-  if (req.admin._id.toString() === id) {
+  if (req.user._id.toString() === id) {
     res.status(403).json({
       success: false,
       message:
@@ -392,10 +455,9 @@ const authorizeTarget = async (req, res, id) => {
     return null;
   }
 
-  const target = await Admin.findOne({
-    _id: id,
-    deletedAt: null,
-  });
+  const found = await findStaffAccountById(id);
+  const target =
+    found && !found.account.deletedAt ? found.account : null;
 
   if (!target) {
     res.status(404).json({
@@ -456,19 +518,10 @@ const authorizeTarget = async (req, res, id) => {
 
 export const getTeamMembers = async (req, res) => {
   try {
-    const members = await Admin.find({
-      deletedAt: null,
-    })
-      .select(MEMBER_FIELDS)
-      .sort({
-        department: 1,
-        name: 1,
-        email: 1,
-      })
-      .lean();
+    const members = await listStaffMembers();
 
     const safeMembers = members.map(toSafeMember);
-    const currentUserId = req.admin._id.toString();
+    const currentUserId = req.user._id.toString();
 
     // Temporary development mode: authenticated users can
     // read the directory without role-based restrictions.
@@ -488,7 +541,7 @@ export const getTeamMembers = async (req, res) => {
       });
     }
 
-    const access = getAccessContext(req.admin);
+    const access = getAccessContext(req.user);
 
     if (!access) {
       return res.status(403).json({
@@ -649,7 +702,7 @@ export const getTeamMemberById = async (req, res) => {
     }
 
     const access = ROLE_BASED_TEAM_MEMBER_READ_ACCESS
-      ? getAccessContext(req.admin)
+      ? getAccessContext(req.user)
       : { type: "TEMPORARY_READ_ALL" };
 
     if (!access) {
@@ -659,12 +712,7 @@ export const getTeamMemberById = async (req, res) => {
       });
     }
 
-    const member = await Admin.findOne({
-      _id: id,
-      deletedAt: null,
-    })
-      .select(MEMBER_FIELDS)
-      .lean();
+    const member = await findStaffMemberLean(id);
 
     if (!member) {
       return res.status(404).json({
@@ -694,7 +742,7 @@ export const getTeamMemberById = async (req, res) => {
       success: true,
       teamMember: {
         ...toSafeMember(member),
-        isMe: member._id.toString() === req.admin._id.toString(),
+        isMe: member._id.toString() === req.user._id.toString(),
       },
     });
   } catch (error) {
@@ -716,7 +764,7 @@ export const createTeamMember = async (req, res) => {
   let teamMember;
 
   try {
-    const access = getAccessContext(req.admin);
+    const access = getAccessContext(req.user);
 
     if (
       !access ||
@@ -737,7 +785,7 @@ export const createTeamMember = async (req, res) => {
       });
     }
 
-    if (await Admin.findOne({ email })) {
+    if (await isEmailInUse(email)) {
       return res.status(409).json({
         success: false,
         message: "An account with this email already exists.",
@@ -774,6 +822,24 @@ export const createTeamMember = async (req, res) => {
         ],
       });
     }
+
+    // Administrators are stored in the Admin collection. All other
+    // staff roles are stored in the User collection. Accounts are
+    // never duplicated across the two.
+    const accountType = getAccountTypeForRole(role);
+
+    if (!accountType) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid role.",
+        allowedRoles: [ADMIN_ROLE, ...USER_ROLES],
+      });
+    }
+
+    const AccountModel = getAccountModelForRole(role);
+    const canonicalRole = isAdministratorRole(role)
+      ? ADMIN_ROLE
+      : resolveUserRole(role);
 
     const name = String(req.body.name || "").trim();
     let designation = String(req.body.designation || "").trim();
@@ -878,13 +944,22 @@ export const createTeamMember = async (req, res) => {
 
       if (
         !department &&
-        !isGlobalAdministrator({ role, adminScope })
+        !(isAdministrator({ role }) && adminScope === "GLOBAL")
       ) {
         return res.status(400).json({
           success: false,
           message: "A department is required for this account.",
         });
       }
+    }
+
+    // Only approved accounts may be Global Administrators.
+    if (adminScope === "GLOBAL" && !isApprovedGlobalAdminEmail(email)) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Only approved accounts can be Global Administrators.",
+      });
     }
 
     if (!designation) {
@@ -905,14 +980,14 @@ export const createTeamMember = async (req, res) => {
 
     try {
       await session.withTransaction(async () => {
-        const created = await Admin.create(
+        const created = await AccountModel.create(
           [
             {
               email,
               password,
               name,
               phone,
-              role,
+              role: canonicalRole,
               designation,
               department,
               adminScope,
@@ -931,7 +1006,7 @@ export const createTeamMember = async (req, res) => {
         await createAuditLog({
           req,
           action: "ACCOUNT_CREATED",
-          targetType: "Admin",
+          targetType: modelNameOf(teamMember),
           targetId: teamMember._id,
           targetLabel: teamMember.email || teamMember.name,
           department: teamMember.department || "",
@@ -963,12 +1038,12 @@ export const createTeamMember = async (req, res) => {
 
       try {
         await cleanupSession.withTransaction(async () => {
-          const existingAccount = await Admin.findById(
+          const existingAccount = await AccountModel.findById(
             teamMember._id
           ).session(cleanupSession);
 
           if (existingAccount) {
-            await Admin.deleteOne(
+            await AccountModel.deleteOne(
               { _id: teamMember._id },
               { session: cleanupSession }
             );
@@ -977,7 +1052,7 @@ export const createTeamMember = async (req, res) => {
           await createAuditLog({
             req,
             action: "ACCOUNT_CREATION_CANCELLED",
-            targetType: "Admin",
+            targetType: modelNameOf(teamMember),
             targetId: teamMember._id,
             targetLabel: teamMember.email || teamMember.name,
             department: teamMember.department || "",
@@ -1182,10 +1257,7 @@ export const updateTeamMember = async (req, res) => {
         });
       }
 
-      const duplicate = await Admin.findOne({
-        email,
-        _id: { $ne: target._id },
-      });
+      const duplicate = await isEmailInUse(email, target._id);
 
       if (duplicate) {
         return res.status(409).json({
@@ -1226,7 +1298,30 @@ export const updateTeamMember = async (req, res) => {
         });
       }
 
-      target.role = newRole;
+      // An account stays in its own collection. Changing between
+      // Administrator (Admin) and staff roles (User) would require
+      // moving or duplicating the account, which is not allowed.
+      const newAccountType = getAccountTypeForRole(newRole);
+
+      if (!newAccountType) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid role.",
+          allowedRoles: [ADMIN_ROLE, ...USER_ROLES],
+        });
+      }
+
+      if (newAccountType !== getAccountTypeOfDocument(target)) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "An account cannot be changed between Administrator and staff roles. Create a separate account for the other role.",
+        });
+      }
+
+      target.role = isAdministratorRole(newRole)
+        ? ADMIN_ROLE
+        : resolveUserRole(newRole);
     }
 
     if (access.type === "DEPARTMENT_ADMIN") {
@@ -1294,6 +1389,18 @@ export const updateTeamMember = async (req, res) => {
           });
         }
       }
+    }
+
+    if (
+      hasField(body, "adminScope") &&
+      requestedScope === "GLOBAL" &&
+      !isApprovedGlobalAdminEmail(target.email)
+    ) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Only approved accounts can be Global Administrators.",
+      });
     }
 
     await saveAccountAndAuditAtomically({

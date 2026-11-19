@@ -1,10 +1,48 @@
+import { useEffect, useState } from "react";
+
 import StatsCounter from "@/components/ui/stats-counter";
 
 import peopleIcon from "@/assets/images/icons8-people.gif";
 import globeIcon from "@/assets/images/globe-icon-final.png";
 import mapsIcon from "@/assets/images/maps-icon.png";
 
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"
+).replace(/\/+$/, "");
+
+const counterClass =
+  "text-3xl font-bold sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl";
+
+// Shows the animated counter once the value has loaded from
+// GET /api/public/stats, and a dash while loading or unavailable.
+const StatValue = ({ value, suffix }) =>
+  Number.isFinite(value) ? (
+    <StatsCounter
+      value={value}
+      suffix={suffix}
+      duration={2}
+      className={counterClass}
+    />
+  ) : (
+    <span className={counterClass} aria-hidden="true">
+      —
+    </span>
+  );
+
 const ProliantInNumbers = () => {
+  const [stats, setStats] = useState(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    fetch(`${API_BASE_URL}/public/stats`, { signal: controller.signal })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((result) => setStats(result?.stats || null))
+      .catch(() => setStats(null));
+
+    return () => controller.abort();
+  }, []);
+
   return (
     <section className="bg-white py-8 text-black sm:py-10 md:py-16 lg:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
@@ -26,12 +64,7 @@ const ProliantInNumbers = () => {
                 className="h-8 w-8 object-contain sm:h-10 sm:w-10 md:h-12 md:w-12 lg:h-14 lg:w-14 xl:h-16 xl:w-16"
               />
 
-              <StatsCounter
-                value={130}
-                suffix="+"
-                duration={2}
-                className="text-3xl font-bold sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl"
-              />
+              <StatValue value={stats?.employees} suffix="+" />
             </div>
 
             <div className="w-full max-w-xs border-t border-black pt-2 sm:pt-3 md:pt-5 lg:pt-6">
@@ -50,12 +83,7 @@ const ProliantInNumbers = () => {
                 className="h-7 w-7 object-contain sm:h-9 sm:w-9 md:h-11 md:w-11 lg:h-14 lg:w-14 xl:h-16 xl:w-16"
               />
 
-              <StatsCounter
-                value={5}
-                suffix="+"
-                duration={2}
-                className="text-3xl font-bold sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl"
-              />
+              <StatValue value={stats?.globalDeployments} suffix="+" />
             </div>
 
             <div className="w-full max-w-xs border-t border-black pt-2 sm:pt-3 md:pt-5 lg:pt-6">
@@ -74,11 +102,7 @@ const ProliantInNumbers = () => {
                 className="h-7 w-7 object-contain sm:h-9 sm:w-9 md:h-11 md:w-11 lg:h-14 lg:w-14 xl:h-16 xl:w-16"
               />
 
-              <StatsCounter
-                value={4}
-                duration={2}
-                className="text-3xl font-bold sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl"
-              />
+              <StatValue value={stats?.countries} />
             </div>
 
             <div className="w-full max-w-xs border-t border-black pt-2 sm:pt-3 md:pt-5 lg:pt-6">

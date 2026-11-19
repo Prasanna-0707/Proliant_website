@@ -2,10 +2,15 @@ import mongoose from "mongoose";
 
 const candidateAccountSchema = new mongoose.Schema(
   {
+    // Generated when the account is created. Accounts created before
+    // this field existed have no candidateId; requiring it only for new
+    // documents lets those accounts still update their profile.
     candidateId: {
       type: String,
       unique: true,
-      required: true,
+      required: function requiresIdForNewAccount() {
+        return this.isNew;
+      },
       immutable: true,
     },
 

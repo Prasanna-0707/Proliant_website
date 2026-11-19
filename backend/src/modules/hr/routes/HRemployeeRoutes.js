@@ -10,19 +10,24 @@ import {
 } from "../controllers/HRemployeeController.js";
 
 import authMiddleware from "../../auth/middleware/authMiddleware.js";
+import validateObjectIdParam from "../../../shared/middleware/validateObjectId.js";
+import requireHrAccess from "../middleware/requireHrAccess.js";
 
 const router = express.Router();
 
-router.get("/", authMiddleware, getEmployees);
-router.post("/", authMiddleware, addEmployee);
-router.post(
-  "/bulk",
-  authMiddleware,
-  uploadEmployeeFile,
-  bulkAddEmployees
-);
+router.param("id", validateObjectIdParam);
 
-router.delete("/:id", authMiddleware, deleteEmployee);
-router.put("/:id", authMiddleware, updateEmployee);
+// Employee directory management: HR and Global Administrators only.
+router.use(authMiddleware, requireHrAccess);
+
+router.get("/", getEmployees);
+
+router.post("/", addEmployee);
+
+router.post("/bulk", uploadEmployeeFile, bulkAddEmployees);
+
+router.delete("/:id", deleteEmployee);
+
+router.put("/:id", updateEmployee);
 
 export default router;

@@ -198,6 +198,25 @@ function Enquiries() {
     setViewEnquiry(enquiry);
     setOpenMenuId(null);
 
+    // Refresh with the full record from GET /contacts/:id.
+    try {
+      const detailResponse = await fetch(
+        `/contacts/${enquiry.id}`,
+        { headers: getAuthHeaders() }
+      );
+
+      if (detailResponse.ok) {
+        const detail = await detailResponse.json();
+
+        if (detail?.contact) {
+          enquiry = normalizeEnquiry(detail.contact);
+          setViewEnquiry(enquiry);
+        }
+      }
+    } catch {
+      /* the list data is enough to show the enquiry */
+    }
+
     if (enquiry.status !== "Unread") return;
 
     try {

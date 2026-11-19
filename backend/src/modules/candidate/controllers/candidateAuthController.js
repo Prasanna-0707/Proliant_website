@@ -4,6 +4,18 @@ import CandidateAccount from "../models/CandidateAccount.js";
 import generateCandidateId from "../../../shared/utils/generateCandidateId.js";
 
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
+
+import {
+  generateAndStoreOTP,
+  verifyOTP,
+  OtpError,
+} from "../../../shared/services/otpService.js";
+
+import {
+  sendCandidatePasswordResetOTPEmail,
+  sendCandidatePasswordChangedEmail,
+} from "../../../shared/services/emailService.js";
 
 // =====================================================
 // CANDIDATE REGISTRATION
@@ -243,5 +255,190 @@ export const loginCandidate = async (req, res) => {
       success: false,
       message: "Internal server error",
     });
+  }
+};
+
+// =====================================================
+// CANDIDATE PASSWORD RESET
+//
+//   POST /api/candidate/auth/forgot-password   { email }
+//   POST /api/candidate/auth/verify-reset-otp  { email, otp }
+//   POST /api/candidate/auth/reset-password    { email, resetToken, newPassword }
+//
+// The OTP is hashed in the database, expires in 5 minutes, allows 3
+// attempts and has a 60 second resend cooldown. The reset token is
+// short-lived and bound to the current password, so it works only once.
+// =====================================================
+
+const GENERIC_RESET_MESSAGE =
+  "If an account exists for this email, a verification code has been sent.";
+
+const passwordFingerprint = (passwordHash) =>
+  crypto
+    .createHash("sha256")
+    .update(String(passwordHash))
+    .digest("hex")
+    .slice(0, 24);
+
+const cleanEmail = (value) =>
+  typeof value === "string" ? value.trim().toLowerCase() : "";
+
+export const forgotCandidatePassword = async (req, res) => {
+  try {
+    const email = cleanEmail(req.body?.email);
+
+    if (!email) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Email is required." });
+    }
+
+    const account = await CandidateAccount.findOne({ email });
+
+    // Same response whether or not the account exists (no enumeration).
+    if (account && account.isActive) {
+      const otp = await generateAndStoreOTP(email, "candidate-reset");
+      await sendCandidatePasswordResetOTPEmail(email, otp);
+    }
+
+    return res
+      .status(200)
+      .json({ success: true, message: GENERIC_RESET_MESSAGE });
+  } catch (error) {
+    if (error instanceof OtpError) {
+      return res
+        .status(error.statusCode)
+        .json({ success: false, message: error.message });
+    }
+
+    console.error("Candidate forgot-password error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to send the verification code. Please try again.",
+    });
+  }
+};
+
+export const verifyCandidateResetOTP = async (req, res) => {
+  try {
+    const email = cleanEmail(req.body?.email);
+    const otp = String(req.body?.otp || "").trim();
+
+    if (!email || !otp) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Email and OTP are required." });
+    }
+
+    const account = await CandidateAccount.findOne({ email }).select(
+      "+password"
+    );
+
+    try {
+      await verifyOTP(email, "candidate-reset", otp);
+    } catch (otpError) {
+      return res
+        .status(400)
+        .json({ success: false, message: otpError.message });
+    }
+
+    if (!account || !account.isActive) {
+      return res
+        .status(400)
+        .json({ success: false, message: "OTP not found or already used" });
+    }
+
+    const resetToken = jwt.sign(
+      {
+        sub: String(account._id),
+        email,
+        purpose: "candidate-password-reset",
+        fp: passwordFingerprint(account.password),
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "10m" }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP verified. You can now set a new password.",
+      resetToken,
+    });
+  } catch (error) {
+    console.error("Candidate verify-reset-otp error:", error);
+
+    return res
+      .status(500)
+      .json({ success: false, message: "Unable to verify the code." });
+  }
+};
+
+export const resetCandidatePassword = async (req, res) => {
+  try {
+    const email = cleanEmail(req.body?.email);
+    const { resetToken, newPassword } = req.body || {};
+
+    if (!email || !resetToken || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Email, reset token and new password are required.",
+      });
+    }
+
+    if (typeof newPassword !== "string" || newPassword.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must contain at least 8 characters",
+      });
+    }
+
+    let decoded;
+
+    try {
+      decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
+    } catch {
+      return res.status(400).json({
+        success: false,
+        message: "Reset session is invalid or has expired.",
+      });
+    }
+
+    const account = await CandidateAccount.findOne({ email }).select(
+      "+password"
+    );
+
+    if (
+      decoded.purpose !== "candidate-password-reset" ||
+      decoded.email !== email ||
+      !account ||
+      String(account._id) !== decoded.sub ||
+      decoded.fp !== passwordFingerprint(account.password)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Reset session is invalid or has already been used.",
+      });
+    }
+
+    account.password = await bcrypt.hash(newPassword, 10);
+    await account.save();
+
+    try {
+      await sendCandidatePasswordChangedEmail(email, account.name);
+    } catch (mailError) {
+      console.error("Password changed email failed:", mailError.message);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Password updated. Please sign in with your new password.",
+    });
+  } catch (error) {
+    console.error("Candidate reset-password error:", error);
+
+    return res
+      .status(500)
+      .json({ success: false, message: "Unable to reset the password." });
   }
 };

@@ -78,8 +78,12 @@ const candidateSchema = new mongoose.Schema(
   }
 );
 
-const Candidate =
-  mongoose.models.Candidate ||
-  mongoose.model("Candidate", candidateSchema);
+// HR application records managed through the HR portal. This is a separate
+// workflow from the registration-based Candidate model, so it has its own
+// model name and its own collection (hrcandidates).
+// Do not merge with modules/candidate/models/Candidate.js.
+const HRCandidate =
+  mongoose.models.HRCandidate ||
+  mongoose.model("HRCandidate", candidateSchema, "hrcandidates");
 
-export default Candidate;
+export default HRCandidate;

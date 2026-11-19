@@ -16,6 +16,7 @@ import {
 } from "../controllers/HRjobController.js";
 
 import authMiddleware from "../../auth/middleware/authMiddleware.js";
+import requireHrAccess from "../middleware/requireHrAccess.js";
 
 const router = express.Router();
 
@@ -30,6 +31,7 @@ const router = express.Router();
 router.get(
   "/manage",
   authMiddleware,
+  requireHrAccess,
   getJobsForHR
 );
 
@@ -38,6 +40,7 @@ router.get(
 router.get(
   "/manage/:id",
   authMiddleware,
+  requireHrAccess,
   getJobForHR
 );
 
@@ -65,6 +68,7 @@ router.get(
 router.post(
   "/",
   authMiddleware,
+  requireHrAccess,
   createJob
 );
 
@@ -75,6 +79,7 @@ router.post(
 router.put(
   "/:id",
   authMiddleware,
+  requireHrAccess,
   updateJob
 );
 
@@ -85,6 +90,7 @@ router.put(
 router.delete(
   "/:id",
   authMiddleware,
+  requireHrAccess,
   deleteJob
 );
 

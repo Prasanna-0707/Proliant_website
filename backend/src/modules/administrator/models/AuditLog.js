@@ -1,5 +1,6 @@
 
 import mongoose from "mongoose";
+import { STAFF_MODELS } from "../../../shared/constants/roles.js";
 
 const auditLogSchema = new mongoose.Schema(
   {
@@ -28,9 +29,16 @@ const auditLogSchema = new mongoose.Schema(
     // Null for system actors and non-admin actors.
     actor: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin",
+      refPath: "actorModel",
       default: null,
       index: true,
+    },
+
+    // Which staff collection "actor" refers to.
+    actorModel: {
+      type: String,
+      enum: STAFF_MODELS,
+      default: "Admin",
     },
 
     // Generic actor identifier for future AI agents

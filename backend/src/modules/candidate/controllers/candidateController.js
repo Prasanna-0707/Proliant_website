@@ -17,9 +17,10 @@ import {
 
 import {
   assignL0ScreenerByWorkload,
-} from "../services/screenerAssignmentService.js";
+} from "../../../shared/services/screenerAssignmentService.js";
+import { notifyStaff, notifyHr } from "../../../shared/services/notificationService.js";
 
-import { createAuditLog } from "../services/auditLogService.js";
+import { createAuditLog } from "../../../shared/services/auditLogService.js";
 
 import {
   getActiveRole,
@@ -482,6 +483,25 @@ export const createCandidate = async (req, res) => {
       };
     }
 
+    // Staff notifications (never fail the registration).
+    if (assignmentResult?.assigned && !assignmentResult.alreadyAssigned) {
+      await notifyStaff(assignmentResult.screenerId, {
+        title: "New screening assignment",
+        message: `${candidate.name} applied for ${job.title} and has been assigned to you for L0 screening.`,
+        type: "SCREENING",
+        link: "/l0-screening",
+        relatedApplication: candidate._id,
+      });
+    }
+
+    await notifyHr({
+      title: "New candidate application",
+      message: `${candidate.name} applied for ${job.title} through the careers site.`,
+      type: "WORKFLOW",
+      link: "/hr/candidates",
+      relatedApplication: candidate._id,
+    });
+
     // -------------------------------------------------
     // 10. FETCH UPDATED CANDIDATE
     // -------------------------------------------------
@@ -898,7 +918,7 @@ export const confirmCandidateJoining = async (
     // 1. AUTHENTICATION
     // -------------------------------------------------
 
-    const user = req.admin;
+    const user = req.user;
 
     if (!user || !isActiveAccount(user)) {
       return res.status(401).json({
@@ -1335,7 +1355,7 @@ export const correctCandidateJoiningDate = async (
     // 1. AUTHENTICATION
     // -------------------------------------------------
 
-    const user = req.admin;
+    const user = req.user;
 
     if (!user || !isActiveAccount(user)) {
       return res.status(401).json({
@@ -1702,7 +1722,7 @@ export const getCandidateJoiningHistory = async (
     // 1. AUTHENTICATION
     // -------------------------------------------------
 
-    const user = req.admin;
+    const user = req.user;
 
     if (!user || !isActiveAccount(user)) {
       return res.status(401).json({

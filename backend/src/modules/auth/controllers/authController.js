@@ -1,19 +1,32 @@
-
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import crypto from "crypto";
-import User from "../models/Users.js";
 
 import {
   generateAndStoreOTP,
   verifyOTP,
+  OtpError,
 } from "../../../shared/services/otpService.js";
 
 import {
   sendLoginOTPEmail,
   sendForgotPasswordOTPEmail,
-  sendTemporaryPasswordEmail,
 } from "../../../shared/services/emailService.js";
+
+import {
+  findAccountByEmail,
+  findAccountById,
+  normalizeEmail,
+} from "../../../shared/services/accountService.js";
+
+import {
+  isGlobalAdministrator,
+  isDepartmentAdministrator,
+} from "../../../shared/services/authorizationService.js";
+
+import {
+  signAccessToken,
+  signResetToken,
+  verifyResetToken,
+} from "../services/tokenService.js";
 
 // =====================================================
 // HELPERS
@@ -22,67 +35,91 @@ import {
 const validatePassword = (password) =>
   typeof password === "string" && password.length >= 8;
 
-const normalizeEmail = (email) =>
-  typeof email === "string" ? email.trim().toLowerCase() : "";
+const isAccountUnavailable = (account) =>
+  !account || account.deletedAt || account.status !== "Active";
 
-const isAccountUnavailable = (user) =>
-  !user || user.deletedAt || user.status !== "Active";
+// Effective administrator access after the approved-Global-Admin rule:
+// "GLOBAL", "DEPARTMENT", or "NONE" (also for every non-administrator).
+const getAdminAccessLevel = (account) => {
+  if (isGlobalAdministrator(account)) return "GLOBAL";
+  if (isDepartmentAdministrator(account)) return "DEPARTMENT";
 
-const getUserProfileData = (user) => ({
-  id: user._id,
-  name: user.name || "",
-  email: user.email,
-  role: user.role,
-  designation: user.designation || "",
-  department: user.department || "",
-  phone: user.phone || "",
-  createdAt: user.createdAt,
-  updatedAt: user.updatedAt,
+  return "NONE";
+};
+
+const getProfileData = (account, accountType) => ({
+  id: account._id,
+  name: account.name || "",
+  email: account.email,
+  role: account.role,
+  accountType,
+  designation: account.designation || "",
+  department: account.department || "",
+  adminScope: account.adminScope ?? null,
+  adminAccessLevel: getAdminAccessLevel(account),
+  phone: account.phone || "",
+  createdAt: account.createdAt,
+  updatedAt: account.updatedAt,
 });
 
 // =====================================================
 // LOGIN
 // POST /api/auth/login
+//
+// The account is located in the Admin collection first and
+// then in the User collection. Emails are unique across both.
 // =====================================================
 
 export const login = async (req, res) => {
   try {
-    const email = normalizeEmail(req.body.email);
-    const { password } = req.body;
+    const email = normalizeEmail(req.body?.email);
+    const password = req.body?.password;
 
-    if (!email || !password) {
+    if (!email || !password || typeof password !== "string") {
       return res.status(400).json({
         success: false,
         message: "Email and password are required",
       });
     }
 
-    const user = await User.findOne({ email }).select("+password");
+    const found = await findAccountByEmail(email, {
+      includePassword: true,
+    });
 
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    if (
+      !found ||
+      !(await bcrypt.compare(password, found.account.password))
+    ) {
       return res.status(401).json({
         success: false,
         message: "Invalid email or password",
       });
     }
 
-    if (isAccountUnavailable(user)) {
+    if (isAccountUnavailable(found.account)) {
       return res.status(403).json({
         success: false,
         message: "Your account is inactive or unavailable",
       });
     }
 
-    const otp = await generateAndStoreOTP(user.email, "login");
-    await sendLoginOTPEmail(user.email, otp);
+    const otp = await generateAndStoreOTP(found.account.email, "login");
+    await sendLoginOTPEmail(found.account.email, otp);
 
     return res.status(200).json({
       success: true,
       message: "Password verified. OTP sent to your email",
-      email: user.email,
+      email: found.account.email,
     });
   } catch (error) {
     console.error("Login error:", error);
+
+    if (error instanceof OtpError) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message,
+      });
+    }
 
     return res.status(500).json({
       success: false,
@@ -98,7 +135,7 @@ export const login = async (req, res) => {
 
 export const forgotPassword = async (req, res) => {
   try {
-    const email = normalizeEmail(req.body.email);
+    const email = normalizeEmail(req.body?.email);
 
     if (!email) {
       return res.status(400).json({
@@ -107,12 +144,12 @@ export const forgotPassword = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email });
+    const found = await findAccountByEmail(email);
 
     // Do not reveal whether an account exists.
-    if (!isAccountUnavailable(user)) {
-      const otp = await generateAndStoreOTP(user.email, "reset");
-      await sendForgotPasswordOTPEmail(user.email, otp);
+    if (found && !isAccountUnavailable(found.account)) {
+      const otp = await generateAndStoreOTP(found.account.email, "reset");
+      await sendForgotPasswordOTPEmail(found.account.email, otp);
     }
 
     return res.status(200).json({
@@ -121,6 +158,16 @@ export const forgotPassword = async (req, res) => {
         "If an account exists with this email, a password reset OTP has been sent",
     });
   } catch (error) {
+    // A resend-cooldown rejection must look identical to success so the
+    // endpoint never reveals whether an account exists.
+    if (error instanceof OtpError) {
+      return res.status(200).json({
+        success: true,
+        message:
+          "If an account exists with this email, a password reset OTP has been sent",
+      });
+    }
+
     console.error("Forgot password error:", error);
 
     return res.status(500).json({
@@ -137,9 +184,9 @@ export const forgotPassword = async (req, res) => {
 
 export const verifyLoginOTP = async (req, res) => {
   try {
-    const email = normalizeEmail(req.body.email);
+    const email = normalizeEmail(req.body?.email);
     const otp =
-      typeof req.body.otp === "string" ? req.body.otp.trim() : "";
+      typeof req.body?.otp === "string" ? req.body.otp.trim() : "";
 
     if (!email || !otp) {
       return res.status(400).json({
@@ -148,37 +195,32 @@ export const verifyLoginOTP = async (req, res) => {
       });
     }
 
-    // Verify OTP before issuing an authenticated token.
+    // Verify the OTP before issuing an authenticated token.
     await verifyOTP(email, "login", otp);
 
-    const user = await User.findOne({ email });
+    const found = await findAccountByEmail(email);
 
-    if (isAccountUnavailable(user)) {
+    if (!found || isAccountUnavailable(found.account)) {
       return res.status(401).json({
         success: false,
         message: "Account not found or unavailable",
       });
     }
 
-    const token = jwt.sign(
-      {
-        userId: user._id.toString(),
-        role: user.role,
-        tokenVersion: user.tokenVersion || 0,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
+    const { account, accountType } = found;
+
+    const token = signAccessToken(account, accountType);
 
     const userData = {
-      ...getUserProfileData(user),
-      mustChangePassword: user.mustChangePassword,
+      ...getProfileData(account, accountType),
+      mustChangePassword: account.mustChangePassword,
     };
 
     return res.status(200).json({
       success: true,
       message: "Login successful",
       token,
+      accountType,
       user: userData,
 
       // Compatibility with existing frontend code
@@ -202,9 +244,9 @@ export const verifyLoginOTP = async (req, res) => {
 
 export const verifyResetOTP = async (req, res) => {
   try {
-    const email = normalizeEmail(req.body.email);
+    const email = normalizeEmail(req.body?.email);
     const otp =
-      typeof req.body.otp === "string" ? req.body.otp.trim() : "";
+      typeof req.body?.otp === "string" ? req.body.otp.trim() : "";
 
     if (!email || !otp) {
       return res.status(400).json({
@@ -215,25 +257,16 @@ export const verifyResetOTP = async (req, res) => {
 
     await verifyOTP(email, "reset", otp);
 
-    const user = await User.findOne({ email });
+    const found = await findAccountByEmail(email);
 
-    if (isAccountUnavailable(user)) {
+    if (!found || isAccountUnavailable(found.account)) {
       return res.status(404).json({
         success: false,
         message: "Account not found or unavailable",
       });
     }
 
-    const resetToken = jwt.sign(
-      {
-        userId: user._id.toString(),
-        email: user.email,
-        purpose: "password-reset",
-        resetTokenVersion: user.resetTokenVersion || 0,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "10m" }
-    );
+    const resetToken = signResetToken(found.account, found.accountType);
 
     return res.status(200).json({
       success: true,
@@ -252,13 +285,13 @@ export const verifyResetOTP = async (req, res) => {
 
 // =====================================================
 // RESET PASSWORD
-// PATCH /api/auth/reset-password
+// POST /api/auth/reset-password
 // =====================================================
 
 export const resetPassword = async (req, res) => {
   try {
-    const email = normalizeEmail(req.body.email);
-    const { resetToken, newPassword } = req.body;
+    const email = normalizeEmail(req.body?.email);
+    const { resetToken, newPassword } = req.body || {};
 
     if (!email || !resetToken || !newPassword) {
       return res.status(400).json({
@@ -274,7 +307,16 @@ export const resetPassword = async (req, res) => {
       });
     }
 
-    const decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
+    let decoded;
+
+    try {
+      decoded = verifyResetToken(resetToken);
+    } catch {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid or expired reset token",
+      });
+    }
 
     if (decoded.email !== email || decoded.purpose !== "password-reset") {
       return res.status(401).json({
@@ -283,31 +325,32 @@ export const resetPassword = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({
-      _id: decoded.userId,
-      email,
-    }).select("+password");
+    const account = await findAccountById(
+      decoded.accountType,
+      decoded.userId,
+      { includePassword: true }
+    );
 
-    if (isAccountUnavailable(user)) {
+    if (!account || account.email !== email || isAccountUnavailable(account)) {
       return res.status(404).json({
         success: false,
         message: "Account not found or unavailable",
       });
     }
 
-    if ((user.resetTokenVersion || 0) !== decoded.resetTokenVersion) {
+    if ((account.resetTokenVersion || 0) !== decoded.resetTokenVersion) {
       return res.status(401).json({
         success: false,
         message: "Reset token is no longer valid",
       });
     }
 
-    user.password = await bcrypt.hash(newPassword, 10);
-    user.mustChangePassword = false;
-    user.tokenVersion = (user.tokenVersion || 0) + 1;
-    user.resetTokenVersion = (user.resetTokenVersion || 0) + 1;
+    account.password = await bcrypt.hash(newPassword, 10);
+    account.mustChangePassword = false;
+    account.tokenVersion = (account.tokenVersion || 0) + 1;
+    account.resetTokenVersion = (account.resetTokenVersion || 0) + 1;
 
-    await user.save();
+    await account.save();
 
     return res.status(200).json({
       success: true,
@@ -316,9 +359,9 @@ export const resetPassword = async (req, res) => {
   } catch (error) {
     console.error("Reset password error:", error);
 
-    return res.status(401).json({
+    return res.status(500).json({
       success: false,
-      message: "Invalid or expired reset token",
+      message: "Password reset failed",
     });
   }
 };
@@ -330,7 +373,7 @@ export const resetPassword = async (req, res) => {
 
 export const changePassword = async (req, res) => {
   try {
-    const { currentPassword, newPassword } = req.body;
+    const { currentPassword, newPassword } = req.body || {};
 
     if (!currentPassword || !newPassword) {
       return res.status(400).json({
@@ -353,9 +396,13 @@ export const changePassword = async (req, res) => {
       });
     }
 
-    const user = await User.findById(req.user._id).select("+password");
+    const account = await findAccountById(
+      req.auth.accountType,
+      req.user._id,
+      { includePassword: true }
+    );
 
-    if (isAccountUnavailable(user)) {
+    if (isAccountUnavailable(account)) {
       return res.status(401).json({
         success: false,
         message: "Account not found or unavailable",
@@ -364,7 +411,7 @@ export const changePassword = async (req, res) => {
 
     const passwordMatches = await bcrypt.compare(
       currentPassword,
-      user.password
+      account.password
     );
 
     if (!passwordMatches) {
@@ -374,11 +421,11 @@ export const changePassword = async (req, res) => {
       });
     }
 
-    user.password = await bcrypt.hash(newPassword, 10);
-    user.mustChangePassword = false;
-    user.tokenVersion = (user.tokenVersion || 0) + 1;
+    account.password = await bcrypt.hash(newPassword, 10);
+    account.mustChangePassword = false;
+    account.tokenVersion = (account.tokenVersion || 0) + 1;
 
-    await user.save();
+    await account.save();
 
     return res.status(200).json({
       success: true,
@@ -395,131 +442,13 @@ export const changePassword = async (req, res) => {
 };
 
 // =====================================================
-// CREATE TEAM MEMBER
-// POST /api/auth/team-members
-// =====================================================
-
-export const createTeamMember = async (req, res) => {
-  try {
-    const email = normalizeEmail(req.body.email);
-    const role = req.body.role || "ADMIN";
-
-    const allowedRoles = [
-      "ADMIN",
-      "HR",
-      "INTERVIEWER",
-      "HIRING_MANAGER",
-      "L0_SCREENER",
-    ];
-
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: "Email is required",
-      });
-    }
-
-    if (!allowedRoles.includes(role)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid user role",
-      });
-    }
-
-    const existingUser = await User.findOne({ email });
-
-    if (existingUser) {
-      return res.status(409).json({
-        success: false,
-        message: "An account with this email already exists",
-      });
-    }
-
-    const temporaryPassword =
-      crypto.randomBytes(12).toString("base64url") + "@1";
-
-    const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
-
-    const teamMember = await User.create({
-      email,
-      password: hashedPassword,
-      name: "",
-      role,
-      designation: "",
-      phone: "",
-      status: "Active",
-      tokenVersion: 0,
-      resetTokenVersion: 0,
-      mustChangePassword: true,
-    });
-
-    await sendTemporaryPasswordEmail(
-      teamMember.email,
-      temporaryPassword
-    );
-
-    return res.status(201).json({
-      success: true,
-      message: "Team member created successfully. Temporary password sent to email",
-      teamMember: {
-        id: teamMember._id,
-        email: teamMember.email,
-        role: teamMember.role,
-      },
-    });
-  } catch (error) {
-    console.error("Create team member error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Team member creation failed",
-    });
-  }
-};
-
-// =====================================================
-// GET TEAM MEMBERS
-// =====================================================
-
-export const getTeamMembers = async (req, res) => {
-  try {
-    const teamMembers = await User.find()
-      .select("-password -tokenVersion -resetTokenVersion")
-      .sort({ createdAt: -1 })
-      .lean();
-
-    return res.status(200).json({
-      success: true,
-      teamMembers,
-    });
-  } catch (error) {
-    console.error("Get team members error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch team members",
-    });
-  }
-};
-
-// =====================================================
 // GET MY PROFILE
 // GET /api/auth/me
 // =====================================================
 
 export const getMyProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id)
-      .select("-password -tokenVersion -resetTokenVersion");
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User profile not found",
-      });
-    }
-
-    const profile = getUserProfileData(user);
+    const profile = getProfileData(req.user, req.auth.accountType);
 
     return res.status(200).json({
       success: true,
@@ -545,8 +474,9 @@ export const getMyProfile = async (req, res) => {
 export const updateMyProfile = async (req, res) => {
   try {
     const allowedFields = ["name", "phone", "designation"];
+    const body = req.body || {};
 
-    const invalidFields = Object.keys(req.body).filter(
+    const invalidFields = Object.keys(body).filter(
       (field) => !allowedFields.includes(field)
     );
 
@@ -557,9 +487,12 @@ export const updateMyProfile = async (req, res) => {
       });
     }
 
-    const user = await User.findById(req.user._id);
+    const account = await findAccountById(
+      req.auth.accountType,
+      req.user._id
+    );
 
-    if (!user || isAccountUnavailable(user)) {
+    if (isAccountUnavailable(account)) {
       return res.status(404).json({
         success: false,
         message: "User profile not found or unavailable",
@@ -567,21 +500,21 @@ export const updateMyProfile = async (req, res) => {
     }
 
     for (const field of allowedFields) {
-      if (req.body[field] !== undefined) {
-        if (typeof req.body[field] !== "string") {
+      if (body[field] !== undefined) {
+        if (typeof body[field] !== "string") {
           return res.status(400).json({
             success: false,
             message: `${field} must be a string`,
           });
         }
 
-        user[field] = req.body[field].trim();
+        account[field] = body[field].trim();
       }
     }
 
-    await user.save();
+    await account.save();
 
-    const profile = getUserProfileData(user);
+    const profile = getProfileData(account, req.auth.accountType);
 
     return res.status(200).json({
       success: true,
@@ -606,9 +539,10 @@ export const updateMyProfile = async (req, res) => {
 
 export const logout = async (req, res) => {
   try {
-    await User.findByIdAndUpdate(req.user._id, {
-      $inc: { tokenVersion: 1 },
-    });
+    await req.user.constructor.updateOne(
+      { _id: req.user._id },
+      { $inc: { tokenVersion: 1 } }
+    );
 
     return res.status(200).json({
       success: true,

@@ -1,50 +1,57 @@
-
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Bell, CheckCircle2, ArrowRight } from "lucide-react";
+
 import {
-  Bell,
-  BriefcaseBusiness,
-  CalendarDays,
-  Sparkles,
-  UserRound,
-  CheckCircle2,
-  X,
-  ArrowRight,
-} from "lucide-react";
-import { initialNotifications } from "./notificationData";
-
-
-const iconMap = {
-  application: BriefcaseBusiness,
-  interview: CalendarDays,
-  jobs: Sparkles,
-  profile: UserRound,
-};
-
-const iconStyles = {
-  application: "bg-red-50 text-red-500",
-  interview: "bg-blue-50 text-blue-600",
-  jobs: "bg-indigo-50 text-indigo-500",
-  profile: "bg-emerald-50 text-emerald-600",
-};
-
-function getNotifications() {
-  try {
-    const saved = localStorage.getItem("candidateNotifications");
-    return saved ? JSON.parse(saved) : initialNotifications;
-  } catch {
-    return initialNotifications;
-  }
-}
+  getUnreadCount,
+  listNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+} from "../../services/candidatePortal.js";
+import { timeAgo } from "../../services/format.js";
+import {
+  notificationIcons,
+  notificationStyles,
+  notifyUpdated,
+} from "../../components/Candidate/notificationUi.js";
 
 export default function NotificationBell() {
   const navigate = useNavigate();
   const wrapperRef = useRef(null);
+
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState("All");
-  const [notifications, setNotifications] = useState(getNotifications);
+  const [notifications, setNotifications] = useState([]);
+  const [error, setError] = useState("");
+  const [serverUnread, setServerUnread] = useState(null);
 
-  const unreadCount = notifications.filter((item) => item.unread).length;
+  const load = useCallback(async () => {
+    try {
+      // The badge uses the server's unread count (GET /candidate/notifications/unread-count).
+      const [data, count] = await Promise.all([
+        listNotifications(),
+        getUnreadCount(),
+      ]);
+
+      setServerUnread(count.unreadCount ?? null);
+      setNotifications(data.notifications || []);
+      setError("");
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  }, []);
+
+  // Initial load and reload whenever another part of the portal changes
+  // notifications.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    load();
+
+    window.addEventListener("candidate-notifications-updated", load);
+
+    return () =>
+      window.removeEventListener("candidate-notifications-updated", load);
+  }, [load]);
 
   useEffect(() => {
     const closeOnOutsideClick = (event) => {
@@ -66,29 +73,34 @@ export default function NotificationBell() {
     };
   }, []);
 
-  const saveNotifications = (updated) => {
-    setNotifications(updated);
-    localStorage.setItem("candidateNotifications", JSON.stringify(updated));
-    window.dispatchEvent(new Event("candidate-notifications-updated"));
+  const unreadCount =
+    serverUnread ?? notifications.filter((item) => !item.isRead).length;
+
+  const markAllRead = async () => {
+    try {
+      await markAllNotificationsRead();
+      notifyUpdated();
+    } catch (requestError) {
+      setError(requestError.message);
+    }
   };
 
-  const markAllRead = () => {
-    saveNotifications(notifications.map((item) => ({ ...item, unread: false })));
-  };
-
-  const openNotification = (notification) => {
-    saveNotifications(
-      notifications.map((item) =>
-        item.id === notification.id ? { ...item, unread: false } : item
-      )
-    );
+  const openNotification = async (notification) => {
+    try {
+      if (!notification.isRead) {
+        await markNotificationRead(notification._id);
+        notifyUpdated();
+      }
+    } catch (requestError) {
+      setError(requestError.message);
+    }
 
     setOpen(false);
-    navigate(notification.path);
+    navigate("/candidate-applications");
   };
 
   const visibleNotifications = notifications.filter(
-    (item) => filter === "All" || item.unread
+    (item) => filter === "All" || !item.isRead
   );
 
   return (
@@ -97,10 +109,7 @@ export default function NotificationBell() {
         type="button"
         aria-label={`Notifications, ${unreadCount} unread`}
         aria-expanded={open}
-        onClick={() => {
-          console.log("Bell clicked");
-          setOpen((value) => !value);
-        }}
+        onClick={() => setOpen((value) => !value)}
         className="relative rounded-full p-2 text-slate-500 transition hover:bg-slate-100"
       >
         <Bell size={21} />
@@ -110,7 +119,7 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="fixed right-6 top-[82px] z-[9999] w-[min(430px,calc(100vw-24px))] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+        <div className="fixed right-6 top-[82px] z-[9999] w-[min(430px,calc(100vw-24px))] overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-xl">
           <div className="flex items-center justify-between gap-3 px-5 pb-4 pt-5">
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-bold text-slate-900">
@@ -150,23 +159,30 @@ export default function NotificationBell() {
             ))}
           </div>
 
+          {error && (
+            <p role="alert" className="px-5 py-3 text-xs text-red-600">
+              {error}
+            </p>
+          )}
+
           <div className="max-h-[390px] overflow-y-auto">
             {visibleNotifications.length > 0 ? (
               visibleNotifications.map((item) => {
-                const Icon = iconMap[item.type] || Bell;
+                const Icon = notificationIcons[item.type] || Bell;
 
                 return (
                   <button
-                    key={item.id}
+                    key={item._id}
                     type="button"
                     onClick={() => openNotification(item)}
                     className={`flex w-full gap-3 border-b border-slate-100 px-4 py-4 text-left transition hover:bg-slate-50 ${
-                      item.unread ? "bg-red-50/20" : "bg-white"
+                      item.isRead ? "bg-white" : "bg-red-50/20"
                     }`}
                   >
                     <span
                       className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
-                        iconStyles[item.type] || "bg-slate-100 text-slate-600"
+                        notificationStyles[item.type] ||
+                        "bg-slate-100 text-slate-600"
                       }`}
                     >
                       <Icon size={21} />
@@ -178,7 +194,7 @@ export default function NotificationBell() {
                           {item.title}
                         </span>
                         <span className="shrink-0 text-[11px] text-slate-400">
-                          {item.time}
+                          {timeAgo(item.createdAt)}
                         </span>
                       </span>
 
@@ -187,7 +203,7 @@ export default function NotificationBell() {
                       </span>
                     </span>
 
-                    {item.unread && (
+                    {!item.isRead && (
                       <span className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-red-500" />
                     )}
                   </button>

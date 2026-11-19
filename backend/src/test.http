@@ -272,7 +272,7 @@ Authorization: Bearer {{token}}
 ############################################################
 
 ### 7.1 Create Candidate Application - PUBLIC
-POST {{baseUrl}}/candidates
+POST {{baseUrl}}/hr-candidates
 Content-Type: application/json
 
 {
@@ -293,22 +293,22 @@ Content-Type: application/json
 
 ###
 
-### 7.2 Get All Candidates - ADMIN
-GET {{baseUrl}}/candidates
+### 7.2 Get All Candidates - HR PORTAL
+GET {{baseUrl}}/hr-candidates
 Authorization: Bearer {{token}}
 
 ###
 
 ### 7.3 Get Single Candidate - ADMIN
 # Replace CANDIDATE_ID with actual candidate _id
-GET {{baseUrl}}/candidates/CANDIDATE_ID
+GET {{baseUrl}}/hr-candidates/CANDIDATE_ID
 Authorization: Bearer {{token}}
 
 ###
 
 ### 7.4 Update Candidate - ADMIN
 # Replace CANDIDATE_ID with actual candidate _id
-PUT {{baseUrl}}/candidates/CANDIDATE_ID
+PUT {{baseUrl}}/hr-candidates/CANDIDATE_ID
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -320,7 +320,7 @@ Content-Type: application/json
 
 ### 7.5 Delete Candidate - ADMIN
 # Replace CANDIDATE_ID with actual candidate _id
-DELETE {{baseUrl}}/candidates/CANDIDATE_ID
+DELETE {{baseUrl}}/hr-candidates/CANDIDATE_ID
 Authorization: Bearer {{token}}
 
 ###
@@ -382,7 +382,7 @@ Content-Type: application/json
 ############################################################
 
 ### 9.1 Export Candidates to Excel - ADMIN
-GET {{baseUrl}}/candidates/export/excel
+GET {{baseUrl}}/hr-candidates/export/excel
 Authorization: Bearer {{token}}
 
 ###
@@ -415,8 +415,25 @@ POST {{baseUrl}}/auth/team-members
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
+# role "Administrator" is stored in the Admin collection and needs adminScope
+# (GLOBAL or DEPARTMENT). Any other role (HR, INTERVIEWER, HIRING_MANAGER,
+# L0_SCREENER, ...) is stored in the User collection and needs a department.
 {
-  "email": "team.member@proliant.com"
+  "email": "team.member@proliant.com",
+  "name": "Team Member",
+  "role": "L0_SCREENER",
+  "department": "Engineering"
+}
+
+###
+
+### 10.3b ACTIVATE / DEACTIVATE TEAM MEMBER
+PATCH {{baseUrl}}/auth/team-members/TEAM_MEMBER_ID/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "Inactive"
 }
 
 ###
@@ -510,6 +527,7 @@ POST {{baseUrl}}/candidates
 Content-Type: application/json
 
 {
+  "jobId": "PASTE_PUBLISHED_JOB_ID",
   "position": "SAP Consultant",
   "areaOfInterest": "SAP",
   "name": "Test Candidate",
@@ -528,7 +546,7 @@ Content-Type: application/json
 
 ### 12.2 Candidate Shortlisted - HR Email
 # Replace CANDIDATE_ID with an existing candidate _id
-PUT {{baseUrl}}/candidates/CANDIDATE_ID
+PUT {{baseUrl}}/hr-candidates/CANDIDATE_ID
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -540,7 +558,7 @@ Content-Type: application/json
 
 ### 12.3 Candidate Rejected - Candidate Email
 # Replace CANDIDATE_ID with an existing candidate _id
-PUT {{baseUrl}}/candidates/CANDIDATE_ID
+PUT {{baseUrl}}/hr-candidates/CANDIDATE_ID
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -913,25 +931,25 @@ Authorization: Bearer {{token}}
 ############################################################
 
 ### 19.1 Get All Applications Assigned to Logged-in L0 Screener
-GET {{baseUrl}}/applications
+GET {{baseUrl}}/screenings/applications
 Authorization: Bearer {{token}}
 
 ###
 
 ### 19.2 Get Application Details
-GET {{baseUrl}}/applications/{{applicationId}}
+GET {{baseUrl}}/screenings/applications/{{applicationId}}
 Authorization: Bearer {{token}}
 
 ###
 
 ### 19.3 Download Application Resume
-GET {{baseUrl}}/applications/{{applicationId}}/resume
+GET {{baseUrl}}/screenings/applications/{{applicationId}}/resume
 Authorization: Bearer {{token}}
 
 ###
 
 ### 19.4 Start L0 Screening
-PATCH {{baseUrl}}/applications/{{applicationId}}/start
+PATCH {{baseUrl}}/screenings/applications/{{applicationId}}/start
 Authorization: Bearer {{token}}
 
 ###
@@ -941,13 +959,13 @@ Authorization: Bearer {{token}}
 ############################################################
 
 ### 20.1 Get Screening Checklist
-GET {{baseUrl}}/applications/{{applicationId}}/checklist
+GET {{baseUrl}}/screenings/applications/{{applicationId}}/checklist
 Authorization: Bearer {{token}}
 
 ###
 
 ### 20.2 Update Screening Checklist
-PUT {{baseUrl}}/applications/{{applicationId}}/checklist
+PUT {{baseUrl}}/screenings/applications/{{applicationId}}/checklist
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -968,7 +986,7 @@ Content-Type: application/json
 ############################################################
 
 ### 21.1 Submit SHORTLIST Decision
-POST {{baseUrl}}/applications/{{applicationId}}/decision
+POST {{baseUrl}}/screenings/applications/{{applicationId}}/decision
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -985,13 +1003,13 @@ Content-Type: application/json
 ############################################################
 
 ### 22.1 Get All HR Review Requests
-GET {{baseUrl}}/hr-review-requests
+GET {{baseUrl}}/screenings/hr-review-requests
 Authorization: Bearer {{token}}
 
 ###
 
 ### 22.2 Get Details of a Particular HR Review Request
-GET {{baseUrl}}/hr-review-requests/{{hrReviewApplicationId}}
+GET {{baseUrl}}/screenings/hr-review-requests/{{hrReviewApplicationId}}
 Authorization: Bearer {{token}}
 
 ###
@@ -1001,13 +1019,13 @@ Authorization: Bearer {{token}}
 ############################################################
 
 ### 23.1 Get L0 Screening History
-GET {{baseUrl}}/history
+GET {{baseUrl}}/screenings/history
 Authorization: Bearer {{token}}
 
 ###
 
 ### 23.2 Get Screening History for a Particular Application
-GET {{baseUrl}}/history/{{applicationId}}
+GET {{baseUrl}}/screenings/history/{{applicationId}}
 Authorization: Bearer {{token}}
 
 ###
@@ -1017,13 +1035,13 @@ Authorization: Bearer {{token}}
 ############################################################
 
 ### 24.1 Get Legacy L0 Assigned Applications
-GET {{baseUrl}}/l0/assigned
+GET {{baseUrl}}/screenings/l0/assigned
 Authorization: Bearer {{token}}
 
 ###
 
 ### 24.2 Get Legacy L0 Screening Statistics
-GET {{baseUrl}}/l0/stats
+GET {{baseUrl}}/screenings/l0/stats
 Authorization: Bearer {{token}}
 
 ###
@@ -1033,19 +1051,19 @@ Authorization: Bearer {{token}}
 ############################################################
 
 ### 25.1 Get L0 Dashboard Statistics
-GET {{baseUrl}}/dashboard
+GET {{baseUrl}}/screenings/dashboard
 Authorization: Bearer {{token}}
 
 ###
 
 ### 25.2 Get L0 Dashboard Recent Applications
-GET {{baseUrl}}/dashboard/recent-applications
+GET {{baseUrl}}/screenings/dashboard/recent-applications
 Authorization: Bearer {{token}}
 
 ###
 
 ### 25.3 Get L0 Dashboard Recent Activity
-GET {{baseUrl}}/dashboard/recent-activity
+GET {{baseUrl}}/screenings/dashboard/recent-activity
 Authorization: Bearer {{token}}
 
 ###
@@ -1053,13 +1071,13 @@ Authorization: Bearer {{token}}
 ################### 7. L0 SCREENER PROFILE APIs###############################
 
 ### 1. Get Logged-in L0 Screener Profile
-GET {{baseUrl}}/profile
+GET {{baseUrl}}/screenings/profile
 Authorization: Bearer {{token}}
 
 ###
 
 ### 2. Update Logged-in L0 Screener Profile
-PATCH {{baseUrl}}/profile
+PATCH {{baseUrl}}/screenings/profile
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -1071,7 +1089,7 @@ Content-Type: application/json
 ###
 
 ################## 3. Try Updating Restricted Profile Fields ##################3
-PATCH {{baseUrl}}/profile
+PATCH {{baseUrl}}/screenings/profile
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -1178,3 +1196,573 @@ Accept: application/json
 GET http://localhost:5000/api/candidates/REPLACE_WITH_CANDIDATE_ID/joining-history
 Authorization: Bearer {{token}}
 Accept: application/json
+
+
+############################################################
+# ADDED: REQUESTS FOR PREVIOUSLY UNCOVERED APIs
+# Replace the placeholder values before sending.
+############################################################
+
+@userId = REPLACE_WITH_ADMIN_USER_ID
+@roleId = REPLACE_WITH_ROLE_ID
+@hiringApplicationId = REPLACE_WITH_APPLICATION_ID
+@hiringToken = PASTE_HIRING_MANAGER_TOKEN_HERE
+
+############################################################
+# A. ADMINISTRATOR APIs  (/api/admin)
+# Existing coverage: GET /admin/users, GET /admin/dashboard
+############################################################
+
+### A.1 Administrator - Get Users With Filters
+GET {{baseUrl}}/admin/users?page=1&limit=20&status=Active&search=admin&sortBy=createdAt&sortOrder=desc
+Authorization: Bearer {{token}}
+
+###
+
+### A.2 Administrator - Get User By ID
+GET {{baseUrl}}/admin/users/{{userId}}
+Authorization: Bearer {{token}}
+
+###
+
+### A.3 Administrator - Create User
+POST {{baseUrl}}/admin/users
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "email": "new.user@proliant.com",
+  "name": "New User",
+  "phone": "9876543210",
+  "role": "HR",
+  "department": "Human Resources"
+}
+
+###
+
+### A.4 Administrator - Update User
+# role / roles / adminScope are rejected here. Use A.5 for those.
+PATCH {{baseUrl}}/admin/users/{{userId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Updated Name",
+  "phone": "9876543210",
+  "department": "Engineering"
+}
+
+###
+
+### A.5 Administrator - Update User Role
+# Allowed fields: role, adminScope, department, reason
+PATCH {{baseUrl}}/admin/users/{{userId}}/role
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "role": "L0_SCREENER",
+  "reason": "Assigned to the screening team."
+}
+
+###
+
+### A.6 Administrator - Update User Role (department admin scope)
+PATCH {{baseUrl}}/admin/users/{{userId}}/role
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "role": "Administrator",
+  "adminScope": "DEPARTMENT",
+  "department": "Engineering",
+  "reason": "Promote to department administrator."
+}
+
+###
+
+### A.7 Administrator - Get Roles
+GET {{baseUrl}}/admin/roles
+Authorization: Bearer {{token}}
+
+###
+
+### A.8 Administrator - Get Roles Including Inactive
+GET {{baseUrl}}/admin/roles?includeInactive=true
+Authorization: Bearer {{token}}
+
+###
+
+### A.9 Administrator - Update Role Permissions
+# Maximum 100 permissions. Each must exist in the permission catalog.
+PUT {{baseUrl}}/admin/roles/{{roleId}}/permissions
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "permissions": [
+    "applications.read",
+    "applications.resume.read",
+    "screening.history.read",
+    "team.members.read"
+  ],
+  "reason": "Align HR role with current responsibilities."
+}
+
+###
+
+### A.10 Administrator - Get Audit Logs
+GET {{baseUrl}}/admin/audit-logs
+Authorization: Bearer {{token}}
+
+###
+
+### A.11 Administrator - Get Settings
+GET {{baseUrl}}/admin/settings
+Authorization: Bearer {{token}}
+
+###
+
+### A.12 Administrator - Get Settings By Category
+# Categories: GENERAL, SECURITY, NOTIFICATIONS, RECRUITMENT
+GET {{baseUrl}}/admin/settings?category=GENERAL&search=company
+Authorization: Bearer {{token}}
+
+###
+
+### A.13 Administrator - Update Setting
+# Keys must match [a-z0-9._-]+. Secrets, tokens and passwords are rejected.
+PATCH {{baseUrl}}/admin/settings
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "key": "general.company.name",
+  "value": "Proliant Data",
+  "category": "GENERAL",
+  "description": "Company display name",
+  "reason": "Initial configuration"
+}
+
+###
+
+### A.14 Administrator - Update Setting With Sensitive Key (expected 400)
+PATCH {{baseUrl}}/admin/settings
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "key": "smtp.password",
+  "value": "should-be-rejected",
+  "category": "SECURITY"
+}
+
+###
+
+############################################################
+# B. HIRING MANAGER APIs  (/api/hiring, /api/applications)
+# Login as a HIRING_MANAGER / HIRING_LEAD account and use its token.
+############################################################
+
+### B.1 Hiring Manager - Pipeline
+GET {{baseUrl}}/hiring/pipeline
+Authorization: Bearer {{hiringToken}}
+
+###
+
+### B.2 Hiring Manager - Feedback History
+GET {{baseUrl}}/hiring/feedback-history
+Authorization: Bearer {{hiringToken}}
+
+###
+
+### B.3 Hiring Manager - Application Details
+GET {{baseUrl}}/applications/{{hiringApplicationId}}
+Authorization: Bearer {{hiringToken}}
+
+###
+
+### B.4 Hiring Manager - Application Feedback
+GET {{baseUrl}}/applications/{{hiringApplicationId}}/feedback
+Authorization: Bearer {{hiringToken}}
+
+###
+
+### B.5 Hiring Manager - Get Decisions
+GET {{baseUrl}}/applications/{{hiringApplicationId}}/decisions
+Authorization: Bearer {{hiringToken}}
+
+###
+
+### B.6 Hiring Manager - Advance Candidate
+# decision: Advance | Reject | Hold
+# reason is required for Reject and Hold (max 3000 characters).
+POST {{baseUrl}}/applications/{{hiringApplicationId}}/decisions
+Authorization: Bearer {{hiringToken}}
+Content-Type: application/json
+
+{
+  "stageCode": "L1",
+  "decision": "Advance",
+  "reason": "Strong technical evaluation."
+}
+
+###
+
+### B.7 Hiring Manager - Reject Candidate
+POST {{baseUrl}}/applications/{{hiringApplicationId}}/decisions
+Authorization: Bearer {{hiringToken}}
+Content-Type: application/json
+
+{
+  "stageCode": "L1",
+  "decision": "Reject",
+  "reason": "Did not meet the required technical depth."
+}
+
+###
+
+### B.8 Hiring Manager - Hold Candidate
+POST {{baseUrl}}/applications/{{hiringApplicationId}}/decisions
+Authorization: Bearer {{hiringToken}}
+Content-Type: application/json
+
+{
+  "stageCode": "L1",
+  "decision": "Hold",
+  "reason": "Waiting for budget approval."
+}
+
+###
+
+### B.9 Hiring Manager - Reject Without Reason (expected 400)
+POST {{baseUrl}}/applications/{{hiringApplicationId}}/decisions
+Authorization: Bearer {{hiringToken}}
+Content-Type: application/json
+
+{
+  "stageCode": "L1",
+  "decision": "Reject"
+}
+
+###
+
+### B.10 Hiring Manager - Invalid Decision Value (expected 400)
+POST {{baseUrl}}/applications/{{hiringApplicationId}}/decisions
+Authorization: Bearer {{hiringToken}}
+Content-Type: application/json
+
+{
+  "stageCode": "L1",
+  "decision": "Maybe",
+  "reason": "Invalid decision value test."
+}
+
+###
+
+############################################################
+# C. HR APIs - PREVIOUSLY UNCOVERED
+############################################################
+
+### C.1 HR - Get One Job For Management
+GET {{baseUrl}}/jobs/manage/JOB_ID
+Authorization: Bearer {{token}}
+
+###
+
+### C.2 HR - Bulk Upload Employees From Excel
+# Put an .xlsx or .xls file next to this test.http file.
+POST {{baseUrl}}/employees/bulk
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=----ProliantBoundary
+
+------ProliantBoundary
+Content-Disposition: form-data; name="file"; filename="employees.xlsx"
+Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+
+< ./employees.xlsx
+------ProliantBoundary--
+
+###
+
+### C.3 HR - Bulk Upload Without a File (expected 400)
+POST {{baseUrl}}/employees/bulk
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=----ProliantBoundary
+
+------ProliantBoundary--
+
+###
+
+### C.4 HR - Get Employee Count Setting
+GET {{baseUrl}}/settings/employee-count
+Authorization: Bearer {{token}}
+
+###
+
+### C.5 HR - Update Employee Count Setting
+PUT {{baseUrl}}/settings/employee-count
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "employeeCount": 150
+}
+
+###
+
+############################################################
+# D. NEGATIVE / ACCESS-CONTROL CHECKS
+############################################################
+
+### D.1 Department Admin Endpoint Without Token (expected 401)
+GET {{baseUrl}}/department-admin/dashboard/overview
+
+###
+
+### D.2 Administrator Endpoint With Candidate Token (expected 401/403)
+GET {{baseUrl}}/admin/users
+Authorization: Bearer {{CandidateToken}}
+
+###
+
+### D.3 Candidate Endpoint Without Token (expected 401)
+GET {{baseUrl}}/candidate/dashboard
+
+###
+
+############################################################
+# REGISTRATION-BASED CANDIDATE WORKFLOW  (/api/candidates)
+# Model Candidate, collection candidates. Separate from the HR portal
+# records above (/api/hr-candidates, model HRCandidate, collection hrcandidates).
+############################################################
+
+### R.1 Candidate registers / applies for a published job - PUBLIC
+# jobId must be a published job. The job's department is copied onto the
+# record and an L0 screener from that department is assigned automatically.
+POST {{baseUrl}}/candidates
+Content-Type: application/json
+
+{
+  "jobId": "PASTE_PUBLISHED_JOB_ID",
+  "areaOfInterest": "SAP",
+  "name": "Registration Candidate",
+  "email": "registration.candidate@example.com",
+  "phone": "9876543210",
+  "isFresher": false,
+  "yearsOfExperience": 3,
+  "highestQualification": "B.Tech",
+  "noticePeriod": "30 Days"
+}
+
+###
+
+### R.2 List registered candidates - HR / Global Administrator
+GET {{baseUrl}}/candidates
+Authorization: Bearer {{token}}
+
+###
+
+### R.3 Registered candidate by id - HR / Global Administrator
+GET {{baseUrl}}/candidates/{{candidateId}}
+Authorization: Bearer {{token}}
+
+###############################################################
+# NEW WORKFLOW APIs (interviews, assignments, screeners,
+# notifications, public stats, candidate password reset)
+# Placeholders: @token = staff token, @CandidateToken = candidate token
+###############################################################
+
+@newInterviewId = PASTE_INTERVIEW_ID
+@assignmentId = PASTE_ASSIGNMENT_ID
+@jobId = PASTE_JOB_ID
+@screenerId = PASTE_SCREENER_USER_ID
+@interviewerId = PASTE_INTERVIEWER_USER_ID
+@hiringManagerId = PASTE_HIRING_MANAGER_USER_ID
+@notificationId = PASTE_NOTIFICATION_ID
+
+### N1 Public statistics (no auth)
+GET {{baseUrl}}/public/stats
+
+### N2 Staff notifications
+GET {{baseUrl}}/notifications?limit=20
+Authorization: Bearer {{token}}
+
+### N3 Unread count
+GET {{baseUrl}}/notifications/unread-count
+Authorization: Bearer {{token}}
+
+### N4 Mark one notification read
+PATCH {{baseUrl}}/notifications/{{notificationId}}/read
+Authorization: Bearer {{token}}
+
+### N5 Mark all notifications read
+PATCH {{baseUrl}}/notifications/read-all
+Authorization: Bearer {{token}}
+
+### N6 Eligible interviewers for a stage (HR / Global Admin / L0 Screener)
+GET {{baseUrl}}/interviews/interviewers?stageCode={{stageCode}}
+Authorization: Bearer {{token}}
+
+### N7 Schedule an interview (stageCode optional: defaults to the first interview stage)
+POST {{baseUrl}}/interviews
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "applicationId": "{{applicationId}}",
+  "stageCode": "L1",
+  "interviewerId": "{{interviewerId}}",
+  "scheduledAt": "2030-01-15T10:00:00.000Z",
+  "timeZone": "Asia/Kolkata",
+  "durationMinutes": 45,
+  "mode": "Online",
+  "meetingLink": "https://meet.example.com/abc",
+  "instructions": "Bring a photo ID"
+}
+
+### N8 List interviews (filters: status, stageCode, applicationId, interviewerId, jobId, from, to)
+GET {{baseUrl}}/interviews?status=Scheduled,Rescheduled&stageCode=L1
+Authorization: Bearer {{token}}
+
+### N9 Interview detail with scheduling history
+GET {{baseUrl}}/interviews/manage/{{newInterviewId}}
+Authorization: Bearer {{token}}
+
+### N10 Reschedule (reason required)
+PATCH {{baseUrl}}/interviews/{{newInterviewId}}/reschedule
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "scheduledAt": "2030-01-16T10:00:00.000Z",
+  "timeZone": "Asia/Kolkata",
+  "reason": "Interviewer unavailable"
+}
+
+### N11 Reassign interviewer
+PATCH {{baseUrl}}/interviews/{{newInterviewId}}/assign
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "interviewerId": "{{interviewerId}}", "reason": "Specialist needed" }
+
+### N12 Cancel (reason required)
+PATCH {{baseUrl}}/interviews/{{newInterviewId}}/cancel
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "reason": "Role on hold" }
+
+### N13 Hiring Manager: scheduled interviews for assigned jobs
+GET {{baseUrl}}/hiring/interviews
+Authorization: Bearer {{token}}
+
+### N14 Hiring Manager assignments (HR / Global Admin)
+GET {{baseUrl}}/hiring/assignments?status=Active
+Authorization: Bearer {{token}}
+
+### N15 Hiring Manager picker
+GET {{baseUrl}}/hiring/assignments/managers
+Authorization: Bearer {{token}}
+
+### N16 Assign a Hiring Manager to a job
+POST {{baseUrl}}/hiring/assignments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "jobId": "{{jobId}}", "hiringManagerId": "{{hiringManagerId}}" }
+
+### N17 Reassign
+PATCH {{baseUrl}}/hiring/assignments/{{assignmentId}}/reassign
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "hiringManagerId": "{{hiringManagerId}}", "reason": "Cover" }
+
+### N18 Revoke
+DELETE {{baseUrl}}/hiring/assignments/{{assignmentId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "reason": "No longer needed" }
+
+### N19 Hiring decision: Advance | Reject | Hold | Select (Select only at the final stage)
+POST {{baseUrl}}/applications/{{applicationId}}/decisions
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "stageCode": "L1", "decision": "Advance", "reason": "Strong evaluation" }
+
+### N20 HR: L0 screeners with workload
+GET {{baseUrl}}/hr-screeners
+Authorization: Bearer {{token}}
+
+### N21 HR: applications for assignment (scope: unassigned | assigned | all)
+GET {{baseUrl}}/hr-screeners/applications?scope=unassigned
+Authorization: Bearer {{token}}
+
+### N22 HR: assign a screener
+POST {{baseUrl}}/hr-screeners/assign
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "applicationId": "{{applicationId}}", "screenerId": "{{screenerId}}" }
+
+### N23 HR: reassign (reason required)
+POST {{baseUrl}}/hr-screeners/reassign
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "applicationId": "{{applicationId}}", "screenerId": "{{screenerId}}", "reason": "Workload balancing" }
+
+### N24 HR: assignment history
+GET {{baseUrl}}/hr-screeners/assignment-history?applicationId={{applicationId}}
+Authorization: Bearer {{token}}
+
+### N25 HR Jobs form: assign hiring managers while editing a job
+PUT {{baseUrl}}/jobs/{{jobId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "hiringManagerIds": ["{{hiringManagerId}}"] }
+
+### N26 Candidate password reset: request code (same response for unknown emails)
+POST {{baseUrl}}/candidate/auth/forgot-password
+Content-Type: application/json
+
+{ "email": "candidate@example.com" }
+
+### N27 Candidate password reset: verify code
+POST {{baseUrl}}/candidate/auth/verify-reset-otp
+Content-Type: application/json
+
+{ "email": "candidate@example.com", "otp": "123456" }
+
+### N28 Candidate password reset: set new password
+POST {{baseUrl}}/candidate/auth/reset-password
+Content-Type: application/json
+
+{ "email": "candidate@example.com", "resetToken": "PASTE_RESET_TOKEN", "newPassword": "NewPassword#9" }
+
+
+###############################################################
+# ADMINISTRATOR ACCESS & RECRUITMENT REPORTING
+###############################################################
+
+### D1 Department Administrator dashboard statistics (aggregate, all departments)
+# status: ALL | IN_INTERVIEW | SELECTED | JOINED
+# period: from/to (YYYY-MM-DD)  OR  year [+ month 1-12 | quarter 1-4]
+GET {{baseUrl}}/department-admin/dashboard/statistics?department=&status=ALL&year=2026&quarter=1
+Authorization: Bearer {{token}}
+
+### D2 HR / Global Admin: same summary for reports
+GET {{baseUrl}}/reports/recruitment-summary?year=2026
+Authorization: Bearer {{token}}
+
+### D3 HR / Global Admin: email the aggregate summary (manual; no schedule)
+POST {{baseUrl}}/reports/recruitment-summary/email
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "recipients": ["department.head@example.com"], "year": 2026 }

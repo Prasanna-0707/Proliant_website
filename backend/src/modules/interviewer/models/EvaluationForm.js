@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 
+import { STAFF_MODELS } from "../../../shared/constants/roles.js";
+
 // =====================================================
 // EVALUATION QUESTION
 // =====================================================
@@ -141,16 +143,29 @@ const evaluationFormSchema = new mongoose.Schema(
       default: [],
     },
 
-    // User who created the form
+    // Staff member who created the form (an Administrator from the Admin
+    // collection or an HR user from the User collection).
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin",
+      refPath: "createdByModel",
     },
 
-    // User who last updated the form
+    createdByModel: {
+      type: String,
+      enum: STAFF_MODELS,
+      default: "Admin",
+    },
+
+    // Staff member who last updated the form
     updatedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin",
+      refPath: "updatedByModel",
+    },
+
+    updatedByModel: {
+      type: String,
+      enum: STAFF_MODELS,
+      default: "Admin",
     },
   },
   {

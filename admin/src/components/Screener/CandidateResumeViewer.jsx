@@ -1,7 +1,38 @@
-import { X, User, Mail, Phone, Briefcase, GraduationCap, Clock } from "lucide-react";
+import { useState } from "react";
+import {
+  X,
+  User,
+  Mail,
+  Phone,
+  Briefcase,
+  GraduationCap,
+  Clock,
+  Building2,
+  MapPin,
+} from "lucide-react";
+
+import { downloadScreeningResume } from "../../services/screening.js";
 
 const CandidateResumeViewer = ({ application, onClose, onStartScreening }) => {
+  const [resumeState, setResumeState] = useState({ loading: false, error: "" });
+
   if (!application) return null;
+
+  // GET /api/screenings/applications/:id/resume
+  const openResume = async () => {
+    setResumeState({ loading: true, error: "" });
+
+    try {
+      const blob = await downloadScreeningResume(application.id);
+      const url = URL.createObjectURL(blob);
+
+      window.open(url, "_blank", "noopener");
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      setResumeState({ loading: false, error: "" });
+    } catch (error) {
+      setResumeState({ loading: false, error: error.message });
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -16,6 +47,7 @@ const CandidateResumeViewer = ({ application, onClose, onStartScreening }) => {
           <button
             type="button"
             onClick={onClose}
+            aria-label="Close"
             className="rounded-lg p-2 text-gray-500 hover:bg-gray-100"
           >
             <X size={20} />
@@ -30,6 +62,8 @@ const CandidateResumeViewer = ({ application, onClose, onStartScreening }) => {
             { label: "Applied Position", value: application.jobTitle, icon: Briefcase },
             { label: "Experience", value: application.experience, icon: Clock },
             { label: "Education", value: application.education, icon: GraduationCap },
+            { label: "Current Company", value: application.currentCompany, icon: Building2 },
+            { label: "Location", value: application.location, icon: MapPin },
           ].map((item) => {
             const Icon = item.icon;
 
@@ -47,22 +81,30 @@ const CandidateResumeViewer = ({ application, onClose, onStartScreening }) => {
           })}
         </div>
 
+        {application.coverMessage && (
+          <div className="border-t p-5">
+            <h3 className="mb-2 font-semibold text-gray-900">Cover message</h3>
+            <p className="text-sm leading-6 text-gray-600">
+              {application.coverMessage}
+            </p>
+          </div>
+        )}
+
         <div className="border-t p-5">
           <h3 className="mb-3 font-semibold text-gray-900">Resume</h3>
 
-          {application.resumeUrl ? (
-            <a
-              href={application.resumeUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Open Candidate Resume
-            </a>
-          ) : (
-            <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">
-              No resume URL is available in this demo record. The actual resume
-              viewer will use the candidate's uploaded resume after backend integration.
+          <button
+            type="button"
+            onClick={openResume}
+            disabled={resumeState.loading}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+          >
+            {resumeState.loading ? "Opening..." : "Open Candidate Resume"}
+          </button>
+
+          {resumeState.error && (
+            <p role="alert" className="mt-3 text-sm text-red-600">
+              {resumeState.error}
             </p>
           )}
         </div>

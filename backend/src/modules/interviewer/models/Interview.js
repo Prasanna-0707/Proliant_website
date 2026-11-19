@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { STAFF_MODELS } from "../../../shared/constants/roles.js";
 
 // =====================================================
 // INTERVIEW EVALUATION CRITERIA
@@ -95,7 +96,7 @@ const evaluationSchema = new mongoose.Schema(
 
     submittedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin",
+      ref: "User",
       default: null,
     },
 
@@ -121,7 +122,7 @@ const evaluationHistorySchema = new mongoose.Schema(
 
     updatedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin",
+      ref: "User",
       required: true,
     },
 
@@ -136,6 +137,53 @@ const evaluationHistorySchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+  },
+  { _id: false }
+);
+
+// =====================================================
+// SCHEDULING HISTORY
+// =====================================================
+
+const scheduleHistorySchema = new mongoose.Schema(
+  {
+    action: {
+      type: String,
+      enum: ["SCHEDULED", "RESCHEDULED", "REASSIGNED", "CANCELLED"],
+      required: true,
+    },
+
+    performedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      refPath: "history.performedByModel",
+      default: null,
+    },
+
+    performedByModel: {
+      type: String,
+      enum: STAFF_MODELS,
+      default: "User",
+    },
+
+    performedByName: { type: String, trim: true, default: "" },
+
+    previousScheduledAt: { type: Date, default: null },
+    newScheduledAt: { type: Date, default: null },
+
+    previousInterviewer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    newInterviewer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    reason: { type: String, trim: true, maxlength: 1500, default: "" },
+
+    at: { type: Date, default: Date.now },
   },
   { _id: false }
 );
@@ -191,7 +239,7 @@ const interviewSchema = new mongoose.Schema(
     // Assigned interviewer
     assignedTo: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin",
+      ref: "User",
       required: true,
       index: true,
     },
@@ -199,8 +247,15 @@ const interviewSchema = new mongoose.Schema(
     // User who created the assignment
     assignedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin",
+      refPath: "assignedByModel",
       required: true,
+    },
+
+    // Which staff collection "assignedBy" refers to.
+    assignedByModel: {
+      type: String,
+      enum: STAFF_MODELS,
+      default: "User",
     },
 
     // Interview schedule
@@ -272,6 +327,19 @@ const interviewSchema = new mongoose.Schema(
     evaluationHistory: {
       type: [evaluationHistorySchema],
       default: [],
+    },
+
+    // Scheduling lifecycle history (schedule, reschedule, reassign, cancel).
+    history: {
+      type: [scheduleHistorySchema],
+      default: [],
+    },
+
+    cancellationReason: {
+      type: String,
+      trim: true,
+      maxlength: 1500,
+      default: "",
     },
   },
   {

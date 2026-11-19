@@ -8,6 +8,8 @@
  // NORMALIZATION
  // -----------------------------------------------------
 
+import { isApprovedGlobalAdminEmail } from "../constants/roles.js";
+
  export const normalizeRole = (value = "") =>
    String(value)
      .trim()
@@ -98,10 +100,13 @@
  export const isAdministrator = (user, activeRole) =>
    hasActiveRole(user, ["Administrator"], activeRole);
 
+ // A Global Administrator must have adminScope GLOBAL AND be on the
+ // approved list. A GLOBAL scope on any other account is ignored.
  export const isGlobalAdministrator = (user, activeRole) =>
    isActiveAccount(user) &&
    isAdministrator(user, activeRole) &&
-   user.adminScope === "GLOBAL";
+   user.adminScope === "GLOBAL" &&
+   isApprovedGlobalAdminEmail(user.email);
 
  export const isDepartmentAdministrator = (user, activeRole) =>
    isActiveAccount(user) &&
@@ -114,7 +119,8 @@
 
  export const isGlobalAdministratorAccount = (user) =>
    hasAssignedRole(user, ["Administrator"]) &&
-   user?.adminScope === "GLOBAL";
+   user?.adminScope === "GLOBAL" &&
+   isApprovedGlobalAdminEmail(user?.email);
 
  export const isDepartmentAdministratorAccount = (user) =>
    hasAssignedRole(user, ["Administrator"]) &&
@@ -334,12 +340,13 @@
 
    if (!department) return null;
 
+   // Department Administrators have a read-only recruitment dashboard only
+   // (Administrator Access & Recruitment Reporting, sections 3.2 and 8).
+   // They do NOT manage portal users, roles, permissions, settings or the
+   // team directory, so no directory access is granted to them here. Their
+   // own module (/api/department-admin) is guarded by requireDepartmentAdmin.
    if (isDepartmentAdministrator(user, activeRole)) {
-     return {
-       type: "DEPARTMENT_ADMIN",
-       department,
-       readOnly: false,
-     };
+     return null;
    }
 
    if (isHrOrRecruiter(user, activeRole)) {

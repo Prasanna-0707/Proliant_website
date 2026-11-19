@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom";
 import Sidebar from "../Sidebar";
+import StaffNotificationBell from "../StaffNotificationBell";
 
 function getHiringManagerUser() {
   const storageKeys = [
@@ -47,6 +48,10 @@ export default function HiringManagerLayout() {
 
       <div className="min-w-0 flex-1 md:ml-64">
         <main className="min-h-screen min-w-0 overflow-x-hidden px-4 pt-20 pb-20 transition-colors sm:px-6 md:pt-6 md:pb-6 lg:px-8 lg:py-7 dark:bg-gray-950">
+          <div className="mb-4 flex justify-end">
+            <StaffNotificationBell />
+          </div>
+
           <Outlet />
         </main>
       </div>
