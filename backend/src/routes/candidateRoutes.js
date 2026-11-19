@@ -15,18 +15,25 @@ import {
 
 import authMiddleware from "../middleware/authMiddleware.js";
 
+import denyDepartmentAdminGenericAccess from "../middleware/denyDepartmentAdminGenericAccess.js";
+
 const router = express.Router();
 
 // =====================================================
 // PUBLIC CANDIDATE APPLICATION
+// POST /api/candidates
 // =====================================================
 
+// Public applications must remain accessible.
 router.post("/", createCandidate);
 
 // =====================================================
 // JOINING CONFIRMATION
+// PATCH /api/candidates/:id/confirm-joining
 // =====================================================
 
+// Authorization is enforced inside the controller.
+// Only authorized HR personnel and Global Administrators.
 router.patch(
   "/:id/confirm-joining",
   authMiddleware,
@@ -35,6 +42,7 @@ router.patch(
 
 // =====================================================
 // JOINING DATE CORRECTION
+// PATCH /api/candidates/:id/correct-joining-date
 // =====================================================
 
 router.patch(
@@ -45,6 +53,7 @@ router.patch(
 
 // =====================================================
 // CANDIDATE JOINING HISTORY
+// GET /api/candidates/:id/joining-history
 // =====================================================
 
 router.get(
@@ -54,21 +63,50 @@ router.get(
 );
 
 // =====================================================
-// EXISTING CANDIDATE APIs
+// EXISTING GENERIC CANDIDATE APIs
 // =====================================================
 
-router.get("/", authMiddleware, getCandidates);
+// Department Administrators must use their dedicated,
+// department-scoped APIs instead of these generic APIs.
 
+// GET ALL CANDIDATES
+router.get(
+  "/",
+  authMiddleware,
+  denyDepartmentAdminGenericAccess,
+  getCandidates
+);
+
+// EXPORT CANDIDATES TO EXCEL
 router.get(
   "/export/excel",
   authMiddleware,
+  denyDepartmentAdminGenericAccess,
   exportCandidatesExcel
 );
 
-router.get("/:id", authMiddleware, getCandidate);
+// GET SINGLE CANDIDATE
+router.get(
+  "/:id",
+  authMiddleware,
+  denyDepartmentAdminGenericAccess,
+  getCandidate
+);
 
-router.put("/:id", authMiddleware, updateCandidate);
+// UPDATE CANDIDATE
+router.put(
+  "/:id",
+  authMiddleware,
+  denyDepartmentAdminGenericAccess,
+  updateCandidate
+);
 
-router.delete("/:id", authMiddleware, deleteCandidate);
+// DELETE CANDIDATE
+router.delete(
+  "/:id",
+  authMiddleware,
+  denyDepartmentAdminGenericAccess,
+  deleteCandidate
+);
 
 export default router;

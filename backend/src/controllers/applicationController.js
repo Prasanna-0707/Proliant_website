@@ -1,5 +1,7 @@
+
 import mongoose from "mongoose";
 import Candidate from "../models/Candidate.js";
+import Job from "../models/job.js";
 import Screening from "../modules/screener/models/Screening.js";
 
 import {
@@ -102,21 +104,40 @@ const SUPPORTED_RESUME_TYPES = {
 
 // =====================================================
 // INTERNAL RESUME DOWNLOAD HANDLER
+//
+// Supports:
+// 1. Existing application resume download.
+// 2. Existing assigned L0 Screener resume download.
+// 3. Department Admin resume download.
+//
+// candidateRecord is optional. When supplied, the
+// caller has already fetched and authorized the candidate.
 // =====================================================
 
-const downloadApplicationResume = async (req, res) => {
-  const { id } = req.params;
+const downloadApplicationResume = async (
+  req,
+  res,
+  candidateRecord = null
+) => {
+  const id =
+    req.params.id ||
+    req.params.candidateId;
 
-  if (!mongoose.isValidObjectId(id)) {
+  if (
+    !candidateRecord &&
+    !mongoose.isValidObjectId(id)
+  ) {
     return res.status(400).json({
       success: false,
       message: "Invalid application ID.",
     });
   }
 
-  const candidate = await Candidate.findById(id)
-    .select("_id name resume")
-    .lean();
+  const candidate =
+    candidateRecord ||
+    await Candidate.findById(id)
+      .select("_id name resume")
+      .lean();
 
   if (!candidate) {
     return res.status(404).json({
@@ -243,6 +264,162 @@ export const getApplicationResume = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to retrieve application resume.",
+    });
+  }
+};
+
+
+// =====================================================
+// GET DEPARTMENT ADMIN CANDIDATE RESUME
+// GET /api/department-admin/candidates/:candidateId/resume
+//
+// Authorization:
+// 1. Global Administrator - organization-wide access.
+// 2. Department Administrator - own department only.
+//
+// Required permission:
+// department.candidate.resume.read
+//
+// Department ownership is determined through:
+// Candidate.job -> Job.department.
+// =====================================================
+
+export const getDepartmentAdminCandidateResume = async (
+  req,
+  res
+) => {
+  try {
+    // -------------------------------------------------
+    // 1. VERIFY DEPARTMENT ADMIN ACCESS CONTEXT
+    // -------------------------------------------------
+
+    const access = req.departmentAdminAccess;
+
+    if (!access) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Department Administrator access context is missing.",
+      });
+    }
+
+    const scope = String(
+      access.scope || ""
+    ).toUpperCase();
+
+    if (
+      scope !== "GLOBAL" &&
+      scope !== "DEPARTMENT"
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Invalid administrator access scope.",
+      });
+    }
+
+    // -------------------------------------------------
+    // 2. VERIFY REQUIRED PERMISSION
+    // -------------------------------------------------
+
+    if (
+      req.permissionContext?.permission !==
+      "department.candidate.resume.read"
+    ) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "You do not have permission to view candidate resumes.",
+      });
+    }
+
+    // -------------------------------------------------
+    // 3. VALIDATE CANDIDATE ID
+    // -------------------------------------------------
+
+    const { candidateId } = req.params;
+
+    if (!mongoose.isValidObjectId(candidateId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid candidate ID.",
+      });
+    }
+
+    // -------------------------------------------------
+    // 4. FETCH CANDIDATE AND ASSOCIATED JOB
+    // -------------------------------------------------
+
+    const candidate = await Candidate.findById(candidateId)
+      .select("_id name resume job")
+      .populate({
+        path: "job",
+        select: "department",
+      })
+      .lean();
+
+    if (!candidate) {
+      return res.status(404).json({
+        success: false,
+        message: "Candidate not found.",
+      });
+    }
+
+    const job =
+      candidate.job &&
+      typeof candidate.job === "object" &&
+      candidate.job._id
+        ? candidate.job
+        : null;
+
+    const jobDepartment = String(
+      job?.department || ""
+    ).trim();
+
+    // -------------------------------------------------
+    // 5. ENFORCE DEPARTMENT OWNERSHIP
+    // -------------------------------------------------
+
+    if (scope === "DEPARTMENT") {
+      const adminDepartment = String(
+        access.department || ""
+      ).trim();
+
+      if (
+        !adminDepartment ||
+        !jobDepartment ||
+        jobDepartment.toLowerCase() !==
+          adminDepartment.toLowerCase()
+      ) {
+        // Use the same response for missing and
+        // unauthorized department records to avoid
+        // exposing another department's candidate data.
+        return res.status(404).json({
+          success: false,
+          message:
+            "Candidate not found in your department.",
+        });
+      }
+    }
+
+    // -------------------------------------------------
+    // 6. REUSE EXISTING SECURE RESUME DOWNLOAD
+    // -------------------------------------------------
+
+    return await downloadApplicationResume(
+      req,
+      res,
+      candidate
+    );
+  } catch (error) {
+    console.error(
+      "Department Admin candidate resume error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Failed to retrieve candidate resume.",
     });
   }
 };

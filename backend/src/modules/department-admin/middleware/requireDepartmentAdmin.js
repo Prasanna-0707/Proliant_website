@@ -1,10 +1,8 @@
-
 import {
   getActiveRole,
   isActiveAccount,
   isGlobalAdministrator,
   isDepartmentAdministrator,
-  isHod,
 } from "../../administrator/services/authorizationService.js";
 
 // =====================================================
@@ -13,7 +11,6 @@ import {
 // Permitted accounts:
 // 1. Global Administrator
 // 2. Department Administrator
-// 3. HOD / Head of Department
 //
 // This module provides READ-ONLY oversight.
 // =====================================================
@@ -46,7 +43,7 @@ const requireDepartmentAdmin = (req, res, next) => {
       });
     }
 
-    // 3. DETERMINE ACCESS SCOPE
+    // 3. DETERMINE ADMINISTRATOR SCOPE
 
     let accessScope = null;
 
@@ -55,8 +52,6 @@ const requireDepartmentAdmin = (req, res, next) => {
     } else if (
       isDepartmentAdministrator(user, activeRole)
     ) {
-      accessScope = "DEPARTMENT";
-    } else if (isHod(user, activeRole)) {
       accessScope = "DEPARTMENT";
     }
 

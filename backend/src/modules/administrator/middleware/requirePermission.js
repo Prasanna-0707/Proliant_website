@@ -3,36 +3,78 @@ import RolePermission from "../models/RolePermission.js";
 import {
   getActiveRole,
   isActiveAccount,
-  isL0Screener,
   normalizeRole,
+  isGlobalAdministrator,
+  isDepartmentAdministrator,
 } from "../services/authorizationService.js";
 
 // =====================================================
 // CONVERT ACTIVE ROLE INTO ROLE PERMISSION KEY
 // =====================================================
 
-const getRolePermissionKey = (activeRole, user) => {
-  const normalizedRole = normalizeRole(activeRole)
-    .trim()
-    .replace(/[\s-]+/g, "_")
-    .toUpperCase();
+const getRolePermissionKey = (activeRole) => {
+  const normalizedRole = normalizeRole(activeRole);
 
-  // Generic Interviewer accounts designated as L0
-  // must use the L0 Screener permission configuration.
-  if (
-    normalizedRole === "INTERVIEWER" &&
-    isL0Screener(user)
-  ) {
+  // Only explicitly assigned L0 roles receive
+  // the L0 Screener permission configuration.
+  // Designation is never used for role mapping.
+
+  const l0Roles = [
+    "l0",
+    "l0 screener",
+    "l0 initial screener",
+    "initial screener",
+    "screener",
+  ];
+
+  const isExplicitL0Role =
+    l0Roles.includes(normalizedRole) ||
+    (
+      normalizedRole.includes("l0") &&
+      (
+        normalizedRole.includes("screener") ||
+        normalizedRole.includes("interviewer")
+      )
+    );
+
+  if (isExplicitL0Role) {
     return "L0_SCREENER";
   }
 
-  // Map role names to keys used in seedData.js.
-  const roleAliases = {
-    HEAD_OF_DEPARTMENT: "HOD",
-  };
-
-  return roleAliases[normalizedRole] || normalizedRole;
+  return normalizedRole
+    .replace(/[\s-]+/g, "_")
+    .toUpperCase();
 };
+
+// =====================================================
+// DEPARTMENT ADMIN PERMISSION RESTRICTIONS
+// =====================================================
+
+const DEPARTMENT_ADMIN_ALLOWED_PERMISSIONS = new Set([
+  // Department Admin read-only dashboard
+  "department.dashboard.read",
+
+  // Department-scoped candidate read-only access
+  "department.candidates.read",
+  "department.candidate.details.read",
+  "department.candidate.resume.read",
+  "department.candidate.history.read",
+
+  // Department-scoped interview feedback read-only access
+  "department.interviews.feedback.read",
+
+  // Department reports read-only access
+  "department.reports.read",
+
+  // User directory read-only access
+  "admin.users.read",
+]);
+
+const LEGACY_HOD_ROLES = new Set([
+  "hod",
+  "head of department",
+  "department head",
+]);
 
 // =====================================================
 // REQUIRE SPECIFIC PERMISSION
@@ -65,12 +107,66 @@ const requirePermission = (permissionKey) => {
         });
       }
 
-      // 3. RESOLVE ROLE PERMISSION DOCUMENT
+      const normalizedRole = normalizeRole(activeRole);
 
-      const roleKey = getRolePermissionKey(
-        activeRole,
-        req.admin
-      );
+      // 3. REJECT LEGACY HOD IDENTITIES
+
+      if (LEGACY_HOD_ROLES.has(normalizedRole)) {
+        return res.status(403).json({
+          success: false,
+          message:
+            "HOD is not an authorized portal role. Use the appropriate Administrator account configuration.",
+        });
+      }
+
+      // 4. VALIDATE ADMINISTRATOR SCOPE
+
+      const isGlobalAdmin =
+        isGlobalAdministrator(req.admin, activeRole);
+
+      const isDepartmentAdmin =
+        isDepartmentAdministrator(req.admin, activeRole);
+
+      if (
+        normalizedRole === "administrator" &&
+        !isGlobalAdmin &&
+        !isDepartmentAdmin
+      ) {
+        return res.status(403).json({
+          success: false,
+          message:
+            "Your Administrator account must have a valid GLOBAL or DEPARTMENT scope and department assignment.",
+        });
+      }
+
+      // 5. RESTRICT DEPARTMENT ADMINISTRATOR PERMISSIONS
+      // Department Administrators are allowed only the
+      // explicitly listed read-only permissions.
+      //
+      // User management mutations such as:
+      // admin.users.create
+      // admin.users.update
+      // admin.users.role.update
+      //
+      // are intentionally excluded.
+
+      if (
+        isDepartmentAdmin &&
+        !DEPARTMENT_ADMIN_ALLOWED_PERMISSIONS.has(
+          permissionKey
+        )
+      ) {
+        return res.status(403).json({
+          success: false,
+          message:
+            "Department Administrators are restricted to approved read-only department-scoped permissions.",
+          requiredPermission: permissionKey,
+        });
+      }
+
+      // 6. RESOLVE ROLE PERMISSION DOCUMENT
+
+      const roleKey = getRolePermissionKey(activeRole);
 
       const rolePermission = await RolePermission.findOne({
         key: roleKey,
@@ -87,7 +183,7 @@ const requirePermission = (permissionKey) => {
         });
       }
 
-      // 4. CHECK REQUIRED PERMISSION
+      // 7. CHECK REQUIRED PERMISSION
 
       const hasPermission =
         Array.isArray(rolePermission.permissions) &&
@@ -102,16 +198,18 @@ const requirePermission = (permissionKey) => {
         });
       }
 
-      // 5. STORE AUTHORIZATION CONTEXT
+      // 8. STORE AUTHORIZATION CONTEXT
 
       req.permissionContext = {
         roleKey: rolePermission.key,
         roleName: rolePermission.name,
         activeRole,
         permission: permissionKey,
-        dataScope:
-          req.admin.adminScope === "GLOBAL"
-            ? "GLOBAL"
+
+        dataScope: isGlobalAdmin
+          ? "GLOBAL"
+          : isDepartmentAdmin
+            ? "DEPARTMENT"
             : rolePermission.dataScope,
       };
 

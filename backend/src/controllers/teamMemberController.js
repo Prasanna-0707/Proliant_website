@@ -1,4 +1,3 @@
-
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
@@ -15,16 +14,6 @@ import {
   retryPendingL0Assignments,
   reassignL0ApplicationsFromInactiveScreener,
 } from "../services/screenerAssignmentService.js";
-
-// =====================================================
-// TEMPORARY DEVELOPMENT SETTING
-// =====================================================
-
-// false = allow authenticated users to view the directory
-// true  = enforce role/department restrictions for GET APIs
-//
-// Restore role-based restrictions before deployment.
-const ROLE_BASED_TEAM_MEMBER_READ_ACCESS = false;
 
 // =====================================================
 // CONSTANTS
@@ -69,7 +58,7 @@ const normalizeRoleLabel = (role = "") =>
 // =====================================================
 
 // Global Administrator and Department Administrator
-// are scopes, not separate role names.
+// are scopes, not separate portal role names.
 //
 // Global:
 // role = Administrator
@@ -96,31 +85,72 @@ const isNonCanonicalAdminRole = (role) =>
     normalizeRoleLabel(role)
   );
 
+const isAdministrator = (member) =>
+  normalizeRole(member?.role) === "administrator";
+
+const isRegularPortalRole = (member) =>
+  Boolean(normalizeRole(member?.role)) &&
+  !isAdministrator(member) &&
+  !isNonCanonicalAdminRole(member.role);
+
 // =====================================================
-// LEGACY HOD DESIGNATION VALIDATION
+// ADMINISTRATOR CONFIGURATION VALIDATION
 // =====================================================
 
-const LEGACY_HOD_DESIGNATIONS = new Set([
-  "hod",
-  "head of department",
-  "department head",
-]);
+const getAccountConfigurationError = (member) => {
+  if (!member || !normalizeRole(member.role)) {
+    return "A valid portal role is required.";
+  }
 
-const isLegacyHodDesignation = (designation) =>
-  LEGACY_HOD_DESIGNATIONS.has(
-    normalizeRoleLabel(designation)
-  );
+  const department = String(
+    member.department || ""
+  ).trim();
+
+  if (isAdministrator(member)) {
+    if (
+      !["GLOBAL", "DEPARTMENT"].includes(
+        member.adminScope
+      )
+    ) {
+      return "Administrator accounts require GLOBAL or DEPARTMENT scope.";
+    }
+
+    if (
+      member.adminScope === "GLOBAL" &&
+      department
+    ) {
+      return "A Global Administrator must not have a department assigned.";
+    }
+
+    if (
+      member.adminScope === "DEPARTMENT" &&
+      !department
+    ) {
+      return "A Department Administrator must have a department.";
+    }
+
+    return null;
+  }
+
+  if (
+    member.adminScope !== null &&
+    member.adminScope !== undefined &&
+    member.adminScope !== ""
+  ) {
+    return "Regular staff accounts cannot have administrator scope.";
+  }
+
+  return null;
+};
 
 // =====================================================
 // ACCOUNT HELPERS
 // =====================================================
 
-const isAdministrator = (member) =>
-  normalizeRole(member.role) === "administrator";
-
 const isGlobalAdministrator = (member) =>
   isAdministrator(member) &&
-  member.adminScope === "GLOBAL";
+  member.adminScope === "GLOBAL" &&
+  !String(member.department || "").trim();
 
 const isDepartmentAdministrator = (member) =>
   isAdministrator(member) &&
@@ -138,7 +168,9 @@ const getAccessContext = (admin) => {
     return null;
   }
 
-  const department = String(admin.department || "").trim();
+  const department = String(
+    admin.department || ""
+  ).trim();
 
   if (isGlobalAdministrator(admin)) {
     return { type: "GLOBAL" };
@@ -152,7 +184,7 @@ const getAccessContext = (admin) => {
   }
 
   if (
-    !isAdministrator(admin) &&
+    isRegularPortalRole(admin) &&
     !admin.adminScope &&
     department
   ) {
@@ -181,6 +213,7 @@ const toSafeMember = (member) => ({
 
 // Only record relevant account fields. Never include passwords,
 // tokens, OTPs, or other authentication credentials.
+
 const toAuditSnapshot = (member) => {
   if (!member) return null;
 
@@ -199,13 +232,18 @@ const toAuditSnapshot = (member) => {
 };
 
 const parseScope = (value) => {
-  if (value === null || value === undefined || value === "") {
+  if (
+    value === null ||
+    value === undefined
+  ) {
     return null;
   }
 
   const scope = String(value).trim().toUpperCase();
 
-  if (scope === "NONE") return null;
+  if (!scope || scope === "NONE") {
+    return null;
+  }
 
   if (["GLOBAL", "DEPARTMENT"].includes(scope)) {
     return scope;
@@ -214,15 +252,11 @@ const parseScope = (value) => {
   return undefined;
 };
 
-const defaultRegularRole = (department) =>
-  normalizeDepartment(department) === "hr"
-    ? "HR"
-    : "Employee";
-
 const countActiveGlobalAdministrators = () =>
   Admin.countDocuments({
     role: /^Administrator$/i,
     adminScope: "GLOBAL",
+    department: { $in: [null, ""] },
     status: "Active",
     deletedAt: null,
   });
@@ -233,6 +267,7 @@ const countActiveGlobalAdministrators = () =>
 
 // The account change and its audit record must commit together.
 // If either operation fails, withTransaction aborts the transaction.
+
 const saveAccountAndAuditAtomically = async ({
   req,
   target,
@@ -369,6 +404,7 @@ const authorizeTarget = async (req, res, id) => {
       success: false,
       message: "Invalid team member ID.",
     });
+
     return null;
   }
 
@@ -379,6 +415,7 @@ const authorizeTarget = async (req, res, id) => {
       success: false,
       message: "Your account permissions are not configured.",
     });
+
     return null;
   }
 
@@ -388,6 +425,7 @@ const authorizeTarget = async (req, res, id) => {
       message:
         "You cannot manage your own account through the Team Members API.",
     });
+
     return null;
   }
 
@@ -401,6 +439,7 @@ const authorizeTarget = async (req, res, id) => {
       success: false,
       message: "Team member not found.",
     });
+
     return null;
   }
 
@@ -421,18 +460,23 @@ const authorizeTarget = async (req, res, id) => {
       isDepartmentAdministrator(target);
 
     const targetIsRegularStaff =
-      !isAdministrator(target) && !target.adminScope;
+      isRegularPortalRole(target) &&
+      !target.adminScope;
 
     if (
       !sameDepartment ||
       targetIsGlobal ||
-      (!targetHasValidDepartmentScope && !targetIsRegularStaff)
+      (
+        !targetHasValidDepartmentScope &&
+        !targetIsRegularStaff
+      )
     ) {
       res.status(403).json({
         success: false,
         message:
           "You can manage eligible accounts in your own department only.",
       });
+
       return null;
     }
 
@@ -449,12 +493,51 @@ const authorizeTarget = async (req, res, id) => {
 };
 
 // =====================================================
+// TEAM MEMBER READ ACCESS
+// =====================================================
+
+// Global Administrators can read all accounts.
+// Department Administrators and regular staff can read
+// only valid accounts assigned to their own department.
+// Global Administrator accounts and malformed account
+// configurations are never exposed to department users.
+
+const canReadDepartmentMember = (member, department) => {
+  const sameDepartment =
+    normalizeDepartment(member.department) ===
+    normalizeDepartment(department);
+
+  if (!sameDepartment) {
+    return false;
+  }
+
+  if (isAdministrator(member)) {
+    return isDepartmentAdministrator(member);
+  }
+
+  return (
+    isRegularPortalRole(member) &&
+    !member.adminScope
+  );
+};
+
+// =====================================================
 // GET TEAM MEMBERS
 // GET /api/auth/team-members
 // =====================================================
 
 export const getTeamMembers = async (req, res) => {
   try {
+    const access = getAccessContext(req.admin);
+
+    if (!access) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Your account's role, department, or access scope is not configured. Please contact a Global Administrator.",
+      });
+    }
+
     const members = await Admin.find({
       deletedAt: null,
     })
@@ -466,50 +549,31 @@ export const getTeamMembers = async (req, res) => {
       })
       .lean();
 
-    const safeMembers = members.map(toSafeMember);
+    // Global Administrators see all accounts.
+    // Other users see only valid accounts in their department.
+
+    const visibleMembers =
+      access.type === "GLOBAL"
+        ? members
+        : members.filter((member) =>
+            canReadDepartmentMember(
+              member,
+              access.department
+            )
+          );
+
+    const safeMembers = visibleMembers.map(toSafeMember);
+
     const currentUserId = req.admin._id.toString();
 
-    // Temporary development mode: authenticated users can
-    // read the directory without role-based restrictions.
-    if (!ROLE_BASED_TEAM_MEMBER_READ_ACCESS) {
+    // Regular staff receive read-only access to their own department.
+
+    if (access.type === "MEMBER") {
       const teamMembers = safeMembers.map((member) => ({
         ...member,
         isMe: member._id === currentUserId,
         canManage: false,
       }));
-
-      return res.status(200).json({
-        success: true,
-        view: "team-members",
-        currentUserId,
-        memberCount: teamMembers.length,
-        teamMembers,
-      });
-    }
-
-    const access = getAccessContext(req.admin);
-
-    if (!access) {
-      return res.status(403).json({
-        success: false,
-        message:
-          "Your account's role, department, or access scope is not configured. Please contact a Global Administrator.",
-      });
-    }
-
-    if (access.type === "MEMBER") {
-      const teamMembers = safeMembers
-        .filter(
-          (member) =>
-            !isGlobalAdministrator(member) &&
-            normalizeDepartment(member.department) ===
-              normalizeDepartment(access.department)
-        )
-        .map((member) => ({
-          ...member,
-          isMe: member._id === currentUserId,
-          canManage: false,
-        }));
 
       return res.status(200).json({
         success: true,
@@ -521,20 +585,25 @@ export const getTeamMembers = async (req, res) => {
       });
     }
 
-    const globalAdministrators = safeMembers
-      .filter(isGlobalAdministrator)
-      .map((member) => ({
-        ...member,
-        isMe: member._id === currentUserId,
-        canManage:
-          access.type === "GLOBAL" &&
-          member._id !== currentUserId,
-      }));
+    // Only Global Administrators can see Global Administrator records.
+
+    const globalAdministrators =
+      access.type === "GLOBAL"
+        ? safeMembers
+            .filter(isGlobalAdministrator)
+            .map((member) => ({
+              ...member,
+              isMe: member._id === currentUserId,
+              canManage: member._id !== currentUserId,
+            }))
+        : [];
 
     const departmentMap = new Map();
 
     for (const member of safeMembers) {
-      const department = String(member.department || "").trim();
+      const department = String(
+        member.department || ""
+      ).trim();
 
       if (!department || isGlobalAdministrator(member)) {
         continue;
@@ -555,7 +624,10 @@ export const getTeamMembers = async (req, res) => {
 
       const eligibleDepartmentAccount =
         isDepartmentAdministrator(member) ||
-        (!isAdministrator(member) && !member.adminScope);
+        (
+          isRegularPortalRole(member) &&
+          !member.adminScope
+        );
 
       const canManage =
         member._id !== currentUserId &&
@@ -603,8 +675,11 @@ export const getTeamMembers = async (req, res) => {
       globalAdministratorCount: globalAdministrators.length,
       globalAdministrators,
       departments,
-      canManageGlobalAdministrators: access.type === "GLOBAL",
+      canManageGlobalAdministrators:
+        access.type === "GLOBAL",
     };
+
+    // Only Global Administrators can see unassigned accounts.
 
     if (access.type === "GLOBAL") {
       response.unassignedMembers = safeMembers
@@ -647,9 +722,7 @@ export const getTeamMemberById = async (req, res) => {
       });
     }
 
-    const access = ROLE_BASED_TEAM_MEMBER_READ_ACCESS
-      ? getAccessContext(req.admin)
-      : { type: "TEMPORARY_READ_ALL" };
+    const access = getAccessContext(req.admin);
 
     if (!access) {
       return res.status(403).json({
@@ -672,28 +745,31 @@ export const getTeamMemberById = async (req, res) => {
       });
     }
 
-    if (
-      ROLE_BASED_TEAM_MEMBER_READ_ACCESS &&
-      access.type === "MEMBER"
-    ) {
-      const sameDepartment =
-        normalizeDepartment(member.department) ===
-        normalizeDepartment(access.department);
+    // Global Administrators can view all accounts.
+    // All other users are limited to eligible accounts
+    // in their own department, including individual-ID lookups.
 
-      if (!sameDepartment || isGlobalAdministrator(member)) {
-        return res.status(403).json({
-          success: false,
-          message:
-            "You can only view members of your own department.",
-        });
-      }
+    if (
+      access.type !== "GLOBAL" &&
+      !canReadDepartmentMember(
+        member,
+        access.department
+      )
+    ) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "You can only view eligible members of your own department.",
+      });
     }
 
     return res.status(200).json({
       success: true,
       teamMember: {
         ...toSafeMember(member),
-        isMe: member._id.toString() === req.admin._id.toString(),
+        isMe:
+          member._id.toString() ===
+          req.admin._id.toString(),
       },
     });
   } catch (error) {
@@ -715,6 +791,7 @@ export const createTeamMember = async (req, res) => {
   let teamMember;
 
   try {
+    const body = req.body || {};
     const access = getAccessContext(req.admin);
 
     if (
@@ -723,13 +800,21 @@ export const createTeamMember = async (req, res) => {
     ) {
       return res.status(403).json({
         success: false,
-        message: "You do not have permission to create accounts.",
+        message:
+          "You do not have permission to create accounts.",
       });
     }
 
-    const email = normalizeEmail(req.body.email);
+    // -------------------------------------------------
+    // EMAIL VALIDATION
+    // -------------------------------------------------
 
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    const email = normalizeEmail(body.email);
+
+    if (
+      !email ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+    ) {
       return res.status(400).json({
         success: false,
         message: "A valid email address is required.",
@@ -739,28 +824,33 @@ export const createTeamMember = async (req, res) => {
     if (await Admin.findOne({ email })) {
       return res.status(409).json({
         success: false,
-        message: "An account with this email already exists.",
+        message:
+          "An account with this email already exists.",
       });
     }
 
-    const role = String(
-      req.body.role ||
-        defaultRegularRole(
-          access.type === "DEPARTMENT_ADMIN"
-            ? access.department
-            : req.body.department
-        )
-    ).trim();
+    // -------------------------------------------------
+    // ROLE VALIDATION
+    // Role is mandatory. Do not infer it from department.
+    // -------------------------------------------------
 
-    // -------------------------------------------------
-    // PREVENT NON-CANONICAL ADMINISTRATOR ROLE CREATION
-    // -------------------------------------------------
+    if (
+      typeof body.role !== "string" ||
+      !body.role.trim()
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "A valid portal role is required.",
+      });
+    }
+
+    let role = body.role.trim();
 
     if (isNonCanonicalAdminRole(role)) {
       return res.status(400).json({
         success: false,
         message:
-          "HOD is not a separate role. Use Administrator with the appropriate administrator scope.",
+          "HOD, Global Admin and Department Admin are not separate portal roles. Use Administrator with the appropriate administrator scope.",
         allowedAdministratorConfiguration: [
           {
             role: "Administrator",
@@ -774,32 +864,80 @@ export const createTeamMember = async (req, res) => {
       });
     }
 
-    const name = String(req.body.name || "").trim();
-    let designation = String(req.body.designation || "").trim();
-    const phone = String(req.body.phone || "").trim();
+    if (isAdministrator({ role })) {
+      role = "Administrator";
+    }
 
     // -------------------------------------------------
-    // PREVENT LEGACY HOD DESIGNATION CREATION
+    // PERSONAL INFORMATION
+    // Designation is optional and never controls access.
     // -------------------------------------------------
 
-    if (isLegacyHodDesignation(designation)) {
+    const name = String(body.name || "").trim();
+    const phone = String(body.phone || "").trim();
+
+    if (
+      body.designation !== undefined &&
+      body.designation !== null &&
+      typeof body.designation !== "string"
+    ) {
       return res.status(400).json({
         success: false,
-        message:
-          "HOD is not a separate profile. Use the Department Administrator account configuration instead.",
+        message: "Designation must be a string.",
       });
     }
 
-    let department = "";
+    const designation =
+      typeof body.designation === "string"
+        ? body.designation.trim()
+        : "";
+
+    // -------------------------------------------------
+    // DEPARTMENT INPUT VALIDATION
+    // -------------------------------------------------
+
+    if (
+      body.department !== undefined &&
+      body.department !== null &&
+      typeof body.department !== "string"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Department must be a string.",
+      });
+    }
+
+    let department = String(
+      body.department || ""
+    ).trim();
+
+    // -------------------------------------------------
+    // ADMIN SCOPE INPUT VALIDATION
+    // -------------------------------------------------
+
+    const requestedScope = parseScope(body.adminScope);
+
+    if (requestedScope === undefined) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid adminScope. Allowed values are GLOBAL, DEPARTMENT or null for regular staff.",
+      });
+    }
+
     let adminScope = null;
 
+    // -------------------------------------------------
+    // DEPARTMENT ADMIN CREATION RULES
+    // -------------------------------------------------
+
     if (access.type === "DEPARTMENT_ADMIN") {
-      department = access.department;
+      const creatorDepartment = access.department;
 
       if (
-        req.body.department &&
-        normalizeDepartment(req.body.department) !==
-          normalizeDepartment(access.department)
+        department &&
+        normalizeDepartment(department) !==
+          normalizeDepartment(creatorDepartment)
       ) {
         return res.status(403).json({
           success: false,
@@ -808,27 +946,33 @@ export const createTeamMember = async (req, res) => {
         });
       }
 
-      const requestedScope = parseScope(req.body.adminScope);
+      // Accounts created by Department Administrators
+      // belong to their own department.
 
-      if (requestedScope === undefined) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid adminScope value.",
-        });
-      }
-
-      if (requestedScope === "GLOBAL") {
-        return res.status(403).json({
-          success: false,
-          message:
-            "Only Global Administrators can grant Global Administrator access.",
-        });
-      }
+      department = creatorDepartment;
 
       if (isAdministrator({ role })) {
+        if (requestedScope === "GLOBAL") {
+          return res.status(403).json({
+            success: false,
+            message:
+              "Only Global Administrators can grant Global Administrator access.",
+          });
+        }
+
+        // Administrator scope is explicitly required.
+
+        if (requestedScope !== "DEPARTMENT") {
+          return res.status(400).json({
+            success: false,
+            message:
+              "Administrator accounts created by a Department Administrator must specify adminScope: DEPARTMENT.",
+          });
+        }
+
         adminScope = "DEPARTMENT";
       } else {
-        if (requestedScope) {
+        if (requestedScope !== null) {
           return res.status(403).json({
             success: false,
             message:
@@ -840,19 +984,17 @@ export const createTeamMember = async (req, res) => {
       }
     }
 
+    // -------------------------------------------------
+    // GLOBAL ADMINISTRATOR CREATION RULES
+    // -------------------------------------------------
+
     if (access.type === "GLOBAL") {
-      department = String(req.body.department || "").trim();
-      adminScope = parseScope(req.body.adminScope);
-
-      if (adminScope === undefined) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid adminScope value.",
-        });
-      }
-
       if (isAdministrator({ role })) {
-        if (!adminScope) {
+        if (
+          !["GLOBAL", "DEPARTMENT"].includes(
+            requestedScope
+          )
+        ) {
           return res.status(400).json({
             success: false,
             message:
@@ -860,68 +1002,103 @@ export const createTeamMember = async (req, res) => {
           });
         }
 
-        if (adminScope === "DEPARTMENT" && !department) {
+        adminScope = requestedScope;
+
+        if (
+          adminScope === "DEPARTMENT" &&
+          !department
+        ) {
           return res.status(400).json({
             success: false,
             message:
               "A Department Administrator must have a department.",
           });
         }
-      } else if (adminScope) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "Regular staff accounts cannot have administrator scope.",
-        });
-      }
 
-      if (
-        !department &&
-        !isGlobalAdministrator({ role, adminScope })
-      ) {
-        return res.status(400).json({
-          success: false,
-          message: "A department is required for this account.",
-        });
+        if (
+          adminScope === "GLOBAL" &&
+          department
+        ) {
+          return res.status(400).json({
+            success: false,
+            message:
+              "A Global Administrator must not have a department assigned.",
+          });
+        }
+      } else {
+        if (requestedScope !== null) {
+          return res.status(400).json({
+            success: false,
+            message:
+              "Regular staff accounts cannot have administrator scope.",
+          });
+        }
+
+        adminScope = null;
       }
     }
 
-    if (!designation) {
-      designation = isAdministrator({ role })
-        ? "Administrator"
-        : normalizeDepartment(department) === "hr"
-          ? "HR Employee"
-          : "Employee";
+    // -------------------------------------------------
+    // FINAL ACCOUNT CONFIGURATION VALIDATION
+    // -------------------------------------------------
+
+    const configurationError =
+      getAccountConfigurationError({
+        role,
+        adminScope,
+        department,
+      });
+
+    if (configurationError) {
+      return res.status(400).json({
+        success: false,
+        message: configurationError,
+      });
     }
+
+    // -------------------------------------------------
+    // PASSWORD GENERATION
+    // -------------------------------------------------
 
     const temporaryPassword =
       crypto.randomBytes(9).toString("base64url") + "@1";
 
-    const password = await bcrypt.hash(temporaryPassword, 10);
+    const password = await bcrypt.hash(
+      temporaryPassword,
+      10
+    );
 
-    // Account creation and its audit record are committed together.
+    // -------------------------------------------------
+    // CREATE ACCOUNT AND AUDIT ATOMICALLY
+    // -------------------------------------------------
+
     const session = await mongoose.startSession();
 
     try {
       await session.withTransaction(async () => {
+        const accountData = {
+          email,
+          password,
+          name,
+          phone,
+          role,
+          department,
+          adminScope,
+          status: "Active",
+          deletedAt: null,
+          tokenVersion: 0,
+          resetTokenVersion: 0,
+          mustChangePassword: true,
+        };
+
+        // Do not force a designation value.
+
+        if (designation) {
+          accountData.designation = designation;
+        }
+
         const created = await Admin.create(
-          [
-            {
-              email,
-              password,
-              name,
-              phone,
-              role,
-              designation,
-              department,
-              adminScope,
-              status: "Active",
-              deletedAt: null,
-              tokenVersion: 0,
-              resetTokenVersion: 0,
-              mustChangePassword: true,
-            },
-          ],
+          [accountData],
           { session }
         );
 
@@ -932,11 +1109,12 @@ export const createTeamMember = async (req, res) => {
           action: "ACCOUNT_CREATED",
           targetType: "Admin",
           targetId: teamMember._id,
-          targetLabel: teamMember.email || teamMember.name,
+          targetLabel:
+            teamMember.email || teamMember.name,
           department: teamMember.department || "",
           before: null,
           after: toAuditSnapshot(teamMember),
-          reason: String(req.body.reason || "").trim(),
+          reason: String(body.reason || "").trim(),
           session,
         });
       });
@@ -944,8 +1122,10 @@ export const createTeamMember = async (req, res) => {
       await session.endSession();
     }
 
-    // Email is an external side effect. Send it only after
-    // the database transaction has committed.
+    // -------------------------------------------------
+    // SEND TEMPORARY PASSWORD AFTER TRANSACTION COMMIT
+    // -------------------------------------------------
+
     try {
       await sendTemporaryPasswordEmail(
         teamMember.email,
@@ -958,6 +1138,7 @@ export const createTeamMember = async (req, res) => {
       );
 
       let cleanupSucceeded = false;
+
       const cleanupSession = await mongoose.startSession();
 
       try {
@@ -978,7 +1159,8 @@ export const createTeamMember = async (req, res) => {
             action: "ACCOUNT_CREATION_CANCELLED",
             targetType: "Admin",
             targetId: teamMember._id,
-            targetLabel: teamMember.email || teamMember.name,
+            targetLabel:
+              teamMember.email || teamMember.name,
             department: teamMember.department || "",
             before: toAuditSnapshot(
               existingAccount || teamMember
@@ -1019,6 +1201,7 @@ export const createTeamMember = async (req, res) => {
 
     // A newly created active L0 Screener can receive
     // applications that were previously waiting for assignment.
+
     const pendingL0AssignmentRetry =
       await retryPendingAssignmentsForScreener({
         member: teamMember,
@@ -1031,18 +1214,21 @@ export const createTeamMember = async (req, res) => {
         "Team member created successfully. A temporary password was sent by email.",
       auditLogged: true,
       teamMember: toSafeMember(teamMember),
-
       ...(pendingL0AssignmentRetry
         ? { pendingL0AssignmentRetry }
         : {}),
     });
   } catch (error) {
-    console.error("Create team member or audit transaction failed:", error);
+    console.error(
+      "Create team member or audit transaction failed:",
+      error
+    );
 
     if (error.code === 11000) {
       return res.status(409).json({
         success: false,
-        message: "An account with this email already exists.",
+        message:
+          "An account with this email already exists.",
       });
     }
 
@@ -1075,6 +1261,7 @@ export const updateTeamMember = async (req, res) => {
 
     // Capture the screener's previous eligibility
     // before changing role or department.
+
     const wasEligibleL0Screener =
       isActiveAccount(target) &&
       isL0Screener(target);
@@ -1103,12 +1290,20 @@ export const updateTeamMember = async (req, res) => {
       });
     }
 
-    if (hasField(body, "status") || hasField(body, "deletedAt")) {
+    if (
+      hasField(body, "status") ||
+      hasField(body, "deletedAt")
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Use the dedicated status or delete endpoint.",
+        message:
+          "Use the dedicated status or delete endpoint.",
       });
     }
+
+    // -------------------------------------------------
+    // VALIDATE SCOPE INPUT
+    // -------------------------------------------------
 
     const requestedScope = hasField(body, "adminScope")
       ? parseScope(body.adminScope)
@@ -1120,6 +1315,32 @@ export const updateTeamMember = async (req, res) => {
         message: "Invalid adminScope value.",
       });
     }
+
+    if (
+      hasField(body, "department") &&
+      body.department !== null &&
+      typeof body.department !== "string"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Department must be a string.",
+      });
+    }
+
+    if (
+      hasField(body, "designation") &&
+      body.designation !== null &&
+      typeof body.designation !== "string"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Designation must be a string.",
+      });
+    }
+
+    // -------------------------------------------------
+    // DEPARTMENT ADMINISTRATOR RESTRICTIONS
+    // -------------------------------------------------
 
     if (access.type === "DEPARTMENT_ADMIN") {
       if (requestedScope === "GLOBAL") {
@@ -1141,40 +1362,59 @@ export const updateTeamMember = async (req, res) => {
             "You cannot move an account outside your department.",
         });
       }
+
+      if (
+        hasField(body, "adminScope") &&
+        requestedScope !== null &&
+        requestedScope !== "DEPARTMENT"
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "A Department Administrator can assign only DEPARTMENT scope.",
+        });
+      }
     }
+
+    // -------------------------------------------------
+    // UPDATE NAME
+    // -------------------------------------------------
 
     if (hasField(body, "name")) {
       target.name = String(body.name || "").trim();
     }
 
     // -------------------------------------------------
-    // PREVENT LEGACY HOD DESIGNATION UPDATES
+    // UPDATE DESIGNATION
+    // Designation is optional and does not control access.
+    // No HOD designation-based authorization is performed.
     // -------------------------------------------------
 
     if (hasField(body, "designation")) {
-      const newDesignation = String(
+      target.designation = String(
         body.designation || ""
       ).trim();
-
-      if (isLegacyHodDesignation(newDesignation)) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "HOD is not a separate profile. Use the Department Administrator account configuration instead.",
-        });
-      }
-
-      target.designation = newDesignation;
     }
+
+    // -------------------------------------------------
+    // UPDATE PHONE
+    // -------------------------------------------------
 
     if (hasField(body, "phone")) {
       target.phone = String(body.phone || "").trim();
     }
 
+    // -------------------------------------------------
+    // UPDATE EMAIL
+    // -------------------------------------------------
+
     if (hasField(body, "email")) {
       const email = normalizeEmail(body.email);
 
-      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      if (
+        !email ||
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+      ) {
         return res.status(400).json({
           success: false,
           message: "A valid email address is required.",
@@ -1189,29 +1429,36 @@ export const updateTeamMember = async (req, res) => {
       if (duplicate) {
         return res.status(409).json({
           success: false,
-          message: "Another account already uses this email.",
+          message:
+            "Another account already uses this email.",
         });
       }
 
       target.email = email;
     }
 
-    if (hasField(body, "role")) {
-      const newRole = String(body.role || "").trim();
+    // -------------------------------------------------
+    // UPDATE ROLE
+    // -------------------------------------------------
 
-      if (!newRole) {
+    if (hasField(body, "role")) {
+      if (
+        typeof body.role !== "string" ||
+        !body.role.trim()
+      ) {
         return res.status(400).json({
           success: false,
           message: "Role cannot be empty.",
         });
       }
 
-      // Prevent non-canonical administrator role names.
+      const newRole = body.role.trim();
+
       if (isNonCanonicalAdminRole(newRole)) {
         return res.status(400).json({
           success: false,
           message:
-            "HOD is not a separate role. Use Administrator with the appropriate administrator scope.",
+            "HOD, Global Admin and Department Admin are not separate portal roles. Use Administrator with the appropriate administrator scope.",
           allowedAdministratorConfiguration: [
             {
               role: "Administrator",
@@ -1225,75 +1472,146 @@ export const updateTeamMember = async (req, res) => {
         });
       }
 
-      target.role = newRole;
+      target.role = isAdministrator({ role: newRole })
+        ? "Administrator"
+        : newRole;
     }
 
-    if (access.type === "DEPARTMENT_ADMIN") {
-      target.department = access.department;
-      target.adminScope = isAdministrator(target)
-        ? "DEPARTMENT"
-        : null;
-    }
+    // -------------------------------------------------
+    // UPDATE DEPARTMENT
+    // -------------------------------------------------
 
     if (access.type === "GLOBAL") {
       if (hasField(body, "department")) {
-        target.department = String(body.department || "").trim();
+        target.department = String(
+          body.department || ""
+        ).trim();
       }
+    }
 
+    // Department Administrators cannot move accounts
+    // outside their own department.
+
+    if (access.type === "DEPARTMENT_ADMIN") {
+      target.department = access.department;
+    }
+
+    // -------------------------------------------------
+    // UPDATE ADMINISTRATOR SCOPE
+    // -------------------------------------------------
+
+    if (access.type === "GLOBAL") {
       if (hasField(body, "adminScope")) {
         target.adminScope = requestedScope;
       } else if (
         hasField(body, "role") &&
         !isAdministrator(target)
       ) {
+        // When an Administrator becomes regular staff,
+        // remove the old administrator scope.
+
         target.adminScope = null;
       }
 
-      if (
-        isAdministrator(target) &&
-        !["GLOBAL", "DEPARTMENT"].includes(target.adminScope)
-      ) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "Administrator accounts require GLOBAL or DEPARTMENT scope.",
-        });
-      }
+      if (isAdministrator(target)) {
+        if (
+          !["GLOBAL", "DEPARTMENT"].includes(
+            target.adminScope
+          )
+        ) {
+          return res.status(400).json({
+            success: false,
+            message:
+              "Administrator accounts require GLOBAL or DEPARTMENT scope.",
+          });
+        }
 
-      if (
-        target.adminScope === "DEPARTMENT" &&
-        !String(target.department || "").trim()
-      ) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "A Department Administrator must have a department.",
-        });
-      }
+        if (target.adminScope === "DEPARTMENT") {
+          if (
+            !String(target.department || "").trim()
+          ) {
+            return res.status(400).json({
+              success: false,
+              message:
+                "A Department Administrator must have a department.",
+            });
+          }
+        }
 
-      if (!isAdministrator(target) && target.adminScope) {
+        if (target.adminScope === "GLOBAL") {
+          // A Global Administrator cannot have a department.
+          // When changing scope from DEPARTMENT to GLOBAL,
+          // clear the previous department assignment.
+
+          if (
+            hasField(body, "department") &&
+            String(body.department || "").trim()
+          ) {
+            return res.status(400).json({
+              success: false,
+              message:
+                "A Global Administrator must not have a department assigned.",
+            });
+          }
+
+          target.department = "";
+        }
+      } else if (target.adminScope) {
         return res.status(400).json({
           success: false,
           message:
             "Regular staff accounts cannot have administrator scope.",
         });
       }
+    }
 
-      if (
-        wasGlobalAdministrator &&
-        !isGlobalAdministrator(target)
-      ) {
-        const count = await countActiveGlobalAdministrators();
+    // Department Administrators can only create or retain
+    // Department Administrator scope within their own department.
 
-        if (count <= 1) {
-          return res.status(409).json({
-            success: false,
-            message:
-              "The last active Global Administrator cannot be demoted.",
-          });
-        }
+    if (access.type === "DEPARTMENT_ADMIN") {
+      target.adminScope = isAdministrator(target)
+        ? "DEPARTMENT"
+        : null;
+    }
+
+    // -------------------------------------------------
+    // FINAL CONFIGURATION VALIDATION
+    // -------------------------------------------------
+
+    const configurationError =
+      getAccountConfigurationError(target);
+
+    if (configurationError) {
+      return res.status(400).json({
+        success: false,
+        message: configurationError,
+      });
+    }
+
+    // -------------------------------------------------
+    // PREVENT DEMOTION OF THE LAST GLOBAL ADMINISTRATOR
+    // -------------------------------------------------
+
+    if (
+      access.type === "GLOBAL" &&
+      wasGlobalAdministrator &&
+      !isGlobalAdministrator(target)
+    ) {
+      const count =
+        await countActiveGlobalAdministrators();
+
+      if (count <= 1) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "The last active Global Administrator cannot be demoted.",
+        });
       }
     }
+
+    // -------------------------------------------------
+    // SAVE ACCOUNT AND AUDIT ATOMICALLY
+    // -------------------------------------------------
 
     await saveAccountAndAuditAtomically({
       req,
@@ -1317,6 +1635,7 @@ export const updateTeamMember = async (req, res) => {
 
     // An existing screener's old department applications
     // need reassignment if their department changes.
+
     const shouldReassignApplications =
       wasEligibleL0Screener &&
       (!isEligibleNow || departmentChanged);
@@ -1333,6 +1652,7 @@ export const updateTeamMember = async (req, res) => {
 
     // A newly eligible screener or a screener moved into
     // another department can receive pending applications.
+
     const shouldRetryPendingAssignments =
       isEligibleNow &&
       (!wasEligibleL0Screener || departmentChanged);
@@ -1370,7 +1690,8 @@ export const updateTeamMember = async (req, res) => {
     if (error.code === 11000) {
       return res.status(409).json({
         success: false,
-        message: "Another account already uses this email.",
+        message:
+          "Another account already uses this email.",
       });
     }
 
@@ -1406,7 +1727,8 @@ export const updateTeamMemberStatus = async (req, res) => {
     if (!["Active", "Inactive"].includes(status)) {
       return res.status(400).json({
         success: false,
-        message: 'Status must be "Active" or "Inactive".',
+        message:
+          'Status must be "Active" or "Inactive".',
       });
     }
 
@@ -1421,6 +1743,7 @@ export const updateTeamMemberStatus = async (req, res) => {
     const before = toAuditSnapshot(target);
 
     // Capture eligibility before the status changes.
+
     const wasEligibleL0Screener =
       isActiveAccount(target) &&
       isL0Screener(target);
@@ -1430,7 +1753,8 @@ export const updateTeamMemberStatus = async (req, res) => {
       isGlobalAdministrator(target) &&
       isActiveAccount(target)
     ) {
-      const count = await countActiveGlobalAdministrators();
+      const count =
+        await countActiveGlobalAdministrators();
 
       if (count <= 1) {
         return res.status(409).json({
@@ -1502,7 +1826,8 @@ export const updateTeamMemberStatus = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: `Team member ${status.toLowerCase()} successfully.`,
+      message:
+        `Team member ${status.toLowerCase()} successfully.`,
       auditLogged: true,
       teamMember: toSafeMember(target),
 
@@ -1544,6 +1869,7 @@ export const deleteTeamMember = async (req, res) => {
     if (!authorized) return;
 
     const { target } = authorized;
+
     const before = toAuditSnapshot(target);
 
     const wasEligibleL0Screener =
@@ -1554,7 +1880,8 @@ export const deleteTeamMember = async (req, res) => {
       isGlobalAdministrator(target) &&
       isActiveAccount(target)
     ) {
-      const count = await countActiveGlobalAdministrators();
+      const count =
+        await countActiveGlobalAdministrators();
 
       if (count <= 1) {
         return res.status(409).json({
@@ -1567,7 +1894,9 @@ export const deleteTeamMember = async (req, res) => {
 
     target.status = "Inactive";
     target.deletedAt = new Date();
-    target.tokenVersion = (target.tokenVersion || 0) + 1;
+
+    target.tokenVersion =
+      (target.tokenVersion || 0) + 1;
 
     await saveAccountAndAuditAtomically({
       req,
@@ -1579,6 +1908,7 @@ export const deleteTeamMember = async (req, res) => {
 
     // Reassign open applications belonging to a screener
     // whose account has now been soft-deleted.
+
     let openApplicationsReassignment = null;
 
     if (wasEligibleL0Screener) {

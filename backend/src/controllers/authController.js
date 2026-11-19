@@ -35,6 +35,96 @@ const normalizeEmail = (email) => {
 };
 
 // =====================================================
+// LEGACY HOD ROLE VALIDATION
+// =====================================================
+
+// HOD is not an authorized portal login role.
+//
+// Global Administrator and Department Administrator
+// are represented by:
+//
+// role = Administrator
+// adminScope = GLOBAL or DEPARTMENT
+
+const LEGACY_HOD_ROLE_NAMES = new Set([
+  "hod",
+  "head of department",
+  "department head",
+]);
+
+const normalizeAssignedRole = (role) =>
+  String(role || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[_/-]+/g, " ")
+    .replace(/\s+/g, " ");
+
+const hasLegacyHodRole = (admin) => {
+  if (!admin) return false;
+
+  const assignedRoles = [
+    admin.role,
+    ...(Array.isArray(admin.roles)
+      ? admin.roles
+      : []),
+  ];
+
+  return assignedRoles.some((role) =>
+    LEGACY_HOD_ROLE_NAMES.has(
+      normalizeAssignedRole(role)
+    )
+  );
+};
+
+// =====================================================
+// ADMINISTRATOR ROLE AND SCOPE VALIDATION
+// =====================================================
+
+const isAdministratorRole = (role) =>
+  String(role || "").trim().toLowerCase() ===
+  "administrator";
+
+// Returns an error message when account configuration
+// is invalid. Returns null when configuration is valid.
+
+const getAccountConfigurationError = (admin) => {
+  if (!admin || !String(admin.role || "").trim()) {
+    return "Your account does not have a valid portal role. Please contact the Global Administrator.";
+  }
+
+  if (isAdministratorRole(admin.role)) {
+    const scope = String(admin.adminScope || "").trim();
+    const department = String(admin.department || "").trim();
+
+    if (!["GLOBAL", "DEPARTMENT"].includes(scope)) {
+      return "Administrator accounts must have either GLOBAL or DEPARTMENT scope. Please contact the Global Administrator.";
+    }
+
+    if (scope === "GLOBAL" && department) {
+      return "A Global Administrator cannot have a department assigned. Please contact the Global Administrator.";
+    }
+
+    if (scope === "DEPARTMENT" && !department) {
+      return "A Department Administrator must have a department assigned. Please contact the Global Administrator.";
+    }
+
+    return null;
+  }
+
+  // Regular roles must not carry administrator scope.
+
+  if (
+    admin.adminScope !== null &&
+    admin.adminScope !== undefined &&
+    admin.adminScope !== ""
+  ) {
+    return "Regular staff accounts cannot have administrator scope. Please contact the Global Administrator.";
+  }
+
+  return null;
+};
+
+// =====================================================
 // ADMIN PROFILE RESPONSE
 // =====================================================
 
@@ -43,10 +133,11 @@ const getAdminProfileData = (admin) => {
     id: admin._id,
     name: admin.name || "",
     email: admin.email,
-    role: admin.role || "Administrator",
-    designation:
-      admin.designation || "Administrator",
+    role: admin.role || "",
+    designation: admin.designation || "",
     phone: admin.phone || "",
+    department: admin.department || "",
+    adminScope: admin.adminScope ?? null,
     createdAt: admin.createdAt,
     updatedAt: admin.updatedAt,
   };
@@ -89,6 +180,36 @@ export const login = async (req, res) => {
       });
     }
 
+    // -------------------------------------------------
+    // PREVENT LEGACY HOD LOGIN
+    // -------------------------------------------------
+
+    if (hasLegacyHodRole(admin)) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "HOD is not an authorized portal role. Please contact the Global Administrator to update your account configuration.",
+      });
+    }
+
+    // -------------------------------------------------
+    // VALIDATE ROLE AND ADMINISTRATOR SCOPE
+    // -------------------------------------------------
+
+    const configurationError =
+      getAccountConfigurationError(admin);
+
+    if (configurationError) {
+      return res.status(403).json({
+        success: false,
+        message: configurationError,
+      });
+    }
+
+    // -------------------------------------------------
+    // GENERATE LOGIN OTP
+    // -------------------------------------------------
+
     const otp = await generateAndStoreOTP(
       admin.email,
       "login"
@@ -106,6 +227,8 @@ export const login = async (req, res) => {
       email: admin.email,
     });
   } catch (error) {
+    console.error("Login error:", error);
+
     return res.status(500).json({
       success: false,
       message: "Login failed",
@@ -131,7 +254,8 @@ export const forgotPassword = async (req, res) => {
 
     const admin = await Admin.findOne({ email });
 
-    // Do not reveal whether account exists
+    // Do not reveal whether account exists.
+
     if (!admin) {
       return res.status(200).json({
         success: true,
@@ -196,6 +320,42 @@ export const verifyLoginOTP = async (req, res) => {
       });
     }
 
+    // -------------------------------------------------
+    // RECHECK LEGACY HOD ROLE BEFORE JWT GENERATION
+    // -------------------------------------------------
+
+    // This prevents an account from obtaining a JWT
+    // using an OTP issued before its role was changed.
+
+    if (hasLegacyHodRole(admin)) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "HOD is not an authorized portal role. Please contact the Global Administrator to update your account configuration.",
+      });
+    }
+
+    // -------------------------------------------------
+    // REVALIDATE ROLE AND ADMINISTRATOR SCOPE
+    // -------------------------------------------------
+
+    // An account's role or scope may have changed
+    // after its login OTP was generated.
+
+    const configurationError =
+      getAccountConfigurationError(admin);
+
+    if (configurationError) {
+      return res.status(403).json({
+        success: false,
+        message: configurationError,
+      });
+    }
+
+    // -------------------------------------------------
+    // GENERATE AUTHENTICATION TOKEN
+    // -------------------------------------------------
+
     const token = jwt.sign(
       {
         adminId: admin._id,
@@ -218,17 +378,18 @@ export const verifyLoginOTP = async (req, res) => {
         id: admin._id,
         name: admin.name || "",
         email: admin.email,
-        role:
-          admin.role || "Administrator",
-        designation:
-          admin.designation ||
-          "Administrator",
+        role: admin.role || "",
+        designation: admin.designation || "",
+        department: admin.department || "",
+        adminScope: admin.adminScope ?? null,
         phone: admin.phone || "",
         mustChangePassword:
           admin.mustChangePassword,
       },
     });
   } catch (error) {
+    console.error("Login OTP verification error:", error);
+
     return res.status(401).json({
       success: false,
       message: error.message,
@@ -371,11 +532,13 @@ export const resetPassword = async (req, res) => {
     admin.password = hashedPassword;
     admin.mustChangePassword = false;
 
-    // Invalidate existing login tokens
+    // Invalidate existing login tokens.
+
     admin.tokenVersion =
       (admin.tokenVersion || 0) + 1;
 
-    // Invalidate reset tokens
+    // Invalidate reset tokens.
+
     admin.resetTokenVersion =
       (admin.resetTokenVersion || 0) + 1;
 
@@ -470,7 +633,8 @@ export const changePassword = async (
     admin.password = hashedPassword;
     admin.mustChangePassword = false;
 
-    // Invalidate existing login tokens
+    // Invalidate existing login tokens.
+
     admin.tokenVersion =
       (admin.tokenVersion || 0) + 1;
 
@@ -495,14 +659,18 @@ export const changePassword = async (
 // CREATE TEAM MEMBER
 // =====================================================
 
+// Legacy account-creation handler.
+// Its route is currently disabled in authRoutes.js.
+// The active team-member route uses teamMemberController.js.
+
 export const createTeamMember = async (
   req,
   res
 ) => {
   try {
-    const email = normalizeEmail(
-      req.body.email
-    );
+    const body = req.body || {};
+
+    const email = normalizeEmail(body.email);
 
     if (!email) {
       return res.status(400).json({
@@ -510,6 +678,131 @@ export const createTeamMember = async (
         message: "Email is required",
       });
     }
+
+    const role =
+      typeof body.role === "string"
+        ? body.role.trim()
+        : "";
+
+    if (!role) {
+      return res.status(400).json({
+        success: false,
+        message: "A valid portal role is required",
+      });
+    }
+
+    // Prevent legacy HOD role creation.
+
+    if (
+      LEGACY_HOD_ROLE_NAMES.has(
+        normalizeAssignedRole(role)
+      )
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "HOD is not a separate portal role. Use Administrator with the appropriate administrator scope.",
+      });
+    }
+
+    // Validate department input.
+
+    if (
+      body.department !== undefined &&
+      body.department !== null &&
+      typeof body.department !== "string"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Department must be a string",
+      });
+    }
+
+    const department = String(
+      body.department || ""
+    ).trim();
+
+    // Validate administrator scope input.
+
+    if (
+      body.adminScope !== undefined &&
+      body.adminScope !== null &&
+      typeof body.adminScope !== "string"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid adminScope value",
+      });
+    }
+
+    const adminScope =
+      body.adminScope === undefined ||
+      body.adminScope === null ||
+      String(body.adminScope).trim() === ""
+        ? null
+        : String(body.adminScope).trim().toUpperCase();
+
+    // -------------------------------------------------
+    // ADMINISTRATOR ACCOUNT VALIDATION
+    // -------------------------------------------------
+
+    if (isAdministratorRole(role)) {
+      if (
+        !["GLOBAL", "DEPARTMENT"].includes(adminScope)
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Administrator accounts require GLOBAL or DEPARTMENT scope.",
+        });
+      }
+
+      if (
+        adminScope === "DEPARTMENT" &&
+        !department
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "A Department Administrator must have a department.",
+        });
+      }
+
+      if (
+        adminScope === "GLOBAL" &&
+        department
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "A Global Administrator must not have a department assigned.",
+        });
+      }
+    } else if (adminScope !== null) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Regular staff accounts cannot have administrator scope.",
+      });
+    }
+
+    // DESIGNATION IS OPTIONAL.
+
+    if (
+      body.designation !== undefined &&
+      body.designation !== null &&
+      typeof body.designation !== "string"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Designation must be a string",
+      });
+    }
+
+    const designation =
+      typeof body.designation === "string"
+        ? body.designation.trim()
+        : "";
 
     const existingAdmin =
       await Admin.findOne({ email });
@@ -533,18 +826,28 @@ export const createTeamMember = async (
         10
       );
 
-    const teamMember =
-      await Admin.create({
-        email,
-        password: hashedPassword,
-        name: "",
-        role: "Administrator",
-        designation: "Administrator",
-        phone: "",
-        tokenVersion: 0,
-        resetTokenVersion: 0,
-        mustChangePassword: true,
-      });
+    const teamMemberData = {
+      email,
+      password: hashedPassword,
+      name: String(body.name || "").trim(),
+      role,
+      phone: String(body.phone || "").trim(),
+      department,
+      adminScope,
+      tokenVersion: 0,
+      resetTokenVersion: 0,
+      mustChangePassword: true,
+    };
+
+    // Only store designation when a non-empty value is supplied.
+
+    if (designation) {
+      teamMemberData.designation = designation;
+    }
+
+    const teamMember = await Admin.create(
+      teamMemberData
+    );
 
     await sendTemporaryPasswordEmail(
       teamMember.email,
@@ -558,9 +861,15 @@ export const createTeamMember = async (
       teamMember: {
         id: teamMember._id,
         email: teamMember.email,
+        role: teamMember.role,
+        adminScope: teamMember.adminScope ?? null,
+        department: teamMember.department || "",
+        designation: teamMember.designation || "",
       },
     });
   } catch (error) {
+    console.error("Create team member error:", error);
+
     return res.status(500).json({
       success: false,
       message:
@@ -659,8 +968,9 @@ export const updateMyProfile = async (
           !allowedFields.includes(field)
       );
 
-    // Email, password, role and security
-    // fields cannot be updated here.
+    // Email, password, role, department, scope and security
+    // fields cannot be updated through the personal profile API.
+
     if (invalidFields.length > 0) {
       return res.status(400).json({
         success: false,
@@ -682,6 +992,7 @@ export const updateMyProfile = async (
     }
 
     // NAME
+
     if (req.body.name !== undefined) {
       if (
         typeof req.body.name !== "string"
@@ -696,6 +1007,7 @@ export const updateMyProfile = async (
     }
 
     // PHONE
+
     if (req.body.phone !== undefined) {
       if (
         typeof req.body.phone !== "string"
@@ -710,6 +1022,8 @@ export const updateMyProfile = async (
     }
 
     // DESIGNATION
+    // Optional; it never determines authorization.
+
     if (req.body.designation !== undefined) {
       if (
         typeof req.body.designation !== "string"

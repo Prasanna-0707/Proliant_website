@@ -934,3 +934,13 @@ Accept: application/json
 GET http://localhost:5000/api/candidates/REPLACE_WITH_CANDIDATE_ID/joining-history
 Authorization: Bearer {{token}}
 Accept: application/json
+
+### API - Department Admin Candidate Resume
+GET http://localhost:5000/api/department-admin/candidates/REPLACE_WITH_CANDIDATE_ID/resume
+Authorization: Bearer {{token}}
+Accept: */*
+
+### Department Admin - Candidate Resume
+GET http://localhost:5000/api/department-admin/candidates/REPLACE_WITH_CANDIDATE_ID/resume
+Authorization: Bearer {{token}}
+Accept: */*

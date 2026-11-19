@@ -1,4 +1,3 @@
-
 import mongoose from "mongoose";
 
 import Candidate from "../../../models/Candidate.js";
@@ -83,11 +82,47 @@ const formatAdmin = (person) => {
 };
 
 // Format evaluation information.
+//
+// Important:
+// Department Admins can see feedback details only after
+// the interviewer has submitted the evaluation.
+//
+// Draft evaluations retain their status, but their
+// ratings, feedback, comments and recommendations are
+// not exposed.
+//
+// This helper is also used for previous evaluations
+// stored in evaluationHistory, so the same protection
+// applies to correction history.
 const formatEvaluation = (evaluation) => {
   if (!evaluation) return null;
 
+  const evaluationStatus =
+    evaluation.status || "Draft";
+
+  // Do not expose unsubmitted evaluation details.
+  if (evaluationStatus !== "Submitted") {
+    return {
+      status: evaluationStatus,
+
+      overallRating: null,
+
+      strengths: "",
+      concerns: "",
+      feedback: "",
+
+      recommendation: null,
+
+      criteria: [],
+
+      submittedBy: null,
+      submittedAt: null,
+    };
+  }
+
+  // Submitted evaluations can be displayed.
   return {
-    status: evaluation.status || "Draft",
+    status: evaluationStatus,
 
     overallRating:
       evaluation.overallRating ?? null,
@@ -502,6 +537,10 @@ export const getDepartmentAdminCandidateHistory = async ({
       .select(
         "stageCode stageName stageOrder decision reason decidedBy roleUsed supersedes decidedAt createdAt updatedAt"
       )
+      .populate({
+        path: "decidedBy",
+        select: "name email role designation",
+      })
       .lean(),
   ]);
 
@@ -826,6 +865,10 @@ export const getDepartmentAdminCandidateHistory = async ({
       getId(decision._id)
     );
 
+    const decisionMaker = formatAdmin(
+      decision.decidedBy
+    );
+
     timeline.push({
       eventId: getId(decision._id),
 
@@ -847,7 +890,7 @@ export const getDepartmentAdminCandidateHistory = async ({
       actor: {
         type: "HUMAN",
         id: getId(decision.decidedBy),
-        name: null,
+        name: decisionMaker?.name || null,
         role: decision.roleUsed,
       },
 
@@ -1134,45 +1177,14 @@ export const getDepartmentAdminCandidateInterviews = async ({
       });
     }
 
-    const evaluation = interview.evaluation
-      ? {
-          status: interview.evaluation.status,
+    // The shared formatter prevents Draft evaluation
+    // details from being exposed to Department Admins.
+    const evaluation = formatEvaluation(
+      interview.evaluation
+    );
 
-          overallRating:
-            interview.evaluation.overallRating ?? null,
-
-          strengths:
-            interview.evaluation.strengths || "",
-
-          concerns:
-            interview.evaluation.concerns || "",
-
-          feedback:
-            interview.evaluation.feedback || "",
-
-          recommendation:
-            interview.evaluation.recommendation || null,
-
-          criteria:
-            (interview.evaluation.criteria || []).map(
-              (item) => ({
-                questionCode: item.questionCode,
-                questionText: item.questionText,
-                rating: item.rating ?? null,
-                answer: item.answer || "",
-                comments: item.comments || "",
-              })
-            ),
-
-          submittedBy: formatAdmin(
-            interview.evaluation.submittedBy
-          ),
-
-          submittedAt:
-            interview.evaluation.submittedAt || null,
-        }
-      : null;
-
+    // Previous evaluations in correction history use
+    // the same formatter, so Draft details stay hidden.
     const evaluationHistory = (
       interview.evaluationHistory || []
     ).map((correction) => ({

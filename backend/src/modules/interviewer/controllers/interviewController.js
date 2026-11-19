@@ -4,7 +4,7 @@ import Interview from "../models/Interview.js";
 import EvaluationForm from "../models/EvaluationForm.js";
 
 import Candidate from "../../../models/Candidate.js";
-import Job from "../../../models/Job.js";
+import Job from "../../../models/job.js";
 
 // =====================================================
 // COMMON HELPERS
@@ -25,9 +25,9 @@ const isValidObjectId = (id) =>
 
 // =====================================================
 // AUTHORIZATION
-// Only active interviewers can use this module.
-// Explicit L1/L2/L3/... designations restrict access
-// to their corresponding stage.
+// Only active accounts with the Interviewer portal role
+// can use this module.
+// Interview stage access is based on actual assignments.
 // =====================================================
 
 const isActiveInterviewer = (admin) => {
@@ -40,39 +40,17 @@ const isActiveInterviewer = (admin) => {
     return false;
   }
 
-  const role = normalize(admin.role);
-  const designation = normalize(admin.designation);
-
-  return (
-    role.includes("interviewer") ||
-    designation.includes("interviewer")
-  );
+  return normalize(admin.role) === "interviewer";
 };
 
-const canAccessStage = (admin, stageCode) => {
-  const role = normalize(admin?.role);
-  const designation = normalize(admin?.designation);
+const hasValidStageCode = (stageCode) => {
+  const normalizedStageCode = String(
+    stageCode || ""
+  )
+    .trim()
+    .toUpperCase();
 
-  const combined = `${role} ${designation}`.toUpperCase();
-
-  // Find explicit L-level restrictions such as L1, L2, L3.
-  const permittedLevels = [
-    ...new Set(
-      combined.match(/\bL\d+\b/g) || []
-    ),
-  ];
-
-  // An interviewer without a specific L-level designation
-  // may access stages assigned to that interviewer.
-  if (permittedLevels.length === 0) {
-    return true;
-  }
-
-  // A role explicitly marked L1 or L2 must not access
-  // another L-level stage.
-  return permittedLevels.includes(
-    String(stageCode).trim().toUpperCase()
-  );
+  return /^[A-Z0-9_-]+$/.test(normalizedStageCode);
 };
 
 const authorizeInterviewer = (req, res) => {
@@ -122,7 +100,7 @@ const populateInterviewDetails = (query) => {
 // GET /api/interviews/my
 //
 // Returns only interviews assigned to the logged-in
-// interviewer and matching their permitted stage.
+// interviewer.
 // =====================================================
 
 export const getMyInterviews = async (req, res) => {
@@ -141,7 +119,7 @@ export const getMyInterviews = async (req, res) => {
 
     const permittedInterviews = interviews.filter(
       (interview) =>
-        canAccessStage(req.admin, interview.stageCode)
+        hasValidStageCode(interview.stageCode)
     );
 
     return res.status(200).json({
@@ -198,13 +176,11 @@ export const getInterviewById = async (req, res) => {
       );
     }
 
-    if (
-      !canAccessStage(req.admin, interview.stageCode)
-    ) {
+    if (!hasValidStageCode(interview.stageCode)) {
       return sendError(
         res,
         403,
-        "You are not permitted to access this interview stage."
+        "This interview has an invalid stage code."
       );
     }
 
@@ -638,13 +614,11 @@ export const submitInterviewEvaluation = async (
       );
     }
 
-    if (
-      !canAccessStage(req.admin, interview.stageCode)
-    ) {
+    if (!hasValidStageCode(interview.stageCode)) {
       return sendError(
         res,
         403,
-        "You are not permitted to evaluate this interview stage."
+        "This interview has an invalid stage code."
       );
     }
 
@@ -773,13 +747,11 @@ export const updateInterviewEvaluation = async (
       );
     }
 
-    if (
-      !canAccessStage(req.admin, interview.stageCode)
-    ) {
+    if (!hasValidStageCode(interview.stageCode)) {
       return sendError(
         res,
         403,
-        "You are not permitted to update this interview evaluation."
+        "This interview has an invalid stage code."
       );
     }
 
@@ -946,7 +918,7 @@ export const getApplicationInterviews = async (
 
     const permittedInterviews = interviews.filter(
       (interview) =>
-        canAccessStage(req.admin, interview.stageCode)
+        hasValidStageCode(interview.stageCode)
     );
 
     return res.status(200).json({
@@ -975,8 +947,8 @@ export const getApplicationInterviews = async (
 // Optional query:
 // ?jobId=<job MongoDB ID>
 //
-// Job-specific forms are available only when the
-// interviewer is assigned to that job and stage.
+// The interviewer must have an actual assignment to
+// the requested stage, with or without jobId.
 // =====================================================
 
 export const getEvaluationFormForStage = async (
@@ -996,7 +968,7 @@ export const getEvaluationFormForStage = async (
 
     if (
       !stageCode ||
-      !/^[A-Z0-9_-]+$/.test(stageCode)
+      !hasValidStageCode(stageCode)
     ) {
       return sendError(
         res,
@@ -1005,17 +977,12 @@ export const getEvaluationFormForStage = async (
       );
     }
 
-    if (!canAccessStage(req.admin, stageCode)) {
-      return sendError(
-        res,
-        403,
-        "You are not permitted to access this evaluation stage."
-      );
-    }
-
     const { jobId } = req.query;
 
-    let form;
+    const assignmentFilter = {
+      assignedTo: req.admin._id,
+      stageCode,
+    };
 
     if (jobId) {
       if (!isValidObjectId(jobId)) {
@@ -1026,26 +993,31 @@ export const getEvaluationFormForStage = async (
         );
       }
 
-      const assignedInterview = await Interview.exists({
-        assignedTo: req.admin._id,
-        job: jobId,
-        stageCode,
-      });
+      assignmentFilter.job = jobId;
+    }
 
-      if (!assignedInterview) {
-        return sendError(
-          res,
-          403,
-          "You must be assigned to this job and stage to retrieve its evaluation form."
-        );
-      }
+    const assignedInterview = await Interview.exists(
+      assignmentFilter
+    );
 
+    if (!assignedInterview) {
+      return sendError(
+        res,
+        403,
+        "You must be assigned to an interview at this stage to retrieve its evaluation form."
+      );
+    }
+
+    let form;
+
+    if (jobId) {
       form = await getPublishedEvaluationForm(
         jobId,
         stageCode
       );
     } else {
-      // Without jobId, retrieve the stage's default form.
+      // Retrieve the default form only after verifying
+      // the interviewer's assignment to this stage.
       form = await EvaluationForm.findOne({
         job: null,
         stageCode,

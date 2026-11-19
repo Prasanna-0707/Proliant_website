@@ -1,3 +1,4 @@
+
 import express from "express";
 
 import {
@@ -12,6 +13,8 @@ import {
 
 import authMiddleware from "../middleware/authMiddleware.js";
 
+import denyDepartmentAdminGenericAccess from "../middleware/denyDepartmentAdminGenericAccess.js";
+
 const router = express.Router();
 
 // =====================================================
@@ -22,6 +25,7 @@ const router = express.Router();
 router.get(
   "/:id/resume",
   authMiddleware,
+  denyDepartmentAdminGenericAccess,
   getApplicationResume
 );
 
@@ -33,6 +37,7 @@ router.get(
 router.post(
   "/:id/screenings/l0",
   authMiddleware,
+  denyDepartmentAdminGenericAccess,
   submitL0Screening
 );
 
@@ -44,6 +49,7 @@ router.post(
 router.get(
   "/:id/screenings",
   authMiddleware,
+  denyDepartmentAdminGenericAccess,
   getApplicationScreeningHistory
 );
 
@@ -55,6 +61,7 @@ router.get(
 router.get(
   "/:id",
   authMiddleware,
+  denyDepartmentAdminGenericAccess,
   getApplicationById
 );
 

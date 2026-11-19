@@ -1,4 +1,3 @@
-
 import bcrypt from "bcryptjs";
 
 import Admin from "../models/Admin.js";
@@ -20,7 +19,7 @@ import RolePermission from "../modules/administrator/models/RolePermission.js";
 
 const SEED_GLOBAL_ADMIN_EMAILS = [
   "bogachandrapu@gmail.com",
-  "aswinijarugula@gmail.com",
+  "aswini32933@gmail.com",
 ];
 
 const SEED_INITIAL_ADMIN_EMAIL = "bogachandrapu@gmail.com";
@@ -34,7 +33,10 @@ const migrateAdminProfileFields = async () => {
 
   let updatedCount = 0;
   let promotedGlobalAdminCount = 0;
+
   const matchedGlobalAdminEmails = new Set();
+  const unresolvedAdministratorAccounts = [];
+  const failedAdminUpdates = [];
 
   const approvedGlobalAdminEmails = new Set(
     SEED_GLOBAL_ADMIN_EMAILS.map((email) =>
@@ -43,21 +45,124 @@ const migrateAdminProfileFields = async () => {
   );
 
   for (const admin of admins) {
+    const normalizedEmail = String(admin.email || "")
+      .trim()
+      .toLowerCase();
+
     let modified = false;
     let promotedGlobalAdmin = false;
 
+    const isApprovedGlobalAdmin =
+      approvedGlobalAdminEmails.has(normalizedEmail);
+
+    // -----------------------------------------------------
+    // APPROVED GLOBAL ADMINISTRATORS
+    // -----------------------------------------------------
+
+    if (isApprovedGlobalAdmin) {
+      matchedGlobalAdminEmails.add(normalizedEmail);
+
+      if (admin.role !== "Administrator") {
+        admin.role = "Administrator";
+        modified = true;
+      }
+
+      if (admin.adminScope !== "GLOBAL") {
+        admin.adminScope = "GLOBAL";
+        modified = true;
+        promotedGlobalAdmin = true;
+      }
+
+      // Global Administrators must not have a department assigned.
+      if (String(admin.department || "").trim()) {
+        admin.department = "";
+        modified = true;
+      }
+    } else {
+      // ---------------------------------------------------
+      // VALIDATE EXISTING ACCOUNT ROLE AND SCOPE
+      // ---------------------------------------------------
+
+      const role = String(admin.role || "").trim();
+
+      if (!role) {
+        unresolvedAdministratorAccounts.push({
+          email: normalizedEmail || "<missing email>",
+          reason: "Missing portal role",
+        });
+
+        // Do not infer a role or save an invalid record.
+        continue;
+      }
+
+      const isAdministrator =
+        role.toLowerCase() === "administrator";
+
+      if (isAdministrator) {
+        const scope = String(admin.adminScope || "")
+          .trim()
+          .toUpperCase();
+
+        if (!["GLOBAL", "DEPARTMENT"].includes(scope)) {
+          unresolvedAdministratorAccounts.push({
+            email: normalizedEmail || "<missing email>",
+            reason: "Missing or invalid administrator scope",
+          });
+
+          // Never assign GLOBAL or DEPARTMENT by guessing.
+          continue;
+        }
+
+        if (scope === "DEPARTMENT") {
+          const department = String(
+            admin.department || ""
+          ).trim();
+
+          if (!department) {
+            unresolvedAdministratorAccounts.push({
+              email: normalizedEmail || "<missing email>",
+              reason:
+                "Department is required for DEPARTMENT scope",
+            });
+
+            continue;
+          }
+
+          if (admin.department !== department) {
+            admin.department = department;
+            modified = true;
+          }
+        }
+
+        if (admin.adminScope !== scope) {
+          admin.adminScope = scope;
+          modified = true;
+        }
+
+        if (
+          scope === "GLOBAL" &&
+          String(admin.department || "").trim()
+        ) {
+          admin.department = "";
+          modified = true;
+        }
+      } else {
+        // Regular portal roles must not carry administrator scope.
+        if (admin.adminScope !== null) {
+          admin.adminScope = null;
+          modified = true;
+        }
+      }
+    }
+
+    // -----------------------------------------------------
+    // OPTIONAL PROFILE DEFAULTS
+    // Do not force a designation; it is optional and is not
+    // used for authorization.
+    // -----------------------------------------------------
+
     if (!admin.name) {
       admin.name = "";
-      modified = true;
-    }
-
-    if (!admin.role) {
-      admin.role = "Administrator";
-      modified = true;
-    }
-
-    if (!admin.designation) {
-      admin.designation = "Administrator";
       modified = true;
     }
 
@@ -67,36 +172,25 @@ const migrateAdminProfileFields = async () => {
     }
 
     // -----------------------------------------------------
-    // PROMOTE ONLY THE EXPLICITLY APPROVED GLOBAL ADMINS
+    // SAVE EACH VALID RECORD INDEPENDENTLY
+    // A single bad legacy record must not crash all seeding.
     // -----------------------------------------------------
 
-    const normalizedEmail = String(admin.email || "")
-      .trim()
-      .toLowerCase();
-
-    if (approvedGlobalAdminEmails.has(normalizedEmail)) {
-      matchedGlobalAdminEmails.add(normalizedEmail);
-
-      if (admin.role !== "Administrator") {
-        admin.role = "Administrator";
-        modified = true;
-      }
-
-      if (admin.designation !== "Administrator") {
-        admin.designation = "Administrator";
-        modified = true;
-      }
-
-      if (admin.adminScope !== "GLOBAL") {
-        admin.adminScope = "GLOBAL";
-        modified = true;
-        promotedGlobalAdmin = true;
-      }
-    }
-
     if (modified) {
-      await admin.save();
-      updatedCount++;
+      try {
+        await admin.save();
+        updatedCount++;
+      } catch (error) {
+        failedAdminUpdates.push({
+          email: normalizedEmail || "<missing email>",
+          reason: error.message,
+        });
+
+        console.error(
+          `Admin migration failed for ${normalizedEmail || "<missing email>"}:`,
+          error.message
+        );
+      }
     }
 
     if (promotedGlobalAdmin) {
@@ -134,6 +228,24 @@ const migrateAdminProfileFields = async () => {
   if (promotedGlobalAdminCount > 0) {
     console.log(
       `→ Global Administrator scope assigned to ${promotedGlobalAdminCount} account(s).`
+    );
+  }
+
+  if (unresolvedAdministratorAccounts.length > 0) {
+    console.warn(
+      "→ Administrator accounts requiring manual scope configuration:"
+    );
+
+    unresolvedAdministratorAccounts.forEach((account) => {
+      console.warn(
+        `   ${account.email}: ${account.reason}`
+      );
+    });
+  }
+
+  if (failedAdminUpdates.length > 0) {
+    console.error(
+      `→ ${failedAdminUpdates.length} admin profile update(s) failed.`
     );
   }
 };
@@ -609,9 +721,10 @@ const seedDatabase = async () => {
 
         name: "",
         role: "Administrator",
-        designation: "Administrator",
-        phone: "",
 
+        // designation is optional and is intentionally not forced.
+        phone: "",
+        department: "",
         adminScope: "GLOBAL",
 
         tokenVersion: 0,

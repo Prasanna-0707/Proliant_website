@@ -112,7 +112,6 @@ export const getAdminUsers = async (req, res) => {
       }
 
       filter.department = access.department;
-      filter.adminScope = { $ne: "GLOBAL" };
     } else if (req.query.department) {
       filter.department = String(req.query.department).trim();
     }
@@ -204,7 +203,74 @@ export const getAdminUsers = async (req, res) => {
       }
     }
 
-    // Sorting is restricted to approved fields.
+    // -------------------------------------------------
+    // DEPARTMENT ADMINISTRATOR ACCOUNT FILTERING
+    // -------------------------------------------------
+
+    // Department Administrators can view only:
+    //
+    // 1. Regular accounts with no administrator scope.
+    // 2. Valid Department Administrator accounts.
+    //
+    // This excludes:
+    // - Global Administrator accounts.
+    // - Administrator accounts with missing scope.
+    // - Administrator accounts with invalid scope.
+    // - Regular accounts carrying an administrator scope.
+
+    if (access.type === "DEPARTMENT_ADMIN") {
+      const administratorRoleRegex = /^administrator$/i;
+
+      const eligibleDepartmentAccounts = {
+        $or: [
+          // Regular portal accounts:
+          // No Administrator role and no administrator scope.
+
+          {
+            $and: [
+              {
+                $nor: [
+                  { role: administratorRoleRegex },
+                  { roles: administratorRoleRegex },
+                ],
+              },
+              {
+                adminScope: {
+                  $in: [null, ""],
+                },
+              },
+            ],
+          },
+
+          // Valid Department Administrator accounts.
+
+          {
+            $and: [
+              {
+                $or: [
+                  { role: administratorRoleRegex },
+                  { roles: administratorRoleRegex },
+                ],
+              },
+              {
+                adminScope: "DEPARTMENT",
+              },
+            ],
+          },
+        ],
+      };
+
+      // Preserve existing search and role conditions.
+
+      filter.$and = [
+        ...(Array.isArray(filter.$and) ? filter.$and : []),
+        eligibleDepartmentAccounts,
+      ];
+    }
+
+    // -------------------------------------------------
+    // SORTING
+    // -------------------------------------------------
 
     const allowedSortFields = [
       "name",

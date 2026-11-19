@@ -8,6 +8,10 @@ import requireDepartmentAdmin from "../middleware/requireDepartmentAdmin.js";
 import requirePermission from "../../administrator/middleware/requirePermission.js";
 
 import {
+  getDepartmentAdminCandidateResume,
+} from "../../../controllers/applicationController.js";
+
+import {
   getDashboardOverview,
   getDepartmentAdminCandidates,
   getDepartmentAdminCandidateDetails,
@@ -55,6 +59,19 @@ router.get(
 );
 
 // =====================================================
+// API 3A: DEPARTMENT ADMIN CANDIDATE RESUME
+// GET /api/department-admin/candidates/:candidateId/resume
+// =====================================================
+
+router.get(
+  "/candidates/:candidateId/resume",
+  authMiddleware,
+  requireDepartmentAdmin,
+  requirePermission("department.candidate.resume.read"),
+  getDepartmentAdminCandidateResume
+);
+
+// =====================================================
 // API 4: CANDIDATE RECRUITMENT HISTORY
 // =====================================================
 
@@ -80,7 +97,6 @@ router.get(
 
 // =====================================================
 // API 6: RECRUITMENT REPORT
-// GET /api/department-admin/reports/recruitment
 // =====================================================
 
 router.get(
