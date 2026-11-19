@@ -26,7 +26,7 @@ import MyApplications from "./pages/Candidate/MyApplicatins";
 import AllJobs from "./pages/Candidate/AllJobs";
 import CandidateProfile from "./pages/Candidate/CandidateProfile";
 import CandidateNotifications from "./pages/Candidate/CandidateNotifications";
-
+import DeptAdminDashboard from "./pages/deptAdmin/DeptAdminDashboard";
 
 function App() {
   const token = localStorage.getItem("adminToken");
@@ -70,7 +70,13 @@ function App() {
           path="/candidate-notifications"
           element={<CandidateNotifications />}
         />
-        
+
+        {/* Dept admin */}
+        <Route
+          path="/dept-admin-dashboard"
+          element={<DeptAdminDashboard />}
+        />
+
         {/* Admin protected pages */}
         <Route element={<ProtectedRoute />}>
           <Route element={<AdminLayout />}>
